@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "functions": [
+    {
+      "function": "___netlify-edge-handler-middleware",
+      "name": "Next.js Middleware Handler",
+      "pattern": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/dashboard(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json)?[\\/#\\?]?$",
+      "generator": "@netlify/plugin-nextjs@5.10.7"
+    },
+    {
+      "function": "___netlify-edge-handler-middleware",
+      "name": "Next.js Middleware Handler",
+      "pattern": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/payments(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json)?[\\/#\\?]?$",
+      "generator": "@netlify/plugin-nextjs@5.10.7"
+    },
+    {
+      "function": "___netlify-edge-handler-middleware",
+      "name": "Next.js Middleware Handler",
+      "pattern": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/payment-link(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json)?[\\/#\\?]?$",
+      "generator": "@netlify/plugin-nextjs@5.10.7"
+    },
+    {
+      "function": "___netlify-edge-handler-middleware",
+      "name": "Next.js Middleware Handler",
+      "pattern": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/stablecoins(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json)?[\\/#\\?]?$",
+      "generator": "@netlify/plugin-nextjs@5.10.7"
+    },
+    {
+      "function": "___netlify-edge-handler-middleware",
+      "name": "Next.js Middleware Handler",
+      "pattern": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/settings(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json)?[\\/#\\?]?$",
+      "generator": "@netlify/plugin-nextjs@5.10.7"
+    }
+  ]
+}

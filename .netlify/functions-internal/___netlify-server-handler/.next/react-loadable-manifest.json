@@ -1,0 +1,140 @@
+{
+  "app/analytics/AnalyticsContent.tsx -> ../utils/rpcProvider": {
+    "id": 95746,
+    "files": [
+      "static/chunks/5746.92900c8ca21709cc.js"
+    ]
+  },
+  "app/analytics/analyticsUtils.ts -> ../utils/paginatedQueryFilter": {
+    "id": 25471,
+    "files": [
+      "static/chunks/5471.b012f0ffcdeb6ed8.js"
+    ]
+  },
+  "app/dashboard/page.tsx -> ../utils/smartWallet": {
+    "id": 43178,
+    "files": []
+  },
+  "app/dashboard/page.tsx -> ethers": {
+    "id": 96775,
+    "files": [
+      "static/chunks/6775.c1aff0ba90ab0c12.js"
+    ]
+  },
+  "app/pay/[id]/PayWithWallet.tsx -> ./WalletConnectButton": {
+    "id": 60414,
+    "files": [
+      "static/chunks/414.943c0dd395ebbb3d.js"
+    ]
+  },
+  "app/pay/[id]/WalletConnectButton.tsx -> @walletconnect/web3-provider": {
+    "id": 31437,
+    "files": [
+      "static/chunks/4134.18351f2dad14e83e.js",
+      "static/chunks/4887.ef3410f815e1073a.js",
+      "static/chunks/1437.292720e20dad5e8b.js",
+      "static/chunks/2855.c7da71e9caacff1d.js"
+    ]
+  },
+  "app/pay/[id]/WalletConnectButton.tsx -> ethers": {
+    "id": 96775,
+    "files": [
+      "static/chunks/6775.c1aff0ba90ab0c12.js"
+    ]
+  },
+  "app/pay/[id]/page.tsx -> ./PayWithWallet": {
+    "id": 4416,
+    "files": [
+      "static/chunks/9697-54e469f32a8f09b2.js",
+      "static/chunks/4416.a49e85fb55f3592a.js"
+    ]
+  },
+  "app/pay/[id]/page.tsx -> ./QRCode": {
+    "id": 36381,
+    "files": [
+      "static/chunks/7013.a50be3d21869331a.js",
+      "static/chunks/6381.f8498151208a2e6f.js"
+    ]
+  },
+  "node_modules/@wagmi/connectors/dist/esm/coinbaseWallet.js -> @coinbase/wallet-sdk": {
+    "id": 41004,
+    "files": [
+      "static/chunks/4134.18351f2dad14e83e.js",
+      "static/chunks/8471.e7f50918f6b2ef08.js",
+      "static/chunks/1004.2090aa21bbfd7b1f.js"
+    ]
+  },
+  "node_modules/@wagmi/connectors/dist/esm/coinbaseWallet.js -> cbw-sdk": {
+    "id": 62524,
+    "files": [
+      "static/chunks/2437-3aceb47607027f9c.js",
+      "static/chunks/4134.18351f2dad14e83e.js",
+      "static/chunks/4887.ef3410f815e1073a.js",
+      "static/chunks/8471.e7f50918f6b2ef08.js",
+      "static/chunks/6440.1c3847881fd81d2f.js",
+      "static/chunks/7446.703bd253742762f5.js"
+    ]
+  },
+  "node_modules/@wagmi/connectors/dist/esm/metaMask.js -> @metamask/sdk": {
+    "id": 65177,
+    "files": [
+      "static/chunks/aea36d77.c243b91049f2b444.js",
+      "static/chunks/2332.57e94b9f26398a5e.js"
+    ]
+  },
+  "node_modules/@wagmi/connectors/dist/esm/safe.js -> @safe-global/safe-apps-provider": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/@wagmi/connectors/dist/esm/safe.js -> @safe-global/safe-apps-sdk": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/@wagmi/connectors/dist/esm/walletConnect.js -> @walletconnect/ethereum-provider": {
+    "id": 23296,
+    "files": [
+      "static/chunks/4134.18351f2dad14e83e.js",
+      "static/chunks/3296.fd53e3bc24852d91.js"
+    ]
+  },
+  "node_modules/@wagmi/connectors/node_modules/@walletconnect/ethereum-provider/dist/index.es.js -> @walletconnect/modal": {
+    "id": 37472,
+    "files": [
+      "static/chunks/7472.39cd3e0c1584ac81.js"
+    ]
+  },
+  "node_modules/@wagmi/connectors/node_modules/@walletconnect/utils/node_modules/viem/_esm/actions/public/call.js -> ../../utils/ccip.js": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/@wagmi/connectors/node_modules/@walletconnect/utils/node_modules/viem/_esm/utils/rpc/webSocket.js -> isows": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/@wagmi/connectors/node_modules/@walletconnect/utils/node_modules/viem/_esm/utils/signature/recoverPublicKey.js -> @noble/curves/secp256k1": {
+    "id": 55040,
+    "files": [
+      "static/chunks/5040.7bf0529251482f09.js"
+    ]
+  },
+  "node_modules/@walletconnect/modal/dist/index.js -> @walletconnect/modal-ui": {
+    "id": 48639,
+    "files": [
+      "static/chunks/8639.e7247ef7874d3080.js"
+    ]
+  },
+  "node_modules/viem/_esm/actions/public/call.js -> ../../utils/ccip.js": {
+    "id": 31026,
+    "files": [
+      "static/chunks/1026.3efac72afba38552.js"
+    ]
+  },
+  "node_modules/viem/_esm/utils/rpc/webSocket.js -> isows": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/viem/_esm/utils/signature/recoverPublicKey.js -> @noble/curves/secp256k1": {
+    "id": 59561,
+    "files": []
+  }
+}
