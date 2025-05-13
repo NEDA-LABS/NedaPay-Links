@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
@@ -22,7 +22,7 @@ import {
 import { getBasename } from "../utils/getBaseName";
 import { Name } from "@coinbase/onchainkit/identity";
 import { base } from "wagmi/chains";
-import ChartComponent from "./ChartComponet"; // Note: Typo in original ("Componet"), assuming corrected to "Component"
+import ChartComponent from "./ChartComponet"; // Corrected typo
 import PieComponent from "./PieComponent";
 import SwapModal from "./SwapModal";
 
@@ -39,7 +39,13 @@ ChartJS.register(
   ArcElement
 );
 
+// Multicall3 contract ABI (minimal)
+const MULTICALL3_ABI = [
+  "function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) view returns (tuple(bool success, bytes returnData)[] returnData)",
+];
 
+// Multicall3 contract address on Base Mainnet
+const MULTICALL3_ADDRESS = "0xcA11bde05977b3631167028862bE2a173976CA11";
 
 // Function to process balances data
 const processBalances = (
@@ -61,17 +67,20 @@ const processBalances = (
   });
 
   const total = processed.reduce(
-    (sum, coin) => sum + parseInt(coin.balance.replace(/,/g, "")),
+    (sum, coin) => {
+      const balanceNum = parseFloat(coin.balance.replace(/,/g, "")) || 0;
+      return sum + balanceNum;
+    },
     0
   );
 
-  const processedCoins = processed.map((coin) => ({
-    ...coin,
-    percentage:
-      total > 0
-        ? Math.round((parseInt(coin.balance.replace(/,/g, "")) / total) * 100)
-        : 0,
-  }));
+  const processedCoins = processed.map((coin) => {
+    const balanceNum = parseFloat(coin.balance.replace(/,/g, "")) || 0;
+    return {
+      ...coin,
+      percentage: total > 0 ? Math.round((balanceNum / total) * 100) : 0,
+    };
+  });
 
   const allStablecoins = stablecoins.map((coin) => {
     const existingCoin = processed.find((p) => p.symbol === coin.baseToken);
@@ -158,8 +167,16 @@ export default function MerchantDashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isTransactionLoading, setIsTransactionLoading] =
     useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isBalanceLoading, setIsBalanceLoading] = useState<boolean>(false);
   const [baseName, setBaseName] = useState<string | null>(null);
+
+  // Memoized provider to avoid reinitialization
+  const provider = useMemo(() => {
+    if (typeof window !== "undefined" && window.ethereum) {
+      return new ethers.providers.Web3Provider(window.ethereum);
+    }
+    return new ethers.providers.JsonRpcProvider("https://mainnet.base.org");
+  }, []);
 
   // isDarkMode state for dynamic theme detection
   const [isDarkMode, setIsDarkMode] = useState<boolean>(
@@ -283,14 +300,9 @@ export default function MerchantDashboard() {
       }
       try {
         const { getSmartWalletAddress } = await import("../utils/smartWallet");
-        const { ethers } = await import("ethers");
-        const provider = new ethers.providers.JsonRpcProvider(
-          "https://mainnet.base.org"
-        );
-        const salt = 0;
         const realSmartWallet = await getSmartWalletAddress(
           address,
-          salt,
+          0,
           provider
         );
         setSmartWalletAddress(realSmartWallet);
@@ -307,7 +319,7 @@ export default function MerchantDashboard() {
       setSmartWalletLoading(false);
     }
     updateSmartWalletAddress();
-  }, [address, selectedWalletType]);
+  }, [address, selectedWalletType, provider]);
 
   useEffect(() => {
     if (
@@ -346,10 +358,6 @@ export default function MerchantDashboard() {
     let listeners: Array<() => void> = [];
     let cancelled = false;
     (async () => {
-      const ethersLib = (await import("ethers")).ethers;
-      const provider = new ethersLib.providers.JsonRpcProvider(
-        "https://mainnet.base.org"
-      );
       const ERC20_ABI = [
         "event Transfer(address indexed from, address indexed to, uint256 value)",
         "function decimals() view returns (uint8)",
@@ -362,7 +370,7 @@ export default function MerchantDashboard() {
           /^0x[a-fA-F0-9]{40}$/.test(c.address)
       )) {
         try {
-          const contract = new ethersLib.Contract(
+          const contract = new ethers.Contract(
             coin.address,
             ERC20_ABI,
             provider
@@ -391,7 +399,7 @@ export default function MerchantDashboard() {
                     merchantId: selectedWalletAddress,
                     wallet: from,
                     amount: parseFloat(
-                      ethersLib.utils.formatUnits(value, decimals)
+                      ethers.utils.formatUnits(value, decimals)
                     ),
                     currency: symbol,
                     status: "Completed",
@@ -400,7 +408,7 @@ export default function MerchantDashboard() {
                 });
                 const shortSender = from.slice(0, 6) + "..." + from.slice(-4);
                 const message = `Payment received: ${parseFloat(
-                  ethersLib.utils.formatUnits(value, decimals)
+                  ethers.utils.formatUnits(value, decimals)
                 )} ${symbol} from ${shortSender}`;
                 toast.success(message);
                 // Dispatch custom notification event
@@ -428,7 +436,7 @@ export default function MerchantDashboard() {
       cancelled = true;
       listeners.forEach((off) => off());
     };
-  }, [isConnected, selectedWalletAddress]);
+  }, [isConnected, selectedWalletAddress, provider]);
 
   // Wallet connection check and redirection
   useEffect(() => {
@@ -451,13 +459,18 @@ export default function MerchantDashboard() {
     }
   }, [mounted, router]);
 
-  // Periodic balance refresh
+  // Periodic balance refresh with debounce
   useEffect(() => {
     if (!isConnected || !selectedWalletAddress) return;
 
-    const refreshInterval = setInterval(() => {
-      if (selectedWalletAddress) {
-        fetchRealBalances(selectedWalletAddress);
+    let isFetching = false;
+    const refreshInterval = setInterval(async () => {
+      if (isFetching) return; // Skip if already fetching
+      isFetching = true;
+      try {
+        await fetchRealBalances(selectedWalletAddress);
+      } finally {
+        isFetching = false;
       }
     }, 30000); // Refresh every 30 seconds
 
@@ -474,69 +487,94 @@ export default function MerchantDashboard() {
   const BASE_MAINNET_CHAIN_ID = 8453;
 
   const fetchRealBalances = async (walletAddress: string) => {
-    let filteredCoins: any[] = [];
     try {
-      setIsLoading(true);
-      let provider;
-      if (typeof window !== "undefined" && window.ethereum) {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        const network = await provider.getNetwork();
-        if (network.chainId !== BASE_MAINNET_CHAIN_ID) {
-          setNetworkWarning(true);
-          setIsLoading(false);
-          filteredCoins = [];
-          return;
-        } else {
-          setNetworkWarning(false);
-          filteredCoins = stablecoins.filter(
-            (coin: any) => coin.chainId === network.chainId
-          );
-        }
-      } else {
-        throw new Error("No wallet provider found");
+      setIsBalanceLoading(true);
+      const network = await provider.getNetwork();
+      if (network.chainId !== BASE_MAINNET_CHAIN_ID) {
+        setNetworkWarning(true);
+        setBalances({});
+        return;
       }
+      setNetworkWarning(false);
+
+      const filteredCoins = stablecoins.filter(
+        (coin) =>
+          coin.chainId === BASE_MAINNET_CHAIN_ID &&
+          coin.address &&
+          /^0x[a-fA-F0-9]{40}$/.test(coin.address)
+      );
+
+      if (!filteredCoins.length) {
+        setBalances({});
+        return;
+      }
+
+      // Prepare Multicall3 calls
+      const calls = filteredCoins.flatMap((coin) => [
+        {
+          target: coin.address,
+          allowFailure: true,
+          callData: new ethers.utils.Interface(ERC20_ABI).encodeFunctionData(
+            "balanceOf",
+            [walletAddress]
+          ),
+        },
+        {
+          target: coin.address,
+          allowFailure: true,
+          callData: new ethers.utils.Interface(ERC20_ABI).encodeFunctionData(
+            "decimals",
+            []
+          ),
+        },
+      ]);
+
+      const multicallContract = new ethers.Contract(
+        MULTICALL3_ADDRESS,
+        MULTICALL3_ABI,
+        provider
+      );
+
+      const results = await multicallContract.aggregate3(calls);
       const realBalances: Record<string, string> = {};
-      let anyError = false;
       const tokenErrors: Record<string, string> = {};
-      for (const coin of filteredCoins) {
+
+      filteredCoins.forEach((coin, index) => {
+        const balanceResult = results[index * 2];
+        const decimalsResult = results[index * 2 + 1];
+
+        if (!balanceResult.success || !decimalsResult.success) {
+          tokenErrors[coin.baseToken] = `Failed to fetch ${
+            !balanceResult.success ? "balance" : "decimals"
+          }`;
+          return;
+        }
+
         try {
-          const tokenContract = new ethers.Contract(
-            coin.address,
-            ERC20_ABI,
-            provider
-          );
-          let balance = "0";
-          let decimals = 18;
-          try {
-            [balance, decimals] = await Promise.all([
-              tokenContract.balanceOf(walletAddress),
-              tokenContract.decimals(),
-            ]);
-          } catch (tokenErr: any) {
-            console.warn(
-              `Could not fetch balance/decimals for ${coin.baseToken}:`,
-              tokenErr?.message
-            );
-            tokenErrors[coin.baseToken] =
-              tokenErr?.message || "Error fetching balance";
-            anyError = true;
-          }
-          let formatted = "0";
-          try {
-            formatted = ethers.utils.formatUnits(balance, decimals);
-          } catch {}
+          const balance = ethers.utils.defaultAbiCoder.decode(
+            ["uint256"],
+            balanceResult.returnData
+          )[0];
+          const decimals = ethers.utils.defaultAbiCoder.decode(
+            ["uint8"],
+            decimalsResult.returnData
+          )[0];
+          const formatted = ethers.utils.formatUnits(balance, decimals);
           realBalances[coin.baseToken] = parseFloat(formatted).toLocaleString();
         } catch (err: any) {
-          // Suppress error
+          tokenErrors[coin.baseToken] = err.message || "Error decoding data";
         }
-      }
-      setBalanceError(anyError);
+      });
+
+      setBalanceError(Object.keys(tokenErrors).length > 0);
       setErrorTokens(tokenErrors);
       setBalances(realBalances);
     } catch (error) {
       console.error("Error fetching balances:", error);
+      setBalanceError(true);
+      setBalances({});
     } finally {
-      setIsLoading(false);
+      setIsBalanceLoading(false);
     }
   };
 
@@ -752,21 +790,32 @@ export default function MerchantDashboard() {
                   Total Received
                 </div>
                 <div className="flex flex-col gap-1 text-2xl font-bold text-slate-900 dark:text-white">
-                  {(() => {
-                    const processed =
-                      processBalances(balances).processedBalances;
-                    const nonZero = processed.filter(
-                      (c) => parseFloat(c.balance.replace(/,/g, "")) > 0
-                    );
-                    if (!nonZero.length) return "0";
-                    return nonZero.map((c) => (
-                      <div key={c.symbol} className="flex items-center gap-2">
-                        <span>{c.flag}</span>
-                        <span className="font-semibold">{c.balance}</span>
-                        <span className="ml-1">{c.symbol}</span>
-                      </div>
-                    ));
-                  })()}
+                  {isBalanceLoading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                      <span className="text-sm text-blue-600 dark:text-blue-300">
+                        Loading balances...
+                      </span>
+                    </div>
+                  ) : balanceError ? (
+                    <span className="text-red-600 dark:text-red-400">N/A</span>
+                  ) : (
+                    (() => {
+                      const processed =
+                        processBalances(balances).processedBalances;
+                      const nonZero = processed.filter(
+                        (c) => parseFloat(c.balance.replace(/,/g, "")) > 0
+                      );
+                      if (!nonZero.length) return "0";
+                      return nonZero.map((c) => (
+                        <div key={c.symbol} className="flex items-center gap-2">
+                          <span>{c.flag}</span>
+                          <span className="font-semibold">{c.balance}</span>
+                          <span className="ml-1">{c.symbol}</span>
+                        </div>
+                      ));
+                    })()
+                  )}
                 </div>
               </div>
               <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
@@ -1034,7 +1083,7 @@ export default function MerchantDashboard() {
                           className="text-slate-800 dark:text-white"
                         >
                           {coin.flag} {coin.baseToken}
-                        </option>
+                      </option>
                       ))}
                     </select>
                   </div>
@@ -1295,128 +1344,191 @@ export default function MerchantDashboard() {
                           d="M9 5l7 7-7 7"
                         />
                       </svg>
-                      View All Transactions
+                      View All Transaction
                     </a>
                   </div>
                 </div>
               </div>
-              {/* --- Custom Stablecoin Balances Table --- */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Stablecoin Balances
-                </h2>
-              </div>
-              
-              <div className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Coin</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Balance</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {processedBalances.map((coin: any, index: any) => {
-                        const balanceNum = parseFloat(String(coin.balance).replace(/,/g, ''));
-                        const hasBalance = balanceNum > 0;
-                        
-                        return (
-                          <tr 
-                            key={coin.symbol} 
-                            className={`hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}`}
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-lg">
-                                  {coin.flag}
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <svg
+                      className="w-5 h-5 mr-2 text-blue-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Stablecoin Balances
+                  </h2>
+                </div>
+                <div className="overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Coin
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Balance
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {processedBalances.map((coin: any, index: any) => {
+                          const balanceNum = parseFloat(
+                            String(coin.balance).replace(/,/g, "")
+                          );
+                          const hasBalance = balanceNum > 0;
+
+                          return (
+                            <tr
+                              key={coin.symbol}
+                              className={`hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-150 ${
+                                index % 2 === 0
+                                  ? "bg-white dark:bg-gray-800"
+                                  : "bg-gray-50 dark:bg-gray-750"
+                              }`}
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-lg">
+                                    {coin.flag}
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {coin.symbol}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                      {coin.name}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900 dark:text-white">{coin.symbol}</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">{coin.name}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div
+                                  className={`text-sm font-semibold ${
+                                    hasBalance
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-gray-500 dark:text-gray-400"
+                                  }`}
+                                >
+                                  {coin.balance}
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className={`text-sm font-semibold ${hasBalance ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                                {coin.balance}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              {/* Identical Swap button for all coins */}
-                              <button
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                onClick={() => hasBalance && handleSwapClick(coin.symbol)}
-                                disabled={!hasBalance}
-                                title={hasBalance ? `Swap ${coin.symbol}` : `No ${coin.symbol} balance to swap`}
-                              >
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                </svg>
-                                Swap
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button
+                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                  onClick={() =>
+                                    hasBalance && handleSwapClick(coin.symbol)
+                                  }
+                                  disabled={!hasBalance}
+                                  title={
+                                    hasBalance
+                                      ? `Swap ${coin.symbol}`
+                                      : `No ${coin.symbol} balance to swap`
+                                  }
+                                >
+                                  <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                                    />
+                                  </svg>
+                                  Swap
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
-            </div>
 
             {swapModalOpen && (
-               <SwapModal
-               open={swapModalOpen}
-               fromSymbol={swapFromSymbol}
-               onClose={() => setSwapModalOpen(false)}
-               onSwap={handleSwap}
-               maxAmount={
-                 processedBalances.find((b: any) => b.symbol === swapFromSymbol)?.balance || '0'
-               }
-             />
+              <SwapModal
+                open={swapModalOpen}
+                fromSymbol={swapFromSymbol}
+                onClose={() => setSwapModalOpen(false)}
+                onSwap={handleSwap}
+                maxAmount={
+                  processedBalances.find((b: any) => b.symbol === swapFromSymbol)
+                    ?.balance || "0"
+                }
+              />
             )}
           </div>
           {/* Quick Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
             <div className="flex justify-center">
-              <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
+              <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
+                Quick Actions
+              </h3>
             </div>
-            
+
             <div className="space-y-4">
-              <button 
+              <button
                 onClick={() => {
-  document.cookie = 'wallet_connected=true; path=/; max-age=86400';
-  setTimeout(() => {
-    window.location.href = '/payment-link';
-  }, 100);
-}} 
+                  document.cookie =
+                    "wallet_connected=true; path=/; max-age=86400";
+                  setTimeout(() => {
+                    window.location.href = "/payment-link";
+                  }, 100);
+                }}
                 className="p-4 w-full bg-gray-100 dark:bg-blue-900/30 rounded-lg border border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
               >
-                <h3 className="font-bold text-blue-900 dark:text-blue-300">Create Payment Link</h3>
-                <p className="text-sm text-blue-900 dark:text-blue-400 mt-1 font-medium">Generate a payment link to share with customers</p>
+                <h3 className="font-bold text-blue-900 dark:text-blue-300">
+                  Create Payment Link
+                </h3>
+                <p className="text-sm text-blue-900 dark:text-blue-400 mt-1 font-medium">
+                  Generate a payment link to share with customers
+                </p>
               </button>
 
-              <button 
-                onClick={() => router.push('/invoice')} 
+              <button
+                onClick={() => router.push("/invoice")}
                 className="p-4 w-full bg-gray-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 transition"
               >
-                <h3 className="font-bold text-green-900 dark:text-green-300">Generate Invoice</h3>
-                <p className="text-sm text-green-900 dark:text-green-400 mt-1 font-medium">Send an invoice to your customer for payment</p>
+                <h3 className="font-bold text-green-900 dark:text-green-300">
+                  Generate Invoice
+                </h3>
+                <p className="text-sm text-green-900 dark:text-green-400 mt-1 font-medium">
+                  Send an invoice to your customer for payment
+                </p>
               </button>
 
-              <button 
-                onClick={() => router.push('/analytics')} 
+              <button
+                onClick={() => router.push("/analytics")}
                 className="p-4 w-full bg-gray-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition"
               >
-                <h3 className="font-bold text-purple-900 dark:text-purple-300">View Analytics</h3>
-                <p className="text-sm text-purple-900 dark:text-purple-400 mt-1 font-medium">Detailed reports and business insights</p>
+                <h3 className="font-bold text-purple-900 dark:text-purple-300">
+                  View Analytics
+                </h3>
+                <p className="text-sm text-purple-900 dark:text-purple-400 mt-1 font-medium">
+                  Detailed reports and business insights
+                </p>
               </button>
             </div>
           </div>
