@@ -683,20 +683,14 @@ export default function MerchantDashboard() {
 
             <div className="bg-primary dark:bg-primary-dark border border-primary-light dark:border-blue-800 rounded-xl p-6 mb-8">
               <h2 className="text-xl font-semibold text-white mb-2">
-                {selectedWalletType === "smart"
-                  ? "Smart Wallet Connected"
-                  : "EOA Wallet Connected"}
+              Wallet Connected
               </h2>
               <p className="text-white mb-4">
-                {selectedWalletType === "smart"
-                  ? "You're using a smart wallet for enhanced security and lower fees"
-                  : "You're using your externally owned account (EOA) wallet"}
+              Your wallet is connected and ready to use
               </p>
               <div className="flex items-center space-x-2">
                 <div className="text-sm font-medium text-white">
-                  {selectedWalletType === "smart"
-                    ? "Smart Wallet Address:"
-                    : "EOA Wallet Address:"}
+                Wallet Address:
                 </div>
                 <div className="text-sm text-white/90">
                   {selectedWalletType === "smart" && smartWalletLoading && (
