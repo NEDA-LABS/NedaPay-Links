@@ -1459,7 +1459,7 @@ export default function MerchantDashboard() {
             )}
           </div>
           {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg max-w-md mx-auto" style={{width: "79%"}}>
             <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
             
             <div className="space-y-4">
