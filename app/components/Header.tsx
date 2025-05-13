@@ -114,7 +114,7 @@ export default function Header() {
           </div>
           
           {/* Right: Nav Buttons + Wallet */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 z-100">
             <nav className="flex flex-wrap space-x-2 md:space-x-3">
               {pathname === '/' && (
                 <>
@@ -162,7 +162,7 @@ export default function Header() {
               )}
             </nav>
             
-            <div className="flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 shadow-md border border-slate-200/50 dark:border-slate-700/50">
+            <div className="flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 shadow-md border border-slate-200/50 dark:border-slate-700/50 ">
               <NotificationTab />
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

@@ -1,9 +1,5 @@
 "use client";
 
-import {
-  getSmartWalletAddress,
-  createSmartWallet as createSmartWalletOnChain,
-} from "../utils/smartWallet";
 import { BASE_MAINNET_RPCS, getRandomRPC } from "../utils/rpcConfig";
 import * as ethers from "ethers";
 import toast from "react-hot-toast";
@@ -11,26 +7,9 @@ import { useState, useRef, useEffect } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { metaMask, coinbaseWallet, walletConnect } from "wagmi/connectors";
 import { useRouter } from "next/navigation";
-// Import base chain and use type assertions to fix compatibility issues
 import { base } from "wagmi/chains";
 import { Name } from "@coinbase/onchainkit/identity";
 import { getBasename } from "../utils/getBaseName";
-
-// Use the Base chain with type assertions where needed
-
-// Format address for display when no name is available
-// function formatAddress(address: string | undefined): string {
-//   if (
-//     !address ||
-//     typeof address !== "string" ||
-//     !address.startsWith("0x") ||
-//     address.length < 10
-//   )
-//     return "";
-//   return `${address.substring(0, 6)}...${address.substring(
-//     address.length - 4
-//   )}`;
-// }
 
 // Utility to detect mobile browsers
 function isMobile() {
@@ -40,12 +19,29 @@ function isMobile() {
 }
 
 export default function WalletSelector() {
+  // Mobile-specific styles
+  const mobileStyles = `
+    @media (max-width: 640px) {
+      .wallet-button {
+        padding: 4px 8px !important;
+        font-size: 0.7rem !important;
+      }
+      .wallet-icon {
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: 4px !important;
+      }
+      .wallet-address {
+        font-size: 0.7rem !important;
+      }
+      .wallet-dropdown {
+        width: 220px !important;
+      }
+    }
+  `;
+
   const [showOptions, setShowOptions] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isCreatingSmartWallet, setIsCreatingSmartWallet] = useState(false);
-  const [smartWalletAddress, setSmartWalletAddress] = useState<string | null>(
-    null
-  );
   const [baseName, setBaseName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -54,13 +50,6 @@ export default function WalletSelector() {
   const { address, isConnected, connector } = useAccount();
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
-
-  // Helper function to ensure address is properly formatted for the Name component
-  // function isHexAddress(addr: string | undefined): addr is `0x${string}` {
-  //   return (
-  //     typeof addr === "string" && addr.startsWith("0x") && addr.length === 42
-  //   );
-  // }
 
   // Format address for display
   const formatAddress = (address: string | undefined): string => {
@@ -71,13 +60,11 @@ export default function WalletSelector() {
       address.length < 10
     )
       return "";
-    return `${address.substring(0, 6)}...${address.substring(
-      address.length - 4
-    )}`;
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
-  // Close dropdown when clicking outside
-  const handleClickOutside = (event: MouseEvent) => {
+  // Close dropdown when clicking or touching outside
+  const handleClickOutside = (event: MouseEvent | TouchEvent) => {
     if (
       dropdownRef.current &&
       !dropdownRef.current.contains(event.target as Node)
@@ -86,10 +73,14 @@ export default function WalletSelector() {
     }
   };
 
-  // Add event listener for clicking outside
+  // Add event listeners for clicking and touching outside
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside as EventListener);
+    document.addEventListener("touchstart", handleClickOutside as EventListener);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside as EventListener);
+      document.removeEventListener("touchstart", handleClickOutside as EventListener);
+    };
   }, []);
 
   // Always write the connected wallet address to localStorage on change
@@ -101,12 +92,6 @@ export default function WalletSelector() {
     }
   }, [isConnected, address]);
 
-  useEffect(() => {
-    if (address && isConnected) {
-      localStorage.setItem("walletAddress", address);
-    }
-  }, [address, isConnected]);
-
   // Check for connected wallet and store in localStorage and cookie
   useEffect(() => {
     if (address && isConnected) {
@@ -116,24 +101,6 @@ export default function WalletSelector() {
 
       // Set a cookie for the middleware to check
       document.cookie = "wallet_connected=true; path=/; max-age=86400"; // 24 hours
-      // Always fetch the real smart wallet address from the on-chain factory
-      const salt = 0; // Use 0 unless you support multiple smart wallets per EOA
-      // Connect to the blockchain using our RPC configuration
-      const rpcUrl = getRandomRPC(BASE_MAINNET_RPCS);
-      const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
-      // Pass the provider to getSmartWalletAddress
-      getSmartWalletAddress(address, salt, provider).then(
-        (realSmartWalletAddress) => {
-          setSmartWalletAddress(realSmartWalletAddress);
-          localStorage.setItem(
-            `smartWallet_${address}`,
-            JSON.stringify({
-              address: realSmartWalletAddress,
-              createdAt: new Date().toISOString(),
-            })
-          );
-        }
-      );
 
       // Immediately dispatch a custom event so dashboard can react instantly
       window.dispatchEvent(
@@ -160,74 +127,53 @@ export default function WalletSelector() {
     }
   }, [address, isConnected, router]);
 
-  // Function to create a smart wallet (on-chain)
-  const createSmartWallet = async () => {
-    console.log("Create Smart Wallet clicked", { address, isConnected });
-    if (!address || !isConnected) return;
-    setIsCreatingSmartWallet(true);
-    try {
-      // Use a fixed salt for demo, or generate a random one for production
-      const salt = 1;
-      // Get the provider from the injected wallet
-      // Use window.ethereum if available, otherwise use our RPC configuration
-      const provider = window.ethereum
-        ? new ethers.providers.Web3Provider(window.ethereum)
-        : new ethers.providers.JsonRpcProvider(getRandomRPC(BASE_MAINNET_RPCS));
-
-      // First, check if the smart wallet already exists
-      console.log(
-        "Checking if smart wallet exists for",
-        address,
-        "with salt",
-        salt
-      );
-      // Get the wallet address using our provider
-      const walletAddr = await getSmartWalletAddress(address, salt, provider);
-      let code = "";
-      if (walletAddr && walletAddr !== ethers.constants.AddressZero) {
-        // Check if the wallet contract is deployed
-        code = await provider.getCode(walletAddr);
-      }
-      // If the wallet contract is actually deployed, show it
-      if (
-        walletAddr &&
-        walletAddr !== ethers.constants.AddressZero &&
-        code !== "0x"
-      ) {
-        setSmartWalletAddress(walletAddr);
-        localStorage.setItem(
-          `smartWallet_${address}`,
-          JSON.stringify({
-            address: walletAddr,
-            createdAt: new Date().toISOString(),
-          })
-        );
-        toast.success("Smart wallet already exists.");
-        router.push("/dashboard");
-        return;
-      }
-      // Otherwise, create the wallet on-chain
-      toast("Creating smart wallet on-chain...");
-      // Updated to match new function signature without signer
-      const result = await createSmartWalletOnChain(address, salt);
-      setSmartWalletAddress(result.walletAddress);
-      localStorage.setItem(
-        `smartWallet_${address}`,
-        JSON.stringify({
-          address: result.walletAddress,
-          createdAt: new Date().toISOString(),
-        })
-      );
-      toast.success("Smart wallet created!");
-      router.push("/dashboard");
-    } catch (error) {
-      console.error("Error creating smart wallet:", error);
-      toast.error("Failed to create smart wallet. See console for details.");
-    } finally {
-      setIsCreatingSmartWallet(false);
-      setShowOptions(false);
+  // Basename fetching
+  useEffect(() => {
+    if (!address) {
+      setBaseName(null);
+      return;
     }
-  };
+
+    function toHexAddress(address: `0x${string}` | undefined | string): `0x${string}` {
+      if (!address || typeof address !== "string") {
+        throw new Error("Invalid address provided");
+      }
+      return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
+    }
+
+    const address_formatted = toHexAddress(address);
+
+    if (!address_formatted) {
+      console.error("Invalid address format");
+      setBaseName(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        const basename = await getBasename(address_formatted);
+        if (basename === undefined) {
+          throw new Error("Failed to resolve address to name");
+        }
+        if (isMounted) {
+          setBaseName(basename);
+        }
+      } catch (error) {
+        console.error("Error fetching base name:", error);
+        if (isMounted) {
+          setBaseName(null);
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [address]);
 
   // Function to handle MetaMask connection
   const handleConnectMetaMask = async () => {
@@ -309,56 +255,6 @@ export default function WalletSelector() {
     }
   };
 
-   //basename fetching
-   useEffect(() => {
-    if (!address) {
-      setBaseName(null);
-      return;
-    }
-  
-    function toHexAddress(address: `0x${string}` | undefined | string): `0x${string}` {
-      if (!address || typeof address !== "string") {
-        throw new Error("Invalid address provided");
-      }
-      return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
-    }
-  
-    const address_formatted = toHexAddress(address);
-  
-    if (!address_formatted) {
-      console.error("Invalid address format");
-      setBaseName(null);
-      return;
-    }
-  
-    let isMounted = true;
-  
-    const fetchData = async () => {
-      try {
-        const basename = await getBasename(address_formatted);
-        if (basename === undefined) {
-          throw new Error("Failed to resolve address to name");
-        }
-        if (isMounted) {
-          setBaseName(basename);
-          
-        }
-      } catch (error) {
-        console.error("Error fetching base name:", error);
-        if (isMounted) {
-          setBaseName(null);
-        }
-      }
-    };
-  
-    fetchData();
-  
-    return () => {
-      isMounted = false;
-    };
-  }, [address]);
-  
-
   // Function to handle wallet disconnection
   const handleDisconnect = () => {
     disconnect();
@@ -372,22 +268,21 @@ export default function WalletSelector() {
     document.cookie = "wallet_connected=; path=/; max-age=0";
 
     // Redirect to home page using Next.js router
-    router.push("/dashboard");
+    router.push("/");
   };
-
- 
 
   return (
     <div className="relative" ref={dropdownRef}>
+      <style jsx>{mobileStyles}</style>
       {isConnected ? (
         <button
           onClick={(e) => {
             e.stopPropagation();
             setShowOptions(!showOptions);
           }}
-          className="flex items-center space-x-2 bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
+          className="wallet-button flex items-center space-x-2 bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
         >
-          <div className="w-6 h-6 rounded-full flex items-center justify-center mr-2 bg-blue-100 dark:bg-blue-900">
+          <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center mr-2 bg-blue-100 dark:bg-blue-900">
             {connector?.id === "coinbaseWallet" ||
             connector?.name === "Coinbase Wallet" ? (
               // Coinbase Wallet Logo
@@ -422,7 +317,7 @@ export default function WalletSelector() {
               </svg>
             )}
           </div>
-          <div className="text-xs sm:text-sm font-bold">
+          <div className="wallet-address text-xs sm:text-sm font-bold">
             {address ? (
               baseName ? (
                 <>
@@ -435,15 +330,12 @@ export default function WalletSelector() {
                   </span>
                 </>
               ) : (
-                <>
-                  <Name address={address} chain={base}/>
-                </>
+                <Name address={address as `0x${string}`} chain={base as any} />
               )
             ) : (
               "Connect Wallet"
             )}
           </div>
-
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -465,7 +357,7 @@ export default function WalletSelector() {
             e.stopPropagation();
             setShowOptions(!showOptions);
           }}
-          className="bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm flex items-center"
+          className="wallet-button flex items-center bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
           disabled={isConnecting}
         >
           <span className="text-xs sm:text-sm font-bold">
@@ -490,8 +382,9 @@ export default function WalletSelector() {
 
       {showOptions && (
         <div
-          className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+          className="wallet-dropdown absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-60 border-2 border-blue-100 dark:border-blue-900"
           onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          style={{ maxHeight: "80vh", overflowY: "auto" }}
         >
           {isConnected ? (
             <>
@@ -506,29 +399,16 @@ export default function WalletSelector() {
                 </div>
                 <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   {address ? (
-                    <>
-                      <Name
-                        address={address as `0x${string}`}
-                        chain={base as any}
-                      />
-                    </>
+                    <Name
+                      address={address as `0x${string}`}
+                      chain={base as any}
+                    />
                   ) : (
                     "Not connected"
                   )}
                 </div>
               </div>
-
               <div className="p-2 space-y-1">
-                <button
-                  onClick={createSmartWallet}
-                  disabled={isCreatingSmartWallet}
-                  className="block w-full text-left px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isCreatingSmartWallet
-                    ? "Creating Smart Wallet..."
-                    : "Create Smart Wallet"}
-                </button>
-
                 <button
                   onClick={handleDisconnect}
                   className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -601,10 +481,10 @@ export default function WalletSelector() {
                       </svg>
                     </div>
                     <div>
-                      <div className="text-xs sm:text-sm font-medium text-white">
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-300">
                         Coinbase Wallet
                       </div>
-                      <div className="text-xs text-white/80">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {isConnecting ? "Connecting..." : "Connect"}
                       </div>
                     </div>
@@ -644,10 +524,10 @@ export default function WalletSelector() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs sm:text-sm font-medium text-white">
+                    <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-300">
                       MetaMask
                     </div>
-                    <div className="text-xs text-white/80">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       {isConnecting ? "Connecting..." : "Connect"}
                     </div>
                   </div>
