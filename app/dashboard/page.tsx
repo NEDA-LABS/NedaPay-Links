@@ -321,25 +321,25 @@ export default function MerchantDashboard() {
     updateSmartWalletAddress();
   }, [address, selectedWalletType, provider]);
 
-  useEffect(() => {
-    if (
-      isConnected &&
-      ((selectedWalletType === "eoa" && address && connector) ||
-        (selectedWalletType === "smart" &&
-          smartWalletAddress &&
-          smartWalletAddress !== address &&
-          connector))
-    ) {
-      fetchRealBalances(selectedWalletAddress!);
-    }
-  }, [
-    isConnected,
-    selectedWalletAddress,
-    connector,
-    selectedWalletType,
-    smartWalletAddress,
-    address,
-  ]);
+  // useEffect(() => {
+  //   if (
+  //     isConnected &&
+  //     ((selectedWalletType === "eoa" && address && connector) ||
+  //       (selectedWalletType === "smart" &&
+  //         smartWalletAddress &&
+  //         smartWalletAddress !== address &&
+  //         connector))
+  //   ) {
+  //     fetchRealBalances(selectedWalletAddress!);
+  //   }
+  // }, [
+  //   isConnected,
+  //   selectedWalletAddress,
+  //   connector,
+  //   selectedWalletType,
+  //   smartWalletAddress,
+  //   address,
+  // ]);
 
   // Fetch transactions from the database
   useEffect(() => {
@@ -585,28 +585,6 @@ export default function MerchantDashboard() {
       <Toaster position="top-right" />
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-white dark:bg-gray-900 dark:text-white">
         <Header />
-        <div className="flex gap-4 mb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <button
-            className={`px-4 py-2 rounded-lg border font-semibold ${
-              selectedWalletType === "eoa"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-            }`}
-            onClick={() => setSelectedWalletType("eoa")}
-          >
-            EOA Wallet
-          </button>
-          <button
-            className={`px-4 py-2 rounded-lg border font-semibold ${
-              selectedWalletType === "smart"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-            }`}
-            onClick={() => setSelectedWalletType("smart")}
-          >
-            Smart Wallet
-          </button>
-        </div>
         <div className="my-4">
           <button
             onClick={() => window.history.back()}
@@ -1482,53 +1460,36 @@ export default function MerchantDashboard() {
           </div>
           {/* Quick Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-            <div className="flex justify-center">
-              <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
-                Quick Actions
-              </h3>
-            </div>
-
+            <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
+            
             <div className="space-y-4">
-              <button
+              <button 
                 onClick={() => {
-                  document.cookie =
-                    "wallet_connected=true; path=/; max-age=86400";
-                  setTimeout(() => {
-                    window.location.href = "/payment-link";
-                  }, 100);
-                }}
+  document.cookie = 'wallet_connected=true; path=/; max-age=86400';
+  setTimeout(() => {
+    window.location.href = '/payment-link';
+  }, 100);
+}} 
                 className="p-4 w-full bg-gray-100 dark:bg-blue-900/30 rounded-lg border border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
               >
-                <h3 className="font-bold text-blue-900 dark:text-blue-300">
-                  Create Payment Link
-                </h3>
-                <p className="text-sm text-blue-900 dark:text-blue-400 mt-1 font-medium">
-                  Generate a payment link to share with customers
-                </p>
+                <h3 className="font-bold text-blue-900 dark:text-blue-300">Create Payment Link</h3>
+                <p className="text-sm text-blue-900 dark:text-blue-400 mt-1 font-medium">Generate a payment link to share with customers</p>
               </button>
 
-              <button
-                onClick={() => router.push("/invoice")}
+              <button 
+                onClick={() => router.push('/invoice')} 
                 className="p-4 w-full bg-gray-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 transition"
               >
-                <h3 className="font-bold text-green-900 dark:text-green-300">
-                  Generate Invoice
-                </h3>
-                <p className="text-sm text-green-900 dark:text-green-400 mt-1 font-medium">
-                  Send an invoice to your customer for payment
-                </p>
+                <h3 className="font-bold text-green-900 dark:text-green-300">Generate Invoice</h3>
+                <p className="text-sm text-green-900 dark:text-green-400 mt-1 font-medium">Send an invoice to your customer for payment</p>
               </button>
 
-              <button
-                onClick={() => router.push("/analytics")}
+              <button 
+                onClick={() => router.push('/analytics')} 
                 className="p-4 w-full bg-gray-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition"
               >
-                <h3 className="font-bold text-purple-900 dark:text-purple-300">
-                  View Analytics
-                </h3>
-                <p className="text-sm text-purple-900 dark:text-purple-400 mt-1 font-medium">
-                  Detailed reports and business insights
-                </p>
+                <h3 className="font-bold text-purple-900 dark:text-purple-300">View Analytics</h3>
+                <p className="text-sm text-purple-900 dark:text-purple-400 mt-1 font-medium">Detailed reports and business insights</p>
               </button>
             </div>
           </div>
