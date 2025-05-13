@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 import dynamic from "next/dynamic";
 import { stablecoins } from "../../data/stablecoins";
 import { utils } from "ethers";
+import { Toaster, toast } from 'react-hot-toast';
 
 const WalletConnectButton = dynamic(() => import("./WalletConnectButton"), {
   ssr: false,
@@ -131,6 +132,15 @@ export default function PayWithWallet({
           setError(
             "Transaction confirmed on-chain, but failed to update in database. Please contact support."
           );
+        } else {
+          const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+          const shortMerchant = merchantId.slice(0, 6) + '...' + merchantId.slice(-4);
+          toast.success(`Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`);
+          window.dispatchEvent(new CustomEvent('neda-notification', {
+            detail: {
+              message: `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`
+            }
+          }));
         }
       } else {
         setTxStatus("failed");
@@ -288,6 +298,17 @@ export default function PayWithWallet({
         setError(
           "Transaction sent, but failed to record in database. Please contact support."
         );
+      } else {
+        const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+        const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
+        toast.success(`Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`, {
+          duration: 3000,
+        });
+        window.dispatchEvent(new CustomEvent('neda-notification', {
+          detail: {
+            message: `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`
+          }
+        }));
       }
 
       // Check transaction status

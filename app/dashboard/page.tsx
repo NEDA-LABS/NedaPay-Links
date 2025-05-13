@@ -355,88 +355,65 @@ export default function MerchantDashboard() {
   // Live event listener for real-time transaction updates
   useEffect(() => {
     if (!isConnected || !selectedWalletAddress) return;
-    let listeners: Array<() => void> = [];
-    let cancelled = false;
-    (async () => {
-      const ERC20_ABI = [
-        "event Transfer(address indexed from, address indexed to, uint256 value)",
-        "function decimals() view returns (uint8)",
-        "function symbol() view returns (string)",
-      ];
-      for (const coin of stablecoins.filter(
-        (c) =>
-          c.chainId === 8453 &&
-          c.address &&
-          /^0x[a-fA-F0-9]{40}$/.test(c.address)
-      )) {
-        try {
-          const contract = new ethers.Contract(
-            coin.address,
-            ERC20_ABI,
-            provider
-          );
-          const decimals = await contract.decimals();
-          const symbol = coin.baseToken;
-          const onTransfer = async (
-            from: string,
-            to: string,
-            value: ethers.BigNumber,
-            event: any
-          ) => {
-            if (cancelled) return;
-            if (to.toLowerCase() === selectedWalletAddress.toLowerCase()) {
-              const txHash = event.transactionHash;
-              const res = await fetch(
-                `/api/transactions?merchantId=${selectedWalletAddress}`
-              );
-              const dbTxs = res.ok ? await res.json() : [];
-              const dbHashes = new Set(dbTxs.map((t: any) => t.txHash));
-              if (!dbHashes.has(txHash)) {
-                await fetch("/api/transactions", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    merchantId: selectedWalletAddress,
-                    wallet: from,
-                    amount: parseFloat(
-                      ethers.utils.formatUnits(value, decimals)
-                    ),
-                    currency: symbol,
-                    status: "Completed",
-                    txHash,
-                  }),
-                });
-                const shortSender = from.slice(0, 6) + "..." + from.slice(-4);
-                const message = `Payment received: ${parseFloat(
-                  ethers.utils.formatUnits(value, decimals)
-                )} ${symbol} from ${shortSender}`;
-                toast.success(message);
-                // Dispatch custom notification event
-                window.dispatchEvent(
-                  new CustomEvent("neda-notification", {
-                    detail: { message },
-                  })
-                );
-                fetchTransactionsFromDB(
-                  selectedWalletAddress,
-                  setTransactions,
-                  setIsTransactionLoading
-                );
-              }
-            }
-          };
-          contract.on("Transfer", onTransfer);
-          listeners.push(() => contract.off("Transfer", onTransfer));
-        } catch (e) {
-          // Ignore
+  
+    let intervalId: NodeJS.Timeout;
+    let knownTxHashes = new Set<string>();
+    let isInitialLoad = true; // Flag to skip initial notification
+  
+    const fetchAndNotifyNewTransactions = async () => {
+      try {
+        const response = await fetch(
+          `/api/transactions?merchantId=${selectedWalletAddress}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch transactions");
+        const transactions = await response.json();
+        const currentTxHashes: Set<string> = new Set(transactions.map((tx: any) => tx.txHash));
+  
+        // On initial load, set baseline without notifying
+        if (isInitialLoad) {
+          knownTxHashes = new Set(currentTxHashes); // Populate with all existing hashes
+          isInitialLoad = false; // Disable initial load flag after first run
+          return; // Exit without notification
         }
+  
+        // Check for new transactions only after initial load
+        const newTxHashes = new Set(
+          [...currentTxHashes].filter((hash) => !knownTxHashes.has(hash))
+        );
+        if (newTxHashes.size > 0) {
+          // Find the newest transaction (assuming createdAt is available and sorted descending)
+          const newTransactions = transactions
+            .filter((tx: any) => newTxHashes.has(tx.txHash))
+            .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          const lastTransaction = newTransactions[0];
+  
+          if (lastTransaction) {
+            const shortSender = lastTransaction.wallet.slice(0, 6) + "..." + lastTransaction.wallet.slice(-4);
+            const message = `Payment received: ${parseFloat(lastTransaction.amount)} ${lastTransaction.currency} from ${shortSender}`;
+            toast.success(message, { duration: 6000 });
+            window.dispatchEvent(
+              new CustomEvent("neda-notification", {
+                detail: { message },
+              })
+            );
+            knownTxHashes.add(lastTransaction.txHash); // Update with new hash
+          }
+        }
+      } catch (error) {
+        console.error("Error checking for new transactions:", error);
       }
-    })();
-    return () => {
-      cancelled = true;
-      listeners.forEach((off) => off());
     };
-  }, [isConnected, selectedWalletAddress, provider]);
+  
+    // Initial fetch to set baseline
+    fetchAndNotifyNewTransactions();
+  
+    // Start polling after initial load
+    intervalId = setInterval(fetchAndNotifyNewTransactions, 10000); // Poll every 10 seconds
+  
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isConnected, selectedWalletAddress]);
 
   // Wallet connection check and redirection
   useEffect(() => {
@@ -472,7 +449,7 @@ export default function MerchantDashboard() {
       } finally {
         isFetching = false;
       }
-    }, 30000); // Refresh every 30 seconds
+    }, 5000); // Refresh every 5 seconds
 
     return () => {
       clearInterval(refreshInterval);
