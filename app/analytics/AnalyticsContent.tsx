@@ -463,9 +463,9 @@ export default function AnalyticsContent() {
                       ) : (
                         filteredTxs.map((tx, idx) => (
                           <tr key={tx.id || idx}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">{tx.date}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">{tx.amount}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">{tx.currency}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white"><p className='dark:text-white'>{tx.date}</p></td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white"><p className='dark:text-white'>{tx.amount}</p></td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white"><p className='dark:text-white'>{tx.currency}</p></td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                                 {tx.status}

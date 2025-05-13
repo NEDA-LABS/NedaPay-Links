@@ -5,7 +5,6 @@ import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import { Toaster, toast } from "react-hot-toast";
-import TransactionTable from "./TransactionTable";
 import { stablecoins } from "../data/stablecoins";
 import { ethers } from "ethers";
 import {
@@ -23,8 +22,9 @@ import {
 import { getBasename } from "../utils/getBaseName";
 import { Name } from "@coinbase/onchainkit/identity";
 import { base } from "wagmi/chains";
-import ChartComponent from "./ChartComponet";
+import ChartComponent from "./ChartComponet"; // Note: Typo in original ("Componet"), assuming corrected to "Component"
 import PieComponent from "./PieComponent";
+import SwapModal from "./SwapModal";
 
 // Register ChartJS components
 ChartJS.register(
@@ -38,6 +38,8 @@ ChartJS.register(
   Legend,
   ArcElement
 );
+
+
 
 // Function to process balances data
 const processBalances = (
@@ -128,12 +130,6 @@ const fetchTransactionsFromDB = async (
   }
 };
 
-
-
-
-// import Balances from './Balances';
-import SwapModal from "./SwapModal";
-
 export default function MerchantDashboard() {
   const [selectedWalletType, setSelectedWalletType] = useState<"eoa" | "smart">(
     "eoa"
@@ -143,6 +139,7 @@ export default function MerchantDashboard() {
   );
   const [smartWalletLoading, setSmartWalletLoading] = useState(false);
   const { address, isConnected, connector } = useAccount();
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("all");
 
   const selectedWalletAddress =
     selectedWalletType === "eoa"
@@ -164,42 +161,43 @@ export default function MerchantDashboard() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [baseName, setBaseName] = useState<string | null>(null);
 
-   // isDarkMode state for dynamic theme detection
-   const [isDarkMode, setIsDarkMode] = useState<boolean>(
+  // isDarkMode state for dynamic theme detection
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(
     typeof window !== "undefined" &&
-      (document.body.classList.contains('dark') ||
-        window.matchMedia('(prefers-color-scheme: dark)').matches)
+      (document.body.classList.contains("dark") ||
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
   );
 
   // Updates theme when it changes
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      const newDarkMode = document.body.classList.contains('dark');
+      const newDarkMode = document.body.classList.contains("dark");
       setIsDarkMode(newDarkMode);
     });
 
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
       setIsDarkMode(e.matches);
     };
-    mediaQuery.addEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
 
     return () => {
       observer.disconnect();
-      mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.removeEventListener("change", handleChange);
     };
   }, []);
 
-  //formats address to normal string
+  // Formats address to normal string
   function toHexAddress(address: string | undefined): `0x${string}` {
     if (!address || typeof address !== "string") {
       throw new Error("Invalid address provided");
     }
-    return (
-      address.startsWith("0x") ? address : `0x${address}`
-    ) as `0x${string}`;
+    return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
   }
 
   // Use with selectedWalletAddress
@@ -208,7 +206,6 @@ export default function MerchantDashboard() {
       setBaseName(null);
       return;
     }
-
 
     const address = toHexAddress(selectedWalletAddress);
     if (!address) {
@@ -243,7 +240,6 @@ export default function MerchantDashboard() {
     };
   }, [selectedWalletAddress]);
 
-  console.log("Base Name:", baseName);
   const { processedBalances } = processBalances(balances);
 
   const handleSwapClick = (fromSymbol: string) => {
@@ -403,10 +399,15 @@ export default function MerchantDashboard() {
                   }),
                 });
                 const shortSender = from.slice(0, 6) + "..." + from.slice(-4);
-                toast.success(
-                  `Payment received: ${parseFloat(
-                    ethersLib.utils.formatUnits(value, decimals)
-                  )} ${symbol} from ${shortSender}`
+                const message = `Payment received: ${parseFloat(
+                  ethersLib.utils.formatUnits(value, decimals)
+                )} ${symbol} from ${shortSender}`;
+                toast.success(message);
+                // Dispatch custom notification event
+                window.dispatchEvent(
+                  new CustomEvent("neda-notification", {
+                    detail: { message },
+                  })
                 );
                 fetchTransactionsFromDB(
                   selectedWalletAddress,
@@ -426,6 +427,42 @@ export default function MerchantDashboard() {
     return () => {
       cancelled = true;
       listeners.forEach((off) => off());
+    };
+  }, [isConnected, selectedWalletAddress]);
+
+  // Wallet connection check and redirection
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Check if wallet is connected via localStorage
+    const walletConnected = localStorage.getItem("walletConnected") === "true";
+    const cookieWalletConnected =
+      document.cookie.includes("wallet_connected=true");
+
+    // If not connected, redirect to home
+    if (!walletConnected && !cookieWalletConnected) {
+      router.push("/?walletRequired=true");
+    } else if (walletConnected && !cookieWalletConnected) {
+      // Sync localStorage to cookie
+      document.cookie = "wallet_connected=true; path=/; max-age=86400"; // 24 hours
+    } else if (cookieWalletConnected && !walletConnected) {
+      // Sync cookie to localStorage
+      localStorage.setItem("walletConnected", "true");
+    }
+  }, [mounted, router]);
+
+  // Periodic balance refresh
+  useEffect(() => {
+    if (!isConnected || !selectedWalletAddress) return;
+
+    const refreshInterval = setInterval(() => {
+      if (selectedWalletAddress) {
+        fetchRealBalances(selectedWalletAddress);
+      }
+    }, 30000); // Refresh every 30 seconds
+
+    return () => {
+      clearInterval(refreshInterval);
     };
   }, [isConnected, selectedWalletAddress]);
 
@@ -553,12 +590,24 @@ export default function MerchantDashboard() {
         <div className="flex-grow">
           <div className="container mx-auto max-w-6xl px-4 py-12">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2 text-slate-800 dark:text-slate-100">
-                Merchant Dashboard
-              </h1>
-              <p className="text-slate-600 dark:text-slate-300 text-base">
-                Manage your stablecoin payments and track business performance
-              </p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2 text-slate-800 dark:text-slate-100">
+                    Merchant Dashboard
+                  </h1>
+                  <p className="text-slate-600 dark:text-slate-300 text-base">
+                    Manage your stablecoin payments and track business performance
+                  </p>
+                </div>
+                {isTransactionLoading && (
+                  <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                    <span className="text-sm text-blue-600 dark:text-blue-300">
+                      Loading data...
+                    </span>
+                  </div>
+                )}
+              </div>
               <div className="mt-4 p-4 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-lg shadow-lg transform transition-all duration-500 hover:scale-102 hover:shadow-xl">
                 <div className="flex items-start">
                   <div className="flex-1">
@@ -865,21 +914,83 @@ export default function MerchantDashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Daily Revenue
-                </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 dark:text-white">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg dark:text-white">
+                <div className="flex justify-between items-center mb-4 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Daily Revenue
+                  </h3>
+                  <select
+                    className="border rounded px-2 py-1 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value)}
+                  >
+                    <option
+                      value="all"
+                      className="text-slate-800 dark:text-white"
+                    >
+                      All Currencies
+                    </option>
+                    {stablecoins.map((coin: any) => (
+                      <option
+                        key={coin.baseToken}
+                        value={coin.baseToken}
+                        className="text-slate-800 dark:text-white"
+                      >
+                        {coin.flag} {coin.baseToken}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="h-64">
-                <ChartComponent transactions={transactions} />
+                  <ChartComponent
+                    transactions={
+                      selectedCurrency === "all"
+                        ? transactions
+                        : transactions.filter(
+                            (tx: any) => tx.currency === selectedCurrency
+                          )
+                    }
+                  />
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Payment Methods
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Payment Methods
+                  </h3>
+                  <select
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value)}
+                    className="border rounded px-2 py-1 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                  >
+                    <option
+                      value="all"
+                      className="text-slate-800 dark:text-white"
+                    >
+                      All Currencies
+                    </option>
+                    {stablecoins.map((coin: any) => (
+                      <option
+                        key={coin.baseToken}
+                        value={coin.baseToken}
+                        className="text-slate-800 dark:text-white"
+                      >
+                        {coin.flag} {coin.baseToken}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="h-64">
-                  <PieComponent transactions={transactions}/>
+                  <PieComponent
+                    transactions={
+                      selectedCurrency === "all"
+                        ? transactions
+                        : transactions.filter(
+                            (tx: any) => tx.currency === selectedCurrency
+                          )
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -887,23 +998,46 @@ export default function MerchantDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                    <svg
-                      className="w-5 h-5 mr-2 text-indigo-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                      <svg
+                        className="w-5 h-5 mr-2 text-indigo-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                        />
+                      </svg>
+                      Recent Transactions
+                    </h3>
+                    <select
+                      value={selectedCurrency}
+                      onChange={(e) => setSelectedCurrency(e.target.value)}
+                      className="border rounded px-2 py-1 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                      />
-                    </svg>
-                    Recent Transactions
-                  </h3>
+                      <option
+                        value="all"
+                        className="text-slate-800 dark:text-white"
+                      >
+                        All Currencies
+                      </option>
+                      {stablecoins.map((coin: any) => (
+                        <option
+                          key={coin.baseToken}
+                          value={coin.baseToken}
+                          className="text-slate-800 dark:text-white"
+                        >
+                          {coin.flag} {coin.baseToken}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
@@ -931,10 +1065,7 @@ export default function MerchantDashboard() {
                         Array(5)
                           .fill(0)
                           .map((_, index) => (
-                            <tr
-                              key={`loading-${index}`}
-                              className="animate-pulse"
-                            >
+                            <tr key={`loading-${index}`} className="animate-pulse">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded relative overflow-hidden">
                                   <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
@@ -962,7 +1093,12 @@ export default function MerchantDashboard() {
                               </td>
                             </tr>
                           ))
-                      ) : transactions.length === 0 ? (
+                      ) : (selectedCurrency === "all"
+                          ? transactions
+                          : transactions.filter(
+                              (tx: any) => tx.currency === selectedCurrency
+                            )
+                        ).length === 0 ? (
                         <tr>
                           <td
                             colSpan={5}
@@ -994,7 +1130,12 @@ export default function MerchantDashboard() {
                           </td>
                         </tr>
                       ) : (
-                        transactions.map((tx, index) => (
+                        (selectedCurrency === "all"
+                          ? transactions
+                          : transactions.filter(
+                              (tx: any) => tx.currency === selectedCurrency
+                            )
+                        ).map((tx, index) => (
                           <tr
                             key={tx.id}
                             className={`hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors duration-150 ${
@@ -1159,179 +1300,124 @@ export default function MerchantDashboard() {
                   </div>
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                    <svg
-                      className="w-5 h-5 mr-2 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Stablecoin Balances
-                  </h2>
-                </div>
-                <div className="overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                      <thead className="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Coin
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Balance
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Action
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {processedBalances.map((coin, index) => {
-                          const balanceNum = parseFloat(
-                            String(coin.balance).replace(/,/g, "")
-                          );
-                          const hasBalance = balanceNum > 0;
-                          return (
-                            <tr
-                              key={coin.symbol}
-                              className={`hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-150 ${
-                                index % 2 === 0
-                                  ? "bg-white dark:bg-gray-800"
-                                  : "bg-gray-50 dark:bg-gray-750"
-                              }`}
-                            >
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-lg">
-                                    {coin.flag}
-                                  </div>
-                                  <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                      {coin.symbol}
-                                    </div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                      {coin.name}
-                                    </div>
-                                  </div>
+              {/* --- Custom Stablecoin Balances Table --- */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Stablecoin Balances
+                </h2>
+              </div>
+              
+              <div className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Coin</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Balance</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {processedBalances.map((coin: any, index: any) => {
+                        const balanceNum = parseFloat(String(coin.balance).replace(/,/g, ''));
+                        const hasBalance = balanceNum > 0;
+                        
+                        return (
+                          <tr 
+                            key={coin.symbol} 
+                            className={`hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'}`}
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-lg">
+                                  {coin.flag}
                                 </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div
-                                  className={`text-sm font-semibold ${
-                                    hasBalance
-                                      ? "text-green-600 dark:text-green-400"
-                                      : "text-gray-500 dark:text-gray-400"
-                                  }`}
-                                >
-                                  {coin.balance}
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">{coin.symbol}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">{coin.name}</div>
                                 </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                  onClick={() =>
-                                    hasBalance && handleSwapClick(coin.symbol)
-                                  }
-                                  disabled={!hasBalance}
-                                  title={
-                                    hasBalance
-                                      ? `Swap ${coin.symbol}`
-                                      : `No ${coin.symbol} balance to swap`
-                                  }
-                                >
-                                  <svg
-                                    className="w-4 h-4 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                                    />
-                                  </svg>
-                                  Swap
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className={`text-sm font-semibold ${hasBalance ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                {coin.balance}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              {/* Identical Swap button for all coins */}
+                              <button
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                onClick={() => hasBalance && handleSwapClick(coin.symbol)}
+                                disabled={!hasBalance}
+                                title={hasBalance ? `Swap ${coin.symbol}` : `No ${coin.symbol} balance to swap`}
+                              >
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                                Swap
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <SwapModal
-                open={swapModalOpen}
-                fromSymbol={swapFromSymbol}
-                onClose={() => setSwapModalOpen(false)}
-                onSwap={handleSwap}
-                maxAmount={
-                  processedBalances.find(
-                    (b: any) => b.symbol === swapFromSymbol
-                  )?.balance || "0"
-                }
-              />
+            </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-              <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
-                Quick Actions
-              </h3>
-              <div className="space-y-4">
-                <button
-                  onClick={() => {
-                    document.cookie =
-                      "wallet_connected=true; path=/; max-age=86400";
-                    setTimeout(() => {
-                      window.location.href = "/payment-link";
-                    }, 100);
-                  }}
-                  className="p-4 w-full bg-gray-100 dark:bg-blue-900/30 rounded-lg border border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
-                >
-                  <h3 className="font-bold text-blue-900 dark:text-blue-300">
-                    Create Payment Link
-                  </h3>
-                  <p className="text-sm text-blue-900 dark:text-blue-400 mt-1 font-medium">
-                    Generate a payment link to share with customers
-                  </p>
-                </button>
-                <button
-                  onClick={() => router.push("/invoice")}
-                  className="p-4 w-full bg-gray-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 transition"
-                >
-                  <h3 className="font-bold text-green-900 dark:text-green-300">
-                    Generate Invoice
-                  </h3>
-                  <p className="text-sm text-green-900 dark:text-green-400 mt-1 font-medium">
-                    Send an invoice to your customer for payment
-                  </p>
-                </button>
-                <button
-                  onClick={() => router.push("/analytics")}
-                  className="p-4 w-full bg-gray-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition"
-                >
-                  <h3 className="font-bold text-purple-900 dark:text-purple-300">
-                    View Analytics
-                  </h3>
-                  <p className="text-sm text-purple-900 dark:text-purple-400 mt-1 font-medium">
-                    Detailed reports and business insights
-                  </p>
-                </button>
-              </div>
+            {swapModalOpen && (
+               <SwapModal
+               open={swapModalOpen}
+               fromSymbol={swapFromSymbol}
+               onClose={() => setSwapModalOpen(false)}
+               onSwap={handleSwap}
+               maxAmount={
+                 processedBalances.find((b: any) => b.symbol === swapFromSymbol)?.balance || '0'
+               }
+             />
+            )}
+          </div>
+          {/* Quick Actions */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="flex justify-center">
+              <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <button 
+                onClick={() => {
+  document.cookie = 'wallet_connected=true; path=/; max-age=86400';
+  setTimeout(() => {
+    window.location.href = '/payment-link';
+  }, 100);
+}} 
+                className="p-4 w-full bg-gray-100 dark:bg-blue-900/30 rounded-lg border border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
+              >
+                <h3 className="font-bold text-blue-900 dark:text-blue-300">Create Payment Link</h3>
+                <p className="text-sm text-blue-900 dark:text-blue-400 mt-1 font-medium">Generate a payment link to share with customers</p>
+              </button>
+
+              <button 
+                onClick={() => router.push('/invoice')} 
+                className="p-4 w-full bg-gray-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 transition"
+              >
+                <h3 className="font-bold text-green-900 dark:text-green-300">Generate Invoice</h3>
+                <p className="text-sm text-green-900 dark:text-green-400 mt-1 font-medium">Send an invoice to your customer for payment</p>
+              </button>
+
+              <button 
+                onClick={() => router.push('/analytics')} 
+                className="p-4 w-full bg-gray-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition"
+              >
+                <h3 className="font-bold text-purple-900 dark:text-purple-300">View Analytics</h3>
+                <p className="text-sm text-purple-900 dark:text-purple-400 mt-1 font-medium">Detailed reports and business insights</p>
+              </button>
             </div>
           </div>
         </div>

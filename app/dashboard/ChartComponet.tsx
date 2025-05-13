@@ -53,6 +53,22 @@ const colorMap: { [key: string]: string } = {
   USDC: '#00A65A', // Green
 };
 
+// Function to format date as YY-MM-DD HH:MM
+const formatDate = (dateStr: string): string => {
+  try {
+    const date = new Date(dateStr);
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (e) {
+    console.warn(`Invalid date format: ${dateStr}`);
+    return dateStr;
+  }
+};
+
 // Function to get chart data with validation
 const getMultiStablecoinHourlyRevenueData = (
   transactions: Transaction[]
@@ -62,15 +78,16 @@ const getMultiStablecoinHourlyRevenueData = (
     return { labels: [], datasets: [] };
   }
 
-  // Get unique date-hour combinations
-  const dateHourSet = new Set<string>();
+  // Get unique date-hour-minute combinations
+  const dateTimeSet = new Set<string>();
   transactions.forEach((tx) => {
     if (tx.date && typeof tx.date === 'string') {
-      const dateHour = tx.date.slice(0, 13) + ':00';
-      dateHourSet.add(dateHour);
+      // Slice to YYYY-MM-DD HH:MM (first 16 characters, assuming format like "YYYY-MM-DD HH:MM:SS")
+      const dateTime = tx.date.slice(0, 16);
+      dateTimeSet.add(dateTime);
     }
   });
-  const labels = Array.from(dateHourSet).sort();
+  const labels = Array.from(dateTimeSet).sort();
 
   // Get unique stablecoin symbols
   const stablecoinSymbols = Array.from(new Set(transactions.map((tx) => tx.currency)));
@@ -79,17 +96,17 @@ const getMultiStablecoinHourlyRevenueData = (
   const datasets = stablecoinSymbols.map((symbol) => {
     const coin = stablecoins.find((c) => c.baseToken === symbol);
     const flag = coin?.flag || '🌐';
-    const data = labels.map((dateHour) => {
-      const hourlySum = transactions
+    const data = labels.map((dateTime) => {
+      const timeSum = transactions
         .filter((tx) => {
-          const txDateHour = tx.date.slice(0, 13) + ':00';
-          return tx.currency === symbol && txDateHour === dateHour;
+          const txDateTime = tx.date.slice(0, 16);
+          return tx.currency === symbol && txDateTime === dateTime;
         })
         .reduce((sum, tx) => {
           const amount = parseFloat(tx.amount.replace(/,/g, '')) || 0;
           return sum + (isNaN(amount) ? 0 : amount);
         }, 0);
-      return hourlySum;
+      return timeSum;
     });
 
     return {
@@ -153,17 +170,7 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
           color: isDarkMode ? '#fffff0' : '#4b5563',
           callback: function (value) {
             const label = this.getLabelForValue(value as number);
-            try {
-              const date = new Date(label);
-              return date.toLocaleString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                hour: '2-digit',
-                hour12: false,
-              });
-            } catch (e) {
-              return label;
-            }
+            return formatDate(label);
           },
         },
       },
@@ -218,19 +225,7 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
           },
           title: function (context) {
             const label = context[0].label;
-            try {
-              const date = new Date(label);
-              return date.toLocaleString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-              });
-            } catch (e) {
-              return label;
-            }
+            return formatDate(label);
           },
         },
       },
