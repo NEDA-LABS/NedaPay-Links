@@ -321,25 +321,25 @@ export default function MerchantDashboard() {
     updateSmartWalletAddress();
   }, [address, selectedWalletType, provider]);
 
-  // useEffect(() => {
-  //   if (
-  //     isConnected &&
-  //     ((selectedWalletType === "eoa" && address && connector) ||
-  //       (selectedWalletType === "smart" &&
-  //         smartWalletAddress &&
-  //         smartWalletAddress !== address &&
-  //         connector))
-  //   ) {
-  //     fetchRealBalances(selectedWalletAddress!);
-  //   }
-  // }, [
-  //   isConnected,
-  //   selectedWalletAddress,
-  //   connector,
-  //   selectedWalletType,
-  //   smartWalletAddress,
-  //   address,
-  // ]);
+  useEffect(() => {
+    if (
+      isConnected &&
+      ((selectedWalletType === "eoa" && address && connector) ||
+        (selectedWalletType === "smart" &&
+          smartWalletAddress &&
+          smartWalletAddress !== address &&
+          connector))
+    ) {
+      fetchRealBalances(selectedWalletAddress!);
+    }
+  }, [
+    isConnected,
+    selectedWalletAddress,
+    connector,
+    selectedWalletType,
+    smartWalletAddress,
+    address,
+  ]);
 
   // Fetch transactions from the database
   useEffect(() => {
