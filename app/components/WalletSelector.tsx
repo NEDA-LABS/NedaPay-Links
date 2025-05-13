@@ -299,22 +299,8 @@ export default function WalletSelector() {
               </svg>
             ) : (
               // MetaMask Logo (default)
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M21.3622 2L13.3622 8.4L14.9622 4.56L21.3622 2Z"
-                  fill="#E17726"
-                />
-                <path
-                  d="M2.63782 2L10.5378 8.46L9.03782 4.56L2.63782 2Z"
-                  fill="#E27625"
-                />
-              </svg>
+              <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/metamask-icon.svg" alt="MetaMask Logo" width="18" height="18"/>
+
             )}
           </div>
           <div className="wallet-address text-xs sm:text-sm font-bold">
@@ -498,30 +484,9 @@ export default function WalletSelector() {
                   className="w-full flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
                 >
                   <div className="w-6 h-6 flex-shrink-0 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M21.3622 2L13.3622 8.4L14.9622 4.56L21.3622 2Z"
-                        fill="#E17726"
-                      />
-                      <path
-                        d="M2.63782 2L10.5378 8.46L9.03782 4.56L2.63782 2Z"
-                        fill="#E27625"
-                      />
-                      <path
-                        d="M18.4378 16.86L16.2378 20.46L20.9378 21.84L22.3378 16.92L18.4378 16.86Z"
-                        fill="#E27625"
-                      />
-                      <path
-                        d="M1.67782 16.92L3.05782 21.84L7.75782 20.46L5.55782 16.86L1.67782 16.92Z"
-                        fill="#E27625"
-                      />
-                    </svg>
+                  <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/metamask-icon.svg" alt="MetaMask Logo" width="18" height="18"/>
+
+
                   </div>
                   <div>
                     <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-300">
