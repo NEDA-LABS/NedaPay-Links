@@ -101,7 +101,7 @@ function HomeContent() {
     prevConnected.current = isConnected;
   }, [mounted, isConnected, address]);  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 dark:text-white mb-4" style={{"--tw-text-opacity": "1"} as React.CSSProperties}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 dark:text-white" style={{"--tw-text-opacity": "1"} as React.CSSProperties}>
       <style jsx global>{`
         .dark h2, .dark h3, .dark p, .dark span, .dark summary, .dark div {
           color: white !important;
@@ -673,7 +673,7 @@ function HomeContent() {
       </div>
 
       {/* CTA Section */}
-      <div className="relative overflow-hidden rounded-3xl mb-12 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl mb-12 shadow-2xl mb-4">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-700 dark:via-indigo-700 dark:to-purple-700"></div>
         <div className="absolute inset-0 bg-blue-600/20 dark:bg-blue-900/30 backdrop-blur-sm"></div>
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-400/30 dark:bg-indigo-600/30 rounded-full blur-3xl animate-pulse-slow"></div>
