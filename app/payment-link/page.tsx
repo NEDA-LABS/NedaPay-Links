@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import { useAccount } from "wagmi";
 import { stablecoins } from "../data/stablecoins";
+import Footer from "../components/Footer";
 
 interface PaymentLink {
   id: string;
@@ -400,6 +401,7 @@ export default function PaymentLinkPage() {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 }

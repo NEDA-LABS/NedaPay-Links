@@ -101,7 +101,7 @@ function HomeContent() {
     prevConnected.current = isConnected;
   }, [mounted, isConnected, address]);  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 dark:text-white" style={{"--tw-text-opacity": "1"} as React.CSSProperties}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 dark:text-white mb-4" style={{"--tw-text-opacity": "1"} as React.CSSProperties}>
       <style jsx global>{`
         .dark h2, .dark h3, .dark p, .dark span, .dark summary, .dark div {
           color: white !important;
@@ -756,6 +756,7 @@ function HomeContent() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

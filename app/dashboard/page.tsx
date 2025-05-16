@@ -25,6 +25,7 @@ import { base } from "wagmi/chains";
 import ChartComponent from "./ChartComponet"; // Corrected typo
 import PieComponent from "./PieComponent";
 import SwapModal from "./SwapModal";
+import Footer from "../components/Footer";
 
 // Register ChartJS components
 ChartJS.register(
@@ -1450,6 +1451,7 @@ export default function MerchantDashboard() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

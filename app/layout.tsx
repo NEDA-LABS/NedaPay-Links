@@ -30,8 +30,8 @@ export default function RootLayout({
             <AppToaster />
             <main className="flex-grow">{children}</main>
           </Providers>
-          <Footer />
         </div>
+        
       </body>
     </html>
   );

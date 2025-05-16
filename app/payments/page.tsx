@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useOnchainKit } from '@coinbase/onchainkit';
 import Header from '../components/Header';
 import { stablecoins, mockTransactions } from '../data/stablecoins';
+import Footer from '../components/Footer';
 
 // Process payment history data
 const mockPaymentHistory = mockTransactions.map(tx => {
@@ -358,6 +359,7 @@ export default function PaymentsPage() {
           </>
         )}
       </div>
+      <Footer/>
     </div>
   );
 }
