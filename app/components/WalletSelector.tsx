@@ -209,10 +209,11 @@ export default function WalletSelector() {
 
   // Function to handle WalletConnect connection
   const handleConnectWalletConnect = async () => {
+    console.log("Connecting with WalletConnect...");
     setIsConnecting(true);
     try {
       const walletConnectConnector = walletConnect({
-        projectId: "b6c0c1f9f3a0c1f9f3a0c1f9f3a0c1f9",
+        projectId: "0ba1867b1fc0af11b0cf14a0ec8e5b0f",
       });
 
       await connect({ connector: walletConnectConnector });
