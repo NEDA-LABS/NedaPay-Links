@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import { useAccount } from "wagmi";
 import { stablecoins } from "../data/stablecoins";
 import Footer from "../components/Footer";
+import { useTheme } from "next-themes";
 
 interface PaymentLink {
   id: string;
@@ -15,6 +16,8 @@ interface PaymentLink {
   url: string;
   description?: string;
 }
+
+
 
 export default function PaymentLinkPage() {
   const { isConnected, address: wagmiAddress } = useAccount();
@@ -37,6 +40,20 @@ export default function PaymentLinkPage() {
   const [copied, setCopied] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
   const [recentLinks, setRecentLinks] = useState<PaymentLink[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const { theme } = useTheme();
+
+  // Set up the theme provider
+useEffect(() => {
+  if (theme === "dark") {
+    setIsDarkMode(true);
+  } else {
+    setIsDarkMode(false);
+  }
+}, [theme]);
+
+console.log("Payment Link Page - Theme:", theme);
 
   // Handle initial page load and cookie setting
   useEffect(() => {
@@ -296,16 +313,17 @@ export default function PaymentLinkPage() {
             </div>
 
             {generatedLink && (
-              <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
+              <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg" style={isDarkMode ? { color: "#fff" } : {}}>
                 <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                   Your Payment Link
                 </h3>
-                <div className="flex items-center">
+                <div className="flex items-center" style={isDarkMode ? { color: "#fff" } : {}}>
                   <input
                     type="text"
                     readOnly
                     value={generatedLink}
                     className="flex-1 p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 rounded-l-md text-sm text-slate-900 dark:text-white"
+                    style={isDarkMode ? { color: "#fff" } : {}}
                   />
                   <button
                     onClick={copyToClipboard}

@@ -202,7 +202,7 @@ function HomeContent() {
             <h1 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-300 leading-tight">
               The Future of Payments is Here
             </h1>
-            <p className="text-xl md:text-2xl font-medium text-slate-700 dark:text-blue-100 mb-8 leading-relaxed">
+            <p className="sm:text-sm md:text-3xl font-medium text-slate-700 dark:text-blue-100 mb-8 leading-relaxed">
               Accept local stablecoins for your business, manage payments, and swap between currencies instantly with ease
             </p>
             
