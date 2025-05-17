@@ -62,14 +62,17 @@ body {
   color: white !important;
 }
 
-html {
-  background-color: white !important;
+.dark html {
+  background-color: black !important;
   height: 100%;
 }
 
-.dark html {
-  background-color: black !important;
-}
+/* html {
+  background-color: white;
+  height: 100%;
+} */
+
+
 
 /* Futuristic Glassmorphism Cards */
 @media (max-width: 640px) {

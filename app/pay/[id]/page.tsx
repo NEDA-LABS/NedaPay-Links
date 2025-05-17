@@ -149,7 +149,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* Footer Badge */}
-      <div className="flex flex-col items-center fixed bottom-4 text-xs text-gray-500 dark:text-gray-400 font-medium">
+      <div className="flex flex-col items-center fixed bottom-4 text-xs text-gray-500 font-medium">
       <div className="flex items-center mt-1 ">
             <Link href="/" className="group flex items-center">
               <div className="flex items-center gap-2 overflow-hidden">
