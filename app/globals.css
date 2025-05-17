@@ -342,7 +342,6 @@ input:-webkit-autofill:focus {
 }
 
 /* Fix for specific dashboard elements */
-.bg-white .text-sm,
 .bg-white .text-xl,
 .bg-white .text-2xl,
 .bg-white .font-semibold,

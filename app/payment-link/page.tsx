@@ -234,7 +234,7 @@ console.log("Payment Link Page - Theme:", theme);
             )}
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg mb-8">
+          <div className="dark:bg-slate-800 rounded-xl p-8 shadow-lg mb-8">
             <div className="space-y-6">
               <div>
                 <label
@@ -313,29 +313,29 @@ console.log("Payment Link Page - Theme:", theme);
             </div>
 
             {generatedLink && (
-              <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg" style={isDarkMode ? { color: "#fff" } : {}}>
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-                  Your Payment Link
-                </h3>
-                <div className="flex items-center" style={isDarkMode ? { color: "#fff" } : {}}>
-                  <input
-                    type="text"
-                    readOnly
-                    value={generatedLink}
-                    className="flex-1 p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 rounded-l-md text-sm text-slate-900 dark:text-white"
-                    style={isDarkMode ? { color: "#fff" } : {}}
-                  />
-                  <button
-                    onClick={copyToClipboard}
-                    className="bg-slate-200 text-black px-4 py-2 rounded-r-md hover:bg-slate-300"
-                  >
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  Share this link with your customers to receive payments.
-                </p>
+              <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+                Your Payment Link
+              </h3>
+              <div className="flex items-center">
+                <input
+                  type="text"
+                  readOnly
+                  value={generatedLink}
+                  className="flex-1 p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 rounded-l-md text-sm dark:text-white"
+                  style={{ color: isDarkMode ? "white" : "black" }}
+                />
+                <button
+                  onClick={copyToClipboard}
+                  className="bg-slate-200 text-black px-4 py-2 rounded-r-md hover:bg-slate-300"
+                >
+                  {copied ? "Copied!" : "Copy"}
+                </button>
               </div>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                Share this link with your customers to receive payments.
+              </p>
+            </div>
             )}
           </div>
 
