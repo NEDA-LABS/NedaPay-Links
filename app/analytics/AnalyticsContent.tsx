@@ -4,36 +4,13 @@ import { useState, useEffect, useMemo } from "react";
 import Header from "../components/Header";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import { stablecoins } from "../data/stablecoins";
 import { ethers } from "ethers";
 import CurrencyFilter from "./CurrencyFilter";
 import { exportTransactionsToCSV } from "./ExportCSV";
-
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import Footer from "../components/Footer";
+import { useTheme } from "next-themes";
+import { RevenueLineChart, TransactionsBarChart, CurrencyDoughnutChart } from "./Charts";
 
 // Multicall3 contract ABI (minimal)
 const MULTICALL3_ABI = [
@@ -184,6 +161,14 @@ export default function AnalyticsContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isTransactionLoading, setIsTransactionLoading] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    setIsDarkMode(theme === "dark");
+    console.log("AnalyticsContent isDarkMode:", theme === "dark"); // Debug
+  }, [theme]);
 
   // Memoized provider
   const provider = useMemo(() => {
@@ -369,9 +354,9 @@ export default function AnalyticsContent() {
   const previousAvgTx = previousTxs.length > 0 ? previousRevenue / previousTxs.length : 0;
   const avgTxChange = computePercentageChange(currentAvg, previousAvgTx);
 
-  console.log("Filtered transactions:", filteredTxs);
-  console.log("Current revenue:", currentRevenue, "Previous revenue:", previousRevenue);
-  console.log("Current tx count:", currentTxCount, "Previous tx count:", previousTxCount);
+  console.log("Filtered transactions:", filteredTxs); // Debug
+  console.log("Current revenue:", currentRevenue, "Previous revenue:", previousRevenue); // Debug
+  console.log("Current tx count:", currentTxCount, "Previous tx count:", previousTxCount); // Debug
 
   // Chart data
   const revenueData = {
@@ -387,83 +372,12 @@ export default function AnalyticsContent() {
     ],
   };
 
-  const transactionsData = {
-    labels: filteredTxs.map((tx) => tx.date),
-    datasets: [
-      {
-        label: "Transactions",
-        data: filteredTxs.map(() => 1),
-        backgroundColor: "rgba(59, 130, 246, 0.8)",
-        borderRadius: 6,
-      },
-    ],
-  };
+  const transactionsData = { transactions: filteredTxs }; // Fixed: Pass raw transactions
+  console.log("transactionsData for Bar chart:", transactionsData); // Debug
 
   const currencyDistributionData = getPaymentMethodsData(filteredBalances);
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top" as const,
-        labels: {
-          color: "#111",
-          font: { size: 14, weight: "bold" as const },
-        },
-      },
-      tooltip: {
-        titleColor: "#111",
-        bodyColor: "#111",
-        footerColor: "#111",
-        backgroundColor: "#fff",
-        borderColor: "#111",
-        borderWidth: 1,
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: "#111",
-          font: { size: 13, weight: "bold" as const },
-        },
-        grid: {
-          color: "#eee",
-        },
-      },
-      y: {
-        ticks: {
-          color: "#111",
-          font: { size: 13, weight: "bold" as const },
-        },
-        grid: {
-          color: "#eee",
-        },
-      },
-    },
-  };
-
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top" as const,
-        labels: {
-          color: "#111",
-          font: { size: 14, weight: "bold" as const },
-        },
-      },
-      tooltip: {
-        titleColor: "#111",
-        bodyColor: "#111",
-        footerColor: "#111",
-        backgroundColor: "#fff",
-        borderColor: "#111",
-        borderWidth: 1,
-      },
-    },
-  };
+  console.log("darkmode analytics page:", isDarkMode); // Debug
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-white dark:bg-gray-900 dark:text-white">
@@ -608,7 +522,7 @@ export default function AnalyticsContent() {
                       d={
                         revenueChange >= 0
                           ? "M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586l3.293-3.293A1 1 0 0112 7z"
-                          : "M12 13a1 1 0 110 2h-5a1 1 0 01-1-1V9a1 1 0 112 0v2.586l4.293-4.293a1 1 0 011.414 0L16 9.586l4.293-4.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0L13 9.414l-3.293 3.293A1 1 0 0112 13z"
+                          : "M12 13a1 1 0 110 2h-5a1 1 0 01-1-1V9a1 1 0 112 0v2.586l-4.293-4.293a1 1 0 011.414 0L16 9.586l4.293-4.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0L13 9.414l-3.293 3.293A1 1 0 0112 13z"
                       }
                       clipRule="evenodd"
                     />
@@ -644,7 +558,7 @@ export default function AnalyticsContent() {
                       d={
                         txCountChange >= 0
                           ? "M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586l3.293-3.293A1 1 0 0112 7z"
-                          : "M12 13a1 1 0 110 2h-5a1 1 0 01-1-1V9a1 1 0 112 0v2.586l4.293-4.293a1 1 0 01-1.414 0L16 9.586l4.293-4.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0L13 9.414l-3.293 3.293A1 1 0 0112 13z"
+                          : "M12 13a1 1 0 110 2h-5a1 1 0 01-1-1V9a1 1 0 112 0v2.586l-4.293-4.293a1 1 0 01-1.414 0L16 9.586l4.293-4.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0L13 9.414l-3.293 3.293A1 1 0 0112 13z"
                       }
                       clipRule="evenodd"
                     />
@@ -717,7 +631,7 @@ export default function AnalyticsContent() {
                       d={
                         avgTxChange >= 0
                           ? "M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586l3.293-3.293A1 1 0 0112 7z"
-                          : "M12 13a1 1 0 110 2h-5a1 1 0 01-1-1V9a1 1 0 112 0v2.586l4.293-4.293a1 1 0 01-1.414 0L16 9.586l4.293-4.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0L13 9.414l-3.293 3.293A1 1 0 0112 13z"
+                          : "M12 13a1 1 0 110 2h-5a1 1 0 01-1-1V9a1 1 0 112 0v2.586l-4.293-4.293a1 1 0 01-1.414 0L16 9.586l4.293-4.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0L13 9.414l-3.293 3.293A1 1 0 0112 13z"
                       }
                       clipRule="evenodd"
                     />
@@ -737,7 +651,7 @@ export default function AnalyticsContent() {
                   <p className="text-sm text-blue-600 dark:text-blue-300 text-center">Loading...</p>
                 ) : (
                   <div className="h-64">
-                    <Line data={revenueData} options={chartOptions} />
+                    <RevenueLineChart data={revenueData} />
                   </div>
                 )}
               </div>
@@ -750,7 +664,7 @@ export default function AnalyticsContent() {
                   <p className="text-sm text-blue-600 dark:text-blue-300 text-center">Loading...</p>
                 ) : (
                   <div className="h-64">
-                    <Bar data={transactionsData} options={chartOptions} />
+                    <TransactionsBarChart data={transactionsData} />
                   </div>
                 )}
               </div>
@@ -765,7 +679,7 @@ export default function AnalyticsContent() {
                   <p className="text-sm text-blue-600 dark:text-blue-300 text-center">Loading...</p>
                 ) : (
                   <div className="h-64">
-                    <Doughnut data={currencyDistributionData} options={doughnutOptions} />
+                    <CurrencyDoughnutChart data={currencyDistributionData} />
                   </div>
                 )}
               </div>
@@ -818,10 +732,10 @@ export default function AnalyticsContent() {
                               <p className="dark:text-white">{tx.date}</p>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
-                            <p className="dark:text-white">{tx.amount}</p>
+                              <p className="dark:text-white">{tx.amount}</p>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
-                            <p className="dark:text-white">{tx.currency}</p>
+                              <p className="dark:text-white">{tx.currency}</p>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
@@ -842,6 +756,7 @@ export default function AnalyticsContent() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }
