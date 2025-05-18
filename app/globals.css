@@ -78,7 +78,6 @@ body {
 @media (max-width: 640px) {
   .glass-card, .card, .dashboard-card {
     padding: 1.2rem 0.7rem !important;
-    font-size: 0.97rem;
   }
   .neon-glow {
     box-shadow: 0 0 8px 1px var(--primary), 0 0 18px 4px var(--accent-light);

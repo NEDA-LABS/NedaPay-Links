@@ -199,10 +199,10 @@ function HomeContent() {
         {/* Hero Section */}
         <div className="hero-section flex flex-col lg:flex-row items-center justify-between mb-16 gap-4 sm:gap-8 p-4 sm:p-6 bg-white/20 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800 shadow-lg">
           <div className="w-full lg:w-1/2 text-left">
-            <h1 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-300 leading-tight">
+            <p className="text-lg font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-300 leading-tight">
               The Future of Payments is Here
-            </h1>
-            <p className="sm:text-sm md:text-3xl font-medium text-slate-700 dark:text-blue-100 mb-8 leading-relaxed">
+            </p>
+            <p className="text-lg font-medium text-slate-700 dark:text-blue-100 mb-8 leading-relaxed">
               Accept local stablecoins for your business, manage payments, and swap between currencies instantly with ease
             </p>
             
@@ -286,7 +286,7 @@ function HomeContent() {
         {/* Features Section */}
         <div className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-300">
+            <h2 className="text-lg font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-300">
               Powerful Features for Modern Merchants
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -300,10 +300,10 @@ function HomeContent() {
               <div className="bg-blue-100 dark:bg-blue-900/50 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors">
                 <span className="text-3xl">💸</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
                 Accept Local Stablecoins
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-lg text-gray-600 dark:text-gray-300">
                 Accept TSHC, cNGN, IDRX and other local stablecoins alongside USDC with ease
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -319,10 +319,10 @@ function HomeContent() {
               <div className="bg-indigo-100 dark:bg-indigo-900/50 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800 transition-colors">
                 <span className="text-3xl">🔄</span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
                 Swap Stablecoins Instantly
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-lg text-gray-600 dark:text-gray-300">
                 Swap between supported stablecoins in seconds, right from your dashboard
               </p>
               <div className="mt-4">
@@ -354,7 +354,7 @@ function HomeContent() {
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
                 Automatic Settlement
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-lg text-gray-600 dark:text-gray-300">
                 Automatically settle payments to your preferred stablecoin with customizable rules
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -400,7 +400,7 @@ function HomeContent() {
                         Connect Your Wallet
                       </h3>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-4">
                       Connect your Base wallet to access the merchant dashboard and all features
                     </p>
                     <div className="flex flex-col items-center space-y-3">
@@ -439,7 +439,7 @@ function HomeContent() {
                         Create Payment Links
                       </h3>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-4">
                       Generate payment links or QR codes to share with your customers
                     </p>
                     <div className="flex flex-col items-center space-y-3">
@@ -474,7 +474,7 @@ function HomeContent() {
                         Receive Payments
                       </h3>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-4">
                       Customers pay using their NEDA Pay app and you receive stablecoins instantly
                     </p>
                     <div className="flex flex-col items-center space-y-3">
@@ -512,7 +512,7 @@ function HomeContent() {
                         Swap Stablecoins
                       </h3>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-4">
                       Instantly swap between TSHC, cNGN, IDRX, USDC, and more—no third-party required
                     </p>
                     <div className="flex flex-col items-center space-y-3">
