@@ -148,16 +148,6 @@ export default function PayPage({ params }: { params: { id: string } }) {
         
       </div>
 
-      {/* Footer Badge */}
-     {/* Footer Badge */}
-<div className="fixed bottom-4 inset-x-0 px-2">
-  <div className="bg-white dark:bg-gray-800 rounded-2xl py-2 shadow-lg flex flex-col items-center space-y-1 text-xs text-gray-500">
-    <Link href="/" className="font-bold text-blue-600 hover:underline">NEDA Pay</Link>
-    <span>Secure Stablecoin Payments</span>
-    <span>© 2025 NEDA LABS.</span>
-  </div>
-</div>
-
 
       {/* Inline Styles for Animations */}
       <style jsx>{`
