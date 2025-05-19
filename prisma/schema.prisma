@@ -1,10 +1,10 @@
 // Prisma schema for NEDA Pay Merchant Portal
-// Using SQLite for local dev, can be Postgres in prod
+// Using PostgreSQL for local dev and prod
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
 }
 
 generator client {
@@ -12,42 +12,87 @@ generator client {
 }
 
 model Transaction {
-  id         String   @id @default(uuid())
+  id         String       @id @default(uuid())
   merchantId String
   wallet     String
   amount     Float
   currency   String
   status     String
-  txHash     String   
-  createdAt  DateTime @default(now())
+  txHash     String
+  createdAt  DateTime     @default(now())
+
+  invoice    Invoice?     @relation("TransactionInvoice")
+  invoiceId  String?      @unique
 
   Notification Notification[] @relation("TransactionNotification")
 }
 
 model PaymentLink {
-  id           String   @id @default(uuid())
-  merchantId   String
-  url          String   @unique
-  amount       Float
-  currency     String
-  description  String?
-  status       String   // e.g. 'active', 'redeemed', 'expired'
-  createdAt    DateTime @default(now())
-  redeemedAt   DateTime?
+  id          String       @id @default(uuid())
+  merchantId  String
+  url         String       @unique
+  amount      Float
+  currency    String
+  description String?
+  status      String       // e.g. 'active', 'redeemed', 'expired'
+  createdAt   DateTime     @default(now())
+  redeemedAt  DateTime?
+
+  invoice     Invoice?     @relation("PaymentLinkInvoice")
+  invoiceId   String?      @unique
 
   Notification Notification[] @relation("PaymentLinkNotification")
 }
 
 model Notification {
-  id         String   @id @default(uuid())
-  message    String
-  recipient  String   // e.g., merchantId or customer wallet address
-  type       String   // e.g., 'payment', 'link_redeemed'
-  status     String   // e.g., 'unread', 'read'
-  createdAt  DateTime @default(now())
+  id                   String       @id @default(uuid())
+  message              String
+  recipient            String       // e.g., merchantId or customer wallet address
+  type                 String       // e.g., 'payment', 'link_redeemed', 'invoice_sent'
+  status               String       // e.g., 'unread', 'read'
+  createdAt            DateTime     @default(now())
+
   relatedTransaction   Transaction? @relation("TransactionNotification", fields: [relatedTransactionId], references: [id])
-  relatedTransactionId String? @unique
+  relatedTransactionId String?      @unique
+
   relatedPaymentLink   PaymentLink? @relation("PaymentLinkNotification", fields: [relatedPaymentLinkId], references: [id])
-  relatedPaymentLinkId String? @unique
+  relatedPaymentLinkId String?      @unique
+
+  relatedInvoice       Invoice?     @relation("InvoiceNotification", fields: [relatedInvoiceId], references: [id])
+  relatedInvoiceId     String?      @unique
 }
 
+model Invoice {
+  id                String           @id @default(uuid())
+  merchantId        String
+  recipient         String
+  email             String
+  paymentCollection String           // e.g., 'one-time', 'recurring'
+  dueDate           DateTime
+  currency          String
+  totalAmount       Float            @default(0)
+  status            String           // e.g., 'draft', 'sent', 'paid', 'overdue', 'canceled'
+  createdAt         DateTime         @default(now())
+  sentAt            DateTime?
+  paidAt            DateTime?
+  canceledAt        DateTime?
+
+  transaction       Transaction?     @relation("TransactionInvoice", fields: [transactionId], references: [id])
+  transactionId     String?          @unique
+
+  paymentLink       PaymentLink?     @relation("PaymentLinkInvoice", fields: [paymentLinkId], references: [id])
+  paymentLinkId     String?          @unique
+
+  lineItems         InvoiceLineItem[]
+  Notification      Notification[]   @relation("InvoiceNotification")
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  description String
+  amount      Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  Invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}

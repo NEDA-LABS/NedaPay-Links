@@ -128,50 +128,50 @@ export default function WalletSelector() {
   }, [address, isConnected, router]);
 
   // Basename fetching
+  function toHexAddress(address: `0x${string}` | undefined | string): `0x${string}` {
+    if (!address || typeof address !== "string") {
+      throw new Error("Invalid address provided");
+    }
+    return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
+  }
+
   useEffect(() => {
     if (!address) {
       setBaseName(null);
       return;
     }
-
-    function toHexAddress(address: `0x${string}` | undefined | string): `0x${string}` {
-      if (!address || typeof address !== "string") {
-        throw new Error("Invalid address provided");
-      }
-      return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
-    }
-
+  
     const address_formatted = toHexAddress(address);
-
     if (!address_formatted) {
       console.error("Invalid address format");
       setBaseName(null);
       return;
     }
-
+  
     let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        const basename = await getBasename(address_formatted);
-        if (basename === undefined) {
-          throw new Error("Failed to resolve address to name");
+    const debounceTimer = setTimeout(() => {
+      const fetchData = async () => {
+        try {
+          const basename = await getBasename(address_formatted);
+          if (basename === undefined) {
+            throw new Error("Failed to resolve address to name");
+          }
+          if (isMounted) {
+            setBaseName(basename);
+          }
+        } catch (error) {
+          console.error("Error fetching base name:", error);
+          if (isMounted) {
+            setBaseName(null);
+          }
         }
-        if (isMounted) {
-          setBaseName(basename);
-        }
-      } catch (error) {
-        console.error("Error fetching base name:", error);
-        if (isMounted) {
-          setBaseName(null);
-        }
-      }
-    };
-
-    fetchData();
-
+      };
+      fetchData();
+    }, 300); // 300ms debounce
+  
     return () => {
       isMounted = false;
+      clearTimeout(debounceTimer);
     };
   }, [address]);
 

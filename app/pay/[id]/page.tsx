@@ -51,8 +51,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 space-y-6 transition-all duration-300">
+     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 pb-24 font-sans">      <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 space-y-6 transition-all duration-300">
         {/* Header */}
         <div className="flex flex-col items-center space-y-2">
           <div className="bg-blue-500 text-white p-3 rounded-full shadow-lg transform transition-transform hover:scale-105">
@@ -72,7 +71,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* Wallet Address */}
-        <div className="w-1/2 max-w-xl mx-auto space-y-2">
+        <div className="w-80 mx-auto space-y-2">
   <div className="flex items-center justify-between gap-4 bg-gray-100 dark:bg-gray-700/50 px-4 py-3 rounded-lg group transition-all duration-200 group-hover:border-blue-500 border">
     
     {/* Column 1: Wallet label */}
@@ -146,28 +145,19 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </p>
           <p>The merchant will confirm your transaction after payment.</p>
         </div>
+        
       </div>
 
       {/* Footer Badge */}
-      <div className="flex flex-col items-center fixed bottom-4 text-xs text-gray-500 font-medium">
-      <div className="flex items-center mt-1 ">
-            <Link href="/" className="group flex items-center">
-              <div className="flex items-center gap-2 overflow-hidden">
-                
-                <div className="flex flex-col">
-                  <span className="text-base sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 group-hover:from-blue-500 group-hover:to-purple-600 dark:group-hover:from-blue-300 dark:group-hover:to-purple-400 transition-all duration-300">
-                    <span className="text-sm">NEDA Pay</span>
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline-block">Secure Stablecoin Payments</span>
-                </div>
-              </div>
-            </Link>
-          </div>
-          <p>Secured by Blockchain Technology</p><br/>
-          <p className="text-xs text-center text-gray-500 dark:text-gray-500">
-          © 2025 NEDA LABS.
-        </p>
-      </div>
+     {/* Footer Badge */}
+<div className="fixed bottom-4 inset-x-0 px-2">
+  <div className="bg-white dark:bg-gray-800 rounded-2xl py-2 shadow-lg flex flex-col items-center space-y-1 text-xs text-gray-500">
+    <Link href="/" className="font-bold text-blue-600 hover:underline">NEDA Pay</Link>
+    <span>Secure Stablecoin Payments</span>
+    <span>© 2025 NEDA LABS.</span>
+  </div>
+</div>
+
 
       {/* Inline Styles for Animations */}
       <style jsx>{`

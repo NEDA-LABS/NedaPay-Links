@@ -464,41 +464,7 @@ export default function PayWithWallet({
 
       {/* Error message */}
       {error && (
-        <div className="mt-2 text-red-600 dark:text-red-400 text-sm">{error}</div>
-      )}
-
-      {/* Mobile wallet options */}
-      {!window.ethereum && isMobile() && (
-        <div className="mt-4 text-center">
-          <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">
-            No wallet detected. Open in your wallet app:
-          </div>
-          <div className="flex flex-col gap-2 items-center">
-            <a
-              href={`metamask://dapp/${
-                typeof window !== "undefined"
-                  ? window.location.host +
-                    window.location.pathname +
-                    window.location.search
-                  : ""
-              }`}
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition"
-            >
-              Open in MetaMask
-            </a>
-            <a
-              href={`cbwallet://dapp?url=${
-                typeof window !== "undefined"
-                  ? encodeURIComponent(window.location.href)
-                  : ""
-              }`}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
-            >
-              Open in Coinbase Wallet
-            </a>
-            <WalletConnectButton to={to} amount={amount} currency={currency} />
-          </div>
-        </div>
+        <div className="mt-2 text-red-600 dark:text-red-400 text-sm" style={{color: "red"}}>{error}</div>
       )}
     </div>
   );
