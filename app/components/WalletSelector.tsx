@@ -128,17 +128,17 @@ export default function WalletSelector() {
   }, [address, isConnected, router]);
 
   // Basename fetching
-  function toHexAddress(address: `0x${string}` | undefined | string): `0x${string}` {
-    if (!address || typeof address !== "string") {
-      throw new Error("Invalid address provided");
-    }
-    return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
-  }
-
   useEffect(() => {
     if (!address) {
       setBaseName(null);
       return;
+    }
+
+    function toHexAddress(address: `0x${string}` | undefined | string): `0x${string}` {
+      if (!address || typeof address !== "string") {
+        throw new Error("Invalid address provided");
+      }
+      return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
     }
   
     const address_formatted = toHexAddress(address);
