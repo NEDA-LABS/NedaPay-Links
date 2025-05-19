@@ -317,7 +317,7 @@ export default function WalletSelector() {
                   </span>
                 </>
               ) : (
-                <Name address={address as `0x${string}`} chain={base as any} />
+                <Name address={address as `0x${string}`} chain={base as any}/>
               )
             ) : (
               "Connect Wallet"
