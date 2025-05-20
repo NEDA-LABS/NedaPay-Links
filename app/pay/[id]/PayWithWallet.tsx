@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { stablecoins } from "../../data/stablecoins";
 import { utils } from "ethers";
 import { Toaster, toast } from 'react-hot-toast';
+import { pad } from "viem";
 
 const WalletConnectButton = dynamic(() => import("./WalletConnectButton"), {
   ssr: false,
@@ -22,10 +23,12 @@ export default function PayWithWallet({
   to,
   amount,
   currency,
+  description,
 }: {
   to: string;
   amount: string;
   currency: string;
+  description?: string;
 }) {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +43,7 @@ export default function PayWithWallet({
     walletAddress: string,
     amount: string,
     currency: string,
+    description: string | undefined,
     status: "Pending" | "Completed",
     txHash: string
   ) => {
@@ -54,6 +58,7 @@ export default function PayWithWallet({
           wallet: walletAddress,
           amount,
           currency,
+          description: description || undefined,
           status,
           txHash,
         }),
@@ -77,7 +82,8 @@ export default function PayWithWallet({
     merchantId: string,
     walletAddress: string,
     amount: string,
-    currency: string
+    currency: string,
+    description: string | undefined
   ) => {
     try {
       const response = await fetch(`/api/transactions?txHash=${txHash}`, {
@@ -90,6 +96,7 @@ export default function PayWithWallet({
           wallet: walletAddress,
           amount,
           currency,
+          description: description || undefined,
           status: "Completed",
         }),
       });
@@ -113,7 +120,8 @@ export default function PayWithWallet({
     merchantId: string,
     walletAddress: string,
     amount: string,
-    currency: string
+    currency: string,
+    description: string | undefined
   ) => {
     try {
       setTxStatus("confirming");
@@ -126,7 +134,8 @@ export default function PayWithWallet({
           merchantId,
           walletAddress,
           amount,
-          currency
+          currency,
+          description
         );
         if (!updated) {
           setError(
@@ -135,10 +144,13 @@ export default function PayWithWallet({
         } else {
           const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
           const shortMerchant = merchantId.slice(0, 6) + '...' + merchantId.slice(-4);
-          toast.success(`Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`);
+          const toastMessage = description
+            ? `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
+            : `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`;
+          toast.success(toastMessage);
           window.dispatchEvent(new CustomEvent('neda-notification', {
             detail: {
-              message: `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`
+              message: toastMessage
             }
           }));
         }
@@ -291,6 +303,7 @@ export default function PayWithWallet({
         walletAddress,
         amount,
         currency,
+        description,
         "Pending",
         txResponse.hash
       );
@@ -301,12 +314,15 @@ export default function PayWithWallet({
       } else {
         const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
         const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
-        toast.success(`Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`, {
+        const toastMessage = description
+          ? `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
+          : `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`;
+        toast.success(toastMessage, {
           duration: 3000,
         });
         window.dispatchEvent(new CustomEvent('neda-notification', {
           detail: {
-            message: `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`
+            message: toastMessage
           }
         }));
       }
@@ -318,7 +334,8 @@ export default function PayWithWallet({
         to,
         walletAddress,
         amount,
-        currency
+        currency,
+        description
       );
 
       if (!confirmed) {
@@ -331,7 +348,8 @@ export default function PayWithWallet({
               to,
               walletAddress,
               amount,
-              currency
+              currency,
+              description
             ),
           30000
         ); // Retry after 30 seconds
@@ -356,28 +374,18 @@ export default function PayWithWallet({
   const statusInfo = () => {
     switch (txStatus) {
       case "preparing":
-        return {
-          message: "Preparing transaction...",
-          color: "text-blue-600 dark:text-blue-400",
-        };
       case "submitting":
-        return {
-          message: "Submitting to blockchain...",
-          color: "text-blue-600 dark:text-blue-400",
-        };
       case "pending":
-        return {
-          message: "Transaction submitted, waiting for confirmation...",
-          color: "text-yellow-600 dark:text-yellow-400",
-        };
       case "confirming":
         return {
-          message: "Confirming transaction...",
-          color: "text-yellow-600 dark:text-yellow-400",
+          message: "Transaction processing...",
+          color: "text-blue-600 dark:text-blue-400",
         };
       case "confirmed":
         return {
-          message: "Transaction confirmed!",
+          message: description
+            ? `Transaction confirmed for ${description}!`
+            : "Transaction confirmed!",
           color: "text-green-600 dark:text-green-400",
         };
       case "failed":
@@ -465,6 +473,29 @@ export default function PayWithWallet({
       {/* Error message */}
       {error && (
         <div className="mt-2 text-red-600 dark:text-red-400 text-sm" style={{color: "red"}}>{error}</div>
+      )}
+
+      {/* Mobile wallet options */}
+      {!window.ethereum && isMobile() && (
+        <div className="mt-4 text-center">
+          <div className="mb-2 text-sm text-red-600 dark:text-red-400" style={{color: "red"}}>No wallet detected. Open in your wallet app:</div>
+          <div className="flex flex-col gap-2 items-center">
+            <a
+              href={`metamask://dapp/${typeof window !== 'undefined' ? window.location.host + window.location.pathname + window.location.search : ''}`}
+              className="bg-orange-500 hover:bg-orange-600  dark:text-white rounded-lg font-semibold transition" style={{color: "#4169E1", textDecoration: "underline"}}
+            >
+            Open in MetaMask
+              
+            </a>
+            <a
+              href={`cbwallet://dapp?url=${typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : ''}`}
+              className="bg-blue-600 hover:bg-blue-700 dark:text-white rounded-lg font-semibold transition" style={{color: "#4169E1", textDecoration: "underline"}}
+            >
+              Open in Coinbase Wallet
+            </a>
+            <WalletConnectButton to={to} amount={amount} currency={currency} description={description || ''} />
+          </div>
+        </div>
       )}
     </div>
   );

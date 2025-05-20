@@ -1,16 +1,87 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { toast } from 'react-hot-toast';
 
-// Dynamically import WalletConnectProvider only on client
-const WalletConnectProvider = dynamic(
-  () => import("@walletconnect/web3-provider"),
-  { ssr: false }
-);
-
-export default function WalletConnectButton({ to, amount, currency }: { to: string; amount: string; currency: string }) {
+export default function WalletConnectButton({ to, amount, currency, description }: { to: string; amount: string; currency: string; description?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Function to save a new transaction (Pending)
+  const saveTransactionToDB = async (
+    merchantId: string,
+    walletAddress: string,
+    amount: string,
+    currency: string,
+    description: string | undefined,
+    status: "Pending" | "Completed",
+    txHash: string
+  ) => {
+    try {
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          merchantId,
+          wallet: walletAddress,
+          amount,
+          currency,
+          description: description || undefined,
+          status,
+          txHash,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to save transaction:", errorData);
+        return false;
+      }
+      return true;
+    } catch (dbError) {
+      console.error("Error saving transaction to database:", dbError);
+      return false;
+    }
+  };
+
+  // Function to update transaction status to Completed
+  const updateTransactionStatus = async (
+    txHash: string,
+    merchantId: string,
+    walletAddress: string,
+    amount: string,
+    currency: string,
+    description: string | undefined
+  ) => {
+    try {
+      const response = await fetch(`/api/transactions?txHash=${txHash}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          merchantId,
+          wallet: walletAddress,
+          amount,
+          currency,
+          description: description || undefined,
+          status: "Completed",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to update transaction:", errorData);
+        return false;
+      }
+      return true;
+    } catch (dbError) {
+      console.error("Error updating transaction in database:", dbError);
+      return false;
+    }
+  };
 
   const handleWalletConnect = async () => {
     setError(null);
@@ -27,14 +98,96 @@ export default function WalletConnectButton({ to, amount, currency }: { to: stri
       const { ethers } = await import("ethers");
       const web3Provider = new ethers.providers.Web3Provider(provider);
       const signer = web3Provider.getSigner();
+      const walletAddress = await signer.getAddress();
+
+      // Validate recipient address
+      if (!ethers.utils.isAddress(to)) {
+        setError("Invalid merchant address. Please check the payment link.");
+        setLoading(false);
+        return;
+      }
+
+      // Validate amount
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+        setError("Invalid amount.");
+        setLoading(false);
+        return;
+      }
+
       // Send transaction (native ETH for now)
+      let value;
+      try {
+        value = ethers.utils.parseEther(amount);
+      } catch {
+        setError("Invalid amount format.");
+        setLoading(false);
+        return;
+      }
+
       const tx = await signer.sendTransaction({
         to,
-        value: ethers.utils.parseEther(amount || "0"),
+        value,
       });
-      await tx.wait();
+
+      const txHash = tx.hash;
+
+      // Save transaction as Pending
+      const saved = await saveTransactionToDB(
+        to,
+        walletAddress,
+        amount,
+        currency,
+        description,
+        "Pending",
+        txHash
+      );
+
+      if (!saved) {
+        setError(
+          "Transaction sent, but failed to record in database. Please contact support."
+        );
+      } else {
+        const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+        const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
+        const toastMessage = description
+          ? `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
+          : `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`;
+        toast.success(toastMessage, {
+          duration: 3000,
+        });
+      }
+
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      if (receipt && receipt.status === 1) {
+        // Update transaction to Completed
+        const updated = await updateTransactionStatus(
+          txHash,
+          to,
+          walletAddress,
+          amount,
+          currency,
+          description
+        );
+        if (!updated) {
+          setError(
+            "Transaction confirmed on-chain, but failed to update in database. Please contact support."
+          );
+        } else {
+          const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+          const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
+          const toastMessage = description
+            ? `Transaction confirmed: ${amount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
+            : `Transaction confirmed: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`;
+          toast.success(toastMessage);
+        }
+      } else {
+        setError("Transaction failed on-chain.");
+      }
+
       setLoading(false);
     } catch (e: any) {
+      console.error("WalletConnect error:", e);
       setError(e.message || "WalletConnect transaction failed");
       setLoading(false);
     }

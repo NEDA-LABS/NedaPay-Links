@@ -4,8 +4,8 @@ export const dynamic = "force-dynamic";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import dynamicImport from "next/dynamic";
-import { useAccount } from "wagmi";
 import { utils } from "ethers";
+import { useAccount } from "wagmi";
 import {
   ClipboardCopy,
   ExternalLink,
@@ -28,6 +28,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
   const [copied, setCopied] = useState(false);
   const amount = searchParams.get("amount");
   const currency = searchParams.get("currency");
+  const description = searchParams.get("description");
   const { address: connectedAddress } = useAccount();
 
   let to = searchParams.get("to");
@@ -51,7 +52,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
   };
 
   return (
-     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 pb-24 font-sans">      <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 space-y-6 transition-all duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 pb-24 font-sans">
+      <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 space-y-6 transition-all duration-300">
         {/* Header */}
         <div className="flex flex-col items-center space-y-2">
           <div className="bg-blue-500 text-white p-3 rounded-full shadow-lg transform transition-transform hover:scale-105">
@@ -70,38 +72,46 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </p>
         </div>
 
+        {/* Description */}
+        {description && (
+          <div className="text-center bg-gray-100 dark:bg-gray-700/50 p-4 rounded-xl">
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Paying For</p>
+            <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mt-1">
+              {"[ " + decodeURIComponent(description) + " ]"}
+            </p>
+          </div>
+        )}
+
         {/* Wallet Address */}
         <div className="w-80 mx-auto space-y-2">
-  <div className="flex items-center justify-between gap-4 bg-gray-100 dark:bg-gray-700/50 px-4 py-3 rounded-lg group transition-all duration-200 group-hover:border-blue-500 border">
-    
-    {/* Column 1: Wallet label */}
-    <div className="flex-1 flex items-center gap-2">
-      <Wallet size={18} className="text-blue-500" />
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        Merchant Wallet
-      </span>
-    </div>
+          <div className="flex items-center justify-between gap-4 bg-gray-100 dark:bg-gray-700/50 px-4 py-3 rounded-lg group transition-all duration-200 group-hover:border-blue-500 border">
+            {/* Column 1: Wallet label */}
+            <div className="flex-1 flex items-center gap-2">
+              <Wallet size={18} className="text-blue-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Merchant Wallet
+              </span>
+            </div>
 
-    {/* Column 2: Short address (centered text) */}
-    <div className="flex-1 text-center">
-      <span className="font-mono text-sm text-gray-800 dark:text-gray-200">
-        {shortAddress}
-      </span>
-    </div>
+            {/* Column 2: Short address (centered text) */}
+            <div className="flex-1 text-center">
+              <span className="font-mono text-sm text-gray-800 dark:text-gray-200">
+                {shortAddress}
+              </span>
+            </div>
 
-    {/* Column 3: Copy button */}
-    <div className="flex-1 flex justify-end">
-      <button
-        onClick={handleCopy}
-        className="p-2 bg-gray-200 dark:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-blue-500 hover:text-white transition-colors duration-200"
-        aria-label="Copy address"
-      >
-        {copied ? <CheckCircle size={16} /> : <ClipboardCopy size={16} />}
-      </button>
-    </div>
-  </div>
-</div>
-
+            {/* Column 3: Copy button */}
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={handleCopy}
+                className="p-2 bg-gray-200 dark:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-blue-500 hover:text-white transition-colors duration-200"
+                aria-label="Copy address"
+              >
+                {copied ? <CheckCircle size={16} /> : <ClipboardCopy size={16} />}
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* QR Code */}
         <div className="bg-gray-100 dark:bg-gray-700/50 p-6 rounded-xl space-y-4">
@@ -112,13 +122,13 @@ export default function PayPage({ params }: { params: { id: string } }) {
             </h2>
           </div>
           <div className="flex justify-center">
-            <PaymentQRCode to={to || ""} amount={amount || ""} currency={currency || ""} />
+            <PaymentQRCode to={to || ""} amount={amount || ""} currency={currency || ""} description={description || ""} />
           </div>
         </div>
 
         {/* Pay with Wallet */}
         <div>
-          <PayWithWallet to={to || ""} amount={amount || ""} currency={currency || ""} />
+          <PayWithWallet to={to || ""} amount={amount || ""} currency={currency || ""} description={description || ""} />
         </div>
 
         {/* View on Block Explorer */}
@@ -145,9 +155,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </p>
           <p>The merchant will confirm your transaction after payment.</p>
         </div>
-        
       </div>
-
 
       {/* Inline Styles for Animations */}
       <style jsx>{`

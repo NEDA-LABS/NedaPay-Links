@@ -218,7 +218,7 @@ input:-webkit-autofill:focus {
 
 /* Card styling for both modes */
 .bg-white {
-  background-color: white !important;
+  /* background-color: white !important; */
   color: black !important;
 }
 
@@ -344,12 +344,12 @@ input:-webkit-autofill:focus {
 }
 
 /* Fix for specific dashboard elements */
-.bg-white .text-xl,
+/* .bg-white .text-xl,
 .bg-white .text-2xl,
 .bg-white .font-semibold,
 .bg-white .font-bold {
   color: #111827 !important;
-}
+} */
 
 /* Fix for Quick Actions */
 .bg-gray-100 h3,

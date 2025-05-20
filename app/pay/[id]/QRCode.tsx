@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { stablecoins } from "../../data/stablecoins";
 import { utils } from "ethers";
 
-export default function PaymentQRCode({ to, amount, currency }: { to: string; amount: string; currency: string }) {
+export default function PaymentQRCode({ to, amount, currency, description }: { to: string; amount: string; currency: string; description?: string }) {
   // Validate recipient address
   let isValidAddress = false;
   try {
@@ -35,7 +35,7 @@ export default function PaymentQRCode({ to, amount, currency }: { to: string; am
     } catch {
       amountInWei = "0";
     }
-    qrValue = `ethereum:${token.address}/transfer?address=${to}&uint256=${amountInWei}`;
+    qrValue = `ethereum:${token.address}/transfer?address=${to}&uint256=${amountInWei}${description ? `&message=${encodeURIComponent(description)}` : ''}`;
   } else {
     // Fallback to native ETH/coin transfer
     let amountInWei = "";
@@ -44,7 +44,7 @@ export default function PaymentQRCode({ to, amount, currency }: { to: string; am
     } catch {
       amountInWei = "0";
     }
-    qrValue = `ethereum:${to}?value=${amountInWei}`;
+    qrValue = `ethereum:${to}?value=${amountInWei}${description ? `&message=${encodeURIComponent(description)}` : ''}`;
   }
 
   return (
@@ -54,4 +54,3 @@ export default function PaymentQRCode({ to, amount, currency }: { to: string; am
     </div>
   );
 }
-

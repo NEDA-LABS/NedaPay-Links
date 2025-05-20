@@ -142,7 +142,7 @@ console.log("Payment Link Page - Theme:", theme);
     // Generate a mock link ID
     const linkId = Math.random().toString(36).substring(2, 10);
     const baseUrl = window.location.origin;
-    const link = `${baseUrl}/pay/${linkId}?amount=${amount}&currency=${currency}&to=${merchantAddress}`;
+    const link = `${baseUrl}/pay/${linkId}?amount=${amount}&currency=${currency}&to=${merchantAddress}&description=${encodeURIComponent(description || '')}`;
 
     try {
       const response = await fetch("/api/payment-links", {
@@ -285,7 +285,7 @@ console.log("Payment Link Page - Theme:", theme);
                   htmlFor="description"
                   className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Description (Optional)
+                  Description (Services/Goods)
                 </label>
                 <div className="mt-1">
                   <textarea
