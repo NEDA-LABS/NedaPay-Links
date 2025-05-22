@@ -30,7 +30,7 @@ export default function CreateInvoicePage() {
     e.preventDefault();
     setStatus("loading");
     try {
-      const res = await fetch("/api/create-invoice", {
+      const res = await fetch("/api/send-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -50,7 +50,7 @@ export default function CreateInvoicePage() {
       }
       const data = await res.json();
       setStatus("success");
-      setTimeout(() => router.push(`/invoice/${data.id}`), 1200);
+      setTimeout(() => router.push(`/invoice`), 1200);
     } catch (err: any) {
       setStatus(err.message || "Unknown error");
     }

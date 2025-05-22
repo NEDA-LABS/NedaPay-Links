@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.38.7",
+    "@emailjs/browser": "^4.4.1",
     "@prisma/client": "^6.8.2",
     "@tanstack/react-query": "^5.74.4",
     "@wagmi/connectors": "^5.7.12",
@@ -41,6 +42,7 @@
     "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.4.1",
     "react-icons": "^5.5.0",
+    "resend": "^4.5.1",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "viem": "^2.26.3",
@@ -51,6 +53,7 @@
     "@netlify/plugin-nextjs": "^5.10.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^6.4.17",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
