@@ -39,6 +39,8 @@
     --card-bg: #121212; /* Very dark gray */
     --card-text: #ffffff; /* White */
     --scrollbar-track: #1e1e1e; /* Dark gray */
+
+   
   }
   
   /* Fix for dark mode select options */
@@ -50,34 +52,75 @@
 
 body {
   color: var(--foreground);
-  background-color: white !important;
-  color: black !important;
+  background-color: white;
+  color: black ;
   font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   letter-spacing: 0.01em;
   transition: background-color 0.3s, color 0.3s;
+
+  /* privy model */
+  --privy-border-radius-sm: 0.375rem; /* Matches Tailwind's rounded-md (6px) */
+  --privy-border-radius-md: 0.5rem; /* Matches Tailwind's rounded-lg (8px) */
+  --privy-border-radius-lg: 0.75rem; /* Matches Tailwind's rounded-xl (12px) */
+  --privy-border-radius-full: 9999px; /* Matches Tailwind's rounded-full */
+  --privy-color-background: #ffffff; /* White for light mode, matches bg-white/80 */
+  --privy-color-background-2: #d1d5db;; /* Light gray for secondary backgrounds, matches Tailwind slate-50 */
+  --privy-color-background-3: #e2e8f0; /* Slightly darker gray, matches Tailwind slate-200 */
+  --privy-color-foreground: #1e293b; /* Dark slate for text, matches text-slate-800 */
+  --privy-color-foreground-2: #475569; /* Lighter slate for secondary text, matches text-gray-600 */
+  --privy-color-foreground-3: #6b7280; /* Even lighter gray, matches text-gray-500 */
+  --privy-color-foreground-4: #9ca3af; /* Lightest gray, matches Tailwind gray-400 */
+  --privy-color-foreground-accent: #2563eb; /* Blue for accents, matches hover:bg-blue-50 */
+  --privy-color-accent: #3b82f6; /* Primary blue, matches border-blue-400 */
+  --privy-color-accent-light: #60a5fa; /* Lighter blue, matches Tailwind blue-400 */
+  --privy-color-accent-lightest: #bfdbfe; /* Very light blue, matches Tailwind blue-200 */
+  --privy-color-accent-dark: #1e40af; /* Darker blue, matches Tailwind blue-600 */
+  --privy-color-accent-darkest: #1e3a8a; /* Darkest blue, matches Tailwind blue-700 */
+  --privy-color-success: #22c55e; /* Green for success, matches text-green-600 */
+  --privy-color-error: #ef4444; /* Red for errors, matches text-red-600 */
+  --privy-color-error-light: #f87171; /* Lighter red, matches Tailwind red-500 */
+  
+
 }
 
 .dark body {
-  background-color: rgb(0, 0, 0) !important;
-  color: white !important;
+  background-color: #1e293b ;
+  /* color: white ; */
+
+   /* privy dark */
+   --privy-color-background: #1a2333;
+   --privy-color-background-2: #334155;
+   --privy-color-background-3: #475569;
+   --privy-color-foreground: #f1f5f9;
+   --privy-color-foreground-2: #d1d5db;
+   --privy-color-foreground-3: #9ca3af;
+   --privy-color-foreground-4: #6b7280;
+   --privy-color-foreground-accent: #93c5fd;
+   --privy-color-accent: #60a5fa;
+   --privy-color-accent-light: #93c5fd;
+   --privy-color-accent-lightest: #bfdbfe;
+   --privy-color-accent-dark: #2563eb;
+   --privy-color-accent-darkest: #1e40af;
+   --privy-color-success: #4ade80;
+   --privy-color-error: #f87171;
+   --privy-color-error-light: #fca5a5;
 }
 
 .dark html {
-  background-color: rgb(0, 0, 0) !important;
+  background-color: #1e293b;
   height: 100%;
 }
 
-/* html {
-  background-color: white;
+html {
+  /* background-color: white; */
   height: 100%;
-} */
-
+}
 
 
 /* Futuristic Glassmorphism Cards */
 @media (max-width: 640px) {
   .glass-card, .card, .dashboard-card {
-    padding: 1.2rem 0.7rem !important;
+    padding: 1.2rem 0.7rem ;
   }
   .neon-glow {
     box-shadow: 0 0 8px 1px var(--primary), 0 0 18px 4px var(--accent-light);
@@ -100,10 +143,10 @@ body {
 /* Neon Buttons */
 .btn, .button, button {
   background: linear-gradient(90deg, var(--primary), var(--accent) 70%);
-  color: #fff;
+  /* color: #fff; */
   border: none;
   border-radius: 0.75rem;
-  box-shadow: 0 2px 12px 0 var(--primary-light);
+  box-shadow: 0 1px 6px 0 var(--primary-light);
   font-weight: 700;
   letter-spacing: 0.02em;
   padding: 0.75em 2em;
@@ -112,14 +155,14 @@ body {
 .btn:hover, .button:hover, button:hover {
   background: linear-gradient(90deg, var(--accent), var(--primary) 70%);
   box-shadow: 0 0 16px 4px var(--accent-light);
-  transform: translateY(-2px) scale(1.03);
+  transform: translateY(-1px) scale(1.01);
 }
 
 /* Futuristic Inputs */
 input, select, textarea {
-  background: #f8fafc; /* Light gray for light mode */
+  /* background: #f8fafc; Light gray for light mode */
   border: 1.5px solid #e2e8f0; /* Light border for light mode */
-  color: black !important;
+  /* color: black ; */
   border-radius: 0.7rem;
   padding: 0.7em 1em;
   font-size: 1rem;
@@ -128,11 +171,11 @@ input, select, textarea {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.dark input, .dark select, .dark textarea {
-  background: #1e1e1e; /* Dark gray for dark mode */
-  border: 1.5px solid #3f3f46; /* Dark border for dark mode */
-  color: white !important;
-}
+/* .dark input, .dark select, .dark textarea {
+  background: #1e1e1e; 
+  border: 1.5px solid #3f3f46; 
+  color: white ;
+} */
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
@@ -141,7 +184,7 @@ input:focus, select:focus, textarea:focus {
 
 /* Fix for placeholder text */
 input::placeholder, textarea::placeholder, select::placeholder {
-  color: var(--input-placeholder) !important;
+  color: var(--input-placeholder) ;
   opacity: 1;
 }
 
@@ -177,12 +220,12 @@ input:-webkit-autofill:focus {
 .dark .text-slate-900,
 .dark .text-black,
 .dark .text-slate-800 {
-  color: white !important;
+  color: white ;
 }
 
 .dark .text-gray-700,
 .dark .text-slate-700 {
-  color: white !important;
+  color: white ;
 }
 
 /* Target only specific landing page elements in dark mode */
@@ -194,7 +237,7 @@ input:-webkit-autofill:focus {
 .dark #faq div,
 .dark .text-on-light,
 .dark .gradient-text {
-  color: white !important;
+  color: white ;
 }
 
 /* Specific rules for landing page feature sections */
@@ -207,37 +250,37 @@ input:-webkit-autofill:focus {
 .dark .text-gray-500,
 .dark .text-gray-600,
 .dark .text-gray-700 {
-  color: white !important;
+  color: white ;
 }
 
 /* Force all text in headers to be visible in dark mode */
 .dark header *,
 .dark nav * {
-  color: white !important;
+  color: white ;
 }
 
 /* Card styling for both modes */
 .bg-white {
-  /* background-color: white !important; */
-  color: black !important;
+  /* background-color: white ; */
+  color: black ;
 }
 
 .dark .bg-white {
-  background-color: #121212 !important;
-  color: white !important;
+  background-color: #1e293b ;
+  color: white ;
 }
 
 /* Chart text visibility */
 .dark canvas,
 .dark .chartjs-render-monitor,
 .dark [class*="chart-"] {
-  color: var(--foreground) !important;
+  color: var(--foreground) ;
 }
 
 .dark canvas text,
 .dark svg text {
-  fill: var(--foreground) !important;
-  color: var(--foreground) !important;
+  fill: var(--foreground) ;
+  color: var(--foreground) ;
 }
 
 /* Ensure form elements are visible */
@@ -245,19 +288,19 @@ input:-webkit-autofill:focus {
 .dark select,
 .dark textarea {
   background-color: var(--input-bg);
-  color: var(--input-text) !important;
+  color: var(--input-text) ;
   border-color: var(--input-border);
 }
 
 /* Ensure table text is visible */
 .dark table {
-  color: var(--foreground) !important;
+  color: var(--foreground) ;
 }
 
 .dark th,
 .dark td {
-  color: var(--foreground) !important;
-}
+  color: var(--foreground) ;
+} 
 
 /* Gradient Text */
 .gradient-text {
@@ -293,11 +336,11 @@ input:-webkit-autofill:focus {
   }
   
   .text-on-light {
-    color: #171717 !important; /* Dark text for light backgrounds */
+    color: #171717 ; /* Dark text for light backgrounds */
   }
   
   .text-on-dark {
-    color: #f8fafc !important; /* Light text for dark backgrounds */
+    color: #f8fafc ; /* Light text for dark backgrounds */
   }
   
   /* Dashboard welcome message animations */
@@ -332,15 +375,15 @@ input:-webkit-autofill:focus {
 
 /* Fix for white-on-white text issues */
 .bg-white {
-  color: #171717 !important;
+  color: #171717 ;
 }
 
 .bg-white h1, .bg-white h2, .bg-white h3, .bg-white h4, .bg-white h5, .bg-white h6 {
-  color: #111827 !important;
+  color: #111827 ;
 }
 
 .bg-white p, .bg-white span{
-  color: #374151 !important;
+  color: #374151 ;
 }
 
 /* Fix for specific dashboard elements */
@@ -348,7 +391,7 @@ input:-webkit-autofill:focus {
 .bg-white .text-2xl,
 .bg-white .font-semibold,
 .bg-white .font-bold {
-  color: #111827 !important;
+  color: #111827 ;
 } */
 
 /* Fix for Quick Actions */
@@ -356,25 +399,26 @@ input:-webkit-autofill:focus {
 .bg-blue-50 h3,
 .bg-green-50 h3,
 .bg-purple-50 h3 {
-  color: #111827 !important;
+  color: #111827 ;
 }
 
 .bg-gray-100 p,
 .bg-blue-50 p,
 .bg-green-50 p,
 .bg-purple-50 p {
-  color: #374151 !important;
+  color: #374151 ;
 }
 
 /* Fix for border colors*/
 .border-blue-css {
-  border-color: #3b82f6 !important;
+  border-color: #3b82f6 ;
 }
 
 /* Dark mode overrides */
-.dark .bg-white h1, .dark .bg-white h2, .dark .bg-white h3, .dark .bg-white h4, .dark .bg-white h5, .dark .bg-white h6,
+/* .dark .bg-white h1, .dark .bg-white h2, .dark .bg-white h3, .dark .bg-white h4, .dark .bg-white h5, .dark .bg-white h6,
 .dark .bg-white p, .dark .bg-white span, .dark .bg-white div,
 .dark .bg-gray-800 h1, .dark .bg-gray-800 h2, .dark .bg-gray-800 h3, .dark .bg-gray-800 h4, .dark .bg-gray-800 h5, .dark .bg-gray-800 h6,
 .dark .bg-gray-800 p, .dark .bg-gray-800 span, .dark .bg-gray-800 div {
-  color: #f3f4f6 !important;
-}
+  color: #f3f4f6 ;
+} */
+

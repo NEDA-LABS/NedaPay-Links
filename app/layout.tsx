@@ -24,7 +24,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-white dark:bg-black text-black dark:text-white">
+      <body className="bg-white text-black dark:text-white">
         <div className="flex flex-col min-h-screen">
           <Providers>
             <AppToaster />

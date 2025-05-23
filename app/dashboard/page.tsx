@@ -166,8 +166,11 @@ export default function MerchantDashboard() {
   const [swapModalOpen, setSwapModalOpen] = useState(false);
   const [swapFromSymbol, setSwapFromSymbol] = useState<string>("");
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [isTransactionLoading, setIsTransactionLoading] =
-    useState<boolean>(false);
+  const [isTransactionLoading, setIsTransactionLoading] = useState(false);
+  const [isLoadingPaymentLink, setIsLoadingPaymentLink] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const [isBalanceLoading, setIsBalanceLoading] = useState<boolean>(false);
   const [baseName, setBaseName] = useState<string | null>(null);
 
@@ -637,16 +640,38 @@ export default function MerchantDashboard() {
                     </p>
                     <div className="mt-3 flex space-x-3 animate-fadeIn animation-delay-300">
                       <button
-                        onClick={() => router.push("/payment-link")}
-                        className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-md text-sm font-medium transition-all duration-200"
+                        onClick={() => {
+                          setIsLoadingPaymentLink(true);
+                          router.push("/payment-link");
+                        }}
+                        className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                        disabled={isLoadingPaymentLink}
                       >
-                        Create Payment Link
+                        {isLoadingPaymentLink ? (
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          "Create Payment Link"
+                        )}
                       </button>
                       <button
-                        onClick={() => router.push("/settings")}
-                        className="px-4 py-2 bg-white bg-opacity-10 hover:bg-opacity-20 text-white rounded-md text-sm font-medium transition-all duration-200"
+                        onClick={() => {
+                          setIsLoadingSettings(true);
+                          router.push("/settings");
+                        }}
+                        className="px-4 py-2 bg-white bg-opacity-10 hover:bg-opacity-20 text-white rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                        disabled={isLoadingSettings}
                       >
-                        Customize Dashboard
+                        {isLoadingSettings ? (
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          "Customize Dashboard"
+                        )}
                       </button>
                     </div>
                   </div>
@@ -667,7 +692,7 @@ export default function MerchantDashboard() {
               Your wallet is connected and ready to use
               </p>
               <div className="flex items-center space-x-2">
-                <div className="text-sm font-medium text-white">
+                <div className="text-sm font-medium text-black dark:text-white">
                 Wallet Address:
                 </div>
                 <div className="text-sm text-white/90">
@@ -1421,31 +1446,83 @@ export default function MerchantDashboard() {
             <div className="space-y-4">
               <button 
                 onClick={() => {
-  document.cookie = 'wallet_connected=true; path=/; max-age=86400';
-  setTimeout(() => {
-    window.location.href = '/payment-link';
-  }, 100);
-}} 
-                className="p-4 w-full bg-gray-100 dark:bg-blue-900/30 rounded-lg border border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
+                  setIsLoadingPaymentLink(true);
+                  document.cookie = 'wallet_connected=true; path=/; max-age=86400';
+                  setTimeout(() => {
+                    window.location.href = '/payment-link';
+                  }, 100);
+                }} 
+                className="p-4 w-full bg-gray-100 dark:bg-blue-900/30 rounded-lg border border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition flex flex-col items-start gap-2"
+                disabled={isLoadingPaymentLink}
               >
-                <h3 className="font-bold text-blue-900 dark:text-blue-300">Create Payment Link</h3>
-                <p className="text-sm text-blue-900 dark:text-blue-400 mt-1 font-medium">Generate a payment link to share with customers</p>
+                {isLoadingPaymentLink ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <p className="font-bold text-blue-900 dark:text-blue-300">Processing...</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold text-blue-900 dark:text-blue-300">Create Payment Link</p>
+                    <p className="text-sm text-blue-900 dark:text-blue-400 mt-1 font-medium">Generate a payment link to share with customers</p>
+                  </>
+                )}
               </button>
 
               <button 
-                onClick={() => router.push('/invoice')} 
-                className="p-4 w-full bg-gray-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 transition"
+                onClick={() => {
+                  setIsLoadingInvoice(true);
+                  router.push('/invoice');
+                }} 
+                className="p-4 w-full bg-gray-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 transition flex flex-col items-start gap-2"
+                disabled={isLoadingInvoice}
               >
-                <h3 className="font-bold text-green-900 dark:text-green-300">Generate Invoice</h3>
-                <p className="text-sm text-green-900 dark:text-green-400 mt-1 font-medium">Send an invoice to your customer for payment</p>
+                {isLoadingInvoice ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <p className="font-bold text-green-900 dark:text-green-300">Processing...</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold text-green-900 dark:text-green-300">Generate Invoice</p>
+                    <p className="text-sm text-green-900 dark:text-green-400 mt-1 font-medium">Send an invoice to your customer for payment</p>
+                  </>
+                )}
               </button>
 
               <button 
-                onClick={() => router.push('/analytics')} 
-                className="p-4 w-full bg-gray-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition"
+                onClick={() => {
+                  setIsLoadingAnalytics(true);
+                  router.push('/analytics');
+                }} 
+                className="p-4 w-full bg-gray-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition flex flex-col items-start gap-2"
+                disabled={isLoadingAnalytics}
               >
-                <h3 className="font-bold text-purple-900 dark:text-purple-300">View Analytics</h3>
-                <p className="text-sm text-purple-900 dark:text-purple-400 mt-1 font-medium">Detailed reports and business insights</p>
+                {isLoadingAnalytics ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <p className="font-bold text-purple-900 dark:text-purple-300">Processing...</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold text-purple-900 dark:text-purple-300">View Analytics</p>
+                    <p className="text-sm text-purple-900 dark:text-purple-400 mt-1 font-medium">Detailed reports and business insights</p>
+                  </>
+                )}
               </button>
             </div>
           </div>

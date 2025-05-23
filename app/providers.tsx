@@ -1,32 +1,35 @@
-'use client';
+"use client";
 
-import { base } from 'wagmi/chains';
-import { ThemeProvider } from 'next-themes';
-import type { ReactNode } from 'react';
-import { WagmiProvider, createConfig, http, fallback } from 'wagmi';
-import { coinbaseWallet, metaMask } from 'wagmi/connectors';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { base } from "wagmi/chains";
+import { ThemeProvider } from "next-themes";
+import type { ReactNode } from "react";
+import { http, fallback } from "wagmi";
+import { createConfig as createPrivyConfig } from "@privy-io/wagmi";
+import { WagmiProvider } from "@privy-io/wagmi";
+import { coinbaseWallet, metaMask } from "wagmi/connectors";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PrivyProvider } from "@privy-io/react-auth";
 
 // Create a query client for React Query
 const queryClient = new QueryClient();
 
 // Configure wagmi with all supported wallet connectors
-const wagmiConfig = createConfig({
+const wagmiConfig = createPrivyConfig({
   chains: [base],
-  connectors: [
-    coinbaseWallet({
-      appName: 'NEDA Pay Merchant',
-    }),
-    metaMask()
-  ],
+  // connectors: [
+  //   coinbaseWallet({
+  //     appName: "NEDA Pay Merchant",
+  //   }),
+  //   metaMask(),
+  // ],
   ssr: true,
   transports: {
     [base.id]: fallback([
-      http(process.env.NEXT_PUBLIC_COINBASE_BASE_RPC || 'https://api.developer.coinbase.com/rpc/v1/base/n4RnEAzBQtErAI53dP6DCa6l6HRGODgV'),
-      http('https://mainnet.base.org'),
-      http('https://base-mainnet.g.alchemy.com/v2/demo'),
-      http('https://base.llamarpc.com'),
-      http('https://1rpc.io/base')
+      http(process.env.NEXT_PUBLIC_COINBASE_BASE_RPC),
+      http("https://mainnet.base.org"),
+      http("https://base-mainnet.g.alchemy.com/v2/demo"),
+      http("https://base.llamarpc.com"),
+      http("https://1rpc.io/base"),
     ]),
   },
 });
@@ -34,11 +37,24 @@ const wagmiConfig = createConfig({
 export function Providers(props: { children: ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <WagmiProvider config={wagmiConfig}>
+      <PrivyProvider
+        appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
+        config={{
+          appearance: {
+            walletList: ['metamask', 'coinbase_wallet', 'wallet_connect'],
+            walletChainType: 'ethereum-only'},
+          embeddedWallets: {
+            ethereum: {
+              createOnLogin: "users-without-wallets",
+            },
+          },
+          defaultChain: base,
+        }}
+      >
         <QueryClientProvider client={queryClient}>
-          {props.children}
+          <WagmiProvider config={wagmiConfig}>{props.children}</WagmiProvider>
         </QueryClientProvider>
-      </WagmiProvider>
+      </PrivyProvider>
     </ThemeProvider>
   );
 }

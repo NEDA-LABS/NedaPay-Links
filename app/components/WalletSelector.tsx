@@ -1,12 +1,9 @@
 "use client";
 
-import { BASE_MAINNET_RPCS, getRandomRPC } from "../utils/rpcConfig";
-import * as ethers from "ethers";
 import toast from "react-hot-toast";
-import { useState, useRef, useEffect } from "react";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { metaMask, coinbaseWallet, walletConnect } from "wagmi/connectors";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { usePrivy } from "@privy-io/react-auth";
 import { base } from "wagmi/chains";
 import { Name } from "@coinbase/onchainkit/identity";
 import { getBasename } from "../utils/getBaseName";
@@ -19,23 +16,79 @@ function isMobile() {
 }
 
 export default function WalletSelector() {
-  // Mobile-specific styles
+  // Enhanced mobile-specific styles
   const mobileStyles = `
     @media (max-width: 640px) {
       .wallet-button {
-        padding: 4px 8px !important;
-        font-size: 0.7rem !important;
+        padding: 6px 10px !important;
+        font-size: 0.75rem !important;
+        min-height: 36px !important;
+        max-width: calc(100vw - 40px) !important;
+        white-space: nowrap !important;
       }
       .wallet-icon {
-        width: 20px !important;
-        height: 20px !important;
-        margin-right: 4px !important;
+        width: 18px !important;
+        height: 18px !important;
+        margin-right: 6px !important;
+        flex-shrink: 0 !important;
       }
       .wallet-address {
         font-size: 0.7rem !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: calc(100vw - 120px) !important;
       }
       .wallet-dropdown {
-        width: 220px !important;
+        width: calc(100vw - 20px) !important;
+        max-width: 280px !important;
+        left: auto !important;
+        right: 0 !important;
+      }
+      .sign-in-text {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+      .wallet-address-container {
+        overflow: hidden !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+      }
+      .basename-display {
+        max-width: 100px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+      .address-display {
+        max-width: 80px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .wallet-button {
+        padding: 4px 8px !important;
+        font-size: 0.7rem !important;
+        min-height: 32px !important;
+      }
+      .wallet-icon {
+        width: 16px !important;
+        height: 16px !important;
+        margin-right: 4px !important;
+      }
+      .wallet-address {
+        font-size: 0.65rem !important;
+        max-width: calc(100vw - 100px) !important;
+      }
+      .basename-display {
+        max-width: 80px !important;
+      }
+      .address-display {
+        max-width: 60px !important;
       }
     }
   `;
@@ -46,236 +99,272 @@ export default function WalletSelector() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  // Use wagmi hooks directly
-  const { address, isConnected, connector } = useAccount();
-  const { connect } = useConnect();
-  const { disconnect } = useDisconnect();
+  // Privy hooks - destructure all needed properties
+  const { 
+    authenticated, 
+    user, 
+    connectWallet, 
+    logout, 
+    ready,
+    login
+  } = usePrivy();
 
-  // Format address for display
-  const formatAddress = (address: string | undefined): string => {
-    if (
-      !address ||
-      typeof address !== "string" ||
-      !address.startsWith("0x") ||
-      address.length < 10
-    )
-      return "";
+  // Get the primary wallet address safely
+  const walletAddress = user?.wallet?.address;
+  const emailAddress = user?.email?.address;
+  const isConnected = authenticated && (walletAddress || emailAddress);
+
+  // Debug Privy state
+  useEffect(() => {
+    console.log("Privy State:", {
+      ready,
+      authenticated,
+      user,
+      walletAddress,
+      walletClientType: user?.wallet?.walletClientType,
+      emailAddress,
+      isConnected,
+    });
+  }, [ready, authenticated, user, walletAddress, emailAddress, isConnected]);
+
+  // Enhanced format address for mobile display
+  const formatAddress = useCallback((address: string | undefined, isMobile: boolean = false): string => {
+    if (!address || typeof address !== "string" || !address.startsWith("0x") || address.length < 10) {
+      return "Unknown Address";
+    }
+    
+    // More aggressive truncation for mobile
+    if (isMobile) {
+      return `${address.substring(0, 4)}...${address.substring(address.length - 3)}`;
+    }
+    
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  };
+  }, []);
+
+  // Enhanced format email for mobile display
+  const formatEmail = useCallback((email: string | undefined, maxLength: number = 20): string => {
+    if (!email) return "Connected";
+    
+    if (email.length <= maxLength) return email;
+    
+    const [localPart, domain] = email.split('@');
+    if (localPart.length > maxLength - domain.length - 4) {
+      return `${localPart.substring(0, maxLength - domain.length - 7)}...@${domain}`;
+    }
+    
+    return email;
+  }, []);
 
   // Close dropdown when clicking or touching outside
-  const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-    if (
-      dropdownRef.current &&
-      !dropdownRef.current.contains(event.target as Node)
-    ) {
-      setShowOptions(false);
-    }
-  };
-
-  // Add event listeners for clicking and touching outside
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside as EventListener);
-    document.addEventListener("touchstart", handleClickOutside as EventListener);
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowOptions(false);
+      }
+    };
+    
+    if (showOptions) {
+      document.addEventListener("mousedown", handleClickOutside as EventListener);
+      document.addEventListener("touchstart", handleClickOutside as EventListener);
+    }
+    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside as EventListener);
       document.removeEventListener("touchstart", handleClickOutside as EventListener);
     };
-  }, []);
+  }, [showOptions]);
 
-  // Always write the connected wallet address to localStorage on change
+  // Handle wallet connection state and persistence
   useEffect(() => {
-    if (isConnected && address) {
-      localStorage.setItem("walletAddress", address);
-    } else {
-      localStorage.removeItem("walletAddress");
-    }
-  }, [isConnected, address]);
+    if (ready && isConnected) {
+      const address = walletAddress || emailAddress || "";
+      
+      // Store connection state
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("walletConnected", "true");
+        if (address) {
+          localStorage.setItem("walletAddress", address);
+        }
+        
+        // Set cookie for server-side detection
+        document.cookie = "wallet_connected=true; path=/; max-age=86400; SameSite=Lax";
+        
+        // Dispatch custom event for other components
+        window.dispatchEvent(new CustomEvent("walletConnected", { 
+          detail: { address, authenticated: true } 
+        }));
+      }
 
-  // Check for connected wallet and store in localStorage and cookie
-  useEffect(() => {
-    if (address && isConnected) {
-      // Store wallet connection in localStorage
-      localStorage.setItem("walletConnected", "true");
-      localStorage.setItem("walletAddress", address);
-
-      // Set a cookie for the middleware to check
-      document.cookie = "wallet_connected=true; path=/; max-age=86400"; // 24 hours
-
-      // Immediately dispatch a custom event so dashboard can react instantly
-      window.dispatchEvent(
-        new CustomEvent("walletConnected", { detail: { address } })
-      );
-
-      // Redirect to dashboard immediately after successful connection
-      // Only redirect to dashboard if on the homepage/root ('' or '/')
-      let path = window.location.pathname.replace(/\/+$/, ""); // Remove all trailing slashes
+      // Redirect to dashboard if on homepage
+      const path = window.location.pathname.replace(/\/+$/, "");
       if (path === "" || path === "/") {
-        console.log(
-          "[DEBUG] Redirecting to /dashboard from WalletSelector. Current path:",
-          window.location.pathname
-        );
+        console.log("Redirecting to /dashboard", { address, isConnected });
         router.push("/dashboard");
       }
     } else {
-      // Clear wallet connection from localStorage
-      localStorage.removeItem("walletConnected");
-      localStorage.removeItem("walletAddress");
-
-      // Clear the cookie
-      document.cookie = "wallet_connected=; path=/; max-age=0";
-    }
-  }, [address, isConnected, router]);
-
-  // Basename fetching
-  useEffect(() => {
-    if (!address) {
-      setBaseName(null);
-      return;
-    }
-
-    function toHexAddress(address: `0x${string}` | undefined | string): `0x${string}` {
-      if (!address || typeof address !== "string") {
-        throw new Error("Invalid address provided");
+      // Clear connection state when not connected
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem("walletConnected");
+        localStorage.removeItem("walletAddress");
+        document.cookie = "wallet_connected=; path=/; max-age=0; SameSite=Lax";
+        
+        window.dispatchEvent(new CustomEvent("walletDisconnected"));
       }
-      return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
     }
-  
-    const address_formatted = toHexAddress(address);
-    if (!address_formatted) {
-      console.error("Invalid address format");
+  }, [ready, isConnected, walletAddress, emailAddress, router]);
+
+  // Basename fetching with proper error handling
+  useEffect(() => {
+    if (!walletAddress) {
       setBaseName(null);
       return;
     }
-  
+
     let isMounted = true;
-    const debounceTimer = setTimeout(() => {
-      const fetchData = async () => {
-        try {
-          const basename = await getBasename(address_formatted);
-          if (basename === undefined) {
-            throw new Error("Failed to resolve address to name");
-          }
-          if (isMounted) {
-            setBaseName(basename);
-          }
-        } catch (error) {
-          console.error("Error fetching base name:", error);
-          if (isMounted) {
-            setBaseName(null);
-          }
+    const controller = new AbortController();
+
+    const fetchBasename = async () => {
+      try {
+        const toHexAddress = (address: string): `0x${string}` => {
+          return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
+        };
+
+        const formattedAddress = toHexAddress(walletAddress);
+        const basename = await getBasename(formattedAddress);
+        
+        if (isMounted && !controller.signal.aborted) {
+          setBaseName(basename || null);
         }
-      };
-      fetchData();
-    }, 300); // 300ms debounce
-  
+      } catch (error) {
+        console.error("Error fetching basename:", error);
+        if (isMounted && !controller.signal.aborted) {
+          setBaseName(null);
+        }
+      }
+    };
+
+    // Debounce the fetch
+    const debounceTimer = setTimeout(fetchBasename, 300);
+
     return () => {
       isMounted = false;
+      controller.abort();
       clearTimeout(debounceTimer);
     };
-  }, [address]);
+  }, [walletAddress]);
 
-  // Function to handle MetaMask connection
-  const handleConnectMetaMask = async () => {
+  // Handle wallet connection with proper error handling
+  const handleConnectWallet = async () => {
+    if (!ready) {
+      toast.error("Privy is not ready yet. Please wait a moment.");
+      return;
+    }
+
     setIsConnecting(true);
     try {
-      // Check if MetaMask is installed
-      if (typeof window.ethereum !== "undefined") {
-        try {
-          // Try to connect with MetaMask
-          const metaMaskConnector = metaMask();
-          await connect({ connector: metaMaskConnector });
-        } catch (error) {
-          console.error("Error connecting to MetaMask:", error);
-        }
-      } else if (isMobile()) {
-        // On mobile, open MetaMask deep link to this dapp
-        const dappUrl = encodeURIComponent(window.location.href);
-        window.open(
-          `https://metamask.app.link/dapp/${window.location.host}`,
-          "_blank"
-        );
+      await connectWallet();
+      toast.success("Wallet connected successfully!");
+    } catch (error: any) {
+      console.error("Error connecting wallet:", error);
+      
+      // Handle specific error cases
+      if (error?.message?.includes("User rejected")) {
+        toast.error("Connection cancelled by user");
+      } else if (error?.message?.includes("No wallet")) {
+        toast.error("Please install a wallet extension like MetaMask");
       } else {
-        // MetaMask not installed, open download page
-        window.open("https://metamask.io/download/", "_blank");
-        throw new Error("MetaMask not installed");
+        toast.error("Failed to connect wallet. Please try again.");
       }
-    } catch (error) {
-      console.error("Error connecting to MetaMask", error);
     } finally {
       setIsConnecting(false);
     }
   };
 
-  // Function to handle WalletConnect connection
-  const handleConnectWalletConnect = async () => {
-    console.log("Connecting with WalletConnect...");
+  // Handle email/SMS login
+  const handleEmailLogin = async () => {
+    if (!ready) {
+      toast.error("Privy is not ready yet. Please wait a moment.");
+      return;
+    }
+
     setIsConnecting(true);
     try {
-      const walletConnectConnector = walletConnect({
-        projectId: "0ba1867b1fc0af11b0cf14a0ec8e5b0f",
-      });
-
-      await connect({ connector: walletConnectConnector });
-      setShowOptions(false);
-      // Note: The redirect will happen in the useEffect when isConnected changes
-    } catch (error) {
-      console.error("Error connecting with WalletConnect", error);
+      await login();
+      toast.success("Logged in successfully!");
+    } catch (error: any) {
+      console.error("Error with email login:", error);
+      toast.error("Failed to login. Please try again.");
     } finally {
       setIsConnecting(false);
     }
   };
 
-  // Function to handle Coinbase Wallet connection
-  const handleConnectCoinbase = async () => {
-    setIsConnecting(true);
+  // Handle logout with cleanup
+  const handleLogout = async () => {
     try {
-      // Coinbase Wallet deep link for mobile
-      if (isMobile() && typeof window.ethereum === "undefined") {
-        // Open Coinbase Wallet deep link to this dapp
-        window.open(
-          `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(
-            window.location.href
-          )}`,
-          "_blank"
-        );
-        return;
-      }
-      // Create Coinbase Wallet connector (desktop or mobile in-app browser)
-      const coinbaseConnector = coinbaseWallet({
-        appName: "NEDA Pay",
-      });
-
-      await connect({ connector: coinbaseConnector });
+      await logout();
       setShowOptions(false);
-      // Note: The redirect will happen in the useEffect when isConnected changes
+      
+      // Clear all stored data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem("walletConnected");
+        localStorage.removeItem("walletAddress");
+        document.cookie = "wallet_connected=; path=/; max-age=0; SameSite=Lax";
+      }
+      
+      toast.success("Logged out successfully");
+      router.push("/");
     } catch (error) {
-      console.error("Error connecting to Coinbase Wallet", error);
-    } finally {
-      setIsConnecting(false);
+      console.error("Error logging out:", error);
+      toast.error("Failed to log out");
     }
   };
 
-  // Function to handle wallet disconnection
-  const handleDisconnect = () => {
-    disconnect();
-    setShowOptions(false);
-
-    // Clear wallet connection from localStorage
-    localStorage.removeItem("walletConnected");
-    localStorage.removeItem("walletAddress");
-
-    // Clear the cookie
-    document.cookie = "wallet_connected=; path=/; max-age=0";
-
-    // Redirect to home page using Next.js router
-    router.push("/");
+  // Render wallet icon based on wallet type
+  const renderWalletIcon = () => {
+    const walletType = user?.wallet?.walletClientType;
+    
+    if (walletType === "coinbase_wallet") {
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#0052FF" />
+          <circle cx="12" cy="12" r="7.2" fill="#fff" />
+          <rect x="8" y="11" width="8" height="2" rx="1" fill="#0052FF" />
+        </svg>
+      );
+    } else if (walletType === "metamask") {
+      return (
+        <img 
+          src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/metamask-icon.svg" 
+          alt="MetaMask Logo" 
+          width="18" 
+          height="18"
+        />
+      );
+    }
+    
+    // Default wallet icon
+    return (
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm1 2a1 1 0 000 2h10a1 1 0 100-2H5z" clipRule="evenodd" />
+      </svg>
+    );
   };
+
+  if (!ready) {
+    return (
+      <div className="wallet-button flex items-center bg-gray-200 dark:bg-gray-700 px-2 sm:px-3 py-1 rounded-lg">
+        <span className="text-xs sm:text-sm text-gray-500">Loading...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
       <style jsx>{mobileStyles}</style>
+      
       {isConnected ? (
+        // Connected state with better mobile handling
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -283,224 +372,99 @@ export default function WalletSelector() {
           }}
           className="wallet-button flex items-center space-x-2 bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
         >
-          <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center mr-2 bg-blue-100 dark:bg-blue-900">
-            {connector?.id === "coinbaseWallet" ||
-            connector?.name === "Coinbase Wallet" ? (
-              // Coinbase Wallet Logo
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="12" cy="12" r="12" fill="#0052FF" />
-                <circle cx="12" cy="12" r="7.2" fill="#fff" />
-                <rect x="8" y="11" width="8" height="2" rx="1" fill="#0052FF" />
-              </svg>
+          <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 flex-shrink-0">
+            {renderWalletIcon()}
+          </div>
+          
+          <div className="wallet-address-container flex-1 min-w-0">
+            {walletAddress ? (
+              <div className="wallet-address text-xs sm:text-sm font-bold">
+                {baseName ? (
+                  <div className="flex flex-col">
+                    <span className="basename-display text-sm text-black font-bold">
+                      {baseName}
+                    </span>
+                    <span className="address-display text-xs text-gray-500">
+                      ({formatAddress(walletAddress, true)})
+                    </span>
+                  </div>
+                ) : (
+                  <div className="address-display">
+                    <Name address={walletAddress as `0x${string}`} chain={base as any} />
+                  </div>
+                )}
+              </div>
+            ) : emailAddress ? (
+              <span className="wallet-address text-xs sm:text-sm font-bold">
+                {formatEmail(emailAddress, 15)}
+              </span>
             ) : (
-              // MetaMask Logo (default)
-              <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/metamask-icon.svg" alt="MetaMask Logo" width="18" height="18"/>
-
+              <span className="wallet-address text-xs sm:text-sm font-bold">Connected</span>
             )}
           </div>
-          <div className="wallet-address text-xs sm:text-sm font-bold">
-            {address ? (
-              baseName ? (
-                <>
-                  <span className="ml-1 text-sm text-black font-bold">
-                    {baseName}
-                  </span>
-                  <br />
-                  <span className="ml-1 text-xs text-gray-500">
-                    ({formatAddress(address)})
-                  </span>
-                </>
-              ) : (
-                <Name address={address as `0x${string}`} chain={base as any}/>
-              )
-            ) : (
-              "Connect Wallet"
-            )}
-          </div>
+          
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="currentColor"
-            className="w-4 h-4 ml-1"
+            className="w-4 h-4 flex-shrink-0"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m19.5 8.25-7.5 7.5-7.5-7.5"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
           </svg>
         </button>
       ) : (
+        // Disconnected state with better mobile text handling
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowOptions(!showOptions);
-          }}
+          onClick={handleEmailLogin}
           className="wallet-button flex items-center bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
           disabled={isConnecting}
         >
-          <span className="text-xs sm:text-sm font-bold">
-            {isConnecting ? "Connecting..." : "Connect Wallet"}
+          <span className="sign-in-text text-xs sm:text-sm font-bold">
+            {isConnecting ? "Connecting..." : "Sign in"}
           </span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-4 h-4 ml-1 inline"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m19.5 8.25-7.5 7.5-7.5-7.5"
-            />
-          </svg>
         </button>
       )}
 
-      {showOptions && (
+      {showOptions && isConnected && (
         <div
-          className="wallet-dropdown absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-60 border-2 border-blue-100 dark:border-blue-900"
+          className="wallet-dropdown absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border-2 border-blue-100 dark:border-blue-900"
           onClick={(e: React.MouseEvent) => e.stopPropagation()}
           style={{ maxHeight: "80vh", overflowY: "auto" }}
         >
-          {isConnected ? (
-            <>
-              <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-300">
-                    Connected Wallet
-                  </h3>
-                  <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
-                    Active
-                  </span>
-                </div>
-                <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                  {address ? (
-                    <Name
-                      address={address as `0x${string}`}
-                      chain={base as any}
-                    />
-                  ) : (
-                    "Not connected"
-                  )}
-                </div>
+          <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-300">
+                Connected Account
+              </h3>
+              <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+                Active
+              </span>
+            </div>
+            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 break-all">
+              {walletAddress ? (
+                <Name address={walletAddress as `0x${string}`} chain={base as any} />
+              ) : emailAddress ? (
+                emailAddress
+              ) : (
+                "Connected"
+              )}
+            </div>
+          </div>
+          <div className="p-2 space-y-1">
+            <button
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-lg"
+            >
+              <div className="flex items-center space-x-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1" />
+                </svg>
+                <span>Logout</span>
               </div>
-              <div className="p-2 space-y-1">
-                <button
-                  onClick={handleDisconnect}
-                  className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Disconnect
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="p-2 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-300">
-                  Select Wallet
-                </h3>
-              </div>
-              <div className="p-2 space-y-2">
-                {/* WalletConnect Option */}
-                <button
-                  onClick={handleConnectWalletConnect}
-                  disabled={isConnecting}
-                  className="w-full flex items-center space-x-2 p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-700 transition-colors text-left"
-                >
-                  <div className="w-6 h-6 flex-shrink-0 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8zm3.536-10.95a1 1 0 0 1 1.415 1.415l-4.95 4.95a1 1 0 0 1-1.415 0l-2.121-2.122a1 1 0 1 1 1.415-1.415l1.414 1.415 4.242-4.243z"
-                        fill="#3396FF"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-300">
-                      WalletConnect
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Connect with WalletConnect
-                    </div>
-                  </div>
-                </button>
-
-                {/* Coinbase Wallet Option */}
-                <div>
-                  <button
-                    onClick={handleConnectCoinbase}
-                    disabled={isConnecting}
-                    className="w-full flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
-                  >
-                    <div className="w-6 h-6 flex-shrink-0 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z"
-                          fill="#0052FF"
-                        />
-                        <path
-                          d="M12.0002 4.80005C8.0002 4.80005 4.8002 8.00005 4.8002 12C4.8002 16 8.0002 19.2 12.0002 19.2C16.0002 19.2 19.2002 16 19.2002 12C19.2002 8.00005 16.0002 4.80005 12.0002 4.80005ZM9.6002 14.4C8.8002 14.4 8.0002 13.6 8.0002 12.8C8.0002 12 8.8002 11.2 9.6002 11.2C10.4002 11.2 11.2002 12 11.2002 12.8C11.2002 13.6 10.4002 14.4 9.6002 14.4ZM14.4002 14.4C13.6002 14.4 12.8002 13.6 12.8002 12.8C12.8002 12 13.6002 11.2 14.4002 11.2C15.2002 11.2 16.0002 12 16.0002 12.8C16.0002 13.6 15.2002 14.4 14.4002 14.4Z"
-                          fill="white"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-300">
-                        Coinbase Wallet
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {isConnecting ? "Connecting..." : "Connect"}
-                      </div>
-                    </div>
-                  </button>
-                </div>
-
-                {/* MetaMask Option */}
-                <button
-                  onClick={handleConnectMetaMask}
-                  disabled={isConnecting}
-                  className="w-full flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
-                >
-                  <div className="w-6 h-6 flex-shrink-0 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
-                  <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/metamask-icon.svg" alt="MetaMask Logo" width="18" height="18"/>
-
-
-                  </div>
-                  <div>
-                    <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-300">
-                      MetaMask
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {isConnecting ? "Connecting..." : "Connect"}
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </>
-          )}
+            </button>
+          </div>
         </div>
       )}
     </div>
