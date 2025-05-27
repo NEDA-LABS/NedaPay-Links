@@ -11,6 +11,18 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// New User model for Privy integration
+model User {
+  id           String   @id @default(uuid())
+  email        String?   @unique
+  wallet       String  @unique
+  privyUserId  String   @unique // Privy's internal user ID
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  name         String?
+  isActive     Boolean  @default(true)
+}
+
 model Transaction {
   id         String       @id @default(uuid())
   merchantId String

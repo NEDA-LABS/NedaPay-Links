@@ -7,6 +7,8 @@ import { usePrivy } from "@privy-io/react-auth";
 import { base } from "wagmi/chains";
 import { Name } from "@coinbase/onchainkit/identity";
 import { getBasename } from "../utils/getBaseName";
+import { useUserSync } from "../hooks/useUserSync";
+import { useLinkAccount } from "@privy-io/react-auth";
 
 // Utility to detect mobile browsers
 function isMobile() {
@@ -42,8 +44,9 @@ export default function WalletSelector() {
       .wallet-dropdown {
         width: calc(100vw - 20px) !important;
         max-width: 280px !important;
-        left: auto !important;
-        right: 0 !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
       }
       .sign-in-text {
         white-space: nowrap !important;
@@ -99,6 +102,11 @@ export default function WalletSelector() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  //email sync and update
+  const { userData, isLoading: userLoading, addEmail, hasEmail } = useUserSync();
+
+  console.log("hasEmail", hasEmail); //debugging
+
   // Privy hooks - destructure all needed properties
   const { 
     authenticated, 
@@ -108,6 +116,18 @@ export default function WalletSelector() {
     ready,
     login
   } = usePrivy();
+
+  // Move useLinkAccount hook to the top level of the component
+  const { linkEmail } = useLinkAccount({
+    onSuccess: ({ user, linkMethod, linkedAccount }) => {
+      console.log('Linked account to user ', linkedAccount); // debugging to be handled by ui later
+      toast.success("Email linked successfully!");
+    },
+    onError: (error) => {
+      console.error('Failed to link account with error ', error); // debugging to be handled by ui later
+      toast.error("Failed to link email. Please try again.");
+    }
+  });
 
   // Get the primary wallet address safely
   const walletAddress = user?.wallet?.address;
@@ -320,6 +340,16 @@ export default function WalletSelector() {
     }
   };
 
+  // Handle linking email to existing wallet account
+  const handleLinkEmail = async () => {
+    try {
+      await linkEmail();
+    } catch (error) {
+      console.error("Error linking email:", error);
+      // Error handling is already done in the useLinkAccount onError callback
+    }
+  };
+
   // Render wallet icon based on wallet type
   const renderWalletIcon = () => {
     const walletType = user?.wallet?.walletClientType;
@@ -452,6 +482,24 @@ export default function WalletSelector() {
               )}
             </div>
           </div>
+          
+          {/* Add email section if user doesn't have email */}
+          {!hasEmail && walletAddress && (
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={handleLinkEmail}
+                className="w-full text-left px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-lg"
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Add Email Address</span>
+                </div>
+              </button>
+            </div>
+          )}
+          
           <div className="p-2 space-y-1">
             <button
               onClick={handleLogout}
