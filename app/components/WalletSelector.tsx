@@ -10,12 +10,6 @@ import { getBasename } from "../utils/getBaseName";
 import { useUserSync } from "../hooks/useUserSync";
 import { useLinkAccount } from "@privy-io/react-auth";
 
-// Utility to detect mobile browsers
-function isMobile() {
-  return /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(
-    typeof navigator === "undefined" ? "" : navigator.userAgent
-  );
-}
 
 export default function WalletSelector() {
   // Enhanced mobile-specific styles
@@ -273,32 +267,6 @@ export default function WalletSelector() {
     };
   }, [walletAddress]);
 
-  // Handle wallet connection with proper error handling
-  const handleConnectWallet = async () => {
-    if (!ready) {
-      toast.error("Privy is not ready yet. Please wait a moment.");
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      await connectWallet();
-      toast.success("Wallet connected successfully!");
-    } catch (error: any) {
-      console.error("Error connecting wallet:", error);
-      
-      // Handle specific error cases
-      if (error?.message?.includes("User rejected")) {
-        toast.error("Connection cancelled by user");
-      } else if (error?.message?.includes("No wallet")) {
-        toast.error("Please install a wallet extension like MetaMask");
-      } else {
-        toast.error("Failed to connect wallet. Please try again.");
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  };
 
   // Handle email/SMS login
   const handleEmailLogin = async () => {
@@ -309,8 +277,7 @@ export default function WalletSelector() {
 
     setIsConnecting(true);
     try {
-      await login();
-      toast.success("Logged in successfully!");
+      await login(); 
     } catch (error: any) {
       console.error("Error with email login:", error);
       toast.error("Failed to login. Please try again.");

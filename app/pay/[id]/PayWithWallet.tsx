@@ -40,7 +40,7 @@ export default function PayWithWallet({
   // Function to save a new transaction (Pending)
   const saveTransactionToDB = async (
     merchantId: string,
-    walletAddress: string,
+    wallet: string,
     amount: string,
     currency: string,
     description: string | undefined,
@@ -55,7 +55,7 @@ export default function PayWithWallet({
         },
         body: JSON.stringify({
           merchantId,
-          wallet: walletAddress,
+          wallet: wallet,
           amount,
           currency,
           description: description || undefined,

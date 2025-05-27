@@ -30,7 +30,7 @@ export async function syncPrivyUser(privyUser: PrivyUser): Promise<UserData> {
       email: privyUser.email?.address,
       name: null, // Can be updated later
       isActive: true,
-      wallet: privyUser.wallet?.address || '', // Match Prisma's expected string type
+      wallet: privyUser.wallet?.address,
     };
 
     const user = await prisma.user.upsert({

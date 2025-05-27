@@ -28,9 +28,9 @@ export function useUserSync() {
           body: JSON.stringify({ privyUser: user }),
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to sync user');
-        }
+        // if (!response.ok) {
+        //   throw new Error('Failed to sync user');
+        // }
 
         const result = await response.json();
         setUserData(result.user);
@@ -43,6 +43,7 @@ export function useUserSync() {
         console.log('privy user:', user);
         console.error('Error syncing user:', error);
         toast.error('Failed to sync user data');
+
       } finally {
         setIsLoading(false);
       }
