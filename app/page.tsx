@@ -7,12 +7,16 @@ import { usePrivy } from "@privy-io/react-auth";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import { stablecoins } from "./data/stablecoins";
+import WalletSelector from "./components/WalletSelector";
+import { useRef } from "react";
+
 
 function HomeContent() {
   const [mounted, setMounted] = useState(false);
   const [expandedFaqs, setExpandedFaqs] = useState<{ [key: number]: boolean }>({});
   const router = useRouter();
   const { authenticated, user } = usePrivy();
+  const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
 
   const toggleFaq = useCallback((index: number) => {
     setExpandedFaqs((prev) => ({
@@ -182,30 +186,23 @@ function HomeContent() {
               </div>
             </div>
 
-            {authenticated ? (
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center border-2 border-blue-400/30 w-full sm:w-auto justify-center"
-              >
-                <span className="mr-2">Go to Dashboard</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+            {!authenticated && (
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={() => {
+                    if (walletSelectorRef.current) {
+                      walletSelectorRef.current.triggerLogin();
+                    }
+                  }}
+                  className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm sm:text-base py-3 px-6 rounded-lg border-2 border-blue-400 dark:border-blue-300 transition-all duration-200 shadow-md w-full sm:w-auto max-w-xs mx-auto"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Connect your wallet using the button in the header to get started.
-              </p>
-            )}
+                  <span className="text-center">Sign in with Email or Wallet</span>
+                </button>
+                <span hidden={true}><WalletSelector ref={walletSelectorRef} /></span>
+                <p>Sign with Email or Connect your wallet to get started and access Dashboard.</p>
+              </div>
+            )
+            }
           </div>
 
           <div className="w-full lg:w-1/2 relative">
@@ -824,82 +821,44 @@ function HomeContent() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            {authenticated ? (
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="bg-white text-blue-600 hover:bg-blue-50 font-bold py-4 px-10 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center group relative overflow-hidden"
-              >
-                <span className="relative z-10 mr-2 group-hover:mr-4 transition-all duration-300">
-                  Go to Dashboard
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="relative z-10 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+          {!authenticated && (
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={() => {
+                    if (walletSelectorRef.current) {
+                      walletSelectorRef.current.triggerLogin();
+                    }
+                  }}
+                  className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm sm:text-base py-3 px-6 rounded-lg border-2 border-blue-400 dark:border-blue-300 transition-all duration-200 shadow-md w-full sm:w-auto max-w-xs mx-auto"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-              </button>
-            ) : (
-              <p className="text-sm text-blue-100">
-                Connect your wallet using the button in the header to get started.
-              </p>
-            )}
+                  <span className="text-center">Sign in with Email or Wallet</span>
+                </button>
+                <span hidden={true}><WalletSelector ref={walletSelectorRef} /></span>
+              </div>
+            )
+            }
           </div>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <div className="flex items-center text-sm text-blue-100">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2 text-blue-200"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>No setup fees</span>
-            </div>
-            <div className="flex items-center text-sm text-blue-100">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2 text-blue-200"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Instant settlements</span>
-            </div>
-            <div className="flex items-center text-sm text-blue-100">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2 text-blue-200"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Global stablecoins</span>
-            </div>
-          </div>
+      <div className="flex items-center text-sm text-blue-100">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-200" viewBox="0 0 20 20" fill="">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+        <span>No setup fees</span>
+      </div>
+      <div className="flex items-center text-sm text-blue-100">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-200" viewBox="0 0 20 20" fill="">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+        <span>Instant settlements</span>
+      </div>
+      <div className="flex items-center text-sm text-blue-100">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-200" viewBox="0 0 20 20" fill="">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+        <span>Global stablecoins</span>
+      </div>
+    </div>
         </div>
       </div>
       <Footer />

@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import { http, fallback } from "wagmi";
 import { createConfig as createPrivyConfig } from "@privy-io/wagmi";
 import { WagmiProvider } from "@privy-io/wagmi";
-import { coinbaseWallet, metaMask } from "wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PrivyProvider } from "@privy-io/react-auth";
 

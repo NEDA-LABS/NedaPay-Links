@@ -23,7 +23,6 @@ export interface UserData {
 
 // Create or update user when they sign in with Privy
 export async function syncPrivyUser(privyUser: PrivyUser): Promise<UserData> {
-  console.log('Syncing Privy user:', privyUser); //debugging
   try {
     const userData = {
       privyUserId: privyUser.id,

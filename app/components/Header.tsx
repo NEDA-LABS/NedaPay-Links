@@ -6,6 +6,8 @@ import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 import WalletSelector from "./WalletSelector";
 import NotificationTab from "./NotificationTab";
+import { FaGear } from "react-icons/fa6";
+import { usePrivy } from "@privy-io/react-auth";
 
 export default function Header() {
   const [mounted, setMounted] = useState(false);
@@ -13,6 +15,8 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+
+  const { authenticated } = usePrivy();
 
   // Handle scroll effect for header
   useEffect(() => {
@@ -60,6 +64,23 @@ export default function Header() {
             width: 12px !important;
             height: 12px !important;
           }
+        }
+        .settings-gear {
+          transition: transform 0.3s ease-in-out;
+        }
+        .settings-button:hover .settings-gear {
+          transform: rotate(180deg);
+        }
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 5px rgba(99, 102, 241, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.6), 0 0 30px rgba(99, 102, 241, 0.4);
+          }
+        }
+        .settings-button:hover {
+          animation: pulse-glow 2s infinite;
         }
       `}</style>
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
@@ -154,7 +175,8 @@ export default function Header() {
               style={{ zIndex: 100 }}
             >
               <NotificationTab />
-              <button
+
+              <button 
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className={`p-2 rounded-full transition-all duration-300 ${
                   theme === "dark"
@@ -187,6 +209,17 @@ export default function Header() {
                   </svg>
                 )}
               </button>
+              {/* Settings Button */}
+              {authenticated && (
+                <Link
+                href="/settings"
+                aria-label="Settings"
+              >
+              <button className="p-2 rounded-full transition-all duration-300"><FaGear size={16}/></button>
+              
+              </Link>
+              )}
+              
               <WalletSelector />
             </div>
           </div>

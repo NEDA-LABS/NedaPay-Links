@@ -26,6 +26,7 @@ import ChartComponent from "./ChartComponet"; // Corrected typo
 import PieComponent from "./PieComponent";
 import SwapModal from "./SwapModal";
 import Footer from "../components/Footer";
+import { BasenameDisplay } from "../components/WalletSelector";
 
 // Register ChartJS components
 ChartJS.register(
@@ -615,13 +616,14 @@ export default function MerchantDashboard() {
                         if (hour < 18) return "🌤️ Good Afternoon";
                         return "🌙 Good Evening";
                       })()}
-                      {baseName ? (
-                        ` ${baseName}`
-                      ) : (
-                        <Name
-                          address={selectedWalletAddress as `0x${string}`}
-                          chain={base}
-                        />
+                      {selectedWalletAddress && (
+                        <div className="text-xl font-bold">
+                          <BasenameDisplay 
+                            address={selectedWalletAddress}
+                            basenameClassName="text-xl font-bold"
+                            isMobile={false}
+                          />
+                        </div>
                       )}
                     </h2>
                     <p className="text-white text-opacity-90 animate-fadeIn animation-delay-200">
@@ -633,9 +635,7 @@ export default function MerchantDashboard() {
                           "Need help? We're just a click away to support your business journey.",
                           "Your success is our success. Let's make today count!",
                         ];
-                        return messages[
-                          Math.floor(Math.random() * messages.length)
-                        ];
+                        return messages[Math.floor(Math.random() * messages.length)];
                       })()}
                     </p>
                     <div className="mt-3 flex space-x-3 animate-fadeIn animation-delay-300">
