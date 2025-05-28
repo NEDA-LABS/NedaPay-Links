@@ -382,7 +382,15 @@ export default function AnalyticsContent() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-white dark:bg-gray-900 dark:text-white">
       <Header />
-      <div className="flex-grow">
+      <div className="global my-4">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center gap-2 px-3 py-1 border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium"
+        >
+          <span aria-hidden="true">←</span> Back
+        </button>
+      </div>
+      <div className="global flex-grow">
         {!isConnected || !address ? (
           <div className="container mx-auto max-w-6xl px-4 py-12">
             <p className="text-red-500">Please connect your wallet to view analytics.</p>

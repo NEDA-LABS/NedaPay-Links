@@ -156,7 +156,7 @@ function HomeContent() {
       `}</style>
       <Header />
 
-      <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12" style={{ zIndex: -100 }}>
+      <div className="global container mx-auto max-w-7xl px-4 py-8 md:py-12" style={{ zIndex: -100 }}>
         {/* Hero Section */}
         <div className="hero-section flex flex-col lg:flex-row items-center justify-between mb-16 gap-4 sm:gap-8 p-4 sm:p-6 bg-white/20 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800 shadow-lg">
           <div className="w-full lg:w-1/2 text-left">

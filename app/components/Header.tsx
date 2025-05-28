@@ -178,7 +178,7 @@ export default function Header() {
 
               <button 
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className={`p-2 rounded-full transition-all duration-300 ${
+                className={`g p-2 rounded-full transition-all duration-300${
                   theme === "dark"
                     ? "bg-slate-700 text-amber-300 hover:bg-slate-600 hover:text-amber-200"
                     : "bg-blue-100 text-blue-800 hover:bg-blue-200"

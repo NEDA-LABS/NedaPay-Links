@@ -52,7 +52,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 pb-24 font-sans">
+    <div className="global min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 pb-24 font-sans">
       <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 space-y-6 transition-all duration-300">
         {/* Header */}
         <div className="flex flex-col items-center space-y-2">

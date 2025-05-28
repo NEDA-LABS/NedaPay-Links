@@ -16,6 +16,7 @@
   --input-border: #e2e8f0; /* Slate-200 */
   --input-text: #000000; /* Black */
   --input-placeholder: #94a3b8; /* Slate-400 */
+  --table-header-bg: #f8fafc50; /* Very light gray */
   --card-bg: #ffffff; /* White */
   --card-text: #000000; /* Black */
   --scrollbar-track: #f1f5f9; /* Light gray */
@@ -140,8 +141,9 @@ html {
   box-shadow: 0 0 16px 4px var(--primary), 0 4px 32px 0 var(--accent);
 }
 
+
 /* Neon Buttons */
-.btn, .button, button {
+.btn, .button, header button, .global button {
   background: linear-gradient(90deg, var(--primary), var(--accent) 70%);
   /* color: #fff; */
   border: none;
@@ -152,7 +154,7 @@ html {
   padding: 0.75em 2em;
   transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
 }
-.btn:hover, .button:hover, button:hover {
+.btn:hover, .button:hover, header button:hover, .global button:hover {
   background: linear-gradient(90deg, var(--accent), var(--primary) 70%);
   box-shadow: 0 0 16px 4px var(--accent-light);
   transform: translateY(-1px) scale(1.01);
@@ -290,6 +292,10 @@ input:-webkit-autofill:focus {
   background-color: var(--input-bg);
   color: var(--input-text) ;
   border-color: var(--input-border);
+}
+
+thead {
+  background-color: var(--table-header-bg);
 }
 
 /* Ensure table text is visible */

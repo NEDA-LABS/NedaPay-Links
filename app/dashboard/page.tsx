@@ -567,7 +567,7 @@ export default function MerchantDashboard() {
       <Toaster position="top-right" />
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-white dark:bg-gray-900 dark:text-white">
         <Header />
-        <div className="my-4">
+        <div className="global my-4">
           <button
             onClick={() => window.history.back()}
             className="flex items-center gap-2 px-3 py-1 border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium"
@@ -638,7 +638,7 @@ export default function MerchantDashboard() {
                         return messages[Math.floor(Math.random() * messages.length)];
                       })()}
                     </p>
-                    <div className="mt-3 flex space-x-3 animate-fadeIn animation-delay-300">
+                    <div className="global mt-3 flex space-x-3 animate-fadeIn animation-delay-300">
                       <button
                         onClick={() => {
                           setIsLoadingPaymentLink(true);
@@ -695,43 +695,8 @@ export default function MerchantDashboard() {
                 <div className="text-sm font-medium text-black dark:text-white">
                 Wallet Address:
                 </div>
-                <div className="text-sm text-white/90">
-                  {selectedWalletType === "smart" && smartWalletLoading && (
-                    <span>Loading smart wallet address...</span>
-                  )}
-                  {selectedWalletType === "smart" &&
-                    !smartWalletLoading &&
-                    (!smartWalletAddress || smartWalletAddress === address) && (
-                      <span className="text-yellow-200">
-                        Smart wallet address not found. Please create or connect
-                        your smart wallet.
-                      </span>
-                    )}
-                  {selectedWalletType === "smart" &&
-                    !smartWalletLoading &&
-                    smartWalletAddress &&
-                    smartWalletAddress !== address && (
-                      <span className="inline-flex items-center gap-2">
-                        {`${smartWalletAddress.substring(
-                          0,
-                          10
-                        )}...${smartWalletAddress.substring(
-                          smartWalletAddress.length - 8
-                        )}`}
-                        <button
-                          className="ml-1 px-2 py-0.5 rounded bg-slate-600 text-xs text-white hover:bg-slate-800 focus:outline-none"
-                          onClick={() => {
-                            navigator.clipboard.writeText(smartWalletAddress);
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 1200);
-                          }}
-                          title="Copy address"
-                        >
-                          {copied ? "Copied!" : "Copy"}
-                        </button>
-                      </span>
-                    )}
-                  {selectedWalletType !== "smart" && selectedWalletAddress && (
+                <div className="global text-sm text-white/90">                 
+                  {selectedWalletAddress && (
                     <span className="inline-flex items-center gap-2">
                       {`${selectedWalletAddress.substring(
                         0,
@@ -740,7 +705,7 @@ export default function MerchantDashboard() {
                         selectedWalletAddress.length - 8
                       )}`}
                       <button
-                        className="ml-1 px-2 py-0.5 rounded bg-slate-600 text-xs text-white hover:bg-slate-800 focus:outline-none"
+                        className="ml-1 rounded bg-slate-600 text-xs text-white hover:bg-slate-800 focus:outline-none"
                         onClick={() => {
                           navigator.clipboard.writeText(selectedWalletAddress);
                           setCopied(true);
@@ -1115,7 +1080,7 @@ export default function MerchantDashboard() {
                 colSpan={5}
                 className="px-2 sm:px-6 py-6 sm:py-10 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400"
               >
-                <div className="flex flex-col items-center justify-center space-y-2">
+                <div className="global flex flex-col items-center justify-center space-y-2">
                   <svg
                     className="w-8 sm:w-12 h-8 sm:h-12 text-gray-400"
                     fill="none"
@@ -1335,7 +1300,7 @@ export default function MerchantDashboard() {
       <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-gray-100 dark:from-gray-800 to-transparent pointer-events-none"></div>
       <div className="absolute inset-y-0 right-0 w-2 bg-gradient-to-l from-gray-100 dark:from-gray-800 to-transparent pointer-events-none"></div>
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-700">
+        <thead className="">
           <tr>
             <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider max-w-[120px]">
               Coin
@@ -1348,7 +1313,7 @@ export default function MerchantDashboard() {
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="global divide-y divide-gray-200 dark:divide-gray-700">
           {processedBalances.map((coin: any, index: any) => {
             const balanceNum = parseFloat(
               String(coin.balance).replace(/,/g, "")
@@ -1440,7 +1405,7 @@ export default function MerchantDashboard() {
             )}
           </div>
           {/* Quick Actions */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg max-w-md mx-auto" style={{width: "79%"}}>
+            <div className="global bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg max-w-md mx-auto" style={{width: "79%"}}>
             <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
             
             <div className="space-y-4">
