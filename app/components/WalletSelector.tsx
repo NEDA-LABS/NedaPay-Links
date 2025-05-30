@@ -2,13 +2,14 @@
 
 import toast from "react-hot-toast";
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { base } from "wagmi/chains";
 import { Name } from "@coinbase/onchainkit/identity";
 import { getBasename } from "../utils/getBaseName";
 import { useUserSync } from "../hooks/useUserSync";
 import { useLinkAccount } from "@privy-io/react-auth";
+import AuthenticationModal from "./AuthenticationModal";
 
 // Type definitions for BasenameDisplay component
 interface BasenameDisplayProps {
@@ -22,8 +23,8 @@ interface BasenameDisplayProps {
 const BasenameDisplay: React.FC<BasenameDisplayProps> = ({
   address,
   basenameClassName = "",
+  addressClassName = "",
   isMobile = false,
-  addressClassName=""
 }) => {
   const [baseName, setBaseName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -184,10 +185,10 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
 
     const [showOptions, setShowOptions] = useState<boolean>(false);
     const [isConnecting, setIsConnecting] = useState<boolean>(false);
-    const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
+    const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    const isInitialRedirect = useRef<boolean>(true);
+    const pathname = usePathname();
 
     // Email sync and update
     const { userData, isLoading: userLoading, addEmail, hasEmail } = useUserSync();
@@ -219,6 +220,22 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
     const emailAddress = user?.email?.address;
     const isConnected = authenticated && (walletAddress || emailAddress);
 
+    // Show authentication modal only on / and once per session
+    useEffect(() => {
+      if (
+        ready &&
+        authenticated &&
+        (walletAddress || emailAddress) &&
+        pathname === "/"
+      ) {
+        const hasShown = sessionStorage.getItem("hasShownAuthModal") === "true";
+        if (!hasShown) {
+          setShowAuthModal(true);
+          sessionStorage.setItem("hasShownAuthModal", "true");
+        }
+      }
+    }, [ready, authenticated, walletAddress, emailAddress, pathname]);
+
     // Expose handleEmailLogin via ref
     const handleEmailLogin = useCallback(async () => {
       if (!ready) {
@@ -227,21 +244,20 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
       }
 
       setIsConnecting(true);
-      setIsRedirecting(true);
       try {
         await login();
-        const minDisplayTime = 2000;
-        setTimeout(() => {
-          setIsRedirecting(false);
-        }, minDisplayTime);
+        // Trigger modal if on /
+        if (pathname === "/" && sessionStorage.getItem("hasShownAuthModal") !== "true") {
+          setShowAuthModal(true);
+          sessionStorage.setItem("hasShownAuthModal", "true");
+        }
       } catch (error: any) {
         console.error("Error with email login:", error);
         toast.error("Failed to login. Please try again.");
-        setIsRedirecting(false);
       } finally {
         setIsConnecting(false);
       }
-    }, [ready, login]);
+    }, [ready, login, pathname]);
 
     useImperativeHandle(ref, () => ({
       triggerLogin: handleEmailLogin,
@@ -333,22 +349,6 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
             })
           );
         }
-
-        const path = window.location.pathname.replace(/\/+$/, "");
-        if ((path === "" || path === "/") && isInitialRedirect.current) {
-          console.log("Initiating redirect to /dashboard", { address, isConnected });
-          setIsRedirecting(true);
-          const minDisplayTime = 2000;
-
-          const redirectTimeout = setTimeout(() => {
-            setIsRedirecting(false);
-          }, minDisplayTime);
-
-          router.push("/dashboard");
-          isInitialRedirect.current = false;
-
-          return () => clearTimeout(redirectTimeout);
-        }
       } else {
         if (typeof window !== "undefined") {
           localStorage.removeItem("walletConnected");
@@ -357,10 +357,8 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
 
           window.dispatchEvent(new CustomEvent("walletDisconnected"));
         }
-        setIsRedirecting(false);
-        isInitialRedirect.current = true;
       }
-    }, [ready, isConnected, walletAddress, emailAddress, router]);
+    }, [ready, isConnected, walletAddress, emailAddress]);
 
     // Handle logout
     const handleLogout = async () => {
@@ -371,6 +369,7 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
         if (typeof window !== "undefined") {
           localStorage.removeItem("walletConnected");
           localStorage.removeItem("walletAddress");
+          sessionStorage.removeItem("hasShownAuthModal"); // Reset modal state
           document.cookie = "wallet_connected=; path=/; max-age=0; SameSite=Lax";
         }
 
@@ -449,24 +448,26 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
               {renderWalletIcon()}
             </div>
 
-            <div className="wallet-address-container flex-1 min-w-0">
-              {walletAddress ? (
-                <div className="wallet-address text-xs sm:text-sm font-bold">
-                  <BasenameDisplay
-                    address={walletAddress}
-                    basenameClassName="basename-display"
-                    addressClassName="address-display"
-                    isMobile={true}
-                  />
-                </div>
-              ) : emailAddress ? (
-                <span className="wallet-address text-xs sm:text-sm font-bold">
-                  {formatEmail(emailAddress, 15)}
-                </span>
-              ) : (
-                <span className="wallet-address text-xs sm:text-sm font-bold">Connected</span>
-              )}
-            </div>
+            {pathname !== "/" && (
+              <div className="wallet-address-container flex-1 min-w-0">
+                {walletAddress ? (
+                  <div className="wallet-address text-xs sm:text-sm font-bold">
+                    <BasenameDisplay
+                      address={walletAddress}
+                      basenameClassName="basename-display"
+                      addressClassName="address-display"
+                      isMobile={true}
+                    />
+                  </div>
+                ) : emailAddress ? (
+                  <span className="wallet-address text-xs sm:text-sm font-bold">
+                    {formatEmail(emailAddress, 15)}
+                  </span>
+                ) : (
+                  <span className="wallet-address text-xs sm:text-sm font-bold">Connected</span>
+                )}
+              </div>
+            )}
 
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -563,33 +564,13 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
           </div>
         )}
 
-        {isRedirecting && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
-            <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-              <svg
-                className="animate-spin h-8 w-8 text-blue-500 dark:text-blue-400"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                ></path>
-              </svg>
-              <span className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                Loading Dashboard...
-              </span>
-            </div>
+        {showAuthModal && isConnected && (
+          <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4">
+            <AuthenticationModal
+              isOpen={showAuthModal}
+              onClose={() => setShowAuthModal(false)}
+              address={walletAddress || emailAddress || ""}
+            />
           </div>
         )}
       </div>

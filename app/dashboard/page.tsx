@@ -567,14 +567,6 @@ export default function MerchantDashboard() {
       <Toaster position="top-right" />
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-white dark:bg-gray-900 dark:text-white">
         <Header />
-        <div className="global my-4">
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 px-3 py-1 border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium"
-          >
-            <span aria-hidden="true">←</span> Back
-          </button>
-        </div>
         {networkWarning && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative m-4">
             <strong className="font-bold">Network Error:</strong>
@@ -590,7 +582,7 @@ export default function MerchantDashboard() {
             <div className="mb-8">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2 text-slate-800 dark:text-slate-100">
+                  <h1 className="text-xl font-bold mb-2 text-slate-800 dark:text-slate-100">
                     Merchant Dashboard
                   </h1>
                   <p className="text-slate-600 dark:text-slate-300 text-base">

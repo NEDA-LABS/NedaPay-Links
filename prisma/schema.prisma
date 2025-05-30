@@ -1,110 +1,160 @@
 // Prisma schema for NEDA Pay Merchant Portal
 // Using PostgreSQL for local dev and prod
-
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  directUrl  = env("DIRECT_URL")
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// New User model for Privy integration
+// Updated User model for Privy integration with merchant settings
 model User {
-  id           String   @id @default(uuid())
-  email        String?   @unique
-  wallet       String?  @unique
-  privyUserId  String   @unique // Privy's internal user ID
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  name         String?
-  isActive     Boolean  @default(true)
+  id String @id @default(uuid())
+  email String? @unique
+  wallet String? @unique
+  privyUserId String @unique // Privy's internal user ID
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name String?
+  isActive Boolean @default(true)
+  
+  // Relation to merchant settings
+  merchantSettings MerchantSettings?
+  apiKeys ApiKey[]
+}
+
+// New model for merchant business profile and settings
+model MerchantSettings {
+  id String @id @default(uuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Business Profile
+  businessName String?
+  businessEmail String?
+  businessPhone String?
+  businessCategory String? // 'retail', 'food', 'services', 'technology', 'education', 'other'
+  businessDescription String?
+  
+  // Payment Settings
+  autoSettlement Boolean @default(true)
+  settlementThreshold Float @default(1000)
+  settlementCurrency String @default("TSHC")
+  paymentExpiry Int @default(60) // in minutes
+  
+  // Security Settings
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String? // encrypted TOTP secret
+  withdrawalConfirmation Boolean @default(true)
+  
+  // Notification Settings
+  transactionNotifications Boolean @default(true)
+  settlementNotifications Boolean @default(true)
+  securityAlerts Boolean @default(true)
+  marketingUpdates Boolean @default(false)
+  
+  // Webhook Settings
+  webhookUrl String?
+  webhookSecret String? // for webhook signature verification
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// New model for API key management
+model ApiKey {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  keyId String @unique // public key identifier
+  hashedKey String // hashed version of the API key
+  environment String // 'live' or 'test'
+  name String? // optional name for the key
+  lastUsed DateTime?
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([keyId])
+  @@index([userId, environment])
 }
 
 model Transaction {
-  id         String       @id @default(uuid())
+  id String @id @default(uuid())
   merchantId String
-  wallet     String
-  amount     Float
-  currency   String
-  status     String
-  txHash     String
-  createdAt  DateTime     @default(now())
-
-  invoice    Invoice?     @relation("TransactionInvoice")
-  invoiceId  String?      @unique
-
+  wallet String
+  amount Float
+  currency String
+  status String
+  txHash String
+  createdAt DateTime @default(now())
+  invoice Invoice? @relation("TransactionInvoice")
+  invoiceId String? @unique
   Notification Notification[] @relation("TransactionNotification")
 }
 
 model PaymentLink {
-  id          String       @id @default(uuid())
-  merchantId  String
-  url         String       @unique
-  amount      Float
-  currency    String
+  id String @id @default(uuid())
+  merchantId String
+  url String @unique
+  amount Float
+  currency String
   description String?
-  status      String       // e.g. 'active', 'redeemed', 'expired'
-  createdAt   DateTime     @default(now())
-  redeemedAt  DateTime?
-
-  invoice     Invoice?     @relation("PaymentLinkInvoice")
-  invoiceId   String?      @unique
-
+  status String // e.g. 'active', 'redeemed', 'expired'
+  createdAt DateTime @default(now())
+  redeemedAt DateTime?
+  invoice Invoice? @relation("PaymentLinkInvoice")
+  invoiceId String? @unique
   Notification Notification[] @relation("PaymentLinkNotification")
 }
 
 model Notification {
-  id                   String       @id @default(uuid())
-  message              String
-  recipient            String       // e.g., merchantId or customer wallet address
-  type                 String       // e.g., 'payment', 'link_redeemed', 'invoice_sent'
-  status               String       // e.g., 'unread', 'read'
-  createdAt            DateTime     @default(now())
-
-  relatedTransaction   Transaction? @relation("TransactionNotification", fields: [relatedTransactionId], references: [id])
-  relatedTransactionId String?      @unique
-
-  relatedPaymentLink   PaymentLink? @relation("PaymentLinkNotification", fields: [relatedPaymentLinkId], references: [id])
-  relatedPaymentLinkId String?      @unique
-
-  relatedInvoice       Invoice?     @relation("InvoiceNotification", fields: [relatedInvoiceId], references: [id])
-  relatedInvoiceId     String?      @unique
+  id String @id @default(uuid())
+  message String
+  recipient String // e.g., merchantId or customer wallet address
+  type String // e.g., 'payment', 'link_redeemed', 'invoice_sent'
+  status String // e.g., 'unread', 'read'
+  createdAt DateTime @default(now())
+  relatedTransaction Transaction? @relation("TransactionNotification", fields: [relatedTransactionId], references: [id])
+  relatedTransactionId String? @unique
+  relatedPaymentLink PaymentLink? @relation("PaymentLinkNotification", fields: [relatedPaymentLinkId], references: [id])
+  relatedPaymentLinkId String? @unique
+  relatedInvoice Invoice? @relation("InvoiceNotification", fields: [relatedInvoiceId], references: [id])
+  relatedInvoiceId String? @unique
 }
 
 model Invoice {
-  id                String           @id @default(uuid())
-  merchantId        String
-  recipient         String
-  email             String
-  paymentCollection String           // e.g., 'one-time', 'recurring'
-  dueDate           DateTime
-  currency          String
-  totalAmount       Float            @default(0)
-  status            String           // e.g., 'draft', 'sent', 'paid', 'overdue', 'canceled'
-  createdAt         DateTime         @default(now())
-  sentAt            DateTime?
-  paidAt            DateTime?
-  canceledAt        DateTime?
-
-  transaction       Transaction?     @relation("TransactionInvoice", fields: [transactionId], references: [id])
-  transactionId     String?          @unique
-
-  paymentLink       PaymentLink?     @relation("PaymentLinkInvoice", fields: [paymentLinkId], references: [id])
-  paymentLinkId     String?          @unique
-
-  lineItems         InvoiceLineItem[]
-  Notification      Notification[]   @relation("InvoiceNotification")
+  id String @id @default(uuid())
+  merchantId String
+  recipient String
+  email String
+  paymentCollection String // e.g., 'one-time', 'recurring'
+  dueDate DateTime
+  currency String
+  totalAmount Float @default(0)
+  status String // e.g., 'draft', 'sent', 'paid', 'overdue', 'canceled'
+  createdAt DateTime @default(now())
+  sentAt DateTime?
+  paidAt DateTime?
+  canceledAt DateTime?
+  transaction Transaction? @relation("TransactionInvoice", fields: [transactionId], references: [id])
+  transactionId String? @unique
+  paymentLink PaymentLink? @relation("PaymentLinkInvoice", fields: [paymentLinkId], references: [id])
+  paymentLinkId String? @unique
+  lineItems InvoiceLineItem[]
+  Notification Notification[] @relation("InvoiceNotification")
 }
 
 model InvoiceLineItem {
-  id          String   @id @default(uuid())
-  invoiceId   String
+  id String @id @default(uuid())
+  invoiceId String
   description String
-  amount      Float    @default(0)
-  createdAt   DateTime @default(now())
-
-  Invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount Float @default(0)
+  createdAt DateTime @default(now())
+  Invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }

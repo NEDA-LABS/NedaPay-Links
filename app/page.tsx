@@ -29,15 +29,17 @@ function HomeContent() {
     setMounted(true);
   }, []);
 
-  // Redirect to dashboard if authenticated and on homepage
-  useEffect(() => {
-    if (mounted && authenticated && (user?.wallet?.address || user?.email?.address)) {
-      const path = window.location.pathname.replace(/\/+$/, "");
-      if (path === "" || path === "/") {
-        router.push("/dashboard");
-      }
-    }
-  }, [mounted, authenticated, user, router]);
+  // Show auth modal only once when authenticated
+  // useEffect(() => {
+  //   if (mounted && authenticated && (user?.wallet?.address || user?.email?.address)) {
+  //     const address = user?.wallet?.address || user?.email?.address;
+  //     if (!hasShownAuthModal) {
+  //       setShowAuthModal(true);
+  //       setHasShownAuthModal(true);
+  //     }
+  //   }
+  // }, [mounted, authenticated, user, hasShownAuthModal]);
+
 
   if (!mounted) return null;
 
@@ -47,111 +49,260 @@ function HomeContent() {
       style={{ "--tw-text-opacity": "1" } as React.CSSProperties}
     >
       <style jsx global>{`
+        :root {
+            --primary-glow: #3b82f6;
+            --secondary-glow: #6366f1;
+            --accent-glow: #8b5cf6;
+        }
+
         .dark h2,
         .dark h3,
         .dark p,
         .dark span,
         .dark summary,
         .dark div {
-          color: white !important;
+            color: white !important;
         }
+        
         .dark .text-gray-300,
         .dark .text-gray-500,
         .dark .text-gray-600,
         .dark .text-gray-700 {
-          color: white !important;
+            color: white !important;
         }
+
+        /* Enhanced floating animation with rotation and scale */
         .animate-float {
-          animation: float 3s ease-in-out infinite;
+            animation: float 3s ease-in-out infinite;
         }
+
         @keyframes float {
-          0% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-          100% {
-            transform: translateY(0px);
-          }
+            0% {
+                transform: translateY(0px) scale(1) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-5px) scale(1.02) rotate(0.5deg);
+            }
+            50% {
+                transform: translateY(-10px) scale(1.05) rotate(0deg);
+            }
+            75% {
+                transform: translateY(-5px) scale(1.02) rotate(-0.5deg);
+            }
+            100% {
+                transform: translateY(0px) scale(1) rotate(0deg);
+            }
         }
-        .animate-pulse-slow {
-          animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+        /* Advanced glow and shimmer effects */
+        .glow-border {
+            position: relative;
+            border: 2px solid transparent;
+            
+            border-radius: 1rem;
         }
-        @keyframes pulse {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.8;
-          }
+
+        .glow-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            padding: 2px;
+            border-radius: inherit;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: xor;
+            animation: borderRotate 4s linear infinite;
         }
-        /* Mobile-specific styles for stablecoins and hero section */
+
+        @keyframes borderRotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Particle effect background */
+        .particle-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 1rem;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: particle-float 8s infinite linear;
+        }
+
+        @keyframes particle-float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Enhanced hover effects */
+        .stablecoin-item {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(100, 100, 100, 0.44);
+            box-shadow: 
+                
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .stablecoin-item:hover {
+            transform: translateY(-8px) scale(1.08);
+            box-shadow: 
+                0 20px 60px rgba(59, 130, 246, 0.4),
+                0 0 30px rgba(99, 102, 241, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        /* Holographic text effect */
+        .holographic {
+            background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+            background-size: 300% 300%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: holographic 3s ease-in-out infinite;
+        }
+
+        @keyframes holographic {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+
+        /* Enhanced blur orbs */
+        .blur-orb {
+            animation: orbit 10s infinite linear;
+            filter: blur(40px);
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+        }
+
+        /* Grid container enhancements */
+        .stablecoin-grid {
+            position: relative;
+            z-index: 10;
+        }
+
+        .stablecoin-grid::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            background: linear-gradient(45deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            border-radius: 2rem;
+            animation: gridGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes gridGlow {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.7; }
+        }
+
+        /* Flag emoji enhancement */
+        .stablecoin-flag {
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+            transition: all 0.3s ease;
+        }
+
+        .stablecoin-item:hover .stablecoin-flag {
+            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.8));
+            transform: scale(1.2);
+        }
+
+        /* Responsive styles */
         @media (max-width: 640px) {
-          .hero-section {
-            flex-direction: column !important; /* Stack vertically on mobile */
-          }
-          .stablecoin-grid {
-            display: grid !important; /* Retain grid layout for the flags */
-            grid-template-columns: repeat(3, 1fr) !important; /* Keep 3-column grid */
-            gap: 12px !important;
-            width: 100% !important; /* Full width on mobile */
-            max-width: 100% !important; /* Ensure it doesn't exceed container */
-            margin: 0 auto;
-          }
-          .stablecoin-item {
-            padding: 8px !important;
-            font-size: 0.85rem !important;
-            border-width: 1px !important;
-          }
-          .stablecoin-flag {
-            font-size: 1.5rem !important;
-            margin-bottom: 2px !important;
-          }
-          .stablecoin-name {
-            font-size: 0.75rem !important;
-            font-weight: bold !important;
-            margin-bottom: 0 !important;
-          }
-          .stablecoin-region {
-            font-size: 0.65rem !important;
-            text-align: center !important;
-            line-height: 1 !important;
-          }
-          .hero-feature-item {
-            padding: 8px !important;
-            font-size: 0.85rem !important;
-          }
-          .hero-feature-icon {
-            font-size: 1.25rem !important;
-            margin-right: 8px !important;
-          }
+            .hero-section {
+                flex-direction: column !important;
+            }
+            
+            .stablecoin-grid {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 12px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 auto;
+            }
+            
+            .stablecoin-item {
+                padding: 8px !important;
+                font-size: 0.85rem !important;
+                border-width: 1px !important;
+            }
+            
+            .stablecoin-flag {
+                font-size: 1.5rem !important;
+                margin-bottom: 2px !important;
+            }
+            
+            .stablecoin-name {
+                font-size: 0.75rem !important;
+                font-weight: bold !important;
+                margin-bottom: 0 !important;
+            }
+            
+            .stablecoin-region {
+                font-size: 0.65rem !important;
+                text-align: center !important;
+                line-height: 1 !important;
+            }
         }
-        /* Desktop styles to ensure original layout */
+
         @media (min-width: 641px) {
-          .hero-section {
-            flex-direction: row !important; /* Side by side on desktop */
-          }
-          .stablecoin-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-          }
-          .stablecoin-item {
-            padding: 12px;
-          }
-          .stablecoin-flag {
-            font-size: 2rem;
-            margin-bottom: 4px;
-          }
-          .stablecoin-name {
-            font-size: 0.875rem;
-            font-weight: bold;
-          }
-          .stablecoin-region {
-            font-size: 0.75rem;
-          }
+            .hero-section {
+                flex-direction: row !important;
+            }
+            
+            .stablecoin-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+            
+            .stablecoin-item {
+                padding: 12px;
+            }
+            
+            .stablecoin-flag {
+                font-size: 2rem;
+                margin-bottom: 4px;
+            }
+            
+            .stablecoin-name {
+                font-size: 0.875rem;
+                font-weight: bold;
+            }
+            
+            .stablecoin-region {
+                font-size: 0.75rem;
+            }
         }
       `}</style>
       <Header />
@@ -186,7 +337,7 @@ function HomeContent() {
               </div>
             </div>
 
-            {!authenticated && (
+            {!authenticated ? (
               <div className="flex flex-col items-center gap-4">
                 <button
                   onClick={() => {
@@ -194,25 +345,34 @@ function HomeContent() {
                       walletSelectorRef.current.triggerLogin();
                     }
                   }}
-                  className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm sm:text-base py-3 px-6 rounded-lg border-2 border-blue-400 dark:border-blue-300 transition-all duration-200 shadow-md w-full sm:w-auto max-w-xs mx-auto"
+                  className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 font-bold py-3 px-6 rounded-lg border-2 border-blue-400 dark:border-blue-300 transition-all duration-200 shadow-md w-full sm:w-auto max-w-xs mx-auto"
                 >
-                  <span className="text-center">Sign in with Email or Wallet</span>
+                  <span className="text-l text-center" style={{color: "white"}}>Sign in with Email or Wallet</span>
                 </button>
                 <span hidden={true}><WalletSelector ref={walletSelectorRef} /></span>
-                <p>Sign with Email or Connect your wallet to get started and access Dashboard.</p>
+                <p className="flex items-center justify-center">Sign with Email or Connect your wallet to get started and access Dashboard.</p>
               </div>
+            ) : (
+                <div className="flex flex-col items-center gap-4">
+                  <button
+                  onClick={() => router.push('/dashboard')}
+                  className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm sm:text-base py-3 px-6 rounded-lg border-2 border-blue-400 dark:border-blue-300 transition-all duration-200 shadow-md w-full sm:w-auto max-w-xs mx-auto"
+                >
+                  <span className="text-center">Continue to Dashboard</span>
+                </button>
+                </div>
             )
             }
           </div>
 
           <div className="w-full lg:w-1/2 relative">
-            <div className="relative bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 p-3 sm:p-6 rounded-2xl shadow-2xl overflow-hidden border border-blue-200 dark:border-blue-700">
+            <div className="glow-border relative bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 p-3 sm:p-6 rounded-2xl shadow-2xl overflow-hidden border border-blue-200 dark:border-blue-700">
               <div className="absolute top-0 left-0 w-full h-full bg-white/20 dark:bg-blue-500/10 backdrop-blur-sm rounded-2xl"></div>
-              <div className="stablecoin-grid relative z-10 grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
+              <div className="stablecoin-grid relative z-10 grid grid-cols-3 gap-3 max-h-[400px]">
                 {stablecoins.map((coin: any, index: number) => (
                   <div
                     key={index}
-                    className={`stablecoin-item bg-white/80 dark:bg-gray-800/80 p-3 rounded-xl shadow-lg border border-blue-200 dark:border-blue-700 flex flex-col items-center justify-center animate-float`}
+                    className={`stablecoin-item bg-white/80 dark:bg-gray-800/80 p-3 rounded-xl shadow-lg dark:border-blue-700 flex flex-col items-center justify-center animate-float`}
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <div className="stablecoin-flag text-2xl mb-1">{coin.flag}</div>
@@ -820,8 +980,8 @@ function HomeContent() {
             stablecoins through NEDA Pay
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-          {!authenticated && (
+          <div className="global flex flex-col sm:flex-row items-center justify-center gap-6">
+          {!authenticated ? (
               <div className="flex flex-col items-center gap-4">
                 <button
                   onClick={() => {
@@ -829,11 +989,21 @@ function HomeContent() {
                       walletSelectorRef.current.triggerLogin();
                     }
                   }}
-                  className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm sm:text-base py-3 px-6 rounded-lg border-2 border-blue-400 dark:border-blue-300 transition-all duration-200 shadow-md w-full sm:w-auto max-w-xs mx-auto"
+                  className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 font-bold py-3 px-6 rounded-lg border-2 border-blue-400 dark:border-blue-300 transition-all duration-200 shadow-md w-full sm:w-auto max-w-xs mx-auto"
                 >
-                  <span className="text-center">Sign in with Email or Wallet</span>
+                  <span className="text-l text-center" style={{color: "white"}}>Sign in with Email or Wallet</span>
                 </button>
                 <span hidden={true}><WalletSelector ref={walletSelectorRef} /></span>
+                <p className="flex items-center justify-center">Sign with Email or Connect your wallet to get started and access Dashboard.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm sm:text-base py-3 px-6 rounded-lg border-2 border-blue-400 dark:border-blue-300 transition-all duration-200 shadow-md w-full sm:w-auto max-w-xs mx-auto"
+                >
+                  <span className="text-center">Continue to Dashboard</span>
+                </button>
               </div>
             )
             }

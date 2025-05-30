@@ -219,8 +219,8 @@ export default function Header() {
               
               </Link>
               )}
-              
               <WalletSelector />
+              
             </div>
           </div>
         </div>
