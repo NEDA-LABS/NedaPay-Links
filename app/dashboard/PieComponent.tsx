@@ -85,8 +85,6 @@ const PieChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const { theme } = useTheme();
 
-  console.log('Current theme:', theme); // debugging
-
   useEffect(() => {
     theme === 'dark' ? setIsDarkMode(true) : setIsDarkMode(false);
   }, [theme, setIsDarkMode]);

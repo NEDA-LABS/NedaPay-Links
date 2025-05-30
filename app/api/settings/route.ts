@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     // Get user with settings and API keys
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { privyUserId: userId },
       include: {
         merchantSettings: true,
         apiKeys: {
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (!settings) {
       settings = await prisma.merchantSettings.create({
         data: {
-          userId: userId,
+          userId: user.id,
           businessName: '',
           businessEmail: user.email || '',
           businessPhone: '',
@@ -201,18 +202,63 @@ export async function PUT(request: NextRequest) {
 // Helper function to extract user ID from request
 async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
   try {
-    // Example implementation for JWT token
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
-    if (!token) return null;
     
-    // Verify and decode your JWT token here
-    // For Privy integration, you might verify the Privy access token
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // return decoded.userId;
+    if (!token) {
+      console.log('No token provided');
+      return null;
+    }
+
+    // For Privy integration, we need to decode the JWT token directly
+    // Privy access tokens are JWTs that contain user information
+    try {
+      // Decode the JWT without verification first to see the structure
+      const decoded = jwt.decode(token) as any;
+      console.log('Decoded token payload:', decoded);
+      
+      if (decoded && decoded.sub) {
+        // The 'sub' (subject) field typically contains the user ID
+        return decoded.sub;
+      }
+      
+      // If you need to verify with Privy's API (use correct endpoint)
+      // if (process.env.PRIVY_APP_SECRET) {
+      //   const response = await fetch('https://auth.privy.io/api/v1/users/me', {
+      //     method: 'GET',
+      //     headers: {
+      //       'Authorization': `Bearer ${token}`,
+      //       'privy-app-id': process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+      //       'Content-Type': 'application/json',
+      //     },
+      //   });
+
+      //   if (response.ok) {
+      //     const userData = await response.json();
+      //     console.log('Privy user data:', userData);
+      //     return userData.id || userData.sub;
+      //   } else {
+      //     console.log('Privy API response not ok:', response.status, await response.text());
+      //   }
+      // }
+      
+    } catch (jwtError) {
+      console.log('JWT decode error:', jwtError);
+    }
     
-    // Placeholder - replace with your actual auth logic
-    return 'user-id-from-token';
+    // Fallback: For custom JWT tokens
+    // if (process.env.JWT_SECRET) {
+    //   try {
+    //     const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
+    //     return decoded.userId || decoded.sub;
+    //   } catch (verifyError) {
+    //     console.log('JWT verification failed:', verifyError);
+    //   }
+    // }
+
+    console.log('Could not extract user ID from token');
+    return null;
+    
   } catch (error) {
     console.error('Error extracting user ID:', error);
     return null;

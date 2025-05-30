@@ -79,6 +79,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
       try {
         setLoading(true);
         const accessToken = await getAccessToken();
+        console.log('debugging: Access token:', accessToken); //debugging
         const response = await fetch('/api/settings', {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -86,7 +87,9 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
         });
 
         if (!response.ok) {
+          console.log('debugging: Failed to fetch settings'); //debugging
           throw new Error('Failed to fetch settings');
+          
         }
 
         const data = await response.json();
