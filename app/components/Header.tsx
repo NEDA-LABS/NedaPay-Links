@@ -174,11 +174,13 @@ export default function Header() {
               className="flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 shadow-md border border-slate-200/50 dark:border-slate-700/50"
               style={{ zIndex: 100 }}
             >
-              <NotificationTab />
-
+            
+                <NotificationTab />
+              
+              
               <button 
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className={`g p-2 rounded-full transition-all duration-300${
+                className={`hbutton p-2 rounded-full transition-all duration-300${
                   theme === "dark"
                     ? "bg-slate-700 text-amber-300 hover:bg-slate-600 hover:text-amber-200"
                     : "bg-blue-100 text-blue-800 hover:bg-blue-200"
@@ -209,18 +211,17 @@ export default function Header() {
                   </svg>
                 )}
               </button>
-              {/* Settings Button */}
-              {authenticated && (
+                <WalletSelector />
+               {/* Settings Button */}
+               {authenticated && pathname !== '/' && (
                 <Link
                 href="/settings"
                 aria-label="Settings"
               >
-              <button className="p-2 rounded-full transition-all duration-300"><FaGear size={16}/></button>
+              <button className="hbutton p-2 rounded-full transition-all duration-300"><FaGear size={16}/></button>
               
               </Link>
               )}
-              <WalletSelector />
-              
             </div>
           </div>
         </div>

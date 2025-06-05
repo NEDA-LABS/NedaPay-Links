@@ -1,7 +1,14 @@
 "use client";
 
 import toast from "react-hot-toast";
-import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { base } from "wagmi/chains";
@@ -10,6 +17,8 @@ import { getBasename } from "../utils/getBaseName";
 import { useUserSync } from "../hooks/useUserSync";
 import { useLinkAccount } from "@privy-io/react-auth";
 import AuthenticationModal from "./AuthenticationModal";
+import WalletFundsModal from "./WalletFundsModal";
+import { FaWallet, FaSignOutAlt } from "react-icons/fa";
 
 // Type definitions for BasenameDisplay component
 interface BasenameDisplayProps {
@@ -43,7 +52,9 @@ const BasenameDisplay: React.FC<BasenameDisplayProps> = ({
       setIsLoading(true);
       try {
         const toHexAddress = (address: string): `0x${string}` => {
-          return (address.startsWith("0x") ? address : `0x${address}`) as `0x${string}`;
+          return (
+            address.startsWith("0x") ? address : `0x${address}`
+          ) as `0x${string}`;
         };
 
         const formattedAddress = toHexAddress(address);
@@ -84,7 +95,9 @@ const BasenameDisplay: React.FC<BasenameDisplayProps> = ({
 
   if (baseName) {
     return (
-      <span className={`text-sm text-black dark:text-white font-bold ${basenameClassName}`}>
+      <span
+        className={`text-sm text-black dark:text-white font-bold ${basenameClassName}`}
+      >
         {baseName}
       </span>
     );
@@ -103,10 +116,12 @@ interface WalletSelectorProps {
   triggerLogin?: () => void; // Optional prop, expects 0 arguments
 }
 
-const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorProps>(
-  ({ triggerLogin }, ref) => {
-    // Enhanced mobile-specific styles
-    const mobileStyles = `
+const WalletSelector = forwardRef<
+  { triggerLogin: () => void },
+  WalletSelectorProps
+>(({ triggerLogin }, ref) => {
+  // Enhanced mobile-specific styles
+  const mobileStyles = `
       @media (max-width: 640px) {
         .wallet-button {
           padding: 6px 10px !important;
@@ -164,6 +179,7 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
           padding: 4px 8px !important;
           font-size: 0.7rem !important;
           min-height: 32px !important;
+          max-width: 100px !important;
         }
         .wallet-icon {
           width: 16px !important;
@@ -183,122 +199,128 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
       }
     `;
 
-    const [showOptions, setShowOptions] = useState<boolean>(false);
-    const [isConnecting, setIsConnecting] = useState<boolean>(false);
-    const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const router = useRouter();
-    const pathname = usePathname();
+  const [showOptions, setShowOptions] = useState<boolean>(false);
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
 
-    // Email sync and update
-    const { userData, isLoading: userLoading, addEmail, hasEmail } = useUserSync();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
 
-    // Privy hooks
-    const {
+  // Email sync and update
+  const {
+    userData,
+    isLoading: userLoading,
+    addEmail,
+    hasEmail,
+  } = useUserSync();
+
+  // Privy hooks
+  const { authenticated, user, connectWallet, logout, ready, login } =
+    usePrivy();
+
+  // Link account hook
+  const { linkEmail } = useLinkAccount({
+    onSuccess: ({ user, linkMethod, linkedAccount }) => {
+      console.log("Linked account to user ", linkedAccount);
+      toast.success("Email linked successfully!");
+    },
+    onError: (error) => {
+      console.error("Failed to link account with error ", error);
+      toast.error("Failed to link email. Please try again.");
+    },
+  });
+
+  // Get the primary wallet address safely
+  const walletAddress = user?.wallet?.address;
+  const emailAddress = user?.email?.address;
+  const isConnected = authenticated && (walletAddress || emailAddress);
+
+  // Show authentication modal only on / and once per session
+  useEffect(() => {
+    if (
+      ready &&
+      authenticated &&
+      (walletAddress || emailAddress) &&
+      pathname === "/"
+    ) {
+      const hasShown = sessionStorage.getItem("hasShownAuthModal") === "true";
+      if (!hasShown) {
+        setShowAuthModal(true);
+        sessionStorage.setItem("hasShownAuthModal", "true");
+      }
+    }
+  }, [ready, authenticated, walletAddress, emailAddress, pathname]);
+
+  // Expose handleEmailLogin via ref
+  const handleEmailLogin = useCallback(async () => {
+    if (!ready) {
+      toast.error("Privy is not ready yet. Please wait a moment.");
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      await login();
+      // Trigger modal if on /
+      if (
+        pathname === "/" &&
+        sessionStorage.getItem("hasShownAuthModal") !== "true"
+      ) {
+        setShowAuthModal(true);
+        sessionStorage.setItem("hasShownAuthModal", "true");
+      }
+    } catch (error: any) {
+      console.error("Error with email login:", error);
+      toast.error("Failed to login. Please try again.");
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [ready, login, pathname]);
+
+  useImperativeHandle(ref, () => ({
+    triggerLogin: handleEmailLogin,
+  }));
+
+  // Format address for display
+  const formatAddress = useCallback(
+    (address: string | undefined, isMobile: boolean = false): string => {
+      if (
+        !address ||
+        typeof address !== "string" ||
+        !address.startsWith("0x") ||
+        address.length < 10
+      ) {
+        return "Unknown Address";
+      }
+
+      if (isMobile) {
+        return `${address.substring(0, 4)}...${address.substring(address.length - 3)}`;
+      }
+
+      return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+    },
+    []
+  );
+
+  // Debug Privy state
+  useEffect(() => {
+    console.log("Privy State:", {
+      ready,
       authenticated,
       user,
-      connectWallet,
-      logout,
-      ready,
-      login,
-    } = usePrivy();
-
-    // Link account hook
-    const { linkEmail } = useLinkAccount({
-      onSuccess: ({ user, linkMethod, linkedAccount }) => {
-        console.log("Linked account to user ", linkedAccount);
-        toast.success("Email linked successfully!");
-      },
-      onError: (error) => {
-        console.error("Failed to link account with error ", error);
-        toast.error("Failed to link email. Please try again.");
-      },
+      walletAddress,
+      walletClientType: user?.wallet?.walletClientType,
+      emailAddress,
+      isConnected,
     });
+  }, [ready, authenticated, user, walletAddress, emailAddress, isConnected]);
 
-    // Get the primary wallet address safely
-    const walletAddress = user?.wallet?.address;
-    const emailAddress = user?.email?.address;
-    const isConnected = authenticated && (walletAddress || emailAddress);
-
-    // Show authentication modal only on / and once per session
-    useEffect(() => {
-      if (
-        ready &&
-        authenticated &&
-        (walletAddress || emailAddress) &&
-        pathname === "/"
-      ) {
-        const hasShown = sessionStorage.getItem("hasShownAuthModal") === "true";
-        if (!hasShown) {
-          setShowAuthModal(true);
-          sessionStorage.setItem("hasShownAuthModal", "true");
-        }
-      }
-    }, [ready, authenticated, walletAddress, emailAddress, pathname]);
-
-    // Expose handleEmailLogin via ref
-    const handleEmailLogin = useCallback(async () => {
-      if (!ready) {
-        toast.error("Privy is not ready yet. Please wait a moment.");
-        return;
-      }
-
-      setIsConnecting(true);
-      try {
-        await login();
-        // Trigger modal if on /
-        if (pathname === "/" && sessionStorage.getItem("hasShownAuthModal") !== "true") {
-          setShowAuthModal(true);
-          sessionStorage.setItem("hasShownAuthModal", "true");
-        }
-      } catch (error: any) {
-        console.error("Error with email login:", error);
-        toast.error("Failed to login. Please try again.");
-      } finally {
-        setIsConnecting(false);
-      }
-    }, [ready, login, pathname]);
-
-    useImperativeHandle(ref, () => ({
-      triggerLogin: handleEmailLogin,
-    }));
-
-    // Format address for display
-    const formatAddress = useCallback(
-      (address: string | undefined, isMobile: boolean = false): string => {
-        if (
-          !address ||
-          typeof address !== "string" ||
-          !address.startsWith("0x") ||
-          address.length < 10
-        ) {
-          return "Unknown Address";
-        }
-
-        if (isMobile) {
-          return `${address.substring(0, 4)}...${address.substring(address.length - 3)}`;
-        }
-
-        return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-      },
-      []
-    );
-
-    // Debug Privy state
-    useEffect(() => {
-      console.log("Privy State:", {
-        ready,
-        authenticated,
-        user,
-        walletAddress,
-        walletClientType: user?.wallet?.walletClientType,
-        emailAddress,
-        isConnected,
-      });
-    }, [ready, authenticated, user, walletAddress, emailAddress, isConnected]);
-
-    // Enhanced format email for mobile display
-    const formatEmail = useCallback((email: string | undefined, maxLength: number = 20): string => {
+  // Enhanced format email for mobile display
+  const formatEmail = useCallback(
+    (email: string | undefined, maxLength: number = 20): string => {
       if (!email) return "Connected";
 
       if (email.length <= maxLength) return email;
@@ -309,274 +331,341 @@ const WalletSelector = forwardRef<{ triggerLogin: () => void }, WalletSelectorPr
       }
 
       return email;
-    }, []);
+    },
+    []
+  );
 
-    // Close dropdown when clicking or touching outside
-    useEffect(() => {
-      const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-          setShowOptions(false);
-        }
-      };
-
-      if (showOptions) {
-        document.addEventListener("mousedown", handleClickOutside as EventListener);
-        document.addEventListener("touchstart", handleClickOutside as EventListener);
-      }
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside as EventListener);
-        document.removeEventListener("touchstart", handleClickOutside as EventListener);
-      };
-    }, [showOptions]);
-
-    // Handle wallet connection state and persistence
-    useEffect(() => {
-      if (ready && isConnected) {
-        const address = walletAddress || emailAddress || "";
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("walletConnected", "true");
-          if (address) {
-            localStorage.setItem("walletAddress", address);
-          }
-
-          document.cookie = "wallet_connected=true; path=/; max-age=86400; SameSite=Lax";
-
-          window.dispatchEvent(
-            new CustomEvent("walletConnected", {
-              detail: { address, authenticated: true },
-            })
-          );
-        }
-      } else {
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("walletConnected");
-          localStorage.removeItem("walletAddress");
-          document.cookie = "wallet_connected=; path=/; max-age=0; SameSite=Lax";
-
-          window.dispatchEvent(new CustomEvent("walletDisconnected"));
-        }
-      }
-    }, [ready, isConnected, walletAddress, emailAddress]);
-
-    // Handle logout
-    const handleLogout = async () => {
-      try {
-        await logout();
+  // Close dropdown when clicking or touching outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowOptions(false);
-
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("walletConnected");
-          localStorage.removeItem("walletAddress");
-          sessionStorage.removeItem("hasShownAuthModal"); // Reset modal state
-          document.cookie = "wallet_connected=; path=/; max-age=0; SameSite=Lax";
-        }
-
-        toast.success("Logged out successfully");
-        router.push("/");
-      } catch (error) {
-        console.error("Error logging out:", error);
-        toast.error("Failed to log out");
       }
     };
 
-    // Handle linking email
-    const handleLinkEmail = async () => {
-      try {
-        await linkEmail();
-      } catch (error) {
-        console.error("Error linking email:", error);
-      }
-    };
+    if (showOptions) {
+      document.addEventListener(
+        "mousedown",
+        handleClickOutside as EventListener
+      );
+      document.addEventListener(
+        "touchstart",
+        handleClickOutside as EventListener
+      );
+    }
 
-    // Render wallet icon
-    const renderWalletIcon = () => {
-      const walletType = user?.wallet?.walletClientType;
-
-      if (walletType === "coinbase_wallet") {
-        return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="12" fill="#0052FF" />
-            <circle cx="12" cy="12" r="7.2" fill="#fff" />
-            <rect x="8" y="11" width="8" height="2" rx="1" fill="#0052FF" />
-          </svg>
-        );
-      } else if (walletType === "metamask") {
-        return (
-          <img
-            src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/metamask-icon.svg"
-            alt="MetaMask Logo"
-            width="18"
-            height="18"
-          />
-        );
-      }
-
-      return (
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm1 2a1 1 0 000 2h10a1 1 0 100-2H5z"
-            clipRule="evenodd"
-          />
-        </svg>
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside as EventListener
+      );
+      document.removeEventListener(
+        "touchstart",
+        handleClickOutside as EventListener
       );
     };
+  }, [showOptions]);
 
-    if (!ready) {
+  // Handle wallet connection state and persistence
+  useEffect(() => {
+    if (ready && isConnected) {
+      const address = walletAddress || emailAddress || "";
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("walletConnected", "true");
+        if (address) {
+          localStorage.setItem("walletAddress", address);
+        }
+
+        document.cookie =
+          "wallet_connected=true; path=/; max-age=86400; SameSite=Lax";
+
+        window.dispatchEvent(
+          new CustomEvent("walletConnected", {
+            detail: { address, authenticated: true },
+          })
+        );
+      }
+    } else {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("walletConnected");
+        localStorage.removeItem("walletAddress");
+        document.cookie = "wallet_connected=; path=/; max-age=0; SameSite=Lax";
+
+        window.dispatchEvent(new CustomEvent("walletDisconnected"));
+      }
+    }
+  }, [ready, isConnected, walletAddress, emailAddress]);
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowOptions(false);
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("walletConnected");
+        localStorage.removeItem("walletAddress");
+        sessionStorage.removeItem("hasShownAuthModal"); // Reset modal state
+        document.cookie = "wallet_connected=; path=/; max-age=0; SameSite=Lax";
+      }
+
+      toast.success("Logged out successfully");
+      router.push("/");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Failed to log out");
+    }
+  };
+
+  // Handle linking email
+  const handleLinkEmail = async () => {
+    try {
+      await linkEmail();
+    } catch (error) {
+      console.error("Error linking email:", error);
+    }
+  };
+
+  // Render wallet icon
+  const renderWalletIcon = () => {
+    const walletType = user?.wallet?.walletClientType;
+
+    if (walletType === "coinbase_wallet") {
       return (
-        <div className="wallet-button flex items-center bg-gray-200 dark:bg-gray-700 px-2 sm:px-3 py-1 rounded-lg">
-          <span className="text-xs sm:text-sm text-gray-500">Loading...</span>
-        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#0052FF" />
+          <circle cx="12" cy="12" r="7.2" fill="#fff" />
+          <rect x="8" y="11" width="8" height="2" rx="1" fill="#0052FF" />
+        </svg>
+      );
+    } else if (walletType === "metamask") {
+      return (
+        <img
+          src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/metamask-icon.svg"
+          alt="MetaMask Logo"
+          width="18"
+          height="18"
+        />
       );
     }
 
     return (
-      <div className="relative" ref={dropdownRef}>
-        <style jsx>{mobileStyles}</style>
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path
+          fillRule="evenodd"
+          d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm1 2a1 1 0 000 2h10a1 1 0 100-2H5z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  };
 
-        {isConnected ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowOptions(!showOptions);
-            }}
-            className="wallet-button flex items-center space-x-2 bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
-          >
-            <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 flex-shrink-0">
-              {renderWalletIcon()}
-            </div>
+  if (!ready) {
+    return (
+      <div className="wallet-button flex items-center bg-gray-200 dark:bg-gray-700 px-2 sm:px-3 py-1 rounded-lg">
+        <span className="text-xs sm:text-sm text-gray-500">Loading...</span>
+      </div>
+    );
+  }
 
-            {pathname !== "/" && (
-              <div className="wallet-address-container flex-1 min-w-0">
-                {walletAddress ? (
-                  <div className="wallet-address text-xs sm:text-sm font-bold">
-                    <BasenameDisplay
-                      address={walletAddress}
-                      basenameClassName="basename-display"
-                      addressClassName="address-display"
-                      isMobile={true}
-                    />
-                  </div>
-                ) : emailAddress ? (
-                  <span className="wallet-address text-xs sm:text-sm font-bold">
-                    {formatEmail(emailAddress, 15)}
-                  </span>
-                ) : (
-                  <span className="wallet-address text-xs sm:text-sm font-bold">Connected</span>
-                )}
-              </div>
-            )}
+  return (
+    <div className="relative" ref={dropdownRef} style={{ padding: "0.3rem" }}>
+      <style jsx>{mobileStyles}</style>
 
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-4 h-4 flex-shrink-0"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-          </button>
-        ) : (
-          <button
-            onClick={handleEmailLogin}
-            className="wallet-button flex items-center bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
-            disabled={isConnecting}
-          >
-            <span className="sign-in-text text-xs sm:text-sm font-bold">
-              {isConnecting ? "Connecting..." : "Sign in"}
-            </span>
-          </button>
-        )}
+      {isConnected ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowOptions(!showOptions);
+          }}
+          className="wallet-button hbutton flex items-center space-x-2 bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
+          style={{ borderRadius: "0.75rem" }}
+        >
+          <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 flex-shrink-0">
+            {renderWalletIcon()}
+          </div>
 
-        {showOptions && isConnected && (
-          <div
-            className="wallet-dropdown absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border-2 border-blue-100 dark:border-blue-900"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxHeight: "80vh", overflowY: "auto" }}
-          >
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-300">
-                  Connected Account
-                </h3>
-                <span className="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
-                  Active
-                </span>
-              </div>
-              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 break-all">
-                {walletAddress ? (
+          {pathname !== "/" && (
+            <div className="wallet-address-container flex-1 min-w-0">
+              {walletAddress ? (
+                <div className="wallet-address text-xs sm:text-sm font-bold">
                   <BasenameDisplay
                     address={walletAddress}
-                    basenameClassName="text-xs text-gray-600 dark:text-gray-400"
-                    isMobile={false}
+                    basenameClassName="basename-display"
+                    addressClassName="address-display"
+                    isMobile={true}
                   />
-                ) : emailAddress ? (
-                  emailAddress
-                ) : (
-                  "Connected"
-                )}
-              </div>
+                </div>
+              ) : emailAddress ? (
+                <span className="wallet-address text-xs sm:text-sm font-bold">
+                  {formatEmail(emailAddress, 15)}
+                </span>
+              ) : (
+                <span className="wallet-address text-xs sm:text-sm font-bold">
+                  Connected
+                </span>
+              )}
             </div>
+          )}
 
-            {!hasEmail && walletAddress && (
-              <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={handleLinkEmail}
-                  className="w-full text-left px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-lg"
-                >
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
-                    <span>Add Email Address</span>
-                  </div>
-                </button>
-              </div>
-            )}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-4 h-4 flex-shrink-0"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m19.5 8.25-7.5 7.5-7.5-7.5"
+            />
+          </svg>
+        </button>
+      ) : (
+        <button
+          onClick={handleEmailLogin}
+          className="hbutton wallet-button flex items-center bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
+          disabled={isConnecting}
+          style={{ borderRadius: "0.75rem" }}
+        >
+          <span className="sign-in-text text-xs sm:text-sm font-bold">
+            {isConnecting ? "Connecting..." : "Sign in"}
+          </span>
+        </button>
+      )}
 
-            <div className="p-2 space-y-1">
-              <button
-                onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-lg"
+      {showOptions && isConnected && (
+        <div
+          className="wallet-dropdown absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border-2 border-blue-100 dark:border-blue-900"
+          onClick={(e) => e.stopPropagation()}
+          style={{ maxHeight: "80vh", overflowY: "auto" }}
+        >
+          <div
+            className="p-3 border-b border-gray-200 dark:border-gray-700"
+            style={{
+              border: "1px solid lightgray",
+              borderRadius: "0.75rem",
+              padding: "0.5rem",
+              margin: "0.5rem",
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-300">
+                Connected Account
+              </h3>
+              <span
+                className="text-xs px-2 py-1 rounded-full"
+                style={{ color: "green" }}
               >
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                Active
+              </span>
+            </div>
+            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 break-all">
+              {walletAddress ? (
+                <BasenameDisplay
+                  address={walletAddress}
+                  basenameClassName="text-xs text-gray-600 dark:text-gray-400"
+                  isMobile={false}
+                />
+              ) : emailAddress ? (
+                emailAddress
+              ) : (
+                "Connected"
+              )}
+            </div>
+          </div>
+
+          {!hasEmail && walletAddress && (
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={handleLinkEmail}
+                className="options w-full text-center px-4 py-2 text-blue-600 dark:text-blue-400 transition-colors rounded-lg"
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth="2"
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3v1"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                     />
                   </svg>
-                  <span>Logout</span>
+                  <span className="hover:text-blue-800">Add Email Address</span>
                 </div>
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {showAuthModal && isConnected && (
-          <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4">
-            <AuthenticationModal
-              isOpen={showAuthModal}
-              onClose={() => setShowAuthModal(false)}
-              address={walletAddress || emailAddress || ""}
-            />
+          <div className="p-2 space-y-1">
+            <button
+              onClick={handleLogout}
+              className="options block w-full text-center px-4 py-2 rounded-lg"
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <FaSignOutAlt size={20} />
+                <span>Logout</span>
+              </div>
+            </button>
           </div>
-        )}
-      </div>
-    );
-  }
-);
+          {user?.wallet?.walletClientType === "privy" && (
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setShowWithdrawalModal(true);
+                  setIsLoadingWallet(true);
+                }}
+                className="options w-full text-center px-4 py-2 text-orange-600 dark:text-orange-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-lg"
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <FaWallet size={20} />
+                  {isLoadingWallet ? (
+                    <span>Loading...</span>
+                  ) : (
+                    <span>Wallet</span>
+                  )}
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showWithdrawalModal && (
+        <div className="inset-0 flex items-center justify-center z-[9999] p-4">
+        <WalletFundsModal
+          isOpen={showWithdrawalModal}
+          onClose={() => {
+            setShowWithdrawalModal(false);
+            setIsLoadingWallet(false);
+          }}
+          walletAddress={walletAddress}
+        />
+        </div>
+      )}
+
+      {showAuthModal && isConnected && (
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4">
+          <AuthenticationModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            address={walletAddress || emailAddress || ""}
+          />
+        </div>
+      )}
+    </div>
+  );
+});
 
 WalletSelector.displayName = "WalletSelector";
 

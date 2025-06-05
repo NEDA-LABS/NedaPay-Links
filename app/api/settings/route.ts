@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 
@@ -200,7 +201,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // Helper function to extract user ID from request
-async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
+export async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
   try {
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
@@ -215,7 +216,7 @@ async function getUserIdFromRequest(request: NextRequest): Promise<string | null
     try {
       // Decode the JWT without verification first to see the structure
       const decoded = jwt.decode(token) as any;
-      console.log('Decoded token payload:', decoded);
+      // console.log('Decoded token payload:', decoded); //debugging
       
       if (decoded && decoded.sub) {
         // The 'sub' (subject) field typically contains the user ID

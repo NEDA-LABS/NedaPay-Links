@@ -131,7 +131,7 @@ html {
 
 
 /* Neon Buttons */
-.btn, .button, header button, .global button {
+.btn, .button, .global button {
   background: linear-gradient(90deg, var(--primary), var(--accent) 70%);
   /* color: #fff; */
   border: none;
@@ -142,10 +142,38 @@ html {
   padding: 0.75em 2em;
   transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
 }
-.btn:hover, .button:hover, header button:hover, .global button:hover {
+.btn:hover, .button:hover, .global button:hover {
   background: linear-gradient(90deg, var(--accent), var(--primary) 70%);
   box-shadow: 0 0 16px 4px var(--accent-light);
   transform: translateY(-1px) scale(1.01);
+}
+
+header .hbutton {
+  background: linear-gradient(90deg, var(--primary), var(--accent) 70%);
+  /* color: #fff; */
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 1px 6px 0 var(--primary-light);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+header .hbutton:hover {
+  background: linear-gradient(90deg, var(--accent), var(--primary) 70%);
+  box-shadow: 0 0 16px 4px var(--accent-light);
+  transform: translateY(-1px) scale(1.01);
+}
+
+.options:hover{
+  background-color: var(--primary);
+  transition: all 0.2s ease-in-out;
+  padding: 0.3rem;
+  margin: 0.3rem;
+  border-radius: 0.75rem;
+  background-color: '#3b82f6';
+  color: '#ffffff';
+  box-shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
 }
 
 /* Futuristic Inputs */

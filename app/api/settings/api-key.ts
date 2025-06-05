@@ -1,38 +1,45 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import speakeasy from 'speakeasy';
-import { getUserIdFromRequest } from '../route';
+import { getUserIdFromRequest } from './route';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-
-// pages/api/settings/api-keys.ts
-export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
+export async function handleApiKeys(req: NextRequest) {
     const { method } = req;
     const userId = await getUserIdFromRequest(req);
     
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return NextResponse.json({error: 'Unauthorized'}, {status: 401});
     }
   
     switch (method) {
       case 'POST':
-        return generateApiKey(req, res, userId);
+        return generateApiKey(req, userId);
       case 'DELETE':
-        return revokeApiKey(req, res, userId);
+        return revokeApiKey(req, userId);
       default:
-        res.setHeader('Allow', ['POST', 'DELETE']);
-        return res.status(405).json({ error: `Method ${method} not allowed` });
+        return NextResponse.json(
+          { error: `Method ${method} not allowed` }, 
+          { 
+            status: 405,
+            headers: { 'Allow': 'POST, DELETE' }
+          }
+        );
     }
   }
   
-  async function generateApiKey(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  async function generateApiKey(req: NextRequest, userId: string) {
     try {
-      const { environment, name } = req.body;
+      const body = await req.json();
+      const { environment, name } = body;
       
       if (!environment || !['live', 'test'].includes(environment)) {
-        return res.status(400).json({ error: 'Invalid environment. Must be "live" or "test"' });
+        return NextResponse.json(
+          { error: 'Invalid environment. Must be "live" or "test"' },
+          { status: 400 }
+        );
       }
   
       // Generate API key
@@ -51,25 +58,32 @@ export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
         }
       });
   
-      return res.status(201).json({
+      return NextResponse.json({
         message: 'API key generated successfully',
         apiKey, // Only return the actual key once, during creation
         keyId: createdKey.keyId,
         environment: createdKey.environment,
         name: createdKey.name,
-      });
+      }, { status: 201 });
     } catch (error) {
       console.error('Error generating API key:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
     }
   }
   
-  async function revokeApiKey(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  async function revokeApiKey(req: NextRequest, userId: string) {
     try {
-      const { keyId } = req.body;
+      const body = await req.json();
+      const { keyId } = body;
       
       if (!keyId) {
-        return res.status(400).json({ error: 'Key ID is required' });
+        return NextResponse.json(
+          { error: 'Key ID is required' },
+          { status: 400 }
+        );
       }
   
       // Update API key to inactive
@@ -86,39 +100,56 @@ export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
       });
   
       if (updatedKey.count === 0) {
-        return res.status(404).json({ error: 'API key not found or already revoked' });
+        return NextResponse.json(
+          { error: 'API key not found or already revoked' },
+          { status: 404 }
+        );
       }
   
-      return res.status(200).json({ message: 'API key revoked successfully' });
+      return NextResponse.json(
+        { message: 'API key revoked successfully' },
+        { status: 200 }
+      );
     } catch (error) {
       console.error('Error revoking API key:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
     }
   }
   
-  // pages/api/settings/2fa.ts
-  export async function handle2FA(req: NextApiRequest, res: NextApiResponse) {
+  // 2FA Handler
+  export async function handle2FA(req: NextRequest) {
     const { method } = req;
     const userId = await getUserIdFromRequest(req);
     
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
   
     switch (method) {
       case 'POST':
-        return setup2FA(req, res, userId);
+        return setup2FA(req, userId);
       case 'PUT':
-        return verify2FA(req, res, userId);
+        return verify2FA(req, userId);
       case 'DELETE':
-        return disable2FA(req, res, userId);
+        return disable2FA(req, userId);
       default:
-        res.setHeader('Allow', ['POST', 'PUT', 'DELETE']);
-        return res.status(405).json({ error: `Method ${method} not allowed` });
+        return NextResponse.json(
+          { error: `Method ${method} not allowed` },
+          { 
+            status: 405,
+            headers: { 'Allow': 'POST, PUT, DELETE' }
+          }
+        );
     }
   }
   
-  async function setup2FA(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  async function setup2FA(req: NextRequest, userId: string) {
     try {
       // Generate secret for TOTP
       const secret = speakeasy.generateSecret({
@@ -140,22 +171,29 @@ export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
         }
       });
   
-      return res.status(200).json({
+      return NextResponse.json({
         secret: secret.base32,
         qrCode: secret.otpauth_url,
-      });
+      }, { status: 200 });
     } catch (error) {
       console.error('Error setting up 2FA:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
     }
   }
   
-  async function verify2FA(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  async function verify2FA(req: NextRequest, userId: string) {
     try {
-      const { token } = req.body;
+      const body = await req.json();
+      const { token } = body;
       
       if (!token) {
-        return res.status(400).json({ error: 'Token is required' });
+        return NextResponse.json(
+          { error: 'Token is required' },
+          { status: 400 }
+        );
       }
   
       const settings = await prisma.merchantSettings.findUnique({
@@ -163,7 +201,10 @@ export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
       });
   
       if (!settings?.twoFactorSecret) {
-        return res.status(400).json({ error: '2FA setup not initiated' });
+        return NextResponse.json(
+          { error: '2FA setup not initiated' },
+          { status: 400 }
+        );
       }
   
       // Verify the token
@@ -175,7 +216,10 @@ export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
       });
   
       if (!verified) {
-        return res.status(400).json({ error: 'Invalid token' });
+        return NextResponse.json(
+          { error: 'Invalid token' },
+          { status: 400 }
+        );
       }
   
       // Enable 2FA
@@ -187,23 +231,33 @@ export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
         }
       });
   
-      return res.status(200).json({ message: '2FA enabled successfully' });
+      return NextResponse.json(
+        { message: '2FA enabled successfully' },
+        { status: 200 }
+      );
     } catch (error) {
       console.error('Error verifying 2FA:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
     }
   }
   
-  async function disable2FA(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  async function disable2FA(req: NextRequest, userId: string) {
     try {
-      const { token } = req.body;
+      const body = await req.json();
+      const { token } = body;
       
       const settings = await prisma.merchantSettings.findUnique({
         where: { userId }
       });
   
       if (!settings?.twoFactorEnabled || !settings.twoFactorSecret) {
-        return res.status(400).json({ error: '2FA is not enabled' });
+        return NextResponse.json(
+          { error: '2FA is not enabled' },
+          { status: 400 }
+        );
       }
   
       // Verify token before disabling
@@ -215,7 +269,10 @@ export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
       });
   
       if (!verified) {
-        return res.status(400).json({ error: 'Invalid token' });
+        return NextResponse.json(
+          { error: 'Invalid token' },
+          { status: 400 }
+        );
       }
   
       // Disable 2FA
@@ -228,9 +285,15 @@ export async function handleApiKeys(req: NextApiRequest, res: NextApiResponse) {
         }
       });
   
-      return res.status(200).json({ message: '2FA disabled successfully' });
+      return NextResponse.json(
+        { message: '2FA disabled successfully' },
+        { status: 200 }
+      );
     } catch (error) {
       console.error('Error disabling 2FA:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
     }
   }

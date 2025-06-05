@@ -57,7 +57,7 @@ export default function NotificationTab() {
   return (
     <div className="relative">
       <button
-        className="relative p-2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:bg-blue-100 dark:hover:bg-blue-800"
+        className="hbutton relative p-2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:bg-blue-100 dark:hover:bg-blue-800"
         aria-label="Notifications"
         onClick={() => setOpen((o) => !o)}
       >

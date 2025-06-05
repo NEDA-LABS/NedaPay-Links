@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { useTheme } from "next-themes";
 
 interface AuthenticationModalProps {
   isOpen: boolean;
@@ -14,50 +17,169 @@ export default function AuthenticationModal({
 }: AuthenticationModalProps) {
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
+  const [isAnimated, setIsAnimated] = useState(false);
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsAnimated(true);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <div className="mx-auto bg-white dark:bg-slate-900 rounded-xl p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto" style={{ width: "80%", }}>
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 z-10"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 flex items-center justify-center z-[9999] p-4"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)'
+          }}
         >
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        
-        <div className="text-center pt-2"><br/>
-          <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white p-2">
-            Authenticated Successfully!
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm">
-            Welcome, {address?.slice(0, 6)}...{address?.slice(-4)}
-          </p>
-          
-          <div className="flex flex-col gap-3 justify-center">
-            <button
-              onClick={() => {
-                setIsClosing(true);
-                setTimeout(() => {
-                  router.push("/dashboard");
-                }, 200);
-              }}
-              className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-            >
-              Continue to Dashboard
-            </button>
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mx-auto relative shadow-2xl max-h-[90vh] overflow-y-auto"
+            style={{ 
+              width: "80%", 
+              maxWidth: "500px",
+              backgroundColor: theme === 'dark' ? '#1F2937' : 'white',
+              borderRadius: '16px',
+              padding: '32px'
+            }}
+          >
             <button
               onClick={onClose}
-              className="w-full px-6 py-3 border-2 border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 text-sm font-medium"
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                color: '#9CA3AF',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                zIndex: 10,
+                transition: 'color 0.2s ease'
+              }}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.style.color = '#6B7280'}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.style.color = '#9CA3AF'}
             >
-              Stay on Home Page
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-          </div>
-        </div>
-      </div>
-    </div>
+            
+            <div className="text-center">
+              <div className="mb-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="mx-auto"
+                >
+                  <CheckCircleIcon className="w-16 h-16 text-green-500" />
+                </motion.div>
+              </div>
+              
+              <motion.h2
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                style={{
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  marginBottom: '12px',
+                  color: '#111827'
+                }}
+              >
+                Authenticated Successfully!
+              </motion.h2>
+              
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                style={{
+                  color: '#6B7280',
+                  marginBottom: '32px',
+                  fontSize: '14px'
+                }}
+              >
+                Welcome, {address?.slice(0, 6)}...{address?.slice(-4)}
+              </motion.p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setIsClosing(true);
+                    setTimeout(() => {
+                      router.push("/dashboard");
+                    }, 200);
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px 24px',
+                    background: 'linear-gradient(to right, #3B82F6, #2563EB)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  Continue to Dashboard
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onClose}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px 24px',
+                    border: '2px solid #D1D5DB',
+                    color: '#6B7280',
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.currentTarget.style.backgroundColor = '#F9FAFB';
+                  }}
+                  onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                >
+                  
+                  Stay on Home Page
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
