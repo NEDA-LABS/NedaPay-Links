@@ -235,6 +235,8 @@ const WalletSelector = forwardRef<
 
   // Get the primary wallet address safely
   const walletAddress = user?.wallet?.address;
+  localStorage.setItem("walletAddress", walletAddress || "");
+  
   const emailAddress = user?.email?.address;
   const isConnected = authenticated && (walletAddress || emailAddress);
 
@@ -306,17 +308,17 @@ const WalletSelector = forwardRef<
   );
 
   // Debug Privy state
-  useEffect(() => {
-    console.log("Privy State:", {
-      ready,
-      authenticated,
-      user,
-      walletAddress,
-      walletClientType: user?.wallet?.walletClientType,
-      emailAddress,
-      isConnected,
-    });
-  }, [ready, authenticated, user, walletAddress, emailAddress, isConnected]);
+  // useEffect(() => {
+  //   console.log("Privy State:", {
+  //     ready,
+  //     authenticated,
+  //     user,
+  //     walletAddress,
+  //     walletClientType: user?.wallet?.walletClientType,
+  //     emailAddress,
+  //     isConnected,
+  //   });
+  // }, [ready, authenticated, user, walletAddress, emailAddress, isConnected]);
 
   // Enhanced format email for mobile display
   const formatEmail = useCallback(

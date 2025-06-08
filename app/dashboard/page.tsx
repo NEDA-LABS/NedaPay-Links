@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useAccount } from "wagmi";
+// Replace wagmi imports with Privy imports
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import { Toaster, toast } from "react-hot-toast";
@@ -149,7 +150,14 @@ export default function MerchantDashboard() {
     null
   );
   const [smartWalletLoading, setSmartWalletLoading] = useState(false);
-  const { address, isConnected, connector } = useAccount();
+  
+  // Replace wagmi hooks with Privy hooks
+  const { authenticated, user, connectWallet, logout, ready, login } = usePrivy();
+  
+  // Get the address from user object
+  const address = user?.wallet?.address;
+  const isConnected = authenticated && !!address;
+  
   const [selectedCurrency, setSelectedCurrency] = useState<string>("all");
 
   const selectedWalletAddress =
@@ -175,11 +183,8 @@ export default function MerchantDashboard() {
   const [isBalanceLoading, setIsBalanceLoading] = useState<boolean>(false);
   const [baseName, setBaseName] = useState<string | null>(null);
 
-  // Memoized provider to avoid reinitialization
+  // State for the provider - simplified to use RPC provider
   const provider = useMemo(() => {
-    if (typeof window !== "undefined" && window.ethereum) {
-      return new ethers.providers.Web3Provider(window.ethereum);
-    }
     return new ethers.providers.JsonRpcProvider("https://mainnet.base.org");
   }, []);
 
@@ -329,18 +334,16 @@ export default function MerchantDashboard() {
   useEffect(() => {
     if (
       isConnected &&
-      ((selectedWalletType === "eoa" && address && connector) ||
+      ((selectedWalletType === "eoa" && address) ||
         (selectedWalletType === "smart" &&
           smartWalletAddress &&
-          smartWalletAddress !== address &&
-          connector))
+          smartWalletAddress !== address))
     ) {
       fetchRealBalances(selectedWalletAddress!);
     }
   }, [
     isConnected,
     selectedWalletAddress,
-    connector,
     selectedWalletType,
     smartWalletAddress,
     address,
@@ -422,24 +425,13 @@ export default function MerchantDashboard() {
 
   // Wallet connection check and redirection
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !ready) return;
 
-    // Check if wallet is connected via localStorage
-    const walletConnected = localStorage.getItem("walletConnected") === "true";
-    const cookieWalletConnected =
-      document.cookie.includes("wallet_connected=true");
-
-    // If not connected, redirect to home
-    if (!walletConnected && !cookieWalletConnected) {
+    // For Privy, check if user is authenticated
+    if (!authenticated) {
       router.push("/?walletRequired=true");
-    } else if (walletConnected && !cookieWalletConnected) {
-      // Sync localStorage to cookie
-      document.cookie = "wallet_connected=true; path=/; max-age=86400"; // 24 hours
-    } else if (cookieWalletConnected && !walletConnected) {
-      // Sync cookie to localStorage
-      localStorage.setItem("walletConnected", "true");
     }
-  }, [mounted, router]);
+  }, [mounted, authenticated, ready, router]);
 
   // Periodic balance refresh with debounce
   useEffect(() => {
@@ -561,6 +553,10 @@ export default function MerchantDashboard() {
   };
 
   if (!mounted) return null;
+
+  // Rest of your component JSX remains the same...
+
+
 
   return (
     <>

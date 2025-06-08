@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import { useAccount } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 import { stablecoins } from "../data/stablecoins";
 import Footer from "../components/Footer";
 import { useTheme } from "next-themes";
@@ -20,11 +21,14 @@ interface PaymentLink {
 
 
 export default function PaymentLinkPage() {
-  const { isConnected, address: wagmiAddress } = useAccount();
+  const { authenticated, user } = usePrivy();
+  
+  const walletAddress = user?.wallet?.address;
+  const isConnected = authenticated && !!walletAddress;
 
   // Robust merchant address getter: wagmi first, then localStorage fallback
   const getMerchantAddress = () => {
-    if (wagmiAddress && wagmiAddress.length > 10) return wagmiAddress;
+    if (walletAddress && walletAddress.length > 10) return walletAddress;
     if (typeof window !== "undefined") {
       const lsAddr = localStorage.getItem("walletAddress");
       if (lsAddr && lsAddr.length > 10) return lsAddr;
@@ -109,7 +113,7 @@ console.log("Payment Link Page - Theme:", theme);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [isConnected, wagmiAddress]);
+  }, [isConnected, walletAddress]);
 
   // Effect to monitor connection state
   useEffect(() => {

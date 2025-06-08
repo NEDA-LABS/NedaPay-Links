@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
 import { usePrivy } from '@privy-io/react-auth';
 import Header from '../components/Header';
 import { stablecoins } from '../data/stablecoins';
@@ -13,8 +12,7 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Wagmi and Privy hooks
-  const { address, isConnected } = useAccount();
+  // Privy hooks
   const { getAccessToken } = usePrivy();
   const [account, setAccount] = useState('');
 
@@ -55,6 +53,9 @@ export default function SettingsPage() {
   createdAt: string;
 }
 
+const {user, authenticated} = usePrivy();
+const address = localStorage.getItem("walletAddress") || user?.wallet?.address;
+
 const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [webhookUrl, setWebhookUrl] = useState('');
 
@@ -66,20 +67,20 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   }, [address]);
 
   useEffect(() => {
-    if (mounted && !isConnected) {
+    if (mounted && !authenticated) {
       window.location.href = '/dashboard';
     }
-  }, [mounted, isConnected]);
+  }, [mounted, authenticated]);
 
   // Fetch settings on mount when connected
   useEffect(() => {
     const fetchSettings = async () => {
-      if (!isConnected || !address) return;
+      if (!authenticated || !address) return;
 
       try {
         setLoading(true);
         const accessToken = await getAccessToken();
-        console.log('debugging: Access token:', accessToken); //debugging
+        // console.log('debugging: Access token:', accessToken); //debugging
         const response = await fetch('/api/settings', {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -124,7 +125,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     };
 
     fetchSettings();
-  }, [isConnected, address, getAccessToken]);
+  }, [authenticated, address, getAccessToken]);
 
   const saveSettings = async () => {
     setIsSaving(true);
@@ -255,13 +256,13 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
           <p className="text-gray-600 dark:text-gray-300">Manage your merchant account settings</p>
         </div>
 
-        {!isConnected && (
+        {!authenticated && (
           <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-6 mb-8 text-center">
             <h2 className="text-xl font-semibold text-blue-700 dark:text-blue-300 mb-2">Connect Your Wallet</h2>
             <p className="text-blue-600 dark:text-blue-400 mb-4">Connect your wallet to access your merchant settings</p>
           </div>
         )}
-        {isConnected && (
+        {authenticated && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg h-fit">
               <div className="p-6 border-b border-gray-200 dark:border-gray-700">

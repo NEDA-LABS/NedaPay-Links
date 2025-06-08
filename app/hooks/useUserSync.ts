@@ -38,7 +38,7 @@ export function useUserSync() {
         // Store user data in localStorage for quick access
         localStorage.setItem('userData', JSON.stringify(result.user));
         
-        console.log('User synced successfully:', result.user);
+        // console.log('User synced successfully:', result.user); 
       } catch (error) {
         console.log('privy user:', user);
         console.error('Error syncing user:', error);

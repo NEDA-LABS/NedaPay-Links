@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { formatEther, parseEther, isAddress } from 'viem';
+import { usePrivy, useWallets, useFundWallet, useSendTransaction } from '@privy-io/react-auth';
+import { formatEther, parseEther, isAddress, formatUnits, parseUnits, encodeFunctionData } from 'viem';
+import { base } from 'viem/chains';
 import toast from 'react-hot-toast';
 import {
   ModalOverlay,
@@ -21,11 +22,20 @@ import {
   SuccessIcon,
   CloseButton
 } from './WalletFundsModalStyles';
+import { stablecoins } from '../data/stablecoins'; // Adjust path as needed
 
 interface WalletFundsModalProps {
   isOpen: boolean;
   onClose: () => void;
   walletAddress?: string;
+}
+
+interface Token {
+  symbol: string;
+  decimals: number;
+  type: string;
+  address?: string;
+  flag?: string;
 }
 
 interface TokenBalance {
@@ -34,7 +44,27 @@ interface TokenBalance {
   decimals: number;
   contractAddress?: string;
   usdValue?: number;
+  flag?: string;
 }
+
+const erc20BalanceOfAbi = [{
+  "constant": true,
+  "inputs": [{ "name": "_owner", "type": "address" }],
+  "name": "balanceOf",
+  "outputs": [{ "name": "balance", "type": "uint256" }],
+  "type": "function"
+}];
+
+const erc20TransferAbi = [{
+  "constant": false,
+  "inputs": [
+    { "name": "_to", "type": "address" },
+    { "name": "_value", "type": "uint256" }
+  ],
+  "name": "transfer",
+  "outputs": [{ "name": "", "type": "bool" }],
+  "type": "function"
+}];
 
 const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
   isOpen,
@@ -43,16 +73,44 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
 }) => {
   const { user } = usePrivy();
   const { wallets } = useWallets();
-  
+  const { fundWallet } = useFundWallet({
+    onUserExited: (data) => {
+      console.log('Funding flow exited:', data);
+      if (data.balance) {
+        toast.success('Funding completed! Refreshing balances...');
+        setTimeout(() => {
+          fetchBalances();
+        }, 2000);
+      }
+    }
+  });
+  const { exportWallet } = usePrivy();
+  const { sendTransaction } = useSendTransaction({
+    onSuccess: (data) => {
+      console.log('Transaction successful:', data);
+      toast.success(`Transfer successful! TX: ${data.hash}`);
+      setStep('confirm');
+      setTimeout(() => {
+        fetchBalances();
+      }, 2000);
+    },
+    onError: (error) => {
+      console.error('Transaction failed:', error);
+      toast.error(error || 'Transfer failed');
+      setIsTransferring(false);
+    }
+  });
+
   const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [amount, setAmount] = useState('');
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTransferring, setIsTransferring] = useState(false);
-  const [step, setStep] = useState<'select' | 'transfer' | 'confirm'>('select');
+  const [step, setStep] = useState<'select' | 'transfer' | 'confirm' | 'export'>('select');
   const [gasEstimate, setGasEstimate] = useState<string>('');
   const [isValidAddress, setIsValidAddress] = useState(false);
+  const [showExportOptions, setShowExportOptions] = useState(false);
 
   const embeddedWallet = wallets.find(wallet => 
     wallet.walletClientType === 'privy' && wallet.address === walletAddress
@@ -60,26 +118,73 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
 
   const fetchBalances = useCallback(async () => {
     if (!walletAddress || !embeddedWallet) return;
-
     setIsLoading(true);
     try {
       const provider = await embeddedWallet.getEthereumProvider();
-      const ethBalance = await provider.request({
-        method: 'eth_getBalance',
-        params: [walletAddress, 'latest']
-      });
-
-      const ethBalanceFormatted = formatEther(BigInt(ethBalance));
-      
-      const tokenBalances: TokenBalance[] = [
-        {
-          symbol: 'ETH',
-          balance: ethBalanceFormatted,
-          decimals: 18,
-          usdValue: 0
-        }
+      const tokens = [
+        { symbol: 'ETH', decimals: 18, type: 'native', flag: undefined },
+        ...stablecoins.filter(sc => sc.chainId === base.id).map(sc => ({
+          symbol: sc.baseToken,
+          address: sc.address,
+          decimals: sc.decimals,
+          type: 'erc20',
+          flag: sc.flag
+        }))
       ];
-
+      const balancePromises = tokens.map(async (token: Token) => {
+        try {
+          if (token.type === 'native') {
+            const balanceHex = await provider.request({
+              method: 'eth_getBalance',
+              params: [walletAddress, 'latest']
+            });
+            const balance = BigInt(balanceHex);
+            const formattedBalance = formatUnits(balance, token.decimals);
+            return {
+              symbol: token.symbol,
+              balance: formattedBalance,
+              decimals: token.decimals,
+              contractAddress: undefined,
+              usdValue: 0,
+              flag: token.flag
+            };
+          } else {
+            const data = encodeFunctionData({
+              abi: erc20BalanceOfAbi,
+              functionName: 'balanceOf',
+              args: [walletAddress]
+            });
+            if (!token.address) {
+              throw new Error(`Token ${token.symbol} does not have an address`);
+            }
+            const balanceHex = await provider.request({
+              method: 'eth_call',
+              params: [{ to: token.address, data }, 'latest']
+            });
+            const balance = BigInt(balanceHex);
+            const formattedBalance = formatUnits(balance, token.decimals);
+            return {
+              symbol: token.symbol,
+              balance: formattedBalance,
+              decimals: token.decimals,
+              contractAddress: token.address,
+              usdValue: 0,
+              flag: token.flag
+            };
+          }
+        } catch (error) {
+          console.error(`Error fetching balance for ${token.symbol}:`, error);
+          return {
+            symbol: token.symbol,
+            balance: '0',
+            decimals: token.decimals,
+            contractAddress: token.type === 'erc20' ? token.address : undefined,
+            usdValue: 0,
+            flag: token.flag
+          };
+        }
+      });
+      const tokenBalances = await Promise.all(balancePromises);
       setBalances(tokenBalances);
       if (tokenBalances.length > 0) {
         setSelectedToken(tokenBalances[0]);
@@ -92,27 +197,70 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
     }
   }, [walletAddress, embeddedWallet]);
 
-  const estimateGas = useCallback(async () => {
-    if (!embeddedWallet || !recipientAddress || !amount || !selectedToken || !isValidAddress) {
-      return;
+  const handleFundWallet = async () => {
+    try {
+      if (!walletAddress) {
+        toast.error('Wallet address not found');
+        return;
+      }
+      await fundWallet(walletAddress, {
+        chain: base,
+        amount: '0.01'
+      });
+    } catch (error) {
+      console.error('Error opening funding modal:', error);
+      toast.error('Failed to open funding flow');
     }
+  };
 
+  const handleExportWallet = async () => {
+    try {
+      if (!embeddedWallet) {
+        toast.error('Wallet not found');
+        return;
+      }
+      const confirmExport = window.confirm(
+        'Are you sure you want to export your private key? This will reveal sensitive information that should be kept secure.'
+      );
+      if (!confirmExport) return;
+      await exportWallet({ address: embeddedWallet.address });
+    } catch (error) {
+      console.error('Error exporting wallet:', error);
+      toast.error('Failed to export wallet');
+    }
+  };
+
+  const estimateGas = useCallback(async () => {
+    if (!embeddedWallet || !recipientAddress || !amount || !selectedToken || !isValidAddress) return;
     try {
       const provider = await embeddedWallet.getEthereumProvider();
-      const gasPrice = await provider.request({
-        method: 'eth_gasPrice',
-        params: []
-      });
-
-      const gasLimit = await provider.request({
-        method: 'eth_estimateGas',
-        params: [{
-          from: walletAddress,
-          to: recipientAddress,
-          value: `0x${parseEther(amount).toString(16)}`
-        }]
-      });
-
+      const gasPrice = await provider.request({ method: 'eth_gasPrice', params: [] });
+      let gasLimit;
+      if (selectedToken.symbol === 'ETH') {
+        gasLimit = await provider.request({
+          method: 'eth_estimateGas',
+          params: [{
+            from: walletAddress,
+            to: recipientAddress,
+            value: `0x${parseEther(amount).toString(16)}`
+          }]
+        });
+      } else {
+        const amountWei = parseUnits(amount, selectedToken.decimals);
+        const transferData = encodeFunctionData({
+          abi: erc20TransferAbi,
+          functionName: 'transfer',
+          args: [recipientAddress, amountWei]
+        });
+        gasLimit = await provider.request({
+          method: 'eth_estimateGas',
+          params: [{
+            from: walletAddress,
+            to: selectedToken.contractAddress,
+            data: transferData
+          }]
+        });
+      }
       const totalGas = BigInt(gasPrice) * BigInt(gasLimit);
       setGasEstimate(formatEther(totalGas));
     } catch (error) {
@@ -126,82 +274,119 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       toast.error('Missing required information');
       return;
     }
-
+    const ethBalance = balances.find(b => b.symbol === 'ETH')?.balance || '0';
+    const estimatedGas = parseFloat(gasEstimate || '0.001');
+    let isInsufficient = false;
+    let insufficientMessage = '';
+    if (selectedToken.symbol === 'ETH') {
+      const totalCost = parseFloat(amount) + estimatedGas;
+      if (parseFloat(selectedToken.balance) < totalCost) {
+        isInsufficient = true;
+        insufficientMessage = 'Insufficient ETH for transfer and gas';
+      }
+    } else {
+      if (parseFloat(selectedToken.balance) < parseFloat(amount)) {
+        isInsufficient = true;
+        insufficientMessage = `Insufficient ${selectedToken.symbol} balance`;
+      } else if (parseFloat(ethBalance) < estimatedGas) {
+        isInsufficient = true;
+        insufficientMessage = 'Insufficient ETH for gas';
+      }
+    }
+    if (isInsufficient) {
+      toast.error(insufficientMessage);
+      if (selectedToken.symbol === 'ETH' || (selectedToken.symbol !== 'ETH' && parseFloat(ethBalance) < estimatedGas)) {
+        const suggestedAmount = (estimatedGas + 0.001).toFixed(4);
+        const fundAndRetry = window.confirm(
+          `You need more ETH to complete this transaction. Would you like to fund your wallet with ${suggestedAmount} ETH?`
+        );
+        if (fundAndRetry) {
+          try {
+            await fundWallet(walletAddress!, { chain: base, amount: suggestedAmount });
+          } catch (error) {
+            console.error('Error opening funding modal:', error);
+            toast.error('Failed to open funding flow');
+          }
+        }
+      }
+      return;
+    }
     setIsTransferring(true);
     try {
-      const provider = await embeddedWallet.getEthereumProvider();
-      
-      const txHash = await provider.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: walletAddress,
+      if (selectedToken.symbol === 'ETH') {
+        await sendTransaction({
           to: recipientAddress,
-          value: `0x${parseEther(amount).toString(16)}`,
-          gas: '0x5208'
-        }]
-      });
-
-      toast.success(`Transfer successful! TX: ${txHash}`);
-      setStep('confirm');
-      
-      setTimeout(() => {
-        fetchBalances();
-      }, 2000);
-
+          value: parseEther(amount),
+          chainId: base.id,
+        });
+      } else {
+        const amountWei = parseUnits(amount, selectedToken.decimals);
+        const transferData = encodeFunctionData({
+          abi: erc20TransferAbi,
+          functionName: 'transfer',
+          args: [recipientAddress, amountWei]
+        });
+        await sendTransaction({
+          to: selectedToken.contractAddress!,
+          data: transferData,
+          chainId: base.id,
+        });
+      }
     } catch (error: any) {
       console.error('Transfer failed:', error);
       toast.error(error.message || 'Transfer failed');
-    } finally {
       setIsTransferring(false);
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard!');
+  };
+
   useEffect(() => {
-    if (recipientAddress) {
-      setIsValidAddress(isAddress(recipientAddress));
-    } else {
-      setIsValidAddress(false);
-    }
+    setIsValidAddress(recipientAddress ? isAddress(recipientAddress) : false);
   }, [recipientAddress]);
 
   useEffect(() => {
-    if (isOpen && walletAddress) {
-      fetchBalances();
-    }
+    if (isOpen && walletAddress) fetchBalances();
   }, [isOpen, walletAddress, fetchBalances]);
 
   useEffect(() => {
     if (step === 'transfer' && amount && recipientAddress && isValidAddress) {
-      const timer = setTimeout(() => {
-        estimateGas();
-      }, 500);
+      const timer = setTimeout(() => estimateGas(), 500);
       return () => clearTimeout(timer);
     }
   }, [step, amount, recipientAddress, isValidAddress, estimateGas]);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const totalBalance = balances.reduce((sum, token) => sum + (token.usdValue || 0), 0);
   const maxWithdrawable = selectedToken ? 
-    (parseFloat(selectedToken.balance) - parseFloat(gasEstimate || '0.001')).toFixed(6) : 
+    (selectedToken.symbol === 'ETH' ? 
+      (parseFloat(selectedToken.balance) - parseFloat(gasEstimate || '0.001')).toFixed(6) : 
+      selectedToken.balance) : 
     '0';
 
   const getTokenIcon = (symbol: string) => {
     const colors = {
       'USDC': 'bg-blue-500',
       'cNGN': 'bg-purple-500',
-      'ETH': 'bg-gray-700'
+      'ETH': 'bg-gray-700',
+      'NGNC': 'bg-green-500',
+      'ZARP': 'bg-yellow-500',
+      'IDRX': 'bg-red-500',
+      'EURC': 'bg-blue-600',
+      'CADC': 'bg-red-600',
+      'BRL': 'bg-green-600',
+      'TRYB': 'bg-orange-500',
+      'NZDD': 'bg-black',
+      'MXNe': 'bg-pink-500'
     };
     return colors[symbol as keyof typeof colors] || 'bg-gray-400';
   };
@@ -211,37 +396,22 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       <ModalContent>
         <ModalHeader>
           <ModalTitle>
-            <h1>Wallet</h1>
+            <h1>Base Wallet</h1>
             <div className="flex items-center mt-2 text-gray-500">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               <span className="text-sm font-medium truncate max-w-xs">{walletAddress}</span>
-              <button className="ml-2 p-1 hover:bg-gray-100 rounded">
+              <button className="ml-2 p-1 hover:bg-gray-100 rounded" onClick={() => copyToClipboard(walletAddress || '')}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </button>
             </div>
           </ModalTitle>
           <CloseButton onClick={onClose}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </CloseButton>
         </ModalHeader>
@@ -261,10 +431,37 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                 >
                   Transfer
                 </Button>
-                <Button variant="primary">
-                  Fund
+                <Button variant="primary" onClick={handleFundWallet}>
+                  Fund Wallet
+                </Button>
+                <Button variant="secondary" onClick={() => setShowExportOptions(!showExportOptions)}>
+                  Export Keys
                 </Button>
               </ActionButtons>
+
+              {showExportOptions && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-800">Export Private Key</p>
+                      <p className="text-sm text-red-700 mt-1">
+                        This will reveal your private key. Keep it safe and never share it with anyone.
+                      </p>
+                      <div className="mt-3 flex space-x-3">
+                        <button onClick={handleExportWallet} className="text-sm font-medium text-red-800 hover:text-red-900 bg-red-100 hover:bg-red-200 px-3 py-1 rounded">
+                          Export Private Key
+                        </button>
+                        <button onClick={() => setShowExportOptions(false)} className="text-sm font-medium text-red-600 hover:text-red-700">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex mb-6 border-b">
                 <button className="text-[--text-primary] font-semibold pb-2 border-b-2 border-[--border-color] mr-8">
@@ -299,6 +496,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                       onClick={() => setSelectedToken(token)}
                     >
                       <div className="flex items-center">
+                        {token.flag && <span className="mr-2">{token.flag}</span>}
                         <TokenIcon color={getTokenIcon(token.symbol)}>
                           <span className="text-white font-bold text-sm">{token.symbol.slice(0, 2)}</span>
                         </TokenIcon>
@@ -316,22 +514,33 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                   ))
                 )}
               </div>
+
+              {selectedToken && parseFloat(selectedToken.balance) < 0.01 && (
+                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="red" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">Low Balance</p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Your wallet has a low ETH balance. Consider funding it to cover transaction fees.
+                      </p>
+                      <button onClick={handleFundWallet} className="mt-2 text-sm font-medium text-amber-800 hover:text-amber-900 underline">
+                        Fund Wallet Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
           {step === 'transfer' && selectedToken && (
             <div className="space-y-6 flex-1 flex flex-col">
-              <button
-                onClick={() => setStep('select')}
-                className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-              >
+              <button onClick={() => setStep('select')} className="flex items-center text-gray-600 hover:text-gray-900 mb-4">
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 19l-7-7 7-7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                 </svg>
                 Back to Balances
               </button>
@@ -339,12 +548,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
               <WarningBox>
                 <div className="flex items-start">
                   <svg className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                   <div>
                     <p className="text-sm font-medium text-amber-800">Embedded Wallet Warning</p>
@@ -376,10 +580,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                   <label className="block text-sm font-medium text-gray-700">
                     Amount ({selectedToken.symbol})
                   </label>
-                  <button
-                    onClick={() => setAmount(maxWithdrawable)}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                  >
+                  <button onClick={() => setAmount(maxWithdrawable)} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
                     Max: {maxWithdrawable}
                   </button>
                 </div>
@@ -395,22 +596,37 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
 
               {gasEstimate && amount && (
                 <div className="bg-[--bg-secondary] rounded-2xl p-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Network Fee:</span>
-                    <span className="font-medium text-gray-900">{gasEstimate} ETH</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">You'll Send:</span>
-                    <span className="font-medium text-gray-900">{amount} {selectedToken.symbol}</span>
-                  </div>
-                  <div className="border-t border-gray-200 pt-2 mt-2">
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-900">Total Cost:</span>
-                      <span className="font-bold text-gray-900">
-                        {(parseFloat(amount || '0') + parseFloat(gasEstimate)).toFixed(6)} ETH
-                      </span>
-                    </div>
-                  </div>
+                  {selectedToken.symbol === 'ETH' ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Network Fee:</span>
+                        <span className="font-medium text-gray-900">{gasEstimate} ETH</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">You'll Send:</span>
+                        <span className="font-medium text-gray-900">{amount} ETH</span>
+                      </div>
+                      <div className="border-t border-gray-200 pt-2 mt-2">
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-900">Total Cost:</span>
+                          <span className="font-bold text-gray-900">
+                            {(parseFloat(amount || '0') + parseFloat(gasEstimate)).toFixed(6)} ETH
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Transfer Amount:</span>
+                        <span className="font-medium text-gray-900">{amount} {selectedToken.symbol}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Estimated Gas:</span>
+                        <span className="font-medium text-gray-900">{gasEstimate} ETH</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -449,10 +665,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                   Your {selectedToken?.symbol} has been successfully sent to the recipient.
                 </p>
               </div>
-              <Button
-                onClick={onClose}
-                variant="primary"
-              >
+              <Button onClick={onClose} variant="primary">
                 Done
               </Button>
             </div>
