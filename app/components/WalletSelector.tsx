@@ -235,7 +235,7 @@ const WalletSelector = forwardRef<
 
   // Get the primary wallet address safely
   const walletAddress = user?.wallet?.address;
-  localStorage.setItem("walletAddress", walletAddress || "");
+  // localStorage.setItem("walletAddress", walletAddress || "");
   
   const emailAddress = user?.email?.address;
   const isConnected = authenticated && (walletAddress || emailAddress);

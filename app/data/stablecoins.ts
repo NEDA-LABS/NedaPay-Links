@@ -1,17 +1,17 @@
 // Stablecoins data from stablecoins.earth
 export const stablecoins = [
-  // {
-  //   region: 'Tanzania',
-  //   flag: '🇹🇿',
-  //   currency: 'TZS',
-  //   baseToken: 'TSHC',
-  //   name: 'Tanzania Shilling Coin',
-  //   address: '0x123456789abcdef123456789abcdef123456789a', // Placeholder address
-  //   issuer: 'NEDA Pay',
-  //   description: 'Stablecoin pegged 1:1 to the Tanzania Shilling (TZS)',
-  //   website: 'https://nedapay.app',
-  //   chainId: 11155111 // Sepolia Testnet
-  // },
+  {
+    region: 'Tanzania',
+    flag: '🇹🇿',
+    currency: 'TZS',
+    baseToken: 'TSHC',
+    name: 'Tanzania Shilling Coin',
+    address: '0x123456789abcdef123456789abcdef123456789a', // Placeholder address
+    issuer: 'NEDA Pay',
+    description: 'Stablecoin pegged 1:1 to the Tanzania Shilling (TZS)',
+    website: 'https://nedapay.app',
+    chainId: 11155111 // Sepolia Testnet
+  },
   {
     region: 'Nigeria',
     flag: '🇳🇬',
