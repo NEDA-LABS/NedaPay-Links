@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import './components/name-fallback.css';
 import { Providers } from './providers';
-import Footer from './components/Footer';
 import AppToaster from './components/Toaster';
 
 export const metadata: Metadata = {

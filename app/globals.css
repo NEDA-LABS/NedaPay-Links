@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
 
 :root {
   /* Light mode: White background with black text */
@@ -43,60 +42,26 @@
 
    
   }
-  
-  /* Fix for dark mode select options */
-  select option {
-    background-color: #1e293b; /* slate-800 */
-    color: white;
-  }
 }
 
 body {
-  color: var(--foreground);
+  /* color: var(--foreground); */
   background-color: white;
-  color: black ;
+  /* color: black ; */
   font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   letter-spacing: 0.01em;
   transition: background-color 0.3s, color 0.3s;
-
-  /* privy model */
-  --privy-border-radius-sm: 0.375rem; /* Matches Tailwind's rounded-md (6px) */
-  --privy-border-radius-md: 0.5rem; /* Matches Tailwind's rounded-lg (8px) */
-  --privy-border-radius-lg: 0.75rem; /* Matches Tailwind's rounded-xl (12px) */
-  --privy-border-radius-full: 9999px; /* Matches Tailwind's rounded-full */
-  --privy-color-background: #ffffff; /* White for light mode, matches bg-white/80 */
-  --privy-color-background-2: #d1d5db;; /* Light gray for secondary backgrounds, matches Tailwind slate-50 */
-  --privy-color-background-3: #e2e8f0; /* Slightly darker gray, matches Tailwind slate-200 */
-  --privy-color-foreground: #1e293b; /* Dark slate for text, matches text-slate-800 */
-  --privy-color-foreground-2: #475569; /* Lighter slate for secondary text, matches text-gray-600 */
-  --privy-color-foreground-3: #6b7280; /* Even lighter gray, matches text-gray-500 */
-  --privy-color-foreground-4: #9ca3af; /* Lightest gray, matches Tailwind gray-400 */
-  --privy-color-success: #22c55e; /* Green for success, matches text-green-600 */
-  --privy-color-error: #ef4444; /* Red for errors, matches text-red-600 */
-  --privy-color-error-light: #f87171; /* Lighter red, matches Tailwind red-500 */
   
 
 }
 
 .dark body {
-  background-color: #1e293b ;
+  /* background-color: #1e293b ; */
   /* color: white ; */
-
-   /* privy dark */
-   --privy-color-background: #1a2333;
-   --privy-color-background-2: #334155;
-   --privy-color-background-3: #475569;
-   --privy-color-foreground: #f1f5f9;
-   --privy-color-foreground-2: #d1d5db;
-   --privy-color-foreground-3: #9ca3af;
-   --privy-color-foreground-4: #6b7280;
-   --privy-color-success: #4ade80;
-   --privy-color-error: #f87171;
-   --privy-color-error-light: #fca5a5;
 }
 
 .dark html {
-  background-color: #1e293b;
+  /* background-color: #1e293b; */
   height: 100%;
 }
 
@@ -107,7 +72,7 @@ html {
 
 
 /* Futuristic Glassmorphism Cards */
-@media (max-width: 640px) {
+/* @media (max-width: 640px) {
   .glass-card, .card, .dashboard-card {
     padding: 1.2rem 0.7rem ;
   }
@@ -127,13 +92,12 @@ html {
 }
 .glass-card:hover, .card:hover, .dashboard-card:hover {
   box-shadow: 0 0 16px 4px var(--primary), 0 4px 32px 0 var(--accent);
-}
+} */
 
 
 /* Neon Buttons */
-.btn, .button, .global button {
+/* .btn, .button, .global button {
   background: linear-gradient(90deg, var(--primary), var(--accent) 70%);
-  /* color: #fff; */
   border: none;
   border-radius: 0.75rem;
   box-shadow: 0 1px 6px 0 var(--primary-light);
@@ -146,11 +110,11 @@ html {
   background: linear-gradient(90deg, var(--accent), var(--primary) 70%);
   box-shadow: 0 0 16px 4px var(--accent-light);
   transform: translateY(-1px) scale(1.01);
-}
+} */
 
-header .hbutton {
+/* header .hbutton {
   background: linear-gradient(90deg, var(--primary), var(--accent) 70%);
-  /* color: #fff; */
+  color: #fff;
   border-radius: 50%;
   border: none;
   box-shadow: 0 1px 6px 0 var(--primary-light);
@@ -163,7 +127,7 @@ header .hbutton:hover {
   background: linear-gradient(90deg, var(--accent), var(--primary) 70%);
   box-shadow: 0 0 16px 4px var(--accent-light);
   transform: translateY(-1px) scale(1.01);
-}
+} */
 
 .options:hover{
   background-color: var(--primary);
@@ -177,17 +141,17 @@ header .hbutton:hover {
 }
 
 /* Futuristic Inputs */
-input, select, textarea {
-  /* background: #f8fafc; Light gray for light mode */
-  border: 1.5px solid #e2e8f0; /* Light border for light mode */
-  /* color: black ; */
+/* input, select, textarea {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  color: black ;
   border-radius: 0.7rem;
   padding: 0.7em 1em;
   font-size: 1rem;
   outline: none;
   transition: border 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+} */
 
 /* .dark input, .dark select, .dark textarea {
   background: #1e1e1e; 
@@ -195,16 +159,16 @@ input, select, textarea {
   color: white ;
 } */
 
-input:focus, select:focus, textarea:focus {
+/* input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--primary-light);
-}
+} */
 
 /* Fix for placeholder text */
-input::placeholder, textarea::placeholder, select::placeholder {
+/* input::placeholder, textarea::placeholder, select::placeholder {
   color: var(--input-placeholder) ;
   opacity: 1;
-}
+} */
 
 /* Fix for autofill background in Chrome */
 input:-webkit-autofill,
@@ -234,20 +198,20 @@ input:-webkit-autofill:focus {
 }
 
 /* Ensure text visibility in both modes */
-.dark .text-gray-900,
+/* .dark .text-gray-900,
 .dark .text-slate-900,
 .dark .text-black,
 .dark .text-slate-800 {
   color: white ;
-}
+} */
 
-.dark .text-gray-700,
+/* .dark .text-gray-700,
 .dark .text-slate-700 {
   color: white ;
-}
+} */
 
 /* Target only specific landing page elements in dark mode */
-.dark #how-it-works h2,
+/* .dark #how-it-works h2,
 .dark #how-it-works p,
 .dark #how-it-works h3,
 .dark #faq h2,
@@ -256,10 +220,10 @@ input:-webkit-autofill:focus {
 .dark .text-on-light,
 .dark .gradient-text {
   color: white ;
-}
+} */
 
 /* Specific rules for landing page feature sections */
-.dark .bg-white h2,
+/* .dark .bg-white h2,
 .dark .bg-white p,
 .dark .bg-white span,
 .dark .dark\:bg-gray-800 h2,
@@ -269,27 +233,27 @@ input:-webkit-autofill:focus {
 .dark .text-gray-600,
 .dark .text-gray-700 {
   color: white ;
-}
+} */
 
 /* Force all text in headers to be visible in dark mode */
-.dark header *,
+/* .dark header *,
 .dark nav * {
   color: white ;
-}
+} */
 
 /* Card styling for both modes */
-.bg-white {
-  /* background-color: white ; */
+/* .bg-white {
+  background-color: white ;
   color: black ;
-}
+} */
 
-.dark .bg-white {
+/* .dark .bg-white {
   background-color: #1e293b ;
   color: white ;
-}
+} */
 
 /* Chart text visibility */
-.dark canvas,
+/* .dark canvas,
 .dark .chartjs-render-monitor,
 .dark [class*="chart-"] {
   color: var(--foreground) ;
@@ -299,30 +263,30 @@ input:-webkit-autofill:focus {
 .dark svg text {
   fill: var(--foreground) ;
   color: var(--foreground) ;
-}
+} */
 
 /* Ensure form elements are visible */
-.dark input,
+/* .dark input,
 .dark select,
 .dark textarea {
   background-color: var(--input-bg);
   color: var(--input-text) ;
   border-color: var(--input-border);
-}
+} */
 
-thead {
+/* thead {
   background-color: var(--table-header-bg);
-}
+} */
 
 /* Ensure table text is visible */
-.dark table {
+/* .dark table {
   color: var(--foreground) ;
-}
+} */
 
-.dark th,
+/* .dark th,
 .dark td {
   color: var(--foreground) ;
-} 
+}  */
 
 /* Gradient Text */
 .gradient-text {
@@ -332,71 +296,24 @@ thead {
 }
 
 /* Futuristic UI Elements */
-.glass-card {
+/* .glass-card {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 1rem;
-}
+} */
 
-.dark .glass-card {
+/* .dark .glass-card {
   background: rgba(15, 23, 42, 0.3);
   border: 1px solid rgba(59, 130, 246, 0.2);
-}
+} */
 
-@layer utilities {
-  .neon-glow {
-    box-shadow: 0 0 12px 2px var(--primary), 0 0 32px 8px var(--accent-light), 0 1.5px 12px 0 var(--accent);
-    transition: box-shadow 0.2s;
-  }
-  .drop-shadow-neon {
-    text-shadow: 0 0 8px var(--primary), 0 0 16px var(--accent-light), 0 0 2px #fff;
-  }
 
-  .text-balance {
-    text-wrap: balance;
-  }
-  
-  .text-on-light {
-    color: #171717 ; /* Dark text for light backgrounds */
-  }
-  
-  .text-on-dark {
-    color: #f8fafc ; /* Light text for dark backgrounds */
-  }
-  
-  /* Dashboard welcome message animations */
-  .animate-fadeIn {
-    animation: fadeIn 0.8s ease-in-out forwards;
-  }
-  
-  .animation-delay-200 {
-    animation-delay: 0.2s;
-  }
-  
-  .animation-delay-300 {
-    animation-delay: 0.3s;
-  }
-  
-  .hover\:scale-102:hover {
-    transform: scale(1.02);
-  }
-}
 
 /* Animation keyframes */
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 /* Fix for white-on-white text issues */
-.bg-white {
+/* .bg-white {
   color: #171717 ;
 }
 
@@ -406,7 +323,7 @@ thead {
 
 .bg-white p, .bg-white span{
   color: #000000 ;
-}
+} */
 
 /* Fix for specific dashboard elements */
 /* .bg-white .text-xl,
@@ -416,25 +333,10 @@ thead {
   color: #111827 ;
 } */
 
-/* Fix for Quick Actions */
-.bg-gray-100 h3,
-.bg-blue-50 h3,
-.bg-green-50 h3,
-.bg-purple-50 h3 {
-  color: #111827 ;
-}
 
-.bg-gray-100 p,
-.bg-blue-50 p,
-.bg-green-50 p,
-.bg-purple-50 p {
-  color: #374151 ;
-}
 
-/* Fix for border colors*/
-.border-blue-css {
-  border-color: #3b82f6 ;
-}
+
+
 
 /* Dark mode overrides */
 /* .dark .bg-white h1, .dark .bg-white h2, .dark .bg-white h3, .dark .bg-white h4, .dark .bg-white h5, .dark .bg-white h6,

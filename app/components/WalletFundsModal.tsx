@@ -121,17 +121,17 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
     setIsLoading(true);
     try {
       const provider = await embeddedWallet.getEthereumProvider();
-      const tokens = [
+      const tokens: Token[] = [
         { symbol: 'ETH', decimals: 18, type: 'native', flag: undefined },
         ...stablecoins.filter(sc => sc.chainId === base.id).map(sc => ({
           symbol: sc.baseToken,
           address: sc.address,
-          decimals: sc.decimals,
+          decimals: sc.decimals as number,
           type: 'erc20',
           flag: sc.flag
         }))
       ];
-      const balancePromises = tokens.map(async (token: Token) => {
+      const balancePromises = tokens.map(async (token) => {
         try {
           if (token.type === 'native') {
             const balanceHex = await provider.request({
@@ -463,8 +463,8 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                 </div>
               )}
 
-              <div className="flex mb-6 border-b">
-                <button className="text-[--text-primary] font-semibold pb-2 border-b-2 border-[--border-color] mr-8">
+              <div className="flex mb-6 !border-b">
+                <button className="text-[--text-primary] font-semibold pb-2 !border-b-2 !border-[--border-color] !mr-8">
                   Balances
                 </button>
                 <button className="text-[--text-secondary] font-semibold pb-2">
@@ -507,7 +507,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-gray-900">
-                          ${(token.usdValue || 0).toFixed(2)}
+                          ${(token.usdValue || 0).toFixed(4)}
                         </div>
                       </div>
                     </TokenCard>

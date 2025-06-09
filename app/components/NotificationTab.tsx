@@ -61,7 +61,7 @@ export default function NotificationTab() {
         aria-label="Notifications"
         onClick={() => setOpen((o) => !o)}
       >
-        <FaBell size={16}/>
+        <FaBell size={18} className='text-slate-800 hover:text-blue-500 transition-colors duration-300'/>
         {notifications.some(n => !n.read) && (
           <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">{notifications.filter(n => !n.read).length}</span>
         )}

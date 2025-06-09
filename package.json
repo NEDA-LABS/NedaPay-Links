@@ -57,7 +57,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.10.6",
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.1.8",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.17",
@@ -69,9 +69,9 @@
     "eslint-config-next": "15.3.0",
     "netlify-cli": "^21.2.1",
     "pino-pretty": "^13.0.0",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.4",
     "prisma": "^6.8.2",
-    "tailwindcss": "^4.1.6",
+    "tailwindcss": "^4.1.8",
     "typescript": "^5"
   }
 }

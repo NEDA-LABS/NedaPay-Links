@@ -87,7 +87,7 @@ const BasenameDisplay: React.FC<BasenameDisplayProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center space-x-1 text-white">
         <div className="animate-pulse bg-gray-200 dark:bg-gray-600 h-4 w-16 rounded"></div>
       </div>
     );
@@ -96,7 +96,7 @@ const BasenameDisplay: React.FC<BasenameDisplayProps> = ({
   if (baseName) {
     return (
       <span
-        className={`text-sm text-black dark:text-white font-bold ${basenameClassName}`}
+        className={`text-sm text-white font-bold ${basenameClassName}`}
       >
         {baseName}
       </span>
@@ -456,26 +456,20 @@ const WalletSelector = forwardRef<
     }
 
     return (
-      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-        <path
-          fillRule="evenodd"
-          d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm1 2a1 1 0 000 2h10a1 1 0 100-2H5z"
-          clipRule="evenodd"
-        />
-      </svg>
+      <FaWallet className="text-slate-800"/>
     );
   };
 
   if (!ready) {
     return (
-      <div className="wallet-button flex items-center bg-gray-200 dark:bg-gray-700 px-2 sm:px-3 py-1 rounded-lg">
-        <span className="text-xs sm:text-sm text-gray-500">Loading...</span>
+      <div className="wallet-button flex items-center bg-gradient-to-r from-blue-600 to-purple-700 px-2 sm:px-3 py-1 rounded-lg text-white shadow-lg">
+        <span className="text-xs sm:text-sm text-black">Loading...</span>
       </div>
     );
   }
 
   return (
-    <div className="relative" ref={dropdownRef} style={{ padding: "0.3rem" }}>
+    <div className="relative bg-gradient-to-r from-blue-400 bg-indigo-400 rounded-xl p-2" ref={dropdownRef}>
       <style jsx>{mobileStyles}</style>
 
       {isConnected ? (
@@ -484,10 +478,10 @@ const WalletSelector = forwardRef<
             e.stopPropagation();
             setShowOptions(!showOptions);
           }}
-          className="wallet-button hbutton flex items-center space-x-2 bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
+          className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm hover:from-blue-600 hover:to-purple-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           style={{ borderRadius: "0.75rem" }}
         >
-          <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 flex-shrink-0">
+          <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
             {renderWalletIcon()}
           </div>
 
@@ -503,7 +497,7 @@ const WalletSelector = forwardRef<
                   />
                 </div>
               ) : emailAddress ? (
-                <span className="wallet-address text-xs sm:text-sm font-bold">
+                <span className="wallet-address text-xs sm:text-sm !text-slate-20 font-bold">
                   {formatEmail(emailAddress, 15)}
                 </span>
               ) : (
@@ -520,7 +514,7 @@ const WalletSelector = forwardRef<
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="currentColor"
-            className="w-4 h-4 flex-shrink-0"
+            className="w-4 h-4 flex-shrink-0 text-slate-800"
           >
             <path
               strokeLinecap="round"
@@ -620,7 +614,7 @@ const WalletSelector = forwardRef<
               </div>
             </button>
           </div>
-          {user?.wallet?.walletClientType === "privy" && (
+          {user?.wallet?.walletClientType === 'privy' && (
             <div className="p-3 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => {

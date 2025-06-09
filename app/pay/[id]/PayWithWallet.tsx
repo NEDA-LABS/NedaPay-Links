@@ -405,7 +405,7 @@ export default function PayWithWallet({
       <button
         onClick={handlePay}
         disabled={loading}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition disabled:opacity-60"
+        className="px-4 py-2 !bg-blue-500 hover:!bg-blue-600 text-white rounded-lg font-semibold transition disabled:opacity-60"
       >
         {loading ? (
           <span className="flex items-center justify-center">
