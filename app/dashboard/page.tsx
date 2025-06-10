@@ -699,7 +699,7 @@ export default function MerchantDashboard() {
   //     )}
   //   </div>
   //   )
-    
+
   // }
 
   return (
@@ -743,409 +743,502 @@ export default function MerchantDashboard() {
                 )}
               </div>
               <div className="py-4 flex flex-row sm:flex-col items-stretch gap-2">
-              <div className=" sm:p-6 flex-1 bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden backdrop-blur-md">
-                {/* Background Accents */}
-                <div className="absolute inset-0 bg-white/5 backdrop-blur-xl"></div>
-                <div className="absolute -top-6 -left-6 w-32 h-32 bg-blue-800/20 rounded-full blur-2xl animate-pulse-slow"></div>
-                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-indigo-800/20 rounded-full blur-2xl animate-pulse-slow"></div>
-                <div>
-                <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  <div className="flex-1">
-                    <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white mb-2 flex items-center gap-2 animate-slide-in">
-                      Welcome Back
-                      {selectedWalletAddress && (
-                        <span className="inline-flex items-center px-2 py-0.5 bg-white/10 rounded-md text-sm sm:text-base font-medium text-white/90 backdrop-blur-sm">
-                          <BasenameDisplay
-                            address={selectedWalletAddress}
-                            basenameClassName="text-sm sm:text-base font-semibold text-white/90"
-                            isMobile={false}
+                <div className=" sm:p-6 flex-1 bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden backdrop-blur-md">
+                  {/* Background Accents */}
+                  <div className="absolute inset-0 bg-white/5 backdrop-blur-xl"></div>
+                  <div className="absolute -top-6 -left-6 w-32 h-32 bg-blue-800/20 rounded-full blur-2xl animate-pulse-slow"></div>
+                  <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-indigo-800/20 rounded-full blur-2xl animate-pulse-slow"></div>
+                  <div>
+                    <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                      <div className="flex-1">
+                        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white mb-2 flex items-center gap-2 animate-slide-in">
+                          Welcome Back
+                          {selectedWalletAddress && (
+                            <span className="inline-flex items-center px-2 py-0.5 bg-white/10 rounded-md text-sm sm:text-base font-medium text-white/90 backdrop-blur-sm">
+                              <BasenameDisplay
+                                address={selectedWalletAddress}
+                                basenameClassName="text-sm sm:text-base font-semibold text-white/90"
+                                isMobile={false}
+                              />
+                            </span>
+                          )}
+                        </h2>
+                        <p className="text-sm sm:text-base text-white/80 mb-4 animate-slide-in animation-delay-100 max-w-md">
+                          {(() => {
+                            const messages = [
+                              "Unleash your business potential with NEDA Pay’s seamless crypto payments.",
+                              "Your dashboard is live—ready to scale your transactions?",
+                              "Empower your growth with NEDA Pay’s cutting-edge tools.",
+                              "Support at your fingertips—let’s elevate your business today.",
+                              "Transform payments into opportunities with NEDA Pay.",
+                            ];
+                            return messages[
+                              Math.floor(Math.random() * messages.length)
+                            ];
+                          })()}
+                        </p>
+                        <div className="flex flex-row gap-4 animate-slide-in animation-delay-200 mt-8 pt-4">
+                          <button
+                            onClick={() => {
+                              setIsLoadingPaymentLink(true);
+                              router.push("/payment-link");
+                            }}
+                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isLoadingPaymentLink}
+                          >
+                            <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
+                            <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
+                            <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
+                              {isLoadingPaymentLink ? (
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                  <p className="font-semibold text-blue-600">
+                                    Processing...
+                                  </p>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex items-center gap-2">
+                                    
+                                      Create Payment Link
+                                    <FaArrowRight/>
+                                  </div>
+                                </>
+                              )}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              router.push("#swap");
+                            }}
+                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
+                            <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
+                            <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
+                              <>
+                                Swap Coins
+                                <Repeat />
+                              </>
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              router.push("/offramp");
+                            }}
+                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
+                            <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
+                            <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
+                              <span>Transfer to Fiat</span>
+                              <FaMoneyBill />
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsLoadingSettings(true);
+                              router.push("/settings");
+                            }}
+                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold border border-white/30 overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isLoadingSettings}
+                          >
+                            <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></span>
+                            <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:-translate-y-0.5">
+                              {isLoadingSettings ? (
+                                <span>Loading...</span>
+                              ) : (
+                                <>
+                                  Customize Dashboard
+                                  <FaArrowRight />
+                                </>
+                              )}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="hidden md:block">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-400 flex items-center justify-center shadow-md transition-all duration-300 hover:scale-110 hover:rotate-6 animate-slide-in animation-delay-300">
+                          <DollarSign
+                            className="w-7 h-7 text-white"
+                            strokeWidth={2.5}
                           />
-                        </span>
-                      )}
-                    </h2>
-                    <p className="text-sm sm:text-base text-white/80 mb-4 animate-slide-in animation-delay-100 max-w-md">
-                      {(() => {
-                        const messages = [
-                          "Unleash your business potential with NEDA Pay’s seamless crypto payments.",
-                          "Your dashboard is live—ready to scale your transactions?",
-                          "Empower your growth with NEDA Pay’s cutting-edge tools.",
-                          "Support at your fingertips—let’s elevate your business today.",
-                          "Transform payments into opportunities with NEDA Pay.",
-                        ];
-                        return messages[
-                          Math.floor(Math.random() * messages.length)
-                        ];
-                      })()}
-                    </p>
-                    <div className="flex flex-row gap-4 animate-slide-in animation-delay-200 mt-8 pt-4">
-                      <button
-                        onClick={() => {
-                          setIsLoadingPaymentLink(true);
-                          router.push("/payment-link");
-                        }}
-                        className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isLoadingPaymentLink}
-                      >
-                        <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
-                        <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
-                        <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
-                          {isLoadingPaymentLink ? (
-                            <span>Loading...</span>
-                          ) : (
-                            <>
-                              Create Payment Link
-                              <FaArrowRight />
-                            </>
-                          )}
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          router.push("/swap");
-                        }}
-                        className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
-                        <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
-                        <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
-                          <>
-                            Swap Coins
-                            <Repeat />
-                          </>
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          router.push("/offramp");
-                        }}
-                        className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
-                        <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
-                        <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
-                          <span>Transfer to Fiat</span>
-                          <FaMoneyBill />
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsLoadingSettings(true);
-                          router.push("/settings");
-                        }}
-                        className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold border border-white/30 overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isLoadingSettings}
-                      >
-                        <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></span>
-                        <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:-translate-y-0.5">
-                          {isLoadingSettings ? (
-                            <span>Loading...</span>
-                          ) : (
-                            <>
-                              Customize Dashboard
-                              <FaArrowRight />
-                            </>
-                          )}
-                        </span>
-                      </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="hidden md:block">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-400 flex items-center justify-center shadow-md transition-all duration-300 hover:scale-110 hover:rotate-6 animate-slide-in animation-delay-300">
-                      <DollarSign
-                        className="w-7 h-7 text-white"
-                        strokeWidth={2.5}
-                      />
+
+                    {/* Subtle Shimmer Effect */}
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                      <div className="absolute w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
                     </div>
+
+                    <style jsx global>{`
+                      /* Slide-in animation */
+                      .animate-slide-in {
+                        opacity: 0;
+                        transform: translateY(15px);
+                        animation: slideIn 0.6s ease-out forwards;
+                      }
+
+                      .animation-delay-100 {
+                        animation-delay: 0.1s;
+                      }
+
+                      .animation-delay-200 {
+                        animation-delay: 0.2s;
+                      }
+
+                      .animation-delay-300 {
+                        animation-delay: 0.3s;
+                      }
+
+                      @keyframes slideIn {
+                        to {
+                          opacity: 1;
+                          transform: translateY(0);
+                        }
+                      }
+
+                      /* Slow pulse for background accents */
+                      .animate-pulse-slow {
+                        animation: pulseSlow 6s ease-in-out infinite;
+                      }
+
+                      @keyframes pulseSlow {
+                        0%,
+                        100% {
+                          opacity: 0.4;
+                        }
+                        50% {
+                          opacity: 0.7;
+                        }
+                      }
+
+                      /* Shimmer effect */
+                      .animate-shimmer {
+                        transform: translateX(-100%);
+                        animation: shimmer 3s infinite linear;
+                      }
+
+                      @keyframes shimmer {
+                        100% {
+                          transform: translateX(100%);
+                        }
+                      }
+
+                      /* Border pulse for primary button */
+                      .animate-border-pulse {
+                        animation: borderPulse 2s linear infinite;
+                      }
+
+                      @keyframes borderPulse {
+                        0% {
+                          border-color: rgba(59, 130, 246, 0.4);
+                        }
+                        50% {
+                          border-color: rgba(59, 130, 246, 0.8);
+                        }
+                        100% {
+                          border-color: rgba(59, 130, 246, 0.4);
+                        }
+                      }
+                    `}</style>
                   </div>
                 </div>
-
-                {/* Subtle Shimmer Effect */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  <div className="absolute w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-                </div>
-
-                <style jsx global>{`
-                  /* Slide-in animation */
-                  .animate-slide-in {
-                    opacity: 0;
-                    transform: translateY(15px);
-                    animation: slideIn 0.6s ease-out forwards;
-                  }
-
-                  .animation-delay-100 {
-                    animation-delay: 0.1s;
-                  }
-
-                  .animation-delay-200 {
-                    animation-delay: 0.2s;
-                  }
-
-                  .animation-delay-300 {
-                    animation-delay: 0.3s;
-                  }
-
-                  @keyframes slideIn {
-                    to {
-                      opacity: 1;
-                      transform: translateY(0);
-                    }
-                  }
-
-                  /* Slow pulse for background accents */
-                  .animate-pulse-slow {
-                    animation: pulseSlow 6s ease-in-out infinite;
-                  }
-
-                  @keyframes pulseSlow {
-                    0%,
-                    100% {
-                      opacity: 0.4;
-                    }
-                    50% {
-                      opacity: 0.7;
-                    }
-                  }
-
-                  /* Shimmer effect */
-                  .animate-shimmer {
-                    transform: translateX(-100%);
-                    animation: shimmer 3s infinite linear;
-                  }
-
-                  @keyframes shimmer {
-                    100% {
-                      transform: translateX(100%);
-                    }
-                  }
-
-                  /* Border pulse for primary button */
-                  .animate-border-pulse {
-                    animation: borderPulse 2s linear infinite;
-                  }
-
-                  @keyframes borderPulse {
-                    0% {
-                      border-color: rgba(59, 130, 246, 0.4);
-                    }
-                    50% {
-                      border-color: rgba(59, 130, 246, 0.8);
-                    }
-                    100% {
-                      border-color: rgba(59, 130, 246, 0.4);
-                    }
-                  }
-                `}</style>
+                <WalletStatusSection
+                  selectedWalletAddress={selectedWalletAddress}
+                  selectedWalletType={selectedWalletType}
+                />
               </div>
-              </div>
-              <WalletStatusSection selectedWalletAddress={selectedWalletAddress} selectedWalletType={selectedWalletType}/>
-              </div>
-              
             </div>
 
-            <h2 className="text-2xl font-semibold mb-4">Summary of Transactions</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              Summary of Transactions
+            </h2>
             {/* Simple Analytics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-  {/* Total Received */}
-  <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in border border-2 !border-blue-500">
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
-    <div className="relative flex items-center gap-2 mb-2">
-      <FaCoins className="w-5 h-5 text-blue-600" strokeWidth={2.5} />
-      <h3 className="text-sm sm:text-base font-semibold text-slate-800">Total Received</h3>
-    </div>
-    <div className="flex flex-col gap-1 text-xl sm:text-2xl font-semibold text-slate-800">
-      {isBalanceLoading ? (
-        <div className="flex items-center gap-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-          <span className="text-xs sm:text-sm text-blue-600">Refreshing balances...</span>
-        </div>
-      ) : balanceError ? (
-        <span className="text-red-600">N/A</span>
-      ) : (
-        (() => {
-          const processed = processBalances(balances).processedBalances;
-          const nonZero = processed.filter((c) => parseFloat(c.balance.replace(/,/g, "")) > 0);
-          if (!nonZero.length) return "0";
-          return nonZero.map((c) => (
-            <div key={c.symbol} className="flex items-center gap-2 text-sm sm:text-base">
-              <span>{c.flag}</span>
-              <span className="font-semibold">{c.balance}</span>
-              <span className="ml-1">{c.symbol}</span>
+              {/* Total Received */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in border border-2 !border-blue-500">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+                <div className="relative flex items-center gap-2 mb-2">
+                  <FaCoins
+                    className="w-5 h-5 text-blue-600"
+                    strokeWidth={2.5}
+                  />
+                  <h3 className="text-sm sm:text-base font-semibold text-slate-800">
+                    Total Received
+                  </h3>
+                </div>
+                <div className="flex flex-col gap-1 text-xl sm:text-2xl font-semibold text-slate-800">
+                  {isBalanceLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      <span className="text-xs sm:text-sm text-blue-600">
+                        Refreshing balances...
+                      </span>
+                    </div>
+                  ) : balanceError ? (
+                    <span className="text-red-600">N/A</span>
+                  ) : (
+                    (() => {
+                      const processed =
+                        processBalances(balances).processedBalances;
+                      const nonZero = processed.filter(
+                        (c) => parseFloat(c.balance.replace(/,/g, "")) > 0
+                      );
+                      if (!nonZero.length) return "0";
+                      return nonZero.map((c) => (
+                        <div
+                          key={c.symbol}
+                          className="flex items-center gap-2 text-sm sm:text-base"
+                        >
+                          <span>{c.flag}</span>
+                          <span className="font-semibold">{c.balance}</span>
+                          <span className="ml-1">{c.symbol}</span>
+                        </div>
+                      ));
+                    })()
+                  )}
+                </div>
+              </div>
+
+              {/* Total Transactions */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in animation-delay-100 border border-2 !border-blue-500">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+                <div className="relative flex items-center gap-2 mb-2">
+                  <BarChart2
+                    className="w-5 h-5 text-indigo-600"
+                    strokeWidth={2.5}
+                  />
+                  <h3 className="text-sm sm:text-base font-semibold text-slate-800">
+                    Total Transactions
+                  </h3>
+                </div>
+                <div className="flex flex-col gap-1 text-xl sm:text-2xl font-semibold text-slate-800">
+                  {(() => {
+                    const grouped: Record<
+                      string,
+                      { count: number; flag: string }
+                    > = {};
+                    transactions.forEach((tx) => {
+                      const symbol = tx.currency;
+                      if (!grouped[symbol]) {
+                        const coin = stablecoins.find(
+                          (c) => c.baseToken === symbol
+                        );
+                        grouped[symbol] = {
+                          count: 0,
+                          flag: coin?.flag || "🏳️",
+                        };
+                      }
+                      grouped[symbol].count++;
+                    });
+                    const entries = Object.entries(grouped).filter(
+                      ([sym, data]) => data.count > 0
+                    );
+                    if (!entries.length) return "0";
+                    return entries.map(([symbol, data]) => (
+                      <div
+                        key={symbol}
+                        className="flex items-center gap-2 text-sm sm:text-base"
+                      >
+                        <span>{data.flag}</span>
+                        <span className="font-semibold">
+                          {data.count.toLocaleString()}
+                        </span>
+                        <span className="ml-1">{symbol}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Average Transaction */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in animation-delay-200 border border-2 !border-blue-500">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+                <div className="relative flex items-center gap-2 mb-2">
+                  <TrendingUp
+                    className="w-5 h-5 text-purple-600"
+                    strokeWidth={2.5}
+                  />
+                  <h3 className="text-sm sm:text-base font-semibold text-slate-800">
+                    Average Transaction
+                  </h3>
+                </div>
+                <div className="flex flex-col gap-1 text-xl sm:text-2xl font-semibold text-slate-800">
+                  {(() => {
+                    const grouped: Record<
+                      string,
+                      { sum: number; count: number; flag: string }
+                    > = {};
+                    transactions.forEach((tx) => {
+                      const symbol = tx.currency;
+                      if (!grouped[symbol]) {
+                        const coin = stablecoins.find(
+                          (c) => c.baseToken === symbol
+                        );
+                        grouped[symbol] = {
+                          sum: 0,
+                          count: 0,
+                          flag: coin?.flag || "🏳️",
+                        };
+                      }
+                      grouped[symbol].sum +=
+                        parseFloat((tx.amount || "0").replace(/,/g, "")) || 0;
+                      grouped[symbol].count++;
+                    });
+                    const entries = Object.entries(grouped).filter(
+                      ([sym, data]) => data.count > 0
+                    );
+                    if (!entries.length) return "0";
+                    return entries.map(([symbol, data]) => (
+                      <div
+                        key={symbol}
+                        className="flex items-center gap-2 text-sm sm:text-base"
+                      >
+                        <span>{data.flag}</span>
+                        <span className="font-semibold">
+                          {Math.round(data.sum / data.count).toLocaleString()}
+                        </span>
+                        <span className="ml-1">{symbol}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Monthly Growth */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in animation-delay-300 border border-2 !border-blue-500">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+                <div className="relative flex items-center gap-2 mb-2">
+                  <Repeat className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
+                  <h3 className="text-sm sm:text-base font-semibold text-slate-800">
+                    Monthly Growth
+                  </h3>
+                </div>
+                <div className="text-xl sm:text-2xl font-semibold text-slate-800">
+                  {(() => {
+                    const now = new Date();
+                    const thisMonth = now.getMonth();
+                    const thisYear = now.getFullYear();
+                    const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+                    const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+                    let thisMonthSum = 0;
+                    let prevMonthSum = 0;
+                    transactions.forEach((tx) => {
+                      const txDate = new Date(tx.date);
+                      const amt =
+                        parseFloat((tx.amount || "0").replace(/,/g, "")) || 0;
+                      if (
+                        txDate.getFullYear() === thisYear &&
+                        txDate.getMonth() === thisMonth
+                      ) {
+                        thisMonthSum += amt;
+                      } else if (
+                        txDate.getFullYear() === prevYear &&
+                        txDate.getMonth() === prevMonth
+                      ) {
+                        prevMonthSum += amt;
+                      }
+                    });
+                    if (prevMonthSum === 0 && thisMonthSum === 0) return "N/A";
+                    if (prevMonthSum === 0) return "+100%";
+                    const growth =
+                      ((thisMonthSum - prevMonthSum) / prevMonthSum) * 100;
+                    const sign = growth >= 0 ? "+" : "";
+                    return (
+                      <span
+                        className={
+                          growth >= 0 ? "text-green-600" : "text-red-600"
+                        }
+                      >
+                        {`${sign}${growth.toFixed(1)}%`}
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in animation-delay-400 border border-2 !border-blue-500">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+                <div className="relative flex items-center gap-2 mb-2">
+                  <CreditCard
+                    className="w-5 h-5 text-blue-600"
+                    strokeWidth={2.5}
+                  />
+                  <h3 className="text-sm sm:text-base font-semibold text-slate-800">
+                    Payment Methods
+                  </h3>
+                </div>
+                <div className="flex flex-col gap-1 text-xl sm:text-2xl font-semibold text-slate-800">
+                  {(() => {
+                    const usedSymbols = Array.from(
+                      new Set(transactions.map((tx) => tx.currency))
+                    );
+                    if (!usedSymbols.length) return "None";
+                    return usedSymbols.map((symbol) => {
+                      const coin = stablecoins.find(
+                        (c) => c.baseToken === symbol
+                      );
+                      return (
+                        <div
+                          key={symbol}
+                          className="flex items-center gap-2 text-sm sm:text-base"
+                        >
+                          <span>{coin?.flag || "🏳️"}</span>
+                          <span className="font-semibold">{symbol}</span>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+
+              <style jsx global>{`
+                /* Slide-in animation */
+                .animate-slide-in {
+                  opacity: 0;
+                  transform: translateY(15px);
+                  animation: slideIn 0.6s ease-out forwards;
+                }
+
+                .animation-delay-100 {
+                  animation-delay: 0.1s;
+                }
+
+                .animation-delay-200 {
+                  animation-delay: 0.2s;
+                }
+
+                .animation-delay-300 {
+                  animation-delay: 0.3s;
+                }
+
+                .animation-delay-400 {
+                  animation-delay: 0.4s;
+                }
+
+                @keyframes slideIn {
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+
+                /* Shimmer effect */
+                .animate-shimmer {
+                  transform: translateX(-100%);
+                  animation: shimmer 3s infinite linear;
+                }
+
+                @keyframes shimmer {
+                  100% {
+                    transform: translateX(100%);
+                  }
+                }
+              `}</style>
             </div>
-          ));
-        })()
-      )}
-    </div>
-  </div>
-
-  {/* Total Transactions */}
-  <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in animation-delay-100 border border-2 !border-blue-500">
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
-    <div className="relative flex items-center gap-2 mb-2">
-      <BarChart2 className="w-5 h-5 text-indigo-600" strokeWidth={2.5} />
-      <h3 className="text-sm sm:text-base font-semibold text-slate-800">Total Transactions</h3>
-    </div>
-    <div className="flex flex-col gap-1 text-xl sm:text-2xl font-semibold text-slate-800">
-      {(() => {
-        const grouped: Record<string, { count: number; flag: string }> = {};
-        transactions.forEach((tx) => {
-          const symbol = tx.currency;
-          if (!grouped[symbol]) {
-            const coin = stablecoins.find((c) => c.baseToken === symbol);
-            grouped[symbol] = { count: 0, flag: coin?.flag || "🏳️" };
-          }
-          grouped[symbol].count++;
-        });
-        const entries = Object.entries(grouped).filter(([sym, data]) => data.count > 0);
-        if (!entries.length) return "0";
-        return entries.map(([symbol, data]) => (
-          <div key={symbol} className="flex items-center gap-2 text-sm sm:text-base">
-            <span>{data.flag}</span>
-            <span className="font-semibold">{data.count.toLocaleString()}</span>
-            <span className="ml-1">{symbol}</span>
-          </div>
-        ));
-      })()}
-    </div>
-  </div>
-
-  {/* Average Transaction */}
-  <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in animation-delay-200 border border-2 !border-blue-500">
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
-    <div className="relative flex items-center gap-2 mb-2">
-      <TrendingUp className="w-5 h-5 text-purple-600" strokeWidth={2.5} />
-      <h3 className="text-sm sm:text-base font-semibold text-slate-800">Average Transaction</h3>
-    </div>
-    <div className="flex flex-col gap-1 text-xl sm:text-2xl font-semibold text-slate-800">
-      {(() => {
-        const grouped: Record<string, { sum: number; count: number; flag: string }> = {};
-        transactions.forEach((tx) => {
-          const symbol = tx.currency;
-          if (!grouped[symbol]) {
-            const coin = stablecoins.find((c) => c.baseToken === symbol);
-            grouped[symbol] = { sum: 0, count: 0, flag: coin?.flag || "🏳️" };
-          }
-          grouped[symbol].sum += parseFloat((tx.amount || "0").replace(/,/g, "")) || 0;
-          grouped[symbol].count++;
-        });
-        const entries = Object.entries(grouped).filter(([sym, data]) => data.count > 0);
-        if (!entries.length) return "0";
-        return entries.map(([symbol, data]) => (
-          <div key={symbol} className="flex items-center gap-2 text-sm sm:text-base">
-            <span>{data.flag}</span>
-            <span className="font-semibold">{Math.round(data.sum / data.count).toLocaleString()}</span>
-            <span className="ml-1">{symbol}</span>
-          </div>
-        ));
-      })()}
-    </div>
-  </div>
-
-  {/* Monthly Growth */}
-  <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in animation-delay-300 border border-2 !border-blue-500">
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
-    <div className="relative flex items-center gap-2 mb-2">
-      <Repeat className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
-      <h3 className="text-sm sm:text-base font-semibold text-slate-800">Monthly Growth</h3>
-    </div>
-    <div className="text-xl sm:text-2xl font-semibold text-slate-800">
-      {(() => {
-        const now = new Date();
-        const thisMonth = now.getMonth();
-        const thisYear = now.getFullYear();
-        const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
-        const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
-        let thisMonthSum = 0;
-        let prevMonthSum = 0;
-        transactions.forEach((tx) => {
-          const txDate = new Date(tx.date);
-          const amt = parseFloat((tx.amount || "0").replace(/,/g, "")) || 0;
-          if (txDate.getFullYear() === thisYear && txDate.getMonth() === thisMonth) {
-            thisMonthSum += amt;
-          } else if (txDate.getFullYear() === prevYear && txDate.getMonth() === prevMonth) {
-            prevMonthSum += amt;
-          }
-        });
-        if (prevMonthSum === 0 && thisMonthSum === 0) return "N/A";
-        if (prevMonthSum === 0) return "+100%";
-        const growth = ((thisMonthSum - prevMonthSum) / prevMonthSum) * 100;
-        const sign = growth >= 0 ? "+" : "";
-        return (
-          <span className={growth >= 0 ? "text-green-600" : "text-red-600"}>
-            {`${sign}${growth.toFixed(1)}%`}
-          </span>
-        );
-      })()}
-    </div>
-  </div>
-
-  {/* Payment Methods */}
-  <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in animation-delay-400 border border-2 !border-blue-500">
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
-    <div className="relative flex items-center gap-2 mb-2">
-      <CreditCard className="w-5 h-5 text-blue-600" strokeWidth={2.5} />
-      <h3 className="text-sm sm:text-base font-semibold text-slate-800">Payment Methods</h3>
-    </div>
-    <div className="flex flex-col gap-1 text-xl sm:text-2xl font-semibold text-slate-800">
-      {(() => {
-        const usedSymbols = Array.from(new Set(transactions.map((tx) => tx.currency)));
-        if (!usedSymbols.length) return "None";
-        return usedSymbols.map((symbol) => {
-          const coin = stablecoins.find((c) => c.baseToken === symbol);
-          return (
-            <div key={symbol} className="flex items-center gap-2 text-sm sm:text-base">
-              <span>{coin?.flag || "🏳️"}</span>
-              <span className="font-semibold">{symbol}</span>
-            </div>
-          );
-        });
-      })()}
-    </div>
-  </div>
-
-  <style jsx global>{`
-    /* Slide-in animation */
-    .animate-slide-in {
-      opacity: 0;
-      transform: translateY(15px);
-      animation: slideIn 0.6s ease-out forwards;
-    }
-
-    .animation-delay-100 {
-      animation-delay: 0.1s;
-    }
-
-    .animation-delay-200 {
-      animation-delay: 0.2s;
-    }
-
-    .animation-delay-300 {
-      animation-delay: 0.3s;
-    }
-
-    .animation-delay-400 {
-      animation-delay: 0.4s;
-    }
-
-    @keyframes slideIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Shimmer effect */
-    .animate-shimmer {
-      transform: translateX(-100%);
-      animation: shimmer 3s infinite linear;
-    }
-
-    @keyframes shimmer {
-      100% {
-        transform: translateX(100%);
-      }
-    }
-  `}</style>
-</div>
             {/* charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
               <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg">
@@ -1231,259 +1324,292 @@ export default function MerchantDashboard() {
             </div>
 
             <div className="flex flex-col gap-4 sm:gap-6 mb-8">
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in">
-  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
-  <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-400/20 rounded-full blur-xl animate-pulse-slow"></div>
-  <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-indigo-400/20 rounded-full blur-xl animate-pulse-slow"></div>
-  <div className="p-4 sm:p-5 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50 relative">
-    <div className="flex justify-between items-center">
-      <h3 className="text-base sm:text-lg font-semibold text-slate-800 flex items-center">
-        <Activity className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-blue-600" strokeWidth={2.5} />
-        Recent Transactions
-      </h3>
-      <div className="relative">
-      <select
-                    className="border rounded px-1 sm:px-2 py-0.5 sm:py-1 text-xs sm:text-sm bg-white !text-slate-800 w-auto"
-                    value={selectedCurrency}
-                    onChange={(e) => setSelectedCurrency(e.target.value)}
-                  >
-                    <option value="all" className="text-slate-800">
-                      All Currencies
-                    </option>
-                    {stablecoins.map((coin: any) => (
-                      <option
-                        key={coin.baseToken}
-                        value={coin.baseToken}
-                        className="text-slate-800"
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden animate-slide-in">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+                <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-400/20 rounded-full blur-xl animate-pulse-slow"></div>
+                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-indigo-400/20 rounded-full blur-xl animate-pulse-slow"></div>
+                <div className="p-4 sm:p-5 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50 relative">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-800 flex items-center">
+                      <Activity
+                        className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-blue-600"
+                        strokeWidth={2.5}
+                      />
+                      Recent Transactions
+                    </h3>
+                    <div className="relative">
+                      <select
+                        className="border rounded px-1 sm:px-2 py-0.5 sm:py-1 text-xs sm:text-sm bg-white !text-slate-800 w-auto"
+                        value={selectedCurrency}
+                        onChange={(e) => setSelectedCurrency(e.target.value)}
                       >
-                        {coin.flag} {coin.baseToken}
-                      </option>
-                    ))}
-                  </select>
-      </div>
-    </div>
-  </div>
-  <div className="relative overflow-x-auto overflow-y-hidden scroll-smooth">
-    <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-slate-100 to-transparent pointer-events-none z-10"></div>
-    <div className="absolute inset-y-0 right-0 w-2 bg-gradient-to-l from-slate-100 to-transparent pointer-events-none z-10"></div>
-    <table className="min-w-full divide-y divide-slate-200">
-      <thead className="bg-slate-50">
-        <tr>
-          <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[100px]">
-            Tx Hash
-          </th>
-          <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[100px]">
-            Sender
-          </th>
-          <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[120px]">
-            Date
-          </th>
-          <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[80px]">
-            Amount
-          </th>
-          <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[80px]">
-            Status
-          </th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-200">
-        {isTransactionLoading ? (
-          Array(5)
-            .fill(0)
-            .map((_, index) => (
-              <tr
-                key={`loading-${index}`}
-                className="animate-pulse"
-              >
-                <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
-                  <div className="h-4 w-20 bg-slate-200 rounded"></div>
-                </td>
-                <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
-                  <div className="h-4 w-16 bg-slate-200 rounded"></div>
-                </td>
-                <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
-                  <div className="h-4 w-24 bg-slate-200 rounded"></div>
-                </td>
-                <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
-                  <div className="h-4 w-16 bg-slate-200 rounded"></div>
-                </td>
-                <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
-                  <div className="h-4 w-14 bg-slate-200 rounded"></div>
-                </td>
-              </tr>
-            ))
-        ) : (selectedCurrency === "all"
-            ? transactions
-            : transactions.filter(
-                (tx) => tx.currency === selectedCurrency
-              )
-          ).length === 0 ? (
-          <tr>
-            <td
-              colSpan={5}
-              className="px-3 sm:px-5 py-6 sm:py-10 text-center text-xs sm:text-sm text-slate-600"
-            >
-              <div className="flex flex-col items-center justify-center space-y-2">
-                <FileText className="w-8 sm:w-12 h-8 sm:h-12 text-slate-400" strokeWidth={1.5} />
-                <p>No transactions found</p>
-                <button
-                  onClick={() => router.push("/payment-link")}
-                  className="mt-2 inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-                >
-                  Create Payment Link
-                </button>
+                        <option value="all" className="text-slate-800">
+                          All Currencies
+                        </option>
+                        {stablecoins.map((coin: any) => (
+                          <option
+                            key={coin.baseToken}
+                            value={coin.baseToken}
+                            className="text-slate-800"
+                          >
+                            {coin.flag} {coin.baseToken}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="relative overflow-x-auto overflow-y-hidden scroll-smooth">
+                  <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-slate-100 to-transparent pointer-events-none z-10"></div>
+                  <div className="absolute inset-y-0 right-0 w-2 bg-gradient-to-l from-slate-100 to-transparent pointer-events-none z-10"></div>
+                  <table className="min-w-full divide-y divide-slate-200">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[100px]">
+                          Tx Hash
+                        </th>
+                        <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[100px]">
+                          Sender
+                        </th>
+                        <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[120px]">
+                          Date
+                        </th>
+                        <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[80px]">
+                          Amount
+                        </th>
+                        <th className="px-3 sm:px-5 py-2 sm:py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider min-w-[80px]">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {isTransactionLoading ? (
+                        Array(5)
+                          .fill(0)
+                          .map((_, index) => (
+                            <tr
+                              key={`loading-${index}`}
+                              className="animate-pulse"
+                            >
+                              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
+                                <div className="h-4 w-20 bg-slate-200 rounded"></div>
+                              </td>
+                              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
+                                <div className="h-4 w-16 bg-slate-200 rounded"></div>
+                              </td>
+                              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
+                                <div className="h-4 w-24 bg-slate-200 rounded"></div>
+                              </td>
+                              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
+                                <div className="h-4 w-16 bg-slate-200 rounded"></div>
+                              </td>
+                              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-nowrap">
+                                <div className="h-4 w-14 bg-slate-200 rounded"></div>
+                              </td>
+                            </tr>
+                          ))
+                      ) : (selectedCurrency === "all"
+                          ? transactions
+                          : transactions.filter(
+                              (tx) => tx.currency === selectedCurrency
+                            )
+                        ).length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="px-3 sm:px-5 py-6 sm:py-10 text-center text-xs sm:text-sm text-slate-600"
+                          >
+                            <div className="flex flex-col items-center justify-center space-y-2">
+                              <FileText
+                                className="w-8 sm:w-12 h-8 sm:h-12 text-slate-400"
+                                strokeWidth={1.5}
+                              />
+                              <p>No transactions found</p>
+                              <button
+                                onClick={() => router.push("/payment-link")}
+                                className="mt-2 inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                              >
+                                Create Payment Link
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        (selectedCurrency === "all"
+                          ? transactions
+                          : transactions.filter(
+                              (tx) => tx.currency === selectedCurrency
+                            )
+                        ).map((tx, index) => (
+                          <tr
+                            key={tx.id}
+                            className={`hover:bg-blue-50 transition-colors duration-150 animate-fade-in ${index % 2 === 0 ? "bg-white" : "bg-slate-50"}`}
+                            style={{ animationDelay: `${index * 0.1}s` }}
+                          >
+                            <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[100px]">
+                              <a
+                                href={tx.blockExplorerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 font-medium flex items-center text-xs sm:text-sm"
+                              >
+                                <span className="mr-1 text-[10px] sm:text-xs bg-blue-100 text-blue-800 py-0.5 px-1 sm:px-2 rounded-md flex items-center">
+                                  <ExternalLink
+                                    className="w-2 sm:w-3 h-2 sm:h-3 inline mr-0.5"
+                                    strokeWidth={2}
+                                  />
+                                  Tx
+                                </span>
+                                <span className="truncate">{tx.shortId}</span>
+                              </a>
+                            </td>
+                            <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[100px]">
+                              <a
+                                href={`https://basescan.org/address/${tx.sender}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 font-medium flex items-center text-xs sm:text-sm"
+                              >
+                                <span className="inline-block w-4 sm:w-6 h-4 sm:h-6 rounded-full bg-blue-100 text-blue-800 mr-1 sm:mr-2 flex items-center justify-center">
+                                  <User
+                                    className="w-2 sm:w-3 h-2 sm:h-3"
+                                    strokeWidth={2}
+                                  />
+                                </span>
+                                <span className="truncate">
+                                  {tx.senderShort}
+                                </span>
+                              </a>
+                            </td>
+                            <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[120px] text-xs sm:text-sm">
+                              <div className="flex items-center text-slate-800">
+                                <Calendar
+                                  className="w-3 sm:w-4 h-3 sm:h-4 text-slate-500 mr-1"
+                                  strokeWidth={2}
+                                />
+                                {tx.date}
+                              </div>
+                            </td>
+                            <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[80px]">
+                              <div className="font-medium text-xs sm:text-sm">
+                                <span className="text-green-600 font-bold">
+                                  {tx.amount}
+                                </span>
+                                <span className="ml-1 text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                                  {tx.currency}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[80px]">
+                              <span
+                                className={`px-2 sm:px-3 py-1 inline-flex items-center text-[10px] sm:text-xs font-medium rounded-full ${
+                                  tx.status === "Completed"
+                                    ? "bg-green-100 text-green-800 border border-green-200"
+                                    : tx.status === "Pending"
+                                      ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                                      : "bg-red-100 text-red-800 border border-red-200"
+                                }`}
+                              >
+                                {tx.status === "Completed" ? (
+                                  <CheckCircle2
+                                    className="w-2 sm:w-3 h-2 sm:h-3 mr-1"
+                                    strokeWidth={2}
+                                  />
+                                ) : tx.status === "Pending" ? (
+                                  <Clock
+                                    className="w-2 sm:w-3 h-2 sm:h-3 mr-1"
+                                    strokeWidth={2}
+                                  />
+                                ) : (
+                                  <XCircle
+                                    className="w-2 sm:w-3 h-2 sm:h-3 mr-1"
+                                    strokeWidth={2}
+                                  />
+                                )}
+                                {tx.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 sm:p-5 border-t border-slate-200 bg-gradient-to-r from-indigo-50/50 to-blue-50/50 relative">
+                  <div className="flex justify-center">
+                    <a
+                      href="/transactions"
+                      className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white !bg-blue-500 rounded-md hover:!bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                    >
+                      <svg
+                        className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                      View All Transactions
+                    </a>
+                  </div>
+                </div>
+                <style jsx global>{`
+                  .animate-slide-in {
+                    opacity: 0;
+                    transform: translateY(15px);
+                    animation: slideIn 0.6s ease-out forwards;
+                  }
+
+                  @keyframes slideIn {
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+
+                  .animate-fade-in {
+                    opacity: 0;
+                    animation: fadeIn 0.4s ease-out forwards;
+                  }
+
+                  @keyframes fadeIn {
+                    to {
+                      opacity: 1;
+                    }
+                  }
+
+                  .animate-shimmer {
+                    transform: translateX(-100%);
+                    animation: shimmer 3s infinite linear;
+                  }
+
+                  @keyframes shimmer {
+                    100% {
+                      transform: translateX(100%);
+                    }
+                  }
+
+                  .animate-pulse-slow {
+                    animation: pulseSlow 6s ease-in-out infinite;
+                  }
+
+                  @keyframes pulseSlow {
+                    0%,
+                    100% {
+                      opacity: 0.3;
+                    }
+                    50% {
+                      opacity: 0.6;
+                    }
+                  }
+                `}</style>
               </div>
-            </td>
-          </tr>
-        ) : (
-          (selectedCurrency === "all"
-            ? transactions
-            : transactions.filter(
-                (tx) => tx.currency === selectedCurrency
-              )
-          ).map((tx, index) => (
-            <tr
-              key={tx.id}
-              className={`hover:bg-blue-50 transition-colors duration-150 animate-fade-in ${index % 2 === 0 ? "bg-white" : "bg-slate-50"}`}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[100px]">
-                <a
-                  href={tx.blockExplorerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 font-medium flex items-center text-xs sm:text-sm"
-                >
-                  <span className="mr-1 text-[10px] sm:text-xs bg-blue-100 text-blue-800 py-0.5 px-1 sm:px-2 rounded-md flex items-center">
-                    <ExternalLink className="w-2 sm:w-3 h-2 sm:h-3 inline mr-0.5" strokeWidth={2} />
-                    Tx
-                  </span>
-                  <span className="truncate">{tx.shortId}</span>
-                </a>
-              </td>
-              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[100px]">
-                <a
-                  href={`https://basescan.org/address/${tx.sender}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 font-medium flex items-center text-xs sm:text-sm"
-                >
-                  <span className="inline-block w-4 sm:w-6 h-4 sm:h-6 rounded-full bg-blue-100 text-blue-800 mr-1 sm:mr-2 flex items-center justify-center">
-                    <User className="w-2 sm:w-3 h-2 sm:h-3" strokeWidth={2} />
-                  </span>
-                  <span className="truncate">{tx.senderShort}</span>
-                </a>
-              </td>
-              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[120px] text-xs sm:text-sm">
-                <div className="flex items-center text-slate-800">
-                  <Calendar className="w-3 sm:w-4 h-3 sm:h-4 text-slate-500 mr-1" strokeWidth={2} />
-                  {tx.date}
-                </div>
-              </td>
-              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[80px]">
-                <div className="font-medium text-xs sm:text-sm">
-                  <span className="text-green-600 font-bold">{tx.amount}</span>
-                  <span className="ml-1 text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
-                    {tx.currency}
-                  </span>
-                </div>
-              </td>
-              <td className="px-3 sm:px-5 py-2 sm:py-4 whitespace-normal min-w-[80px]">
-                <span
-                  className={`px-2 sm:px-3 py-1 inline-flex items-center text-[10px] sm:text-xs font-medium rounded-full ${
-                    tx.status === "Completed"
-                      ? "bg-green-100 text-green-800 border border-green-200"
-                      : tx.status === "Pending"
-                      ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                      : "bg-red-100 text-red-800 border border-red-200"
-                  }`}
-                >
-                  {tx.status === "Completed" ? (
-                    <CheckCircle2 className="w-2 sm:w-3 h-2 sm:h-3 mr-1" strokeWidth={2} />
-                  ) : tx.status === "Pending" ? (
-                    <Clock className="w-2 sm:w-3 h-2 sm:h-3 mr-1" strokeWidth={2} />
-                  ) : (
-                    <XCircle className="w-2 sm:w-3 h-2 sm:h-3 mr-1" strokeWidth={2} />
-                  )}
-                  {tx.status}
-                </span>
-              </td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
-  </div>
-  <div className="p-4 sm:p-5 border-t border-slate-200 bg-gradient-to-r from-indigo-50/50 to-blue-50/50 relative">
-    <div className="flex justify-center">
-      <a
-        href="/transactions"
-        className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white !bg-blue-500 rounded-md hover:!bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-      >
-        <svg
-          className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-        View All Transactions
-      </a>
-    </div>
-  </div>
-  <style jsx global>{`
-    .animate-slide-in {
-      opacity: 0;
-      transform: translateY(15px);
-      animation: slideIn 0.6s ease-out forwards;
-    }
-
-    @keyframes slideIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .animate-fade-in {
-      opacity: 0;
-      animation: fadeIn 0.4s ease-out forwards;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-      }
-    }
-
-    .animate-shimmer {
-      transform: translateX(-100%);
-      animation: shimmer 3s infinite linear;
-    }
-
-    @keyframes shimmer {
-      100% {
-        transform: translateX(100%);
-      }
-    }
-
-    .animate-pulse-slow {
-      animation: pulseSlow 6s ease-in-out infinite;
-    }
-
-    @keyframes pulseSlow {
-      0%, 100% {
-        opacity: 0.3;
-      }
-      50% {
-        opacity: 0.6;
-      }
-    }
-  `}</style>
-</div>
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl border-2 !border-blue-500">
+              <div id='swap' className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl border-2 !border-blue-500">
                 <div className="p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                   <h2 className="text-base sm:text-xl font-semibold text-gray-900 flex items-center">
                     <svg
@@ -1613,152 +1739,171 @@ export default function MerchantDashboard() {
             )}
           </div>
           {/* Quick Actions */}
-          
 
-<div className="w-[80%] mx-auto bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 relative overflow-hidden animate-slide-in border-2 !border-blue-500">
-  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
-  <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-400/20 rounded-full blur-xl animate-pulse-slow"></div>
-  <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-indigo-400/20 rounded-full blur-xl animate-pulse-slow"></div>
-  <h3 className="text-lg sm:text-xl font-bold text-black mb-6 relative">
-    Quick Actions
-  </h3>
-  <div className="space-y-4 flex flex-col gap-4">
-    <button
-      onClick={() => {
-        setIsLoadingPaymentLink(true);
-        document.cookie = "wallet_connected=true; path=/; max-age=86400";
-        setTimeout(() => {
-          router.push("/payment-link");
-        }, 100);
-      }}
-      className="p-4 w-full !bg-blue-100 rounded-lg border !border-blue-200 hover:!bg-blue-300 hover:!text-white-slate-50 hover:!shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-start gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      disabled={isLoadingPaymentLink}
-      aria-label="Create Payment Link"
-      aria-busy={isLoadingPaymentLink}
-    >
-      {isLoadingPaymentLink ? (
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-          <p className="font-semibold text-blue-600">Processing...</p>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center gap-2">
-            <Link className="w-4 h-4 !text-blue-600" strokeWidth={2.5} />
-            <p className="font-semibold text-slate-800">Create Payment Link</p>
+          <div className="w-[80%] mx-auto bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 relative overflow-hidden animate-slide-in border-2 !border-blue-500">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer"></div>
+            <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-400/20 rounded-full blur-xl animate-pulse-slow"></div>
+            <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-indigo-400/20 rounded-full blur-xl animate-pulse-slow"></div>
+            <h3 className="text-lg sm:text-xl font-bold text-black mb-6 relative">
+              Quick Actions
+            </h3>
+            <div className="space-y-4 flex flex-col gap-4">
+              <button
+                onClick={() => {
+                  setIsLoadingPaymentLink(true);
+                  document.cookie =
+                    "wallet_connected=true; path=/; max-age=86400";
+                  setTimeout(() => {
+                    router.push("/payment-link");
+                  }, 100);
+                }}
+                className="p-4 w-full !bg-blue-100 rounded-lg border !border-blue-200 hover:!bg-blue-300 hover:!text-white-slate-50 hover:!shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-start gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoadingPaymentLink}
+                aria-label="Create Payment Link"
+                aria-busy={isLoadingPaymentLink}
+              >
+                {isLoadingPaymentLink ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                    <p className="font-semibold text-blue-600">Processing...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        className="w-4 h-4 !text-blue-600"
+                        strokeWidth={2.5}
+                      />
+                      <p className="font-semibold text-slate-800">
+                        Create Payment Link
+                      </p>
+                    </div>
+                    <p className="text-sm text-slate-600 font-medium">
+                      Generate a payment link to share with customers
+                    </p>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setIsLoadingInvoice(true);
+                  router.push("/invoice");
+                }}
+                className="p-4 w-full !bg-indigo-100 rounded-lg border !border-indigo-200 hover:!bg-indigo-300 hover:!text-white-slate-50 hover:!shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-start gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoadingInvoice}
+                aria-label="Generate Invoice"
+                aria-busy={isLoadingInvoice}
+              >
+                {isLoadingInvoice ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                    <p className="font-semibold text-indigo-600">
+                      Processing...
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <FileText
+                        className="w-4 h-4 text-indigo-600"
+                        strokeWidth={2.5}
+                      />
+                      <p className="font-semibold text-slate-800">
+                        Generate Invoice
+                      </p>
+                    </div>
+                    <p className="text-sm text-slate-600 font-medium">
+                      Send an invoice to your customer for payment
+                    </p>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setIsLoadingAnalytics(true);
+                  router.push("/analytics");
+                }}
+                className="p-4 w-full !bg-purple-100 rounded-lg border !border-purple-200 hover:!bg-purple-300 hover:!text-white-slate-50 hover:!shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-start gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoadingAnalytics}
+                aria-label="View Analytics"
+                aria-busy={isLoadingAnalytics}
+              >
+                {isLoadingAnalytics ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                    <p className="font-semibold text-purple-600">
+                      Processing...
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <BarChart2
+                        className="w-4 h-4 text-purple-600"
+                        strokeWidth={2.5}
+                      />
+                      <p className="font-semibold text-slate-800">
+                        View Detailed Analytics
+                      </p>
+                    </div>
+                    <p className="text-sm text-slate-600 font-medium">
+                      Detailed reports and business insights
+                    </p>
+                  </>
+                )}
+              </button>
+            </div>
+            <style jsx global>{`
+              .animate-slide-in {
+                opacity: 0;
+                transform: translateY(15px);
+                animation: slideIn 0.6s ease-out forwards;
+              }
+
+              @keyframes slideIn {
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+
+              .animate-fade-in {
+                opacity: 0;
+                animation: fadeIn 0.4s ease-out forwards;
+              }
+
+              @keyframes fadeIn {
+                to {
+                  opacity: 1;
+                }
+              }
+
+              .animate-shimmer {
+                transform: translateX(-100%);
+                animation: shimmer 3s infinite linear;
+              }
+
+              @keyframes shimmer {
+                100% {
+                  transform: translateX(100%);
+                }
+              }
+
+              .animate-pulse-slow {
+                animation: pulseSlow 6s ease-in-out infinite;
+              }
+
+              @keyframes pulseSlow {
+                0%,
+                100% {
+                  opacity: 0.3;
+                }
+                50% {
+                  opacity: 0.6;
+                }
+              }
+            `}</style>
           </div>
-          <p className="text-sm text-slate-600 font-medium">
-            Generate a payment link to share with customers
-          </p>
-        </>
-      )}
-    </button>
-    <button
-      onClick={() => {
-        setIsLoadingInvoice(true);
-        router.push("/invoice");
-      }}
-      className="p-4 w-full !bg-indigo-100 rounded-lg border !border-indigo-200 hover:!bg-indigo-300 hover:!text-white-slate-50 hover:!shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-start gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      disabled={isLoadingInvoice}
-      aria-label="Generate Invoice"
-      aria-busy={isLoadingInvoice}
-    >
-      {isLoadingInvoice ? (
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
-          <p className="font-semibold text-indigo-600">Processing...</p>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-indigo-600" strokeWidth={2.5} />
-            <p className="font-semibold text-slate-800">Generate Invoice</p>
-          </div>
-          <p className="text-sm text-slate-600 font-medium">
-            Send an invoice to your customer for payment
-          </p>
-        </>
-      )}
-    </button>
-    <button
-      onClick={() => {
-        setIsLoadingAnalytics(true);
-        router.push("/analytics");
-      }}
-      className="p-4 w-full !bg-purple-100 rounded-lg border !border-purple-200 hover:!bg-purple-300 hover:!text-white-slate-50 hover:!shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-start gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      disabled={isLoadingAnalytics}
-      aria-label="View Analytics"
-      aria-busy={isLoadingAnalytics}
-    >
-      {isLoadingAnalytics ? (
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-          <p className="font-semibold text-purple-600">Processing...</p>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-purple-600" strokeWidth={2.5} />
-            <p className="font-semibold text-slate-800">View Detailed Analytics</p>
-          </div>
-          <p className="text-sm text-slate-600 font-medium">
-            Detailed reports and business insights
-          </p>
-        </>
-      )}
-    </button>
-  </div>
-  <style jsx global>{`
-    .animate-slide-in {
-      opacity: 0;
-      transform: translateY(15px);
-      animation: slideIn 0.6s ease-out forwards;
-    }
-
-    @keyframes slideIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .animate-fade-in {
-      opacity: 0;
-      animation: fadeIn 0.4s ease-out forwards;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-      }
-    }
-
-    .animate-shimmer {
-      transform: translateX(-100%);
-      animation: shimmer 3s infinite linear;
-    }
-
-    @keyframes shimmer {
-      100% {
-        transform: translateX(100%);
-      }
-    }
-
-    .animate-pulse-slow {
-      animation: pulseSlow 6s ease-in-out infinite;
-    }
-
-    @keyframes pulseSlow {
-      0%, 100% {
-        opacity: 0.3;
-      }
-      50% {
-        opacity: 0.6;
-      }
-    }
-  `}</style>
-</div>
-
         </div>
       </div>
       <Footer />

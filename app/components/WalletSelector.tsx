@@ -492,7 +492,7 @@ const WalletSelector = forwardRef<
                   <BasenameDisplay
                     address={walletAddress}
                     basenameClassName="basename-display"
-                    addressClassName="address-display"
+                    addressClassName="address-display !text-slate-800"
                     isMobile={true}
                   />
                 </div>
@@ -526,7 +526,7 @@ const WalletSelector = forwardRef<
       ) : (
         <button
           onClick={handleEmailLogin}
-          className="hbutton wallet-button flex items-center bg-white/80 dark:bg-slate-900/60 hover:bg-blue-50 dark:hover:bg-blue-800 text-slate-800 dark:text-white border-2 border-blue-400 dark:border-blue-300 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
+          className="hbutton wallet-button flex items-center hover:!bg-blue-50 text-slate-800 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
           disabled={isConnecting}
           style={{ borderRadius: "0.75rem" }}
         >
@@ -552,21 +552,20 @@ const WalletSelector = forwardRef<
             }}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-300">
+              <h3 className="text-sm font-medium text-gray-900">
                 Connected Account
               </h3>
               <span
-                className="text-xs px-2 py-1 rounded-full"
-                style={{ color: "green" }}
+                className="text-xs px-2 py-1 rounded-full text-green-600"
               >
                 Active
               </span>
             </div>
-            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 break-all">
+            <div className="mt-1 text-xs text-slate-800 break-all">
               {walletAddress ? (
                 <BasenameDisplay
                   address={walletAddress}
-                  basenameClassName="text-xs text-gray-600 dark:text-gray-400"
+                  basenameClassName="text-xs !text-slate-800"
                   isMobile={false}
                 />
               ) : emailAddress ? (
@@ -578,10 +577,10 @@ const WalletSelector = forwardRef<
           </div>
 
           {!hasEmail && walletAddress && (
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-3 border-b border-gray-200">
               <button
                 onClick={handleLinkEmail}
-                className="options w-full text-center px-4 py-2 text-blue-600 dark:text-blue-400 transition-colors rounded-lg"
+                className="options w-full text-center px-4 py-2 text-blue-600 transition-colors rounded-lg"
               >
                 <div className="flex items-center justify-center space-x-2">
                   <svg

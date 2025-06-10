@@ -1,7 +1,7 @@
 import React from 'react';
 import { Wallet, Link, DollarSign, Repeat2, CheckCircle, ArrowRight, Globe, Smartphone } from 'lucide-react';
 
-export default function RedesignedHowItWorks() {
+export default function HowItWorksSection() {
   const steps = [
     {
       number: "01",
@@ -120,7 +120,7 @@ export default function RedesignedHowItWorks() {
   ];
 
   return (
-    <div className="py-12 sm:py-16 lg:py-24 scroll-mt-20 relative bg-gradient-to-br from-slate-25 to-blue-25">
+    <div id="how-it-works" className=" relative bg-gradient-to-br from-slate-25 to-blue-25">
       {/* Decorative Elements */}
       <div className="absolute top-10 left-10 w-16 h-16 sm:w-20 sm:h-20 bg-blue-200/30 rounded-full blur-xl"></div>
       <div className="absolute bottom-10 right-10 w-24 h-24 sm:w-32 sm:h-32 bg-purple-200/30 rounded-full blur-2xl"></div>

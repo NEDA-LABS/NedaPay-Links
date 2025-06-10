@@ -4,7 +4,21 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
-import { Settings, Sun, Moon, Zap, HelpCircle, Menu, X, Repeat, Wallet, Banknote, Coins} from "lucide-react";
+import {
+  Settings,
+  Sun,
+  Moon,
+  Zap,
+  HelpCircle,
+  Menu,
+  X,
+  Repeat,
+  Wallet,
+  Banknote,
+  Coins,
+  Link as LinkIcon,
+  Receipt
+} from "lucide-react";
 import StablecoinBalanceTracker from "./StablecoinBalanceTracker";
 
 // Import your actual components
@@ -195,13 +209,16 @@ export default function Header() {
               </button> */}
               <WalletSelector />
               {/* Side Menu Button */}
-              <button
+              {authenticated && (
+                <button
                 onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
                 className="p-2 rounded-xl transition-all duration-300 !bg-gradient-to-r from-blue-400 to-indigo-400 hover:from-blue-500 hover:to-indigo-500"
                 aria-label="Open menu"
               >
                 <Menu size={20} className="text-slate-800 hover:text-slate-700 transition-colors duration-300" />
               </button>
+              )}
+              
             </div>
           </div>
         </div>
@@ -215,7 +232,7 @@ export default function Header() {
     {/* Side Menu Modal */}
     {isSideMenuOpen && (
       <div className="fixed top-0 right-0 bg-black/50 backdrop-blur-sm z-50 w-full h-full">
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-80 shadow-xl absolute top-16 right-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-80 shadow-xl absolute top-16 lg:right-50 sm:right-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Menu</h2>
             <button
@@ -252,19 +269,19 @@ export default function Header() {
               <span>Swap</span>
             </Link>
             <Link
-              href="/swap"
+              href="/payment-link"
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               onClick={() => setIsSideMenuOpen(false)}
             >
-              <Repeat className="w-5 h-5" />
+              <LinkIcon className="w-5 h-5" />
               <span>Generate Payment Link</span>
             </Link>
             <Link
-              href="/swap"
+              href="/invoice"
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               onClick={() => setIsSideMenuOpen(false)}
             >
-              <Repeat className="w-5 h-5" />
+              <Receipt className="w-5 h-5" />
               <span>Send Invoice</span>
             </Link>
           </nav>

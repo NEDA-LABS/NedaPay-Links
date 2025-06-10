@@ -2,7 +2,7 @@ import { stablecoins } from "../data/stablecoins";
 
 export default function Flags() {
     return (
-  <div className="w-full lg:w-1/2 relative">
+  <div className="lg:w-[60%] relative opacity-75">
     <style jsx global>{`
       :root {
         --primary-glow: #3b82f6;
@@ -259,13 +259,13 @@ export default function Flags() {
         }
       }
     `}</style>
-    <div className="glow-border relative bg-gradient-to-br from-blue-10 to-indigo-50 p-3 sm:p-6 rounded-2xl shadow-2xl overflow-hidden border border-blue-200 dark:border-blue-700">
-      <div className="absolute top-0 left-0 w-full h-full bg-white/20 backdrop-blur-sm rounded-2xl"></div>
-      <div className="stablecoin-grid relative z-10 grid grid-cols-3 gap-3 max-h-[400px]">
+    <div className="relative bg-gradient-to-br from-blue-10 to-indigo-50 p-3 sm:p-6 shadow-2xl overflow-hidden">
+      <div className="absolute top-0 left-0 h-full bg-white/20 backdrop-blur-sm rounded-2xl"></div>
+      <div className="stablecoin-grid relative z-10 grid grid-cols-3 gap-8">
         {stablecoins.map((coin: any, index: number) => (
           <div
             key={index}
-            className={`stablecoin-item bg-white/80 p-3 rounded-xl shadow-lg flex flex-col items-center justify-center animate-float`}
+            className={`stablecoin-item bg-white/80 p-3 rounded-xl shadow-lg flex flex-col items-center gap-4 justify-center animate-float`}
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <div className="stablecoin-flag text-2xl mb-1">{coin.flag}</div>
@@ -278,8 +278,8 @@ export default function Flags() {
           </div>
         ))}
       </div>
-      <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-400/30 rounded-full blur-2xl"></div>
-      <div className="absolute -top-6 -left-6 w-32 h-32 bg-indigo-400/30 rounded-full blur-2xl"></div>
+      <div className="absolute -bottom-0 -right-0 w-32 h-32 bg-blue-400/30 rounded-full blur-2xl"></div>
+      <div className="absolute -top-0 -left-0 w-32 h-32 bg-indigo-400/30 rounded-full blur-2xl"></div>
     </div>
   </div>
     )

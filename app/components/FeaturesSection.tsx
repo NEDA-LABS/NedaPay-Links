@@ -1,7 +1,15 @@
 import React from 'react';
 import { Coins, Repeat, BarChart2, Settings, ArrowRight, Zap, Shield, Clock } from 'lucide-react';
+import { useRef } from 'react';
+import WalletSelector from './WalletSelector';
+import { usePrivy } from '@privy-io/react-auth';
+import { useRouter } from 'next/navigation';
 
 export default function EnhancedFeaturesSection() {
+  const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
+  const {authenticated} = usePrivy();
+  const router = useRouter();
+
   const features = [
     {
       icon: Coins,
@@ -129,18 +137,48 @@ export default function EnhancedFeaturesSection() {
         </div>
 
         {/* Bottom CTA section */}
-        <div className="mt-12 text-center">
-          <div className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
-            <Shield className="mr-2 h-5 w-5" />
+        {!authenticated ? (
+          <div className="mt-12 text-center">
+          <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={() => {
+                    if (walletSelectorRef.current) {
+                      walletSelectorRef.current.triggerLogin();
+                    }
+                  }}
+                  className="inline-flex items-center px-6 py-3 rounded-full !bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg hover:!shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"                >
+                 <Shield className="mr-2 h-5 w-5" />
             <span>Start accepting payments today</span>
             <ArrowRight className="ml-2 h-5 w-5" />
-          </div>
+                </button>
+                <span hidden={true}>
+                  <WalletSelector ref={walletSelectorRef} />
+                </span>
+                
+              </div>
           
           <p className="mt-3 text-sm text-gray-500 flex items-center justify-center">
             <Clock className="mr-1 h-4 w-4" />
             Setup takes less than 5 minutes
           </p>
         </div>
+        ) : (
+          <div className="mt-12 text-center">
+          <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="inline-flex items-center px-6 py-3 rounded-full !bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg hover:!shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"                >
+                 <Shield className="mr-2 h-5 w-5" />
+            <span>Start accepting payments today</span>
+            <ArrowRight className="ml-2 h-5 w-5" />
+                </button>
+              </div>
+        </div>
+        )}
+        
+      </div>
+      <div>
+        
       </div>
     </div>
   );
