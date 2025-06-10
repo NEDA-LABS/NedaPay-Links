@@ -54,7 +54,7 @@ export default function SettingsPage() {
 }
 
 const {user, authenticated} = usePrivy();
-const address = localStorage.getItem("walletAddress") || user?.wallet?.address;
+const address = user?.wallet?.address;
 
 const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [webhookUrl, setWebhookUrl] = useState('');

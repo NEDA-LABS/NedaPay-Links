@@ -253,7 +253,7 @@ export default function Header() {
               <span>Settings</span>
             </Link>
             <Link
-              href="/withdraw"
+              href="#"
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               onClick={() => setIsSideMenuOpen(false)}
             >
@@ -261,7 +261,7 @@ export default function Header() {
               <span>Withdraw</span>
             </Link>
             <Link
-              href="/swap"
+              href="#swap"
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               onClick={() => setIsSideMenuOpen(false)}
             >
