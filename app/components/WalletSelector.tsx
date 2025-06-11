@@ -150,11 +150,7 @@ const WalletSelector = forwardRef<
           right: auto !important;
           transform: translateX(-50%) !important;
         }
-        .sign-in-text {
-          white-space: nowrap !important;
-          overflow: hidden !important;
-          text-overflow: ellipsis !important;
-        }
+        
         .wallet-address-container {
           overflow: hidden !important;
           flex: 1 !important;
@@ -469,7 +465,7 @@ const WalletSelector = forwardRef<
   }
 
   return (
-    <div className="relative bg-gradient-to-r from-blue-400 bg-indigo-400 rounded-xl p-2" ref={dropdownRef}>
+    <div className="relative bg-gradient-to-r from-blue-400 bg-indigo-400 rounded-xl" ref={dropdownRef}>
       <style jsx>{mobileStyles}</style>
 
       {isConnected ? (
@@ -526,11 +522,11 @@ const WalletSelector = forwardRef<
       ) : (
         <button
           onClick={handleEmailLogin}
-          className="hbutton wallet-button flex items-center hover:!bg-blue-50 text-slate-800 px-2 sm:px-3 py-1 rounded-lg transition-all duration-200 shadow-sm"
+          className="flex items-center hover:!bg-blue-50 text-slate-800 rounded-lg transition-all duration-200 shadow-sm"
           disabled={isConnecting}
           style={{ borderRadius: "0.75rem" }}
         >
-          <span className="sign-in-text text-xs sm:text-sm font-bold">
+          <span className="sign-in-text text-xs sm:text-sm font-bold p-2">
             {isConnecting ? "Connecting..." : "Sign in"}
           </span>
         </button>

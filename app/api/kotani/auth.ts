@@ -5,8 +5,8 @@ const KOTANI_API_BASE = process.env.KOTANI_API_BASE || 'https://sandbox-api.kota
 const KOTANI_USERNAME = process.env.KOTANI_USERNAME;
 const KOTANI_PASSWORD = process.env.KOTANI_PASSWORD;
 
-let authToken = null;
-let tokenExpiry = null;
+let authToken: string | null = null;
+let tokenExpiry: number | null = null;
 
 export async function getAuthToken() {
   // Check if token is still valid

@@ -20,6 +20,7 @@ import {
   Receipt
 } from "lucide-react";
 import StablecoinBalanceTracker from "./StablecoinBalanceTracker";
+import Sidebar from "./Sidebar";
 
 // Import your actual components
 import WalletSelector from "./WalletSelector";
@@ -92,12 +93,12 @@ export default function Header() {
               {/* Simplified Logo */}
               <div className="relative flex items-center">
                 <div className="h-10 rounded-xl bg-slate-800 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="relative z-10 text-white font-black text-xl drop-shadow-lg px-2 py-1">
+                  <span className="relative z-10 text-white font-black text-l drop-shadow-lg px-2 py-1">
                     NEDA
                   </span>
                 </div>
                 <div className="h-10 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="relative z-10 text-slate-600 font-black text-2xl drop-shadow-lg px-2">
+                  <span className="relative z-10 text-slate-600 font-black text-xl drop-shadow-lg px-2">
                     Pay
                   </span>
                 </div>
@@ -113,7 +114,7 @@ export default function Header() {
               <nav className="flex items-center space-x-2">
                 <a
                   href="#how-it-works"
-                  className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 font-medium bg-slate-200 shadow-sm group"
+                  className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 font-medium bg-slate-200 shadow-sm group hidden md:!flex"
                 >
                   <span className="relative z-10 flex items-center">
                     <svg
@@ -136,7 +137,7 @@ export default function Header() {
                 <a
                   href="#faq"
                   onClick={handleFAQClick}
-                  className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 font-medium bg-slate-200 shadow-sm group"
+                  className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 font-medium bg-slate-200 shadow-sm group hidden md:!flex"
                 >
                   <span className="relative z-10 flex items-center">
                     <svg
@@ -209,15 +210,14 @@ export default function Header() {
               </button> */}
               <WalletSelector />
               {/* Side Menu Button */}
-              {authenticated && (
+              
                 <button
                 onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
                 className="p-2 rounded-xl transition-all duration-300 !bg-gradient-to-r from-blue-400 to-indigo-400 hover:from-blue-500 hover:to-indigo-500"
                 aria-label="Open menu"
               >
-                <Menu size={20} className="text-slate-800 hover:text-slate-700 transition-colors duration-300" />
+                <Menu size={16} className="text-slate-800 hover:text-slate-700 transition-colors duration-300" />
               </button>
-              )}
               
             </div>
           </div>
@@ -229,65 +229,8 @@ export default function Header() {
     <StablecoinBalanceTracker isOpen={isBalanceModalOpen} onClose={() => setIsBalanceModalOpen(false)} />
     )}
     
-    {/* Side Menu Modal */}
-    {isSideMenuOpen && (
-      <div className="fixed top-0 right-0 bg-black/50 backdrop-blur-sm z-50 w-full h-full">
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-80 shadow-xl absolute top-16 lg:right-50 sm:right-0">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Menu</h2>
-            <button
-              onClick={() => setIsSideMenuOpen(false)}
-              className="text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          
-          <nav className="space-y-4">
-            <Link
-              href="/settings"
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              onClick={() => setIsSideMenuOpen(false)}
-            >
-              <Settings className="w-5 h-5" />
-              <span>Settings</span>
-            </Link>
-            <Link
-              href="#"
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              onClick={() => setIsSideMenuOpen(false)}
-            >
-              <Zap className="w-5 h-5" />
-              <span>Withdraw</span>
-            </Link>
-            <Link
-              href="#swap"
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              onClick={() => setIsSideMenuOpen(false)}
-            >
-              <Repeat className="w-5 h-5" />
-              <span>Swap</span>
-            </Link>
-            <Link
-              href="/payment-link"
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              onClick={() => setIsSideMenuOpen(false)}
-            >
-              <LinkIcon className="w-5 h-5" />
-              <span>Generate Payment Link</span>
-            </Link>
-            <Link
-              href="/invoice"
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              onClick={() => setIsSideMenuOpen(false)}
-            >
-              <Receipt className="w-5 h-5" />
-              <span>Send Invoice</span>
-            </Link>
-          </nav>
-        </div>
-      </div>
-    )}
+    {/* Side Bar Modal */}
+    <Sidebar isOpen={isSideMenuOpen} onClose={() => setIsSideMenuOpen(false)} authenticated={authenticated} />
     </header>
 
     

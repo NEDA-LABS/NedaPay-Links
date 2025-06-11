@@ -1,7 +1,9 @@
 // api/kotani/create-customer.js
 import { getAuthToken } from './auth';
 
-export default async function handler(req, res) {
+import { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -34,6 +36,7 @@ export default async function handler(req, res) {
     res.status(200).json(data);
   } catch (error) {
     console.error('Create customer error:', error);
-    res.status(500).json({ error: error.message || 'Failed to create customer' });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create customer';
+    res.status(500).json({ error: errorMessage });
   }
 }

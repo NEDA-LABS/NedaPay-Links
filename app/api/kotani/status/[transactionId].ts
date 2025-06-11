@@ -1,7 +1,13 @@
 // api/kotani/status/[transactionId].js
 import { getAuthToken } from '../auth';
 
-export default async function handler(req, res) {
+import { NextApiRequest, NextApiResponse } from 'next';
+
+interface StatusQueryParams {
+  transactionId: string;
+}
+
+export default async function handler(req: NextApiRequest & { query: StatusQueryParams }, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

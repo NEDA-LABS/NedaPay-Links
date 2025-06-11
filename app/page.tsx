@@ -63,7 +63,7 @@ function HomeContent() {
         className="container mx-auto max-w-7xl px-4 pb-8 md:py-12 "
         style={{ zIndex: -100 }}
       >
-        <div className="flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full w-fit">
+        <div className="flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full w-fit  invisible sm:visible">
               <TrendingUp className="w-4 h-4" />
               <span className="text-sm font-medium">Trusted by 10,000+ merchants worldwide</span>
             </div>
@@ -74,32 +74,29 @@ function HomeContent() {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 bg-indigo-300/20 rounded-full blur-3xl"></div>
 
           <div className="flex flex-col gap-6">
-            <h1 className="text-3xl lg:text-8xl font-bold tracking-tight bg-gradient-to-r from-blue-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse-slow">
-              Revolutionize Your Business Payments
-            </h1>
-            <p className="text-l  font-semibold text-slate-500 leading-relaxed drop-shadow-md">
-              Accept local stablecoins for your business, manage payments, and
-              swap between currencies instantly with ease
+          <h1 className="!text-2xl  lg:!text-7xl font-bold tracking-tight bg-gradient-to-r from-blue-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse-slow leading-tight">
+        Revolutionize Your Business Payments
+      </h1>
+            <p className="!text-l lg:!text-l  font-semibold text-slate-500 leading-relaxed drop-shadow-md">
+              Accept Stablecoins, Swap instantly, Cash Out Easily
             </p>
              {/* Clean CTA Section */}
         
          {!authenticated ? (
-              <div className="flex flex-row items-start gap-4 w-full">
+              <div className="flex flex-row items-start gap-4 w-full items-stretch">
                 <button
                   onClick={() => {
                     if (walletSelectorRef.current) {
                       walletSelectorRef.current.triggerLogin();
                     }
                   }}
-                  className="group relative !px-8 !py-4 !bg-gradient-to-r !from-blue-600 !to-indigo-600 hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold !rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-3"
+                  className="group relative !px-4 !py-2 sm:!px-8 sm:!py-4 !bg-gradient-to-r !from-blue-600 !to-indigo-600 hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold !rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-3"
                 >
-                  <span className="text-sm lg:text-lg">Start with Email or Wallet</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
+                  <span className="text-xs sm:text-sm lg:text-lg">Start with Email or Wallet</span>                </button>
                 
-                <button className="group flex items-center gap-3 !px-6 !py-4 text-gray-700 hover:text-gray-900 font-medium !rounded-2xl !border !border-gray-200 hover:!border-gray-300 hover:!bg-white/50 transition-all duration-300">
+                <button className="group flex items-center gap-3 !px-4 !py-2 sm:!px-8 sm:!py-4 text-gray-700 hover:text-gray-900 font-medium !rounded-2xl !border !border-gray-200 hover:!border-gray-300 hover:!bg-white/50 transition-all duration-300">
                   <PlayCircle className="w-5 h-5" />
-                  <span>Watch Demo</span>
+                  <span className="text-xs sm:text-sm">Watch Demo</span>
                 </button>
                 
                 <span hidden={true}>

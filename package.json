@@ -26,6 +26,7 @@
     "@walletconnect/web3-provider": "^1.8.0",
     "@web3modal/ethereum": "^2.7.1",
     "@web3modal/react": "^2.7.1",
+    "axios": "^1.9.0",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.8",
     "crypto-browserify": "^3.12.1",

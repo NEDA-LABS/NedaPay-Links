@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-
-
 :root {
   /* Light mode: White background with black text */
   --background: #ffffff; /* White */
@@ -40,8 +38,6 @@
     --card-bg: #121212; /* Very dark gray */
     --card-text: #ffffff; /* White */
     --scrollbar-track: #1e1e1e; /* Dark gray */
-
-   
   }
 }
 
@@ -52,8 +48,12 @@ body {
   font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   letter-spacing: 0.01em;
   transition: background-color 0.3s, color 0.3s;
-  
+}
 
+/* Fix for heading font sizes being reset */
+h1, h2, h3, h4, h5, h6, p {
+  font-size: revert;
+  font-weight: revert;
 }
 
 
