@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 
 interface AuthenticationModalProps {
@@ -122,6 +123,7 @@ export default function AuthenticationModal({
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     setIsClosing(true);
+                    // Navigate to dashboard after a short delay to show loading animation
                     setTimeout(() => {
                       router.push("/dashboard");
                     }, 200);
@@ -143,8 +145,32 @@ export default function AuthenticationModal({
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  Continue to Dashboard
+                  {isClosing ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : (
+                    'Continue to Dashboard'
+                  )}
                 </motion.button>
+                
+                {isClosing && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 10
+                    }}
+                  >
+                    <Loader2 className="h-6 w-6 animate-spin text-white" />
+                  </motion.div>
+                )}
                 
                 <motion.button
                   whileHover={{ scale: 1.02 }}
