@@ -122,7 +122,7 @@ const PieChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
         labels: {
           color: '#1e293b', // text-slate-800
           padding: 20,
-          font: { size: 12, weight: 600 },
+          font: { size: 10, weight: 600 },
           usePointStyle: true,
           pointStyle: 'circle',
           boxWidth: 8,
@@ -163,8 +163,6 @@ const PieChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
 
   return (
     <div className="relative h-full w-full bg-white/95 backdrop-blur-sm rounded-lg p-2 animate-slide-in">
-      <div className="absolute -top-2 -left-2 w-16 h-16 bg-indigo-400/20 rounded-full blur-lg animate-pulse-slow"></div>
-      <div className="absolute -bottom-2 -right-2 w-16 h-16 bg-purple-400/20 rounded-full blur-lg animate-pulse-slow"></div>
       <Doughnut
         ref={chartRef}
         data={getPaymentMethodsData(transactions)}

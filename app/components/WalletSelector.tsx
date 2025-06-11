@@ -123,39 +123,17 @@ const WalletSelector = forwardRef<
   // Enhanced mobile-specific styles
   const mobileStyles = `
       @media (max-width: 640px) {
-        .wallet-button {
-          padding: 6px 10px !important;
-          font-size: 0.75rem !important;
-          min-height: 36px !important;
-          max-width: calc(100vw - 40px) !important;
-          white-space: nowrap !important;
-        }
+        
         .wallet-icon {
           width: 18px !important;
           height: 18px !important;
           margin-right: 6px !important;
           flex-shrink: 0 !important;
         }
-        .wallet-address {
-          font-size: 0.7rem !important;
-          overflow: hidden !important;
-          text-overflow: ellipsis !important;
-          white-space: nowrap !important;
-          max-width: calc(100vw - 120px) !important;
-        }
-        .wallet-dropdown {
-          width: calc(100vw - 20px) !important;
-          max-width: 280px !important;
-          left: 50% !important;
-          right: auto !important;
-          transform: translateX(-50%) !important;
-        }
         
-        .wallet-address-container {
-          overflow: hidden !important;
-          flex: 1 !important;
-          min-width: 0 !important;
-        }
+        
+        
+        
         .basename-display {
           max-width: 100px !important;
           overflow: hidden !important;
@@ -171,17 +149,7 @@ const WalletSelector = forwardRef<
       }
       
       @media (max-width: 480px) {
-        .wallet-button {
-          padding: 4px 8px !important;
-          font-size: 0.7rem !important;
-          min-height: 32px !important;
-          max-width: 100px !important;
-        }
-        .wallet-icon {
-          width: 16px !important;
-          height: 16px !important;
-          margin-right: 4px !important;
-        }
+        
         .wallet-address {
           font-size: 0.65rem;
           max-width: calc(100vw - 100px);
@@ -474,7 +442,7 @@ const WalletSelector = forwardRef<
             e.stopPropagation();
             setShowOptions(!showOptions);
           }}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm hover:from-blue-600 hover:to-purple-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm hover:from-blue-600 hover:to-purple-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-2"
           style={{ borderRadius: "0.75rem" }}
         >
           <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
@@ -497,7 +465,7 @@ const WalletSelector = forwardRef<
                   {formatEmail(emailAddress, 15)}
                 </span>
               ) : (
-                <span className="wallet-address text-xs sm:text-sm font-bold">
+                <span className="wallet-address text-xs sm:text-sm font-bold p-2">
                   Connected
                 </span>
               )}

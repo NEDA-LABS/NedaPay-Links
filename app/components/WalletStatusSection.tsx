@@ -33,13 +33,13 @@ export default function WalletStatusSection({ selectedWalletAddress, selectedWal
         <div className="relative flex items-start justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
-                <CheckCircle className="w-6 h-6 text-slate-800" />
+              <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                <CheckCircle className="w-4 h-4 text-slate-800" />
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2 pt-2">
                 Wallet Connected
                 <Shield className="w-5 h-5 text-emerald-600" />
               </h2>
@@ -49,11 +49,7 @@ export default function WalletStatusSection({ selectedWalletAddress, selectedWal
             </div>
           </div>
           
-          {/* Connection Status Badge */}
-          <div className="flex items-center px-3 py-1.5 bg-white rounded-full text-sm font-medium border border-slate-800">
-            <div className="w-2 h-2 bg-emerald-600 rounded-full mr-2 animate-pulse"></div>
-            Active
-          </div>
+
         </div>
 
         {/* Wallet Details Card */}

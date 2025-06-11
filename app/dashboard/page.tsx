@@ -582,126 +582,6 @@ export default function MerchantDashboard() {
 
   if (!mounted) return null;
 
-  // const WalletStatusSection () {
-  //   return (
-  //     {/* Wallet Status Section */}
-  //     <div className="relative w-1/2 mx-auto sm:w-full bg-gradient-to-br from-blue-500 via-blue-400 to-blue-500 border-2 border-blue-200/60 rounded-2xl p-6 mb-8 shadow-lg hover:shadow-xl transition-all duration-300">
-  //     {/* Background Pattern */}
-  //     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-blue-500/5 rounded-2xl"></div>
-  //     <div className="absolute top-4 right-4 w-20 h-20 bg-gradient-to-br from-blue-200/30 to-blue-200/30 rounded-full blur-xl"></div>
-
-  //     {/* Status Indicator */}
-  //     <div className="relative flex items-start justify-between mb-6">
-  //       <div className="flex items-center space-x-3">
-  //         <div className="relative">
-  //           <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-  //             <CheckCircle className="w-6 h-6 text-white" />
-  //           </div>
-  //           <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
-  //         </div>
-  //         <div>
-  //           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-  //             Wallet Connected
-  //             <Shield className="w-5 h-5 text-emerald-600" />
-  //           </h2>
-  //           <p className="text-slate-600 text-sm">
-  //             Your wallet is securely connected and ready to use
-  //           </p>
-  //         </div>
-  //       </div>
-
-  //       {/* Connection Status Badge */}
-  //       <div className="flex items-center px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium border border-emerald-200">
-  //         <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></div>
-  //         Active
-  //       </div>
-  //     </div>
-
-  //     {/* Wallet Details Card */}
-  //     <div className="relative bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
-  //       <div className="flex items-center justify-between mb-3">
-  //         <div className="flex items-center space-x-2">
-  //           <Wallet className="w-4 h-4 text-slate-600" />
-  //           <span className="text-sm font-semibold text-slate-700">
-  //             Wallet Address
-  //           </span>
-  //         </div>
-  //         <div className="flex items-center space-x-2">
-  //           <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
-  //             {selectedWalletType?.toUpperCase() || "CONNECTED"}
-  //           </span>
-  //         </div>
-  //       </div>
-
-  //       {selectedWalletAddress ? (
-  //         <div className="flex items-center justify-between bg-slate-50 rounded-lg p-3">
-  //           <div className="flex items-center space-x-3">
-  //             <div className="font-mono text-sm text-slate-800 bg-white px-3 py-1.5 rounded-md shadow-sm">
-  //               {`${selectedWalletAddress.substring(0, 6)}...${selectedWalletAddress.substring(selectedWalletAddress.length - 4)}`}
-  //             </div>
-  //           </div>
-
-  //           <div className="flex items-center space-x-2">
-  //             <button
-  //               onClick={() => {
-  //                 navigator.clipboard.writeText(selectedWalletAddress);
-  //                 setCopied(true);
-  //                 setTimeout(() => setCopied(false), 2000);
-  //               }}
-  //               className="group relative inline-flex items-center px-3 py-1.5 !bg-slate-700 hover:!bg-slate-800 text-white text-xs font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-  //               title="Copy full address"
-  //             >
-  //               {copied ? (
-  //                 <>
-  //                   <Check className="w-3 h-3 mr-1.5" />
-  //                   Copied!
-  //                 </>
-  //               ) : (
-  //                 <>
-  //                   <Copy className="w-3 h-3 mr-1.5" />
-  //                   Copy
-  //                 </>
-  //               )}
-  //             </button>
-
-  //             <button
-  //               onClick={() =>
-  //                 window.open(
-  //                   `https://etherscan.io/address/${selectedWalletAddress}`,
-  //                   "_blank"
-  //                 )
-  //               }
-  //               className="inline-flex items-center px-3 py-1.5 !bg-blue-600 hover:!bg-blue-700 text-white text-xs font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-  //               title="View on explorer"
-  //             >
-  //               <ExternalLink className="w-3 h-3 mr-1.5" />
-  //               View
-  //             </button>
-  //           </div>
-  //         </div>
-  //       ) : (
-  //         <div className="flex items-center justify-center py-6 text-slate-500">
-  //           <div className="text-center">
-  //             <Wallet className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-  //             <p className="text-sm">No wallet connected</p>
-  //           </div>
-  //         </div>
-  //       )}
-  //     </div>
-
-  //     {/* Success Animation Overlay */}
-  //     {copied && (
-  //       <div className="absolute inset-0 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
-  //         <div className="bg-white rounded-full p-3 shadow-lg border border-blue-200">
-  //           <Check className="w-6 h-6 text-blue-600" />
-  //         </div>
-  //       </div>
-  //     )}
-  //   </div>
-  //   )
-
-  // }
-
   return (
     <>
       <Toaster position="top-right" />
@@ -718,10 +598,10 @@ export default function MerchantDashboard() {
           </div>
         )}
         <div className="flex-grow">
-          <div className="container mx-auto max-w-6xl px-4 py-12">
+          <div className="container mx-auto px-4 py-12">
             <div className="mb-8">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="relative">
+                <div className="relative p-2">
                   <div className="absolute -top-2 -left-2 w-16 h-16 bg-blue-300/10 rounded-full blur-xl"></div>
                   <div>
                     <h1 className="text-2xl sm:text-2xl lg:text-4xl font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-blue-600">
@@ -742,7 +622,7 @@ export default function MerchantDashboard() {
                   </div>
                 )}
               </div>
-              <div className="py-4 flex flex-row sm:flex-col items-stretch gap-2">
+              <div className="py-4 flex flex-col md:!flex-row items-stretch gap-2">
                 <div className=" sm:p-6 flex-1 bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden backdrop-blur-md">
                   {/* Background Accents */}
                   <div className="absolute inset-0 bg-white/5 backdrop-blur-xl"></div>
@@ -751,7 +631,7 @@ export default function MerchantDashboard() {
                   <div>
                     <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4">
                       <div className="flex-1">
-                        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white mb-2 flex items-center gap-2 animate-slide-in">
+                        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white mb-2 flex items-center gap-2 animate-slide-in p-2">
                           Welcome Back
                           {selectedWalletAddress && (
                             <span className="inline-flex items-center px-2 py-0.5 bg-white/10 rounded-md text-sm sm:text-base font-medium text-white/90 backdrop-blur-sm">
@@ -763,7 +643,7 @@ export default function MerchantDashboard() {
                             </span>
                           )}
                         </h2>
-                        <p className="text-sm sm:text-base text-white/80 mb-4 animate-slide-in animation-delay-100 max-w-md">
+                        <p className="text-sm sm:text-base text-white/80 mb-4 animate-slide-in animation-delay-100 max-w-md p-2">
                           {(() => {
                             const messages = [
                               "Unleash your business potential with NEDA Pay’s seamless crypto payments.",
@@ -777,7 +657,7 @@ export default function MerchantDashboard() {
                             ];
                           })()}
                         </p>
-                        <div className="flex flex-row gap-4 animate-slide-in animation-delay-200 mt-8 pt-4">
+                        <div className="flex flex-row gap-4 animate-slide-in animation-delay-200 mt-8 p-1">
                           <button
                             onClick={() => {
                               setIsLoadingPaymentLink(true);
@@ -811,7 +691,7 @@ export default function MerchantDashboard() {
                             onClick={() => {
                               router.push("#swap");
                             }}
-                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed hidden md:!flex"
                           >
                             <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
                             <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
@@ -840,7 +720,7 @@ export default function MerchantDashboard() {
                               setIsLoadingSettings(true);
                               router.push("/settings");
                             }}
-                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold border border-white/30 overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold border border-white/30 overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed hidden md:!flex"
                             disabled={isLoadingSettings}
                           >
                             <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></span>

@@ -92,13 +92,13 @@ export default function Header() {
             <Link href="/" className="group flex items-center space-x-3">
               {/* Simplified Logo */}
               <div className="relative flex items-center">
-                <div className="h-10 rounded-xl bg-slate-800 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="relative z-10 text-white font-black text-l drop-shadow-lg px-2 py-1">
+                <div className="rounded-sm bg-slate-800 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                  <span className="text-xs relative z-10 text-white font-bold drop-shadow-lg p-1">
                     NEDA
                   </span>
                 </div>
-                <div className="h-10 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="relative z-10 text-slate-600 font-black text-xl drop-shadow-lg px-2">
+                <div className="rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                  <span className="text-xs relative z-10 text-slate-600 font-bold drop-shadow-lg p-1">
                     Pay
                   </span>
                 </div>
@@ -161,14 +161,14 @@ export default function Header() {
             )}
 
               {/* Action Buttons Container */}
-              <div className="flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl shadow-md">
+              <div className="flex items-center space-x-1 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl shadow-md">
                 {/* Stablecoin Balance Modal Toggle */}
                 <button
                   onClick={() => setIsBalanceModalOpen(true)}
-                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  className="rounded-lg hover:!bg-slate-100 transition-colors"
                   title="View Stablecoin Balances"
                 >
-                  <Coins className="w-8 h-8 p-1 hover:text-blue-500" />
+                  <Coins className="w-5 h-5 hover:text-blue-500" />
                 </button>
                 <NotificationTab />
                 
