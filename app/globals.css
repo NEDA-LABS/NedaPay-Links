@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 
+
 :root {
   /* Light mode: White background with black text */
   --background: #ffffff; /* White */
@@ -55,10 +56,9 @@ body {
 
 }
 
-.dark body {
-  /* background-color: #1e293b ; */
-  /* color: white ; */
-}
+
+
+
 
 .dark html {
   /* background-color: #1e293b; */
@@ -69,6 +69,12 @@ html {
   /* background-color: white; */
   height: 100%;
 }
+
+/* Override the CSS reset for headings */
+/* h1, h2, h3, h4, h5, h6 {
+  font-size: revert !important;
+  font-weight: revert !important;
+} */
 
 
 /* Futuristic Glassmorphism Cards */
@@ -180,7 +186,7 @@ input:-webkit-autofill:focus {
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   width: 10px;
   background: var(--scrollbar-track);
 }
@@ -190,7 +196,7 @@ input:-webkit-autofill:focus {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, var(--accent), var(--primary));
-}
+} */
 
 /* Neon Glow Text */
 .glow-text {
