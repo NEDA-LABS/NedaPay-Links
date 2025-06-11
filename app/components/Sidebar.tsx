@@ -136,8 +136,8 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
           {/* Authenticated user items */}
           {authenticated && (
             <>
-              <div className="border-t border-slate-200 dark:border-slate-700 my-4 pt-4">
-                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium mb-2 px-3">
+              <div className="border-t border-slate-200 my-4 pt-4">
+                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2 px-3">
                   Account
                 </p>
               </div>

@@ -1,4 +1,5 @@
-// pages/offramp.js or app/offramp/page.js (depending on your Next.js version)
+'use client';
+
 import { useState, useEffect } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
