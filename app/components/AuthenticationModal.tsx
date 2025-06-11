@@ -52,7 +52,7 @@ export default function AuthenticationModal({
             style={{ 
               width: "80%", 
               maxWidth: "500px",
-              backgroundColor: theme === 'dark' ? '#1F2937' : 'white',
+              backgroundColor: 'white',
               borderRadius: '16px',
               padding: '32px'
             }}

@@ -7,6 +7,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { stablecoins } from "../data/stablecoins";
 import Footer from "../components/Footer";
 import { useTheme } from "next-themes";
+import { FaWhatsapp, FaTelegramPlane, FaEnvelope } from "react-icons/fa";
 
 interface PaymentLink {
   id: string;
@@ -136,7 +137,7 @@ export default function PaymentLinkPage() {
     // Generate a mock link ID
     const linkId = Math.random().toString(36).substring(2, 10);
     const baseUrl = window.location.origin;
-    const link = `${baseUrl}/pay/${linkId}?amount=${amount}&currency=${currency}&to=${merchantAddress}&description=${encodeURIComponent(description || '')}`;
+    const link = `${baseUrl}/pay/${linkId}?amount=${amount}¤cy=${currency}&to=${merchantAddress}&description=${encodeURIComponent(description || '')}`;
 
     try {
       const response = await fetch("/api/payment-links", {
@@ -192,6 +193,36 @@ export default function PaymentLinkPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const shareViaWhatsApp = () => {
+    const phone = prompt("Please enter the phone number (with country code, e.g., +1234567890):");
+    if (phone) {
+      const message = `Pay ${amount} ${currency} for ${description || 'your purchase'}: ${generatedLink}`;
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+    }
+  };
+
+  const shareViaTelegram = () => {
+    const telegramId = prompt("Please enter the Telegram handle (e.g., @username) or phone number (with country code, e.g., +1234567890):");
+    if (telegramId) {
+      const message = `Pay ${amount} ${currency} for ${description || 'your purchase'}: ${generatedLink}`;
+      let telegramUrl;
+      if (telegramId.startsWith('@')) {
+        telegramUrl = `https://t.me/${telegramId.substring(1)}?text=${encodeURIComponent(message)}`;
+      } else {
+        telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(generatedLink)}&text=${encodeURIComponent(message)}`;
+      }
+      window.open(telegramUrl, '_blank');
+    }
+  };
+
+  const shareViaEmail = () => {
+    const subject = `Payment Request: ${amount} ${currency}`;
+    const body = `Please make a payment of ${amount} ${currency} for ${description || 'your purchase'} using this link: ${generatedLink}`;
+    const emailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(emailUrl);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
       <Header />
@@ -200,7 +231,7 @@ export default function PaymentLinkPage() {
       <div className="container mx-auto max-w-6xl px-4 pt-6">
         <button
           onClick={() => window.history.back()}
-          className="group flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white hover:shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
+          className="group flex items-center gap-2 px-4 py-2 !bg-white/80 !backdrop-blur-sm !border !border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
         >
           <span className="group-hover:-translate-x-1 transition-transform duration-300">←</span> 
           Back
@@ -208,32 +239,35 @@ export default function PaymentLinkPage() {
       </div>
 
       <div className="container mx-auto max-w-6xl px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-4">
+        {/* Updated Hero Section */}
+        <div className="text-center mb-4 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-200/30 to-purple-200/30 blur-3xl rounded-4xl"></div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium animate-pulse">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
             </svg>
             Payment Link Generator
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
-            Create Payment Links
+          <h1 className="text-lg md:text-6xl font-extrabold text-gray-900 mb-1 tracking-tight">
+            <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Create Instant Payment Links
+            </span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Generate secure payment links instantly and share them with your customers for seamless transactions
+          <p className="text-xs md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed pb-2 px-2">
+            Effortlessly generate secure Web3 payment links.
           </p>
         </div>
 
         {/* Wallet Status Card */}
         {isClient && (
-          <div className={`mb-8 p-6 rounded-2xl border-2 transition-all duration-300 ${
+          <div className={`text-sm mb-8 p-3 rounded-2xl border-2 transition-all duration-300 ${
             getMerchantAddress()
-              ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 shadow-green-100/50"
-              : "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 shadow-amber-100/50"
+              ? "text-sm bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 shadow-green-100/50"
+              : "text-sm bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 shadow-amber-100/50"
           } shadow-lg`}>
             <div className="flex items-start gap-4">
               <div className={`p-3 rounded-xl ${
-                getMerchantAddress() ? "bg-green-100" : "bg-amber-100"
+                getMerchantAddress() ? "text-sm bg-green-100" : "text-sm bg-amber-100"
               }`}>
                 <svg className={`w-6 h-6 ${
                   getMerchantAddress() ? "text-green-600" : "text-amber-600"
@@ -242,12 +276,12 @@ export default function PaymentLinkPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className={`font-semibold text-lg ${
+                <h3 className={`font-semibold text-sm ${
                   getMerchantAddress() ? "text-green-900" : "text-amber-900"
                 }`}>
                   {getMerchantAddress() ? "Wallet Connected" : "Wallet Required"}
                 </h3>
-                <p className={`text-sm ${
+                <p className={`text-xs ${
                   getMerchantAddress() ? "text-green-700" : "text-amber-700"
                 } font-mono break-all mt-1`}>
                   {getMerchantAddress() || "Please connect your wallet to create payment links"}
@@ -259,7 +293,7 @@ export default function PaymentLinkPage() {
 
         {/* Main Form Card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-2xl border border-white/20 mb-12">
-          <div className="space-y-8">
+          <div className="space-y-4">
             {/* Amount Input */}
             <div className="group">
               <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 mb-3">
@@ -273,7 +307,7 @@ export default function PaymentLinkPage() {
                   required
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                  className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                   placeholder="0.00"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-6">
@@ -295,7 +329,7 @@ export default function PaymentLinkPage() {
                   name="currency"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                  className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                 >
                   {stablecoins.map((coin: any) => (
                     <option key={coin.baseToken} value={coin.baseToken}>
@@ -322,7 +356,7 @@ export default function PaymentLinkPage() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
+                className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
                 placeholder="Payment for services, products, or invoices..."
               />
             </div>
@@ -343,7 +377,7 @@ export default function PaymentLinkPage() {
                     Generating Link...
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-3">
+                  <div className="flex text-sm items-center justify-center gap-3">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
@@ -354,38 +388,69 @@ export default function PaymentLinkPage() {
             </form>
           </div>
 
-          {/* Generated Link Display */}
+          {/* Updated Generated Link Display with Preview and Sharing Options */}
           {generatedLink && (
             <div className="mt-10 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 animate-fade-in">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center gap-3 mb-4">
                 <div className="p-2 bg-green-100 rounded-lg">
                   <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" stroke="true" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-green-900">
+                <h3 className="text-sm font-semibold text-green-900">
                   Payment Link Generated Successfully!
                 </h3>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-center gap-3 mb-4 ">
                 <input
                   type="text"
                   readOnly
                   value={generatedLink}
-                  className="flex-1 px-4 py-3 bg-white border-2 border-green-200 rounded-xl text-sm font-mono"
+                  className="flex-1 !text-xs px-4 py-3 !bg-white !border-2 !border-green-200 !rounded-xl !text-sm !font-mono"
                 />
+                <div className="flex items-center gap-3">
                 <button
                   onClick={copyToClipboard}
-                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 !rounded-xl !font-medium !transition-all !duration-300 ${
                     copied
-                      ? "bg-green-600 text-blue"
-                      : "bg-green-100 text-green-700 hover:bg-green-200"
+                      ? "!bg-green-600 !text-white text-xs"
+                      : "!bg-green-100 !text-green-700 hover:!bg-green-200 text-xs"
                   }`}
                 >
                   {copied ? "Copied!" : "Copy"}
                 </button>
+                <a
+                  href={generatedLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-all duration-300 text-xs"
+                >
+                  Preview
+                </a>
+                </div>
+               
               </div>
-              <p className="mt-3 text-sm text-green-700">
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={shareViaWhatsApp}
+                  className="px-4 py-2 !bg-green-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-green-600 transition-all duration-300 flex items-center gap-2"
+                >
+                  <FaWhatsapp />
+                </button>
+                <button
+                  onClick={shareViaTelegram}
+                  className="px-4 py-2 !bg-blue-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-blue-600 transition-all duration-300 flex items-center gap-2"
+                >
+                  <FaTelegramPlane />
+                </button>
+                <button
+                  onClick={shareViaEmail}
+                  className="px-4 py-2 !bg-gray-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-gray-600 transition-all duration-300 flex items-center gap-2"
+                >
+                  <FaEnvelope />
+                </button>
+              </div>
+              <p className="mt-3 text-xs text-green-700 text-center">
                 Share this secure link with your customers to receive payments instantly.
               </p>
             </div>
@@ -396,11 +461,11 @@ export default function PaymentLinkPage() {
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-3 bg-indigo-100 rounded-xl">
-              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002 2v2H6a2 2 0 00-2 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Recent Payment Links</h2>
+            <h2 className="text-lg font-bold text-gray-900">Recent Payment Links</h2>
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-gray-200">
@@ -432,7 +497,7 @@ export default function PaymentLinkPage() {
                         <div className="flex flex-col items-center gap-3">
                           <div className="p-4 bg-gray-100 rounded-2xl">
                             <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                             </svg>
                           </div>
                           <p className="text-gray-500 text-lg">No payment links created yet</p>
@@ -448,13 +513,13 @@ export default function PaymentLinkPage() {
                           index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
                         }`}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-900">
                           {link.createdAt}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
                           {link.amount}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-900">
                           <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
                             {link.currency}
                           </span>
@@ -464,7 +529,7 @@ export default function PaymentLinkPage() {
                             {link.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs">
                           <a
                             href={link.url}
                             target="_blank"
@@ -472,7 +537,7 @@ export default function PaymentLinkPage() {
                             className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
                             View
                           </a>
@@ -503,6 +568,19 @@ export default function PaymentLinkPage() {
         
         .animate-fade-in {
           animation: fade-in 0.5s ease-out;
+        }
+
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
+          }
         }
       `}</style>
     </div>
