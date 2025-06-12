@@ -176,7 +176,7 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
               </div>
               
               <Link
-                href="#"
+                href="/mobileWithdrawal"
                 className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors"
                 onClick={onClose}
               >

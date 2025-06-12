@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
 
-const KOTANI_API_BASE = 'https://sandbox-api.kotanipay.io/v3'; // Use sandbox for testing
+const KOTANI_API_BASE = 'https://sandbox-api.kotanipay.io/v3'; // for testing
 const SUPPORTED_NETWORKS = {
   base: {
     chainId: 8453,

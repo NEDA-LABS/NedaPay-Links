@@ -8,6 +8,31 @@ import { stablecoins } from "../data/stablecoins";
 import Footer from "../components/Footer";
 import { useTheme } from "next-themes";
 import { FaWhatsapp, FaTelegramPlane, FaEnvelope } from "react-icons/fa";
+import { siX, siFarcaster } from 'simple-icons'
+
+const XIcon = ({ size = 24, color = siX.hex }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={`#${color}`}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d={siX.path} />
+  </svg>
+)
+
+const FarcasterIcon = ({ size = 24, color = siFarcaster.hex }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={`#${color}`}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d={siFarcaster.path} />
+  </svg>
+)
 
 interface PaymentLink {
   id: string;
@@ -44,6 +69,10 @@ export default function PaymentLinkPage() {
   const [pageLoaded, setPageLoaded] = useState(false);
   const [recentLinks, setRecentLinks] = useState<PaymentLink[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showWhatsAppInput, setShowWhatsAppInput] = useState(false);
+  const [showTelegramInput, setShowTelegramInput] = useState(false);
+  const [whatsAppReceiver, setWhatsAppReceiver] = useState("");
+  const [telegramReceiver, setTelegramReceiver] = useState("");
 
   const { theme } = useTheme();
 
@@ -137,7 +166,7 @@ export default function PaymentLinkPage() {
     // Generate a mock link ID
     const linkId = Math.random().toString(36).substring(2, 10);
     const baseUrl = window.location.origin;
-    const link = `${baseUrl}/pay/${linkId}?amount=${amount}¤cy=${currency}&to=${merchantAddress}&description=${encodeURIComponent(description || '')}`;
+    const link = `${baseUrl}/pay/${linkId}?amount=${amount}&currency=${currency}&to=${merchantAddress}&description=${encodeURIComponent(description || '')}`;
 
     try {
       const response = await fetch("/api/payment-links", {
@@ -193,27 +222,39 @@ export default function PaymentLinkPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shareViaWhatsApp = () => {
-    const phone = prompt("Please enter the phone number (with country code, e.g., +1234567890):");
-    if (phone) {
-      const message = `Pay ${amount} ${currency} for ${description || 'your purchase'}: ${generatedLink}`;
-      const whatsappUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
+  const shareViaWhatsApp = (direct = false) => {
+    const message = `Pay ${amount} ${currency} for ${description || 'your purchase'}: ${generatedLink}`;
+    let whatsappUrl;
+    if (direct) {
+      whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    } else {
+      if (!whatsAppReceiver) {
+        setShowWhatsAppInput(true);
+        return;
+      }
+      whatsappUrl = `https://wa.me/${encodeURIComponent(whatsAppReceiver)}?text=${encodeURIComponent(message)}`;
+      setShowWhatsAppInput(false);
+      setWhatsAppReceiver("");
     }
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const shareViaTelegram = () => {
-    const telegramId = prompt("Please enter the Telegram handle (e.g., @username) or phone number (with country code, e.g., +1234567890):");
-    if (telegramId) {
-      const message = `Pay ${amount} ${currency} for ${description || 'your purchase'}: ${generatedLink}`;
-      let telegramUrl;
-      if (telegramId.startsWith('@')) {
-        telegramUrl = `https://t.me/${telegramId.substring(1)}?text=${encodeURIComponent(message)}`;
-      } else {
-        telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(generatedLink)}&text=${encodeURIComponent(message)}`;
+  const shareViaTelegram = (direct = false) => {
+    const message = `Pay ${amount} ${currency} for ${description || 'your purchase'}: ${generatedLink}`;
+    let telegramUrl;
+    if (direct) {
+      telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(generatedLink)}&text=${encodeURIComponent(message)}`;
+    } else {
+      if (!telegramReceiver) {
+        setShowTelegramInput(true);
+        return;
       }
-      window.open(telegramUrl, '_blank');
+      const receiver = telegramReceiver.startsWith('@') ? telegramReceiver.substring(1) : telegramReceiver;
+      telegramUrl = `https://t.me/${encodeURIComponent(receiver)}?text=${encodeURIComponent(message)}`;
+      setShowTelegramInput(false);
+      setTelegramReceiver("");
     }
+    window.open(telegramUrl, '_blank', 'noopener,noreferrer');
   };
 
   const shareViaEmail = () => {
@@ -221,6 +262,18 @@ export default function PaymentLinkPage() {
     const body = `Please make a payment of ${amount} ${currency} for ${description || 'your purchase'} using this link: ${generatedLink}`;
     const emailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(emailUrl);
+  };
+
+  const shareViaX = () => {
+    const message = `Pay ${amount} ${currency} for ${description || 'your purchase'}: ${generatedLink}`;
+    const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(message)}`;
+    window.open(xUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const shareViaFarcaster = () => {
+    const message = `Pay ${amount} ${currency} for ${description || 'your purchase'}: ${generatedLink}`;
+    const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(message)}`;
+    window.open(farcasterUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -366,7 +419,7 @@ export default function PaymentLinkPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 px-8 !bg-gradient-to-r from-blue-600 to-blue-500 hover:!from-indigo-700 hover:!to-purple-700 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full py-4 px-8 !bg-gradient-to-r fromlogos/coinbase_wallet_logo.png from-blue-600 to-blue-500 hover:!from-indigo-700 hover:!to-purple-700 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-3">
@@ -401,7 +454,7 @@ export default function PaymentLinkPage() {
                   Payment Link Generated Successfully!
                 </h3>
               </div>
-              <div className="flex flex-col sm:flex-row items-center gap-3 mb-4 ">
+              <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">
                 <input
                   type="text"
                   readOnly
@@ -428,31 +481,85 @@ export default function PaymentLinkPage() {
                   Preview
                 </a>
                 </div>
-               
               </div>
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  onClick={shareViaWhatsApp}
-                  className="px-4 py-2 !bg-green-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-green-600 transition-all duration-300 flex items-center gap-2"
-                >
-                  <FaWhatsapp />
-                </button>
-                <button
-                  onClick={shareViaTelegram}
-                  className="px-4 py-2 !bg-blue-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-blue-600 transition-all duration-300 flex items-center gap-2"
-                >
-                  <FaTelegramPlane />
-                </button>
-                <button
-                  onClick={shareViaEmail}
-                  className="px-4 py-2 !bg-gray-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-gray-600 transition-all duration-300 flex items-center gap-2"
-                >
-                  <FaEnvelope />
-                </button>
+              <div className="flex flex-col gap-3">
+                {/* WhatsApp Sharing Options */}
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => shareViaWhatsApp(true)}
+                    className="px-4 py-2 !bg-green-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-green-600 transition-all duration-300 flex items-center gap-2"
+                  >
+                    <FaWhatsapp /> Direct Share
+                  </button>
+                  <button
+                    onClick={() => shareViaWhatsApp(false)}
+                    className="px-4 py-2 !bg-green-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-green-600 transition-all duration-300 flex items-center gap-2"
+                  >
+                    <FaWhatsapp /> Share to Contact
+                  </button>
+                </div>
+                {showWhatsAppInput && (
+                  <div className="mt-3">
+                    <input
+                      type="text"
+                      value={whatsAppReceiver}
+                      onChange={(e) => setWhatsAppReceiver(e.target.value)}
+                      placeholder="Enter phone number (e.g., +1234567890)"
+                      className="w-full px-4 py-3 text-xs rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-300"
+                    />
+                  </div>
+                )}
+                {/* Telegram Sharing Options */}
+                <div className="flex items-center justify-center gap-3 mt-3">
+                  <button
+                    onClick={() => shareViaTelegram(true)}
+                    className="px-4 py-2 !bg-blue-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-blue-600 transition-all duration-300 flex items-center gap-2"
+                  >
+                    <FaTelegramPlane /> Direct Share
+                  </button>
+                  <button
+                    onClick={() => shareViaTelegram(false)}
+                    className="px-4 py-2 !bg-blue-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-blue-600 transition-all duration-300 flex items-center gap-2"
+                  >
+                    <FaTelegramPlane /> Share to Contact
+                  </button>
+                </div>
+                {showTelegramInput && (
+                  <div className="mt-3">
+                    <input
+                      type="text"
+                      value={telegramReceiver}
+                      onChange={(e) => setTelegramReceiver(e.target.value)}
+                      placeholder="Enter Telegram handle (e.g., @username) or phone number"
+                      className="w-full px-4 py-3 text-xs rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300"
+                    />
+                  </div>
+                )}
+                {/* Other Sharing Options */}
+                <div className="flex items-center justify-center gap-3 mt-3">
+                  <button
+                    onClick={shareViaEmail}
+                    className="px-4 py-2 !bg-slate-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-gray-600 transition-all duration-300 flex items-center gap-2"
+                  >
+                    <FaEnvelope color="black" size={20}/>
+                  </button>
+                  <button
+                    onClick={shareViaX}
+                    className="px-4 py-2 !bg-slate-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-slate-600 transition-all duration-300 flex items-center gap-2"
+                  >
+                    <XIcon />
+                  </button>
+                  <button
+                    onClick={shareViaFarcaster}
+                    className="px-4 py-2 !bg-purple-400 text-xs !text-white !rounded-xl !font-medium hover:!bg-purple-300 transition-all duration-300 flex items-center gap-2"
+                  >
+                    <FarcasterIcon />
+                  </button>
+                </div>
+                <p className="mt-3 text-xs text-green-700 text-center">
+                  Share this secure link with your customers to receive payments instantly.
+                </p>
               </div>
-              <p className="mt-3 text-xs text-green-700 text-center">
-                Share this secure link with your customers to receive payments instantly.
-              </p>
             </div>
           )}
         </div>
@@ -579,7 +686,7 @@ export default function PaymentLinkPage() {
             opacity: 1;
           }
           50% {
-            opacity: 0.7;
+            opacity: 0.７;
           }
         }
       `}</style>
