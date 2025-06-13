@@ -143,7 +143,7 @@ function HomeContent() {
 
       {/* CTA Section */}
       {/* Enhanced CTA Section */}
-      <div className="w-[90%] mx-auto bg-gradient-to-r from-blue-600 to-purple-400 relative overflow-hidden rounded-3xl mb-12 shadow-2xl">
+      <div className="w-[90%] mx-auto bg-gradient-to-r from-blue-600 to-purple-400 relative overflow-hidden rounded-b-3xl mb-12 shadow-2xl">
         {/* Animated Background Elements */}
         <div className="absolute -top-32 -right-32 w-80 h-80 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 dark:from-indigo-500/15 dark:to-purple-500/15 rounded-full blur-3xl animate-pulse"></div>
         <div
@@ -167,7 +167,7 @@ function HomeContent() {
         <div className="relative z-10 px-8 py-20 text-center text-white">
           {/* Enhanced Heading */}
           <h2 className="text-2xl font-bold mb-8 leading-tight">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-100 drop-shadow-sm">
+            <span className="bg-clip-text text-transparent !bg-gradient-to-r !from-white !via-blue-100 !to-indigo-100 drop-shadow-sm">
               Ready to accept
             </span>
             <br />
@@ -189,7 +189,7 @@ function HomeContent() {
                   className="group relative flex items-center justify-center !bg-white hover:!bg-gray-50 !text-gray-900 font-bold text-sm py-4 px-8 rounded-3xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
                   {/* Button Background Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 !bg-gradient-to-r !from-blue-600/5 !to-purple-600/5 opacity-0 group-hover:!opacity-100 transition-opacity duration-300"></div>
                   <span className="relative flex items-center">
                     <svg
                       className="w-5 h-5 mr-3 text-blue-600"
@@ -225,7 +225,7 @@ function HomeContent() {
                 >
                   {/* Button Background Effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <span className="relative flex items-center">
+                  <span className="relative flex items-center text-slate-800 text-sm">
                     <svg
                       className="w-5 h-5 mr-3 text-blue-600"
                       fill="none"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, Link, DollarSign, Repeat2, CheckCircle, ArrowRight, Globe, Smartphone, Shield } from 'lucide-react';
+import { Wallet, Link, DollarSign, Repeat2, CheckCircle, ArrowRight, Globe, Smartphone, Shield, Banknote, ArrowDown } from 'lucide-react';
 import { useRef } from 'react';
 import WalletSelector from './WalletSelector';
 import { usePrivy } from '@privy-io/react-auth';
@@ -24,7 +24,7 @@ export default function HowItWorksSection() {
     {
       number: "01",
       icon: Wallet,
-      title: "Connect Your Wallet",
+      title: "Sign in with Email or Wallet",
       description: "Connect your Base wallet to access the merchant dashboard and all features",
       details: "Supports MetaMask, Coinbase Wallet, and other Web3 wallets",
       color: "blue",
@@ -141,7 +141,38 @@ export default function HowItWorksSection() {
             </div>
           </div>
         </div>
-      )
+      ),
+    },
+    {
+    number: "05",
+    icon: Banknote,
+    title: "Transfer Tokens",
+    description: "Withdraw your stablecoins to your bank account, mobile network, exchange or external wallet",
+    details: "Fast and secure withdrawal process",
+    color: "orange",
+    gradient: "from-orange-400 to-pink-400",
+    bgColor: "bg-orange-25",
+    iconBg: "bg-orange-500",
+    tags: ["Bank", "Mobile"],
+    button: "Withdraw",
+    buttonGradient: "from-orange-600 to-pink-600",
+    visual: (
+      <div className="relative">
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center bg-orange-50 rounded-md px-2 py-1">
+            <span className="text-xs mr-1">💵</span>
+            <span className="text-xs font-medium">USDC</span>
+          </div>
+          <div className="w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center">
+            <ArrowRight className="w-3 h-3 text-white" />
+          </div>
+          <div className="flex items-center bg-blue-50 rounded-md px-2 py-1">
+            <span className="text-xs mr-1">🇳🇬</span>
+            <span className="text-xs font-medium">cNGN</span>
+          </div>
+        </div>
+      </div>
+    ),
     }
   ];
 

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import StablecoinBalanceTracker from "./StablecoinBalanceTracker";
 import Sidebar from "./Sidebar";
+import Image from "next/image";
 
 // Import your actual components
 import WalletSelector from "./WalletSelector";
@@ -91,15 +92,13 @@ export default function Header() {
           <div className="flex items-center">
             <Link href="/" className="group flex items-center space-x-3">
               {/* Simplified Logo */}
-              <div className="relative flex items-center">
-                <div className="rounded-sm bg-slate-800 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="text-xs relative z-10 text-white font-bold drop-shadow-lg p-1">
-                    NEDA
-                  </span>
+              <div className="relative flex">
+                <div className="flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                  <Image src="/NEDApayLogo.png" alt="Logo" width={20} height={20} />
                 </div>
-                <div className="rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="text-xs relative z-10 text-slate-600 font-bold drop-shadow-lg p-1">
-                    Pay
+                <div className="flex justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                  <span className="text-sm relative z-10 text-slate-800 font-extrabold drop-shadow-lg p-1">
+                    NEDAPay
                   </span>
                 </div>
               </div>
