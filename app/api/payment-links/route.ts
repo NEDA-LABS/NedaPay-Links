@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import { Redis } from '@upstash/redis';
 
+
 const prisma = new PrismaClient();
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -102,7 +103,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Generate payment link URL and HMAC signature
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'; // Set this in your .env file
+  const getBaseUrl = (req: NextRequest) => {
+    if (req) {
+      const protocol = req.headers.get('x-forwarded-proto') || 'http';
+      const host = req.headers.get('host');
+      return `${protocol}://${host}`;
+    }
+    return typeof window !== 'undefined' 
+      ? `${window.location.protocol}//${window.location.host}`
+      : 'http://localhost:3000';
+  };
+
+  const baseUrl =getBaseUrl(req);
   const queryString = `amount=${parsedAmount}&currency=${currency}&to=${merchantId}&description=${encodeURIComponent(description || '')}`;
   const signature = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'default-secret')
     .update(queryString)
