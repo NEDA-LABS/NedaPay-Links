@@ -176,12 +176,12 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
               </div>
               
               <Link
-                href="/mobileWithdrawal"
+                href="/paycrest"
                 className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors"
                 onClick={onClose}
               >
                 <Zap className="w-5 h-5" />
-                <span>Withdraw</span>
+                <span>Withdraw to Fiat</span>
               </Link>
               
               <Link

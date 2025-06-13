@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
 
-const KOTANI_API_BASE = 'https://sandbox-api.kotanipay.io/v3'; // for testing
 const SUPPORTED_NETWORKS = {
   base: {
     chainId: 8453,
@@ -15,10 +14,10 @@ const SUPPORTED_NETWORKS = {
 };
 
 const MOBILE_MONEY_PROVIDERS = [
-  { code: 'MPESA', name: 'M-Pesa', country: 'TZ' },
-  { code: 'TIGOPESA', name: 'Tigo Pesa', country: 'TZ' },
-  { code: 'AIRTELMONEY', name: 'Airtel Money', country: 'TZ' },
-  { code: 'HALOPESA', name: 'Halo Pesa', country: 'TZ' }
+  { code: 'MTN', name: 'M-Pesa', country: 'TZ' },
+  { code: 'TIGO', name: 'Tigo Pesa', country: 'TZ' },
+  { code: 'AIRTEL', name: 'Airtel Money', country: 'TZ' },
+  { code: 'VODACOM', name: 'Halo Pesa', country: 'TZ' }
 ];
 
 export default function mobileWithdrawal() {
@@ -29,7 +28,8 @@ export default function mobileWithdrawal() {
   const [formData, setFormData] = useState({
     amount: '',
     phoneNumber: '',
-    provider: 'MPESA',
+    accountName: '',
+    provider: 'MTN',
     currency: 'TZS'
   });
   
@@ -42,15 +42,17 @@ export default function mobileWithdrawal() {
   }
   const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
   interface Transaction {
-    transactionId: string;
+    referenceId: string;
     status: string;
     amount: string;
     currency: string;
+    transactionId?: string;
   }
 
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [statusLoading, setStatusLoading] = useState(false);
 
   // Get wallet balance
   useEffect(() => {
@@ -131,7 +133,16 @@ export default function mobileWithdrawal() {
       return false;
     }
 
+    if (!formData.accountName.trim()) {
+      setError('Please enter account name');
+      return false;
+    }
+
     return true;
+  };
+
+  const generateReferenceId = () => {
+    return `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
   const handleOfframp = async () => {
@@ -142,49 +153,48 @@ export default function mobileWithdrawal() {
     setSuccess('');
 
     try {
-      // Step 1: Create mobile money customer
-      const customerResponse = await fetch('/api/kotani/create-customer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phoneNumber: formData.phoneNumber,
-          provider: formData.provider,
-          walletAddress: wallets[0].address
-        })
-      });
-
-      if (!customerResponse.ok) {
-        throw new Error('Failed to create customer');
-      }
-
-      const customer = await customerResponse.json();
-
-      // Step 2: Initiate offramp transaction
+      const referenceId = generateReferenceId();
+      
+      // Initiate offramp transaction directly
       const offrampResponse = await fetch('/api/kotani/offramp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: formData.amount,
           currency: formData.currency,
-          customerKey: customer.customerKey,
           walletAddress: wallets[0].address,
-          provider: formData.provider
+          receiverType: 'mobile',
+          phoneNumber: formData.phoneNumber,
+          accountName: formData.accountName,
+          networkProvider: formData.provider,
+          referenceId: referenceId
         })
       });
 
       if (!offrampResponse.ok) {
-        throw new Error('Failed to initiate offramp');
+        const errorData = await offrampResponse.json();
+        throw new Error(errorData.error || 'Failed to initiate offramp');
       }
 
       const offrampResult = await offrampResponse.json();
-      setTransaction(offrampResult);
-      setSuccess(`Offramp initiated successfully! Transaction ID: ${offrampResult.transactionId}`);
+      
+      const transactionData = {
+        referenceId: referenceId,
+        status: offrampResult.status || 'PENDING',
+        amount: formData.amount,
+        currency: formData.currency,
+        transactionId: offrampResult.transactionId
+      };
+      
+      setTransaction(transactionData);
+      setSuccess(`Offramp initiated successfully! Reference ID: ${referenceId}`);
       
       // Reset form
       setFormData({
         amount: '',
         phoneNumber: '',
-        provider: 'MPESA',
+        accountName: '',
+        provider: 'MTN',
         currency: 'TZS'
       });
       
@@ -195,6 +205,61 @@ export default function mobileWithdrawal() {
       setError(err instanceof Error ? err.message : 'Failed to process offramp');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkTransactionStatus = async () => {
+    if (!transaction?.referenceId) return;
+
+    setStatusLoading(true);
+    try {
+      const response = await fetch('/api/kotani/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referenceId: transaction.referenceId
+        })
+      });
+
+      if (response.ok) {
+        const statusData = await response.json();
+        setTransaction(prev => prev ? {
+          ...prev,
+          status: statusData.status || prev.status
+        } : null);
+      }
+    } catch (err) {
+      console.error('Error checking status:', err);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const cancelTransaction = async () => {
+    if (!transaction?.referenceId) return;
+
+    try {
+      const response = await fetch('/api/kotani/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referenceId: transaction.referenceId
+        })
+      });
+
+      if (response.ok) {
+        const cancelData = await response.json();
+        setTransaction(prev => prev ? {
+          ...prev,
+          status: 'CANCELLED'
+        } : null);
+        setSuccess('Transaction cancelled successfully');
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to cancel transaction');
+      }
+    } catch (err) {
+      setError('Error cancelling transaction');
     }
   };
 
@@ -209,7 +274,7 @@ export default function mobileWithdrawal() {
         <p className="mb-4">Please connect your wallet to access the offramp feature.</p>
         <button
           onClick={login}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+          className="w-full !bg-blue-600 text-white py-2 px-4 !rounded hover:!bg-blue-700"
         >
           Connect Wallet
         </button>
@@ -272,6 +337,20 @@ export default function mobileWithdrawal() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
+            Account Name
+          </label>
+          <input
+            type="text"
+            name="accountName"
+            value={formData.accountName}
+            onChange={handleInputChange}
+            placeholder="Enter your full name"
+            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Phone Number
           </label>
           <input
@@ -315,8 +394,8 @@ export default function mobileWithdrawal() {
 
         <button
           onClick={handleOfframp}
-          disabled={loading || !formData.amount || !formData.phoneNumber}
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+          disabled={loading || !formData.amount || !formData.phoneNumber || !formData.accountName}
+          className="w-full !bg-blue-600 text-white py-3 px-4 !rounded-md hover:!bg-blue-700 disabled:!bg-gray-400 disabled:cursor-not-allowed font-medium"
         >
           {loading ? 'Processing...' : 'Send to Mobile Money'}
         </button>
@@ -326,11 +405,37 @@ export default function mobileWithdrawal() {
       {transaction && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h3 className="text-lg font-semibold mb-2">Transaction Details</h3>
-          <p className="text-sm text-gray-600">Transaction ID: {transaction.transactionId}</p>
-          <p className="text-sm text-gray-600">Status: {transaction.status}</p>
+          <p className="text-sm text-gray-600">Reference ID: {transaction.referenceId}</p>
+          {transaction.transactionId && (
+            <p className="text-sm text-gray-600">Transaction ID: {transaction.transactionId}</p>
+          )}
+          <p className="text-sm text-gray-600">Status: <span className={`font-medium ${
+            transaction.status === 'COMPLETED' ? 'text-green-600' :
+            transaction.status === 'FAILED' || transaction.status === 'CANCELLED' ? 'text-red-600' :
+            'text-yellow-600'
+          }`}>{transaction.status}</span></p>
           <p className="text-sm text-gray-600">
-            Amount: {transaction.amount} {transaction.currency}
+            Amount: {transaction.amount} USDC → {formData.currency}
           </p>
+          
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={checkTransactionStatus}
+              disabled={statusLoading}
+              className="px-4 py-2 !bg-blue-600 text-white text-sm !rounded hover:!bg-blue-700 disabled:!bg-gray-400"
+            >
+              {statusLoading ? 'Checking...' : 'Check Status'}
+            </button>
+            
+            {transaction.status === 'PENDING' && (
+              <button
+                onClick={cancelTransaction}
+                className="px-4 py-2  !bg-red-600 text-white text-sm !rounded hover:!bg-red-700"
+              >
+                Cancel Transaction
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

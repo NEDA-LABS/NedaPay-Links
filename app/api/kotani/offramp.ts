@@ -1,6 +1,5 @@
 // api/kotani/offramp.js
-import { getAuthToken } from './auth';
-
+import kotaniPay from '@api/kotani-pay';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,59 +8,88 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { amount, currency, customerKey, walletAddress, provider } = req.body;
-    const token = await getAuthToken();
+    const { 
+      amount, 
+      currency, 
+      customerKey, 
+      walletAddress, 
+      provider,
+      receiverType, // 'mobile' or 'bank'
+      referenceId,
+      // Mobile money receiver fields
+      phoneNumber,
+      accountName,
+      networkProvider,
+      // Bank receiver fields
+      name,
+      address,
+      bankCode,
+      accountNumber,
+      country
+    } = req.body;
+
+    const token = process.env.KOTANI_API_KEY || '';
+    
+    // Authenticate with Kotani API
+    kotaniPay.auth(token);
 
     // First, get the exchange rate to calculate the exact amounts
-    const rateResponse = await fetch(`${process.env.KOTANI_API_BASE || 'https://sandbox-api.kotanipay.io/v3'}/rates/offramp-exchange-rate`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        fromCurrency: 'USDC',
-        toCurrency: currency,
-        amount: parseFloat(amount)
-      })
-    });
+    try {
+      const rateData = await kotaniPay.rateController_getOffRampRates({
+        from: 'USDC',
+        to: currency,
+        cryptoAmount: parseFloat(amount)
+      });
 
-    if (!rateResponse.ok) {
+      console.log('Exchange rate data:', rateData.data);
+    } catch (rateError) {
+      console.error('Rate fetch error:', rateError);
       throw new Error('Failed to get exchange rate');
     }
 
-    const rateData = await rateResponse.json();
-
-    // Now create the offramp request
-    const offrampResponse = await fetch(`${process.env.KOTANI_API_BASE || 'https://sandbox-api.kotanipay.io/v3'}/offramp/request`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        customerKey,
-        amount: parseFloat(amount), // USDC amount
-        fromCurrency: 'USDC',
-        toCurrency: currency,
-        provider,
-        walletAddress,
-        network: 'BASE', // Specify Base network
-        webhookUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/kotani/webhook`
-      })
-    });
-
-    if (!offrampResponse.ok) {
-      const errorData = await offrampResponse.json();
-      throw new Error(errorData.message || 'Failed to create offramp request');
+    // Prepare receiver object based on type
+    let receiverConfig = {};
+    
+    if (receiverType === 'mobile') {
+      receiverConfig = {
+        mobileMoneyReceiver: {
+          phoneNumber,
+          accountName,
+          networkProvider
+        }
+      };
+    } else if (receiverType === 'bank') {
+      receiverConfig = {
+        bankReceiver: {
+          name,
+          address,
+          phoneNumber,
+          bankCode: parseInt(bankCode),
+          accountNumber,
+          country
+        }
+      };
+    } else {
+      throw new Error('Invalid receiver type. Must be "mobile" or "bank"');
     }
 
-    const offrampData = await offrampResponse.json();
-    res.status(200).json(offrampData);
+    // Create the offramp request
+    const offrampData = await kotaniPay.offRampController_createOfframp({
+      ...receiverConfig,
+      cryptoAmount: parseFloat(amount),
+      currency,
+      chain: 'BASE',
+      token: 'USDC',
+      referenceId: referenceId || `offramp_${Date.now()}`, // Generate reference ID if not provided
+      senderAddress: walletAddress
+    });
+
+    res.status(200).json(offrampData.data);
+
   } catch (error: unknown) {
     console.error('Offramp error:', error);
-    res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'Failed to process offramp' 
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to process offramp'
     });
   }
 }
