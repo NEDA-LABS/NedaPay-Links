@@ -27,6 +27,7 @@ import FeaturesSection from "./components/FeaturesSection";
 import HowItWorksSection from "./components/HowItWorksSection";
 import FaqSection from "./components/FaqSection";
 import HeroFlags from "./components/HeroFlags";
+import Supporters from "./components/SupportersSection";
 
 function HomeContent() {
   const [mounted, setMounted] = useState(false);
@@ -65,7 +66,7 @@ function HomeContent() {
       >
         <div className="flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full w-fit  invisible sm:visible">
               <TrendingUp className="w-4 h-4" />
-              <span className="text-sm font-medium">Trusted by 10,000+ merchants worldwide</span>
+              <span className="text-sm font-medium">Join the Payment Revolution</span>
             </div>
         {/* Hero Section */}
         <div className="grid lg:h-[80vh] grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 p-4 items-center rounded-2xl relative">
@@ -164,15 +165,6 @@ function HomeContent() {
         ></div>
 
         <div className="relative z-10 px-8 py-20 text-center text-white">
-          {/* Enhanced Badge */}
-          <div className="mb-8 flex justify-center">
-            <div className="inline-flex items-center px-6 py-3 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-sm font-semibold shadow-lg hover:bg-white/20 transition-all duration-300">
-              <span className="mr-3 text-lg">🚀</span>
-              <span className="tracking-wide">Instant Setup</span>
-              <div className="ml-3 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-
           {/* Enhanced Heading */}
           <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-100 drop-shadow-sm">
@@ -184,16 +176,6 @@ function HomeContent() {
             </span>
           </h2>
 
-          {/* Enhanced Subtitle */}
-          <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto text-blue-50/90 leading-relaxed font-light">
-            Join{" "}
-            <span className="font-semibold text-white">
-              thousands of merchants
-            </span>{" "}
-            across the world who are already accepting local stablecoins through{" "}
-            <span className="font-semibold text-white">NEDA Pay</span>
-          </p>
-
           {/* Enhanced CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
             {!authenticated ? (
@@ -204,7 +186,7 @@ function HomeContent() {
                       walletSelectorRef.current.triggerLogin();
                     }
                   }}
-                  className="group relative flex items-center justify-center !bg-white hover:!bg-gray-50 !text-gray-900 font-bold text-lg py-4 px-8 rounded-xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
+                  className="group relative flex items-center justify-center !bg-white hover:!bg-gray-50 !text-gray-900 font-bold text-lg py-4 px-8 rounded-3xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
                   {/* Button Background Effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -239,7 +221,7 @@ function HomeContent() {
               <div className="flex flex-col items-center gap-6">
                 <button
                   onClick={() => router.push("/dashboard")}
-                  className="group relative flex items-center justify-center bg-white hover:bg-gray-50 text-gray-900 font-bold text-lg py-4 px-8 rounded-xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
+                  className="group relative flex items-center justify-center bg-white hover:bg-gray-50 text-gray-900 font-bold text-lg py-4 px-8 rounded-3xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
                   {/* Button Background Effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -322,6 +304,7 @@ function HomeContent() {
           </div>
         </div>
       </div>
+      <Supporters />
       <Footer />
     </div>
   );

@@ -1,7 +1,25 @@
 import React from 'react';
-import { Wallet, Link, DollarSign, Repeat2, CheckCircle, ArrowRight, Globe, Smartphone } from 'lucide-react';
+import { Wallet, Link, DollarSign, Repeat2, CheckCircle, ArrowRight, Globe, Smartphone, Shield } from 'lucide-react';
+import { useRef } from 'react';
+import WalletSelector from './WalletSelector';
+import { usePrivy } from '@privy-io/react-auth';
+import { useRouter } from 'next/navigation';
 
 export default function HowItWorksSection() {
+  const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
+    const { authenticated } = usePrivy();
+    const router = useRouter();
+
+  const handleCTAClick = () => {
+    if (!authenticated && walletSelectorRef.current) {
+      walletSelectorRef.current.triggerLogin();
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
+
+
   const steps = [
     {
       number: "01",
@@ -14,6 +32,8 @@ export default function HowItWorksSection() {
       bgColor: "bg-blue-25",
       iconBg: "bg-blue-500",
       tags: ["MetaMask", "Coinbase"],
+      button: "Connect Wallet",
+      buttonGradient: "from-blue-600 to-cyan-600",
       visual: (
         <div className="relative">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-md">
@@ -36,13 +56,15 @@ export default function HowItWorksSection() {
       bgColor: "bg-indigo-25",
       iconBg: "bg-indigo-500",
       tags: ["QR Codes", "Custom Links"],
+      button: "Create Payment Link",
+      buttonGradient: "from-indigo-600 to-purple-600",
       visual: (
         <div className="relative">
           <div className="bg-white rounded-lg p-2 shadow-md border border-indigo-100">
             <div className="text-xs text-indigo-500 font-mono">
               nedapay.com/pay/store
             </div>
-            <div className="mt-2 grid grid-cols-4 gap-1 w-10 h-10">
+            {/* <div className="mt-2 grid grid-cols-4 gap-1 w-10 h-10">
               {[...Array(16)].map((_, i) => (
                 <div
                   key={i}
@@ -51,7 +73,7 @@ export default function HowItWorksSection() {
                   } rounded-sm`}
                 ></div>
               ))}
-            </div>
+            </div> */}
           </div>
         </div>
       )
@@ -67,6 +89,8 @@ export default function HowItWorksSection() {
       bgColor: "bg-green-25",
       iconBg: "bg-green-500",
       tags: ["Instant", "Secure"],
+      button: "Receive Payments",
+      buttonGradient: "from-green-600 to-emerald-600",
       visual: (
         <div className="relative">
           <div className="bg-white rounded-lg p-3 shadow-md border border-green-100">
@@ -99,6 +123,8 @@ export default function HowItWorksSection() {
       bgColor: "bg-purple-25",
       iconBg: "bg-purple-500",
       tags: ["DEX", "Low Fees"],
+      button: "Swap Stablecoins",
+      buttonGradient: "from-purple-600 to-pink-600",
       visual: (
         <div className="relative">
           <div className="flex items-center space-x-2">
@@ -184,7 +210,7 @@ export default function HowItWorksSection() {
                   </div>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mt-auto">
+                  <div className="flex flex-wrap gap-2 mt-auto mx-auto">
                     {step.tags.map((tag, tagIndex) => (
                       <span
                         key={tagIndex}
@@ -194,6 +220,17 @@ export default function HowItWorksSection() {
                         {tag}
                       </span>
                     ))}
+                  </div>
+
+                  {/* Button */}
+                  <div className="flex justify-center mt-4 sm:mt-6 z-10">
+                    <button
+                      onClick={handleCTAClick}
+                      className={`inline-flex text-xs items-center px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl !bg-gradient-to-r ${step.buttonGradient} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer`}
+                    >
+                      <span className="text-xs sm:text-lg">{step.button}</span>
+                      <ArrowRight className="ml-2 sm:ml-3 h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
                   </div>
 
                   {/* Subtle Hover Effect */}
@@ -215,9 +252,39 @@ export default function HowItWorksSection() {
 
         {/* Bottom CTA */}
         <div className="text-center mt-12 sm:mt-16">
-          <div className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
-            <span className="text-base sm:text-lg">Ready to get started?</span>
-            <ArrowRight className="ml-2 sm:ml-3 h-4 w-4 sm:h-5 sm:w-5" />
+          <div className="text-sm inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
+          {!authenticated ? (
+          <div className="text-center">
+            <div className="">
+              <button
+                onClick={() => {
+                  if (walletSelectorRef.current) {
+                    walletSelectorRef.current.triggerLogin();
+                  }
+                }}
+                className="inline-flex items-center px-6 py-3 !rounded-full !bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white !font-semibold !shadow-lg !hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+              >
+            
+                <span>Ready to get Started?</span>
+                
+              </button>
+              <span hidden={true}>
+                <WalletSelector ref={walletSelectorRef} />
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center px-6 py-3 !rounded-full !bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white !font-semibold !shadow-lg !hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+              >
+                <span>Ready to get Started?</span>
+              </button>
+            </div>
+          </div>
+        )}
           </div>
           
           <p className="mt-3 sm:mt-4 text-gray-500 text-sm sm:text-base">

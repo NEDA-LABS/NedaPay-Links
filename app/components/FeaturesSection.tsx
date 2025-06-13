@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 export default function EnhancedFeaturesSection() {
   const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
-  const {authenticated} = usePrivy();
+  const { authenticated } = usePrivy();
   const router = useRouter();
 
   const features = [
@@ -20,7 +20,9 @@ export default function EnhancedFeaturesSection() {
       bgGradient: "from-blue-500/20 to-indigo-600/20",
       iconBg: "bg-blue-100 dark:bg-blue-900/50",
       iconColor: "text-blue-600",
-      glowColor: "bg-blue-400/20"
+      glowColor: "bg-blue-400/20",
+      button: "Start Accepting",
+      buttonGradient: "from-blue-600 to-indigo-600"
     },
     {
       icon: Repeat,
@@ -31,7 +33,9 @@ export default function EnhancedFeaturesSection() {
       bgGradient: "from-indigo-500/20 to-purple-600/20",
       iconBg: "bg-indigo-100",
       iconColor: "text-indigo-600",
-      glowColor: "bg-indigo-400/20"
+      glowColor: "bg-indigo-400/20",
+      button: "Start Swapping",
+      buttonGradient: "from-indigo-600 to-purple-600"
     },
     {
       icon: BarChart2,
@@ -42,7 +46,9 @@ export default function EnhancedFeaturesSection() {
       bgGradient: "from-green-500/20 to-teal-600/20",
       iconBg: "bg-green-100",
       iconColor: "text-green-600",
-      glowColor: "bg-green-400/20"
+      glowColor: "bg-green-400/20",
+      button: "Start Analyzing",
+      buttonGradient: "from-green-600 to-teal-600"
     },
     {
       icon: Settings,
@@ -53,9 +59,19 @@ export default function EnhancedFeaturesSection() {
       bgGradient: "from-purple-500/20 to-pink-600/20",
       iconBg: "bg-purple-100",
       iconColor: "text-purple-600",
-      glowColor: "bg-purple-400/20"
+      glowColor: "bg-purple-400/20",
+      button: "Start Settling",
+      buttonGradient: "from-purple-600 to-pink-600"
     }
   ];
+
+  const handleCTAClick = () => {
+    if (!authenticated && walletSelectorRef.current) {
+      walletSelectorRef.current.triggerLogin();
+    } else {
+      router.push('/dashboard');
+    }
+  };
 
   return (
     <div className="mb-24 scroll-mt-20 p-6 sm:p-8 bg-white/20 rounded-2xl border border-blue-100 shadow-lg relative overflow-hidden">
@@ -86,13 +102,13 @@ export default function EnhancedFeaturesSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <div key={index} className="relative group">
-              <div className="bg-white rounded-2xl p-6 shadow-xl border border-blue-100 h-full hover:shadow-2xl transition-all duration-300 hover:border-blue-300 hover:-translate-y-1">
+              <div className="bg-white rounded-2xl p-6 shadow-xl border border-blue-100 flex flex-col h-full hover:shadow-2xl transition-all duration-300 hover:border-blue-300 hover:-translate-y-1">
                 
                 {/* Glow effect */}
                 <div className={`absolute -inset-0.5 ${feature.glowColor} rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                 
                 {/* Content */}
-                <div className="relative">
+                <div className="relative flex flex-col flex-grow">
                   {/* Icon */}
                   <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-all duration-300`}>
                     <feature.icon className="h-8 w-8 text-white" strokeWidth={2} />
@@ -105,12 +121,12 @@ export default function EnhancedFeaturesSection() {
                   </h3>
 
                   {/* Description */}
-                  <p className="text-gray-600 mb-4 text-sm leading-relaxed">
+                  <p className="text-gray-600 mb-4 text-sm leading-relaxed flex-grow">
                     {feature.description}
                   </p>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-2 mb-4 mx-auto">
                     {feature.tags.map((tag, tagIndex) => (
                       <span
                         key={tagIndex}
@@ -122,11 +138,17 @@ export default function EnhancedFeaturesSection() {
                     ))}
                   </div>
 
-                  {/* Interactive element */}
-                  <div className="flex items-center text-blue-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
-                    <span>Learn more</span>
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </div>
+                  {/* CTA Button */}
+                  {/* <div className="mt-auto">
+                    <button
+                      onClick={handleCTAClick}
+                      className={`inline-flex items-center px-4 py-2 !rounded-full !bg-gradient-to-r ${feature.buttonGradient} !text-white !text-sm !font-medium !shadow-md !hover:shadow-lg transition-all duration-300 hover:scale-105 w-full justify-center`}
+                    >
+                      <Shield className="mr-1 h-4 w-4" />
+                      {feature.button}
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </button>
+                  </div> */}
                 </div>
 
                 {/* Bottom gradient line */}
@@ -139,46 +161,43 @@ export default function EnhancedFeaturesSection() {
         {/* Bottom CTA section */}
         {!authenticated ? (
           <div className="mt-12 text-center">
-          <div className="flex flex-col items-center gap-4">
-                <button
-                  onClick={() => {
-                    if (walletSelectorRef.current) {
-                      walletSelectorRef.current.triggerLogin();
-                    }
-                  }}
-                  className="inline-flex items-center px-6 py-3 rounded-full !bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg hover:!shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"                >
-                 <Shield className="mr-2 h-5 w-5" />
-            <span>Start accepting payments today</span>
-            <ArrowRight className="ml-2 h-5 w-5" />
-                </button>
-                <span hidden={true}>
-                  <WalletSelector ref={walletSelectorRef} />
-                </span>
-                
-              </div>
+            <div className="flex flex-col items-center gap-4">
+              <button
+                onClick={() => {
+                  if (walletSelectorRef.current) {
+                    walletSelectorRef.current.triggerLogin();
+                  }
+                }}
+                className="inline-flex items-center px-6 py-3 !rounded-full !bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white !font-semibold !shadow-lg !hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+              >
+                <Shield className="mr-2 h-5 w-5" />
+                <span>Start accepting payments today</span>
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </button>
+              <span hidden={true}>
+                <WalletSelector ref={walletSelectorRef} />
+              </span>
+            </div>
           
-          <p className="mt-3 text-sm text-gray-500 flex items-center justify-center">
-            <Clock className="mr-1 h-4 w-4" />
-            Setup takes less than 5 minutes
-          </p>
-        </div>
+            <p className="mt-3 text-sm text-gray-500 flex items-center justify-center">
+              <Clock className="mr-1 h-4 w-4" />
+              Setup takes less than 5 minutes
+            </p>
+          </div>
         ) : (
           <div className="mt-12 text-center">
-          <div className="flex flex-col items-center gap-4">
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="inline-flex items-center px-6 py-3 rounded-full !bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg hover:!shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"                >
-                 <Shield className="mr-2 h-5 w-5" />
-            <span>Start accepting payments today</span>
-            <ArrowRight className="ml-2 h-5 w-5" />
-                </button>
-              </div>
-        </div>
+            <div className="flex flex-col items-center gap-4">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center px-6 py-3 !rounded-full !bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white !font-semibold !shadow-lg !hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+              >
+                <Shield className="mr-2 h-5 w-5" />
+                <span>Start accepting payments today</span>
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </button>
+            </div>
+          </div>
         )}
-        
-      </div>
-      <div>
-        
       </div>
     </div>
   );

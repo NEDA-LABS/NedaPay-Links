@@ -605,7 +605,7 @@ export default function MerchantDashboard() {
                   <div className="absolute -top-2 -left-2 w-16 h-16 bg-blue-300/10 rounded-full blur-xl"></div>
                   <div>
                     <h1 className="text-2xl sm:text-2xl lg:text-4xl font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-blue-600">
-                      Merchant Dashboard
+                      Your Dashboard
                     </h1>
                     <p className="text-sm sm:text-base text-slate-700 mt-1">
                       Seamlessly manage stablecoin payments and monitor your
