@@ -70,7 +70,7 @@ export default function HeroFeatures() {
 
             {/* Content */}
             <div className="">
-              <h3 className="!text-l sm:!text-xl font-bold text-slate-800 group-hover:text-slate-900 transition-colors duration-300 mb-1">
+              <h3 className="!text-l sm:!text-l font-bold text-slate-800 group-hover:text-slate-900 transition-colors duration-300 mb-1">
                 {feature.title}
               </h3>
               <p className="text-sm sm:text-xl text-slate-600 group-hover:text-slate-700 transition-colors duration-300 leading-relaxed">

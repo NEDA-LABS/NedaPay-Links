@@ -8,11 +8,9 @@ import { utils } from "ethers";
 import { useAccount } from "wagmi";
 import {
   ClipboardCopy,
-  ExternalLink,
   CheckCircle,
   QrCode,
   Wallet,
-  Banknote
 } from "lucide-react";
 
 const PaymentQRCode = dynamicImport(() => import("./QRCode"), { ssr: false });
@@ -21,43 +19,92 @@ const PayWithWallet = dynamicImport(() => import("./PayWithWallet"), { ssr: fals
 export default function PayPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
   const [copied, setCopied] = useState(false);
+  const [isValidLink, setIsValidLink] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const amount = searchParams.get("amount");
   const currency = searchParams.get("currency");
   const description = searchParams.get("description");
+  const to = searchParams.get("to");
+  const signature = searchParams.get("sig");
   const { address: connectedAddress } = useAccount();
 
-  let to = searchParams.get("to");
-  if (!to || !utils.isAddress(to)) {
-    to = connectedAddress || "";
-  }
-
-  const shortAddress = to ? `${to.slice(0, 6)}...${to.slice(-4)}` : "";
+  const merchantAddress = to && utils.isAddress(to) ? to : connectedAddress || "";
+  const shortAddress = merchantAddress ? `${merchantAddress.slice(0, 6)}...${merchantAddress.slice(-4)}` : "";
 
   useEffect(() => {
-    setCopied(false);
-  }, [to]);
+    const validateLink = async () => {
+      try {
+        const response = await fetch(`/api/payment-links/validate/${params.id}?${searchParams.toString()}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          setIsValidLink(false);
+          setErrorMessage(data.error || "Invalid or expired payment link");
+        } else {
+          setIsValidLink(true);
+        }
+      } catch (error) {
+        setIsValidLink(false);
+        setErrorMessage("Error validating payment link");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    validateLink();
+  }, [params.id, searchParams]);
 
   const handleCopy = () => {
-    if (to) {
-      navigator.clipboard.writeText(to);
+    if (merchantAddress) {
+      navigator.clipboard.writeText(merchantAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
+          <div className="text-center space-y-3">
+            <h1 className="text-2xl font-bold text-gray-900">Validating Payment Link...</h1>
+            <div className="flex justify-center">
+              <svg className="animate-spin w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isValidLink) {
+    return (
+      <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
+          <div className="text-center space-y-3">
+            <h1 className="text-2xl font-bold text-red-600">Invalid Payment Link</h1>
+            <p className="text-sm text-gray-600">{errorMessage}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
-        
-        {/* Header */}
         <div className="text-center space-y-3">
-          {/* <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto">
-            <Banknote size={24} className="text-white" />
-          </div> */}
           <h1 className="text-2xl font-bold text-gray-900">Payment Request</h1>
         </div>
 
-        {/* Amount */}
         <div className="text-center bg-gray-50 p-4 rounded-xl">
           <p className="text-sm text-gray-600 mb-1">Amount</p>
           <p className="text-3xl font-bold text-gray-900">
@@ -65,7 +112,6 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </p>
         </div>
 
-        {/* Description */}
         {description && (
           <div className="text-center bg-gray-50 p-4 rounded-xl">
             <p className="text-sm text-gray-600 mb-1">Description</p>
@@ -75,25 +121,19 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        {/* Wallet Address */}
         <div className="w-80 mx-auto space-y-2">
           <div className="flex items-center justify-between gap-4 bg-gray-100 px-4 py-3 rounded-lg group transition-all duration-200 group-hover:border-blue-500 border">
-            {/* Column 1: Wallet label */}
             <div className="flex-1 flex items-center gap-2">
               <Wallet size={18} className="text-blue-500" />
               <span className="text-sm font-medium text-gray-700">
                 Merchant Wallet
               </span>
             </div>
-
-            {/* Column 2: Short address (centered text) */}
             <div className="flex-1 text-center">
               <span className="font-mono text-sm text-gray-800">
                 {shortAddress}
               </span>
             </div>
-
-            {/* Column 3: Copy button */}
             <div className="flex-1 flex justify-end">
               <button
                 onClick={handleCopy}
@@ -106,30 +146,24 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* QR Code */}
         <div className="bg-gray-50 p-2 rounded-xl">
           <div className="flex items-center justify-center gap-1 mb-4">
             <QrCode size={18} className="text-blue-500" />
             <h2 className="text-sm font-semibold text-gray-700">Scan to Pay</h2>
           </div>
           <div className="flex justify-center">
-            <PaymentQRCode to={to || ""} amount={amount || ""} currency={currency || ""} description={description || ""} />
+            <PaymentQRCode to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} />
           </div>
         </div>
 
-        {/* Pay with Wallet */}
-        <PayWithWallet to={to || ""} amount={amount || ""} currency={currency || ""} description={description || ""} />
+        <PayWithWallet to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} />
 
-        {/* Block Explorer Link */}
-
-        {/* Instructions */}
         <div className="text-center text-sm text-gray-600 bg-amber-50 p-4 rounded-xl">
           <p className="mb-1">
             Send exactly <span className="font-semibold text-blue-600">{amount} {currency}</span> to complete payment.
           </p>
           <p>Transaction confirmation will appear automatically.</p>
         </div>
-        
       </div>
     </div>
   );

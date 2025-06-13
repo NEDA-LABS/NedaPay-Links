@@ -89,23 +89,23 @@ export default function EnhancedFeaturesSection() {
             <span>Powerful Features</span>
           </div>
           
-          <h2 className="text-3xl font-bold mb-4 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold mb-4 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Everything You Need to Accept Crypto Payments
           </h2>
           
-          <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto text-lg">
+          <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto text-xs">
             Streamline your stablecoin payments with intuitive, secure, and lightning-fast features
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <div key={index} className="relative group">
-              <div className="bg-white rounded-2xl p-6 shadow-xl border border-blue-100 flex flex-col h-full hover:shadow-2xl transition-all duration-300 hover:border-blue-300 hover:-translate-y-1">
+              <div className="bg-white rounded-2xl justify-center items-center p-6 shadow-xl border border-blue-100 flex flex-col h-full hover:shadow-2xl transition-all duration-300 hover:border-blue-300 hover:-translate-y-1">
                 
                 {/* Glow effect */}
-                <div className={`absolute -inset-0.5 ${feature.glowColor} rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                <div className={`absolute -inset-0.5 ${feature.glowColor} rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 `}></div>
                 
                 {/* Content */}
                 <div className="relative flex flex-col flex-grow">
@@ -116,17 +116,17 @@ export default function EnhancedFeaturesSection() {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+                  <h3 className="text-sm font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
                     {feature.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-gray-600 mb-4 text-sm leading-relaxed flex-grow">
+                  <p className="text-gray-600 mb-4 text-xs leading-relaxed flex-grow">
                     {feature.description}
                   </p>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4 mx-auto">
+                  <div className="flex flex-wrap gap-2 mb-4">
                     {feature.tags.map((tag, tagIndex) => (
                       <span
                         key={tagIndex}
@@ -171,7 +171,7 @@ export default function EnhancedFeaturesSection() {
                 className="inline-flex items-center px-6 py-3 !rounded-full !bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white !font-semibold !shadow-lg !hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
               >
                 <Shield className="mr-2 h-5 w-5" />
-                <span>Start accepting payments today</span>
+                <span className="text-xs">Start accepting payments today</span>
                 <ArrowRight className="ml-2 h-5 w-5" />
               </button>
               <span hidden={true}>
@@ -179,9 +179,9 @@ export default function EnhancedFeaturesSection() {
               </span>
             </div>
           
-            <p className="mt-3 text-sm text-gray-500 flex items-center justify-center">
+            <p className="mt-3 text-xs text-gray-500 flex items-center justify-center">
               <Clock className="mr-1 h-4 w-4" />
-              Setup takes less than 5 minutes
+              Setup takes 60 sec
             </p>
           </div>
         ) : (

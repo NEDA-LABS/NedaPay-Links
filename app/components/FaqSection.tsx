@@ -16,31 +16,32 @@ export default function ProfessionalFaqSection() {
       icon: HelpCircle,
       iconColor: "from-blue-500 to-blue-600",
       question: "What is NEDA Pay?",
-      answer: "NEDA Pay is a platform that enables merchants to accept and manage local stablecoin payments easily and securely on the Base blockchain."
+      answer: " NEDA Pay is a seamless platform for merchants and creators to get paid in local stablecoins. Whether you're online or on the ground, you can easily generate payment links & invoices, manage, swap, and withdraw your earnings & funds straight to your bank or mobile as well as keep track of performance and growth."
+
     },
     {
       icon: CreditCard,
       iconColor: "from-emerald-500 to-emerald-600",
       question: "How do I receive stablecoin payments?",
-      answer: "Simply connect your Base wallet, generate payment links or QR codes, and share them with your customers. Payments are settled instantly to your wallet in local stablecoins."
+      answer: "Just sign up with your email with social login or simply connect your wallet, create a payment link or QR code or generate an invoice and share it with your customers. Payments arrive instantly, and you have the option to either swap to your preferred currency or withdraw to your bank account instantly, no delays, no hassle."
     },
     {
       icon: Shield,
       iconColor: "from-violet-500 to-violet-600",
       question: "Is NEDA Pay secure?",
-      answer: "Yes! NEDA Pay uses secure wallet connections and never stores your private keys. All transactions happen directly on the blockchain for full transparency and safety."
+      answer: " Absolutely. Your private keys stay with you. NEDA Pay uses secure wallet connections and processes all transactions transparently on-chain, so you stay in control at all times. You have a dashboard that displays all transactions in real time."
     },
     {
       icon: Globe,
       iconColor: "from-cyan-500 to-cyan-600",
       question: "Can I use NEDA Pay internationally?",
-      answer: "Yes, NEDA Pay enables merchants to accept stablecoin payments from customers around the world, as long as they use supported wallets and stablecoins on the Base blockchain."
+      answer: " Yes, you can accept payments from anyone, anywhere instantly with ease. NEDA Pay has you covered."
     },
     {
       icon: DollarSign,
       iconColor: "from-amber-500 to-amber-600",
       question: "What fees does NEDA Pay charge?",
-      answer: "NEDA Pay charges low transaction fees for each payment processed. You can view the detailed fee structure in your merchant dashboard or on our website."
+      answer: " We keep it simple and affordable with low transaction fees on every payment. Full details are available in your merchant dashboard or on our website."
     }
   ];
 
@@ -53,11 +54,11 @@ export default function ProfessionalFaqSection() {
             <HelpCircle className="w-4 h-4" />
             Support Center
           </div>
-          <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-6 leading-tight">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 leading-tight">
             Frequently Asked
             <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent"> Questions</span>
           </h2>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Find answers to common questions about NEDA Pay and how it works for your business
           </p>
         </div>
@@ -76,13 +77,13 @@ export default function ProfessionalFaqSection() {
                 {/* Question Button */}
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full p-6 flex items-center justify-between bg-white hover:bg-slate-50/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-left"
+                  className="w-full p-2 flex items-center justify-between bg-white hover:bg-slate-50/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-left"
                 >
                   <div className="flex items-center flex-1 min-w-0">
                     <div className={`w-12 h-12 bg-gradient-to-br ${faq.iconColor} rounded-xl flex items-center justify-center mr-4 shadow-sm group-hover:shadow-md transition-all duration-300 flex-shrink-0`}>
                       <Icon className="w-6 h-6 text-white" strokeWidth={2} />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900 group-hover:text-slate-800 transition-colors duration-300 pr-4">
+                    <h3 className="text-sm font-semibold text-slate-900 group-hover:text-slate-800 transition-colors duration-300 pr-4">
                       {faq.question}
                     </h3>
                   </div>
@@ -107,7 +108,7 @@ export default function ProfessionalFaqSection() {
                 >
                   <div className="px-6 pb-6 bg-slate-50/30 border-t border-slate-100">
                     <div className="pt-4">
-                      <p className="text-slate-700 leading-relaxed text-[15px]">
+                      <p className="text-slate-700 leading-relaxed text-sm">
                         {faq.answer}
                       </p>
                     </div>
@@ -129,21 +130,21 @@ export default function ProfessionalFaqSection() {
           </div>
           
           <div className="relative z-10">
-            <h3 className="text-2xl font-bold text-white mb-3">
+            <h3 className="text-xl font-bold text-white mb-3">
               Still have questions?
             </h3>
-            <p className="text-slate-300 mb-8 text-lg">
+            <p className="text-slate-300 mb-8 text-sm">
               Our support team is here to help you get started with NEDA Pay
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
-              <button className="w-full sm:w-auto group relative px-8 py-4 bg-white text-slate-900 font-semibold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
+              <button className="w-full text-sm sm:w-auto group relative px-8 py-4 bg-white text-slate-900 font-semibold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
                 <MessageCircle className="w-5 h-5" />
                 Contact Support
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600/10 to-violet-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
               
-              <button className="w-full sm:w-auto px-8 py-4 bg-transparent text-white font-semibold rounded-2xl border-2 border-slate-600 hover:border-slate-500 hover:bg-slate-800/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
+              <button className="w-full text-sm sm:w-auto px-8 py-4 bg-transparent text-white font-semibold rounded-2xl border-2 border-slate-600 hover:border-slate-500 hover:bg-slate-800/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
                 <FileText className="w-5 h-5" />
                 Documentation
               </button>

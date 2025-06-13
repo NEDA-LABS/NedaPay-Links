@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
-import { useAccount } from "wagmi";
 import { usePrivy } from "@privy-io/react-auth";
 import { stablecoins } from "../data/stablecoins";
 import Footer from "../components/Footer";
 import { useTheme } from "next-themes";
 import { FaWhatsapp, FaTelegramPlane, FaEnvelope } from "react-icons/fa";
-import { siX, siFarcaster } from 'simple-icons'
+import { siX, siFarcaster } from 'simple-icons';
 
 const XIcon = ({ size = 24, color = siX.hex }) => (
   <svg
@@ -20,7 +19,7 @@ const XIcon = ({ size = 24, color = siX.hex }) => (
   >
     <path d={siX.path} />
   </svg>
-)
+);
 
 const FarcasterIcon = ({ size = 24, color = siFarcaster.hex }) => (
   <svg
@@ -32,7 +31,7 @@ const FarcasterIcon = ({ size = 24, color = siFarcaster.hex }) => (
   >
     <path d={siFarcaster.path} />
   </svg>
-)
+);
 
 interface PaymentLink {
   id: string;
@@ -42,15 +41,15 @@ interface PaymentLink {
   status: string;
   url: string;
   description?: string;
+  expiresAt: string;
+  linkId: string;
 }
 
 export default function PaymentLinkPage() {
   const { authenticated, user } = usePrivy();
-  
   const walletAddress = user?.wallet?.address;
   const isConnected = authenticated && !!walletAddress;
 
-  // Robust merchant address getter: wagmi first, then localStorage fallback
   const getMerchantAddress = () => {
     if (walletAddress && walletAddress.length > 10) return walletAddress;
     if (typeof window !== "undefined") {
@@ -73,15 +72,26 @@ export default function PaymentLinkPage() {
   const [showTelegramInput, setShowTelegramInput] = useState(false);
   const [whatsAppReceiver, setWhatsAppReceiver] = useState("");
   const [telegramReceiver, setTelegramReceiver] = useState("");
-
   const { theme } = useTheme();
 
-  // Handle initial page load and cookie setting
+  // Input sanitization
+  const sanitizeInput = (input: string): string => {
+    return input.replace(/[<>{}]/g, '').substring(0, 1000);
+  };
+
+  // Input validation
+  const validateInput = (amount: string, description: string): boolean => {
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return false;
+    if (description.length > 1000) return false;
+    if (!/^[a-zA-Z0-9\s.,!?-]*$/.test(description)) return false;
+    return true;
+  };
+
   useEffect(() => {
     setIsClient(true);
     console.log("Payment Link Page - Loading, isConnected:", isConnected);
 
-    // Fetch recent links for the current merchant address
     const fetchLinks = async () => {
       const merchantAddress = getMerchantAddress();
       if (merchantAddress) {
@@ -103,6 +113,11 @@ export default function PaymentLinkPage() {
                 status: link.status,
                 url: link.url,
                 description: link.description,
+                expiresAt: new Date(link.expiresAt).toLocaleDateString(
+                  undefined,
+                  { year: "numeric", month: "short", day: "numeric" }
+                ),
+                linkId: link.linkId,
               }))
             );
           } else {
@@ -117,8 +132,6 @@ export default function PaymentLinkPage() {
 
     fetchLinks();
     setPageLoaded(true);
-
-    // Force set the wallet_connected cookie
     document.cookie = "wallet_connected=true; path=/; max-age=86400";
 
     const handleBeforeUnload = () => {
@@ -126,13 +139,9 @@ export default function PaymentLinkPage() {
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isConnected, walletAddress]);
 
-  // Effect to monitor connection state
   useEffect(() => {
     if (pageLoaded) {
       console.log(
@@ -150,12 +159,13 @@ export default function PaymentLinkPage() {
     console.log("Generating payment link via API...");
     setIsLoading(true);
 
-    // Validate input
-    if (!amount || parseFloat(amount) <= 0) {
-      alert("Please enter a valid amount");
+    // Input validation
+    if (!validateInput(amount, description)) {
+      alert("Invalid input. Please check amount and description.");
       setIsLoading(false);
       return;
     }
+
     const merchantAddress = getMerchantAddress();
     if (!merchantAddress) {
       alert("Wallet address not found. Please connect your wallet.");
@@ -163,12 +173,20 @@ export default function PaymentLinkPage() {
       return;
     }
 
-    // Generate a mock link ID
-    const linkId = Math.random().toString(36).substring(2, 10);
-    const baseUrl = window.location.origin;
-    const link = `${baseUrl}/pay/${linkId}?amount=${amount}&currency=${currency}&to=${merchantAddress}&description=${encodeURIComponent(description || '')}`;
+    // Generate secure random link ID
+    const array = new Uint8Array(16);
+    window.crypto.getRandomValues(array);
+    const linkId = Array.from(array)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    // Sanitize inputs
+    const sanitizedAmount = sanitizeInput(amount);
+    const sanitizedDescription = sanitizeInput(description);
 
     try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      
       const response = await fetch("/api/payment-links", {
         method: "POST",
         headers: {
@@ -176,17 +194,18 @@ export default function PaymentLinkPage() {
         },
         body: JSON.stringify({
           merchantId: merchantAddress,
-          url: link,
-          amount,
+          amount: parseFloat(sanitizedAmount),
           currency,
-          description: description || undefined,
+          description: sanitizedDescription || undefined,
           status: "Active",
+          expiresAt,
+          linkId,
         }),
       });
 
       if (response.ok) {
         const newLink = await response.json();
-        setGeneratedLink(link);
+        setGeneratedLink(newLink.url);
         setRecentLinks((prev) => [
           {
             id: newLink.id,
@@ -199,6 +218,11 @@ export default function PaymentLinkPage() {
             status: newLink.status,
             url: newLink.url,
             description: newLink.description,
+            expiresAt: new Date(newLink.expiresAt).toLocaleDateString(
+              undefined,
+              { year: "numeric", month: "short", day: "numeric" }
+            ),
+            linkId: newLink.linkId,
           },
           ...prev,
         ]);
@@ -212,7 +236,6 @@ export default function PaymentLinkPage() {
     }
 
     setIsLoading(false);
-    // Ensure cookie persists
     document.cookie = "wallet_connected=true; path=/; max-age=86400";
   };
 
@@ -280,7 +303,6 @@ export default function PaymentLinkPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
       <Header />
       
-      {/* Back Button */}
       <div className="container mx-auto max-w-6xl px-4 pt-6">
         <button
           onClick={() => window.history.back()}
@@ -292,7 +314,6 @@ export default function PaymentLinkPage() {
       </div>
 
       <div className="container mx-auto max-w-6xl px-4 py-8">
-        {/* Updated Hero Section */}
         <div className="text-center mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-200/30 to-purple-200/30 blur-3xl rounded-4xl"></div>
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium animate-pulse">
@@ -311,7 +332,6 @@ export default function PaymentLinkPage() {
           </p>
         </div>
 
-        {/* Wallet Status Card */}
         {isClient && (
           <div className={`text-sm mb-8 p-3 rounded-2xl border-2 transition-all duration-300 ${
             getMerchantAddress()
@@ -344,10 +364,8 @@ export default function PaymentLinkPage() {
           </div>
         )}
 
-        {/* Main Form Card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-2xl border border-white/20 mb-12">
           <div className="space-y-4">
-            {/* Amount Input */}
             <div className="group">
               <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 mb-3">
                 Payment Amount
@@ -371,7 +389,6 @@ export default function PaymentLinkPage() {
               </div>
             </div>
 
-            {/* Currency Selection */}
             <div className="group">
               <label htmlFor="currency" className="block text-sm font-semibold text-gray-700 mb-3">
                 Currency
@@ -398,7 +415,6 @@ export default function PaymentLinkPage() {
               </div>
             </div>
 
-            {/* Description Input */}
             <div className="group">
               <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-3">
                 Description (Optional)
@@ -414,7 +430,6 @@ export default function PaymentLinkPage() {
               />
             </div>
 
-            {/* Generate Button */}
             <form onSubmit={handleCreateLink}>
               <button
                 type="submit"
@@ -441,7 +456,6 @@ export default function PaymentLinkPage() {
             </form>
           </div>
 
-          {/* Updated Generated Link Display with Preview and Sharing Options */}
           {generatedLink && (
             <div className="mt-10 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 animate-fade-in">
               <div className="flex items-center justify-center gap-3 mb-4">
@@ -483,7 +497,6 @@ export default function PaymentLinkPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-3">
-                {/* WhatsApp Sharing Options */}
                 <div className="flex items-center justify-center gap-3">
                   <button
                     onClick={() => shareViaWhatsApp(true)}
@@ -509,7 +522,6 @@ export default function PaymentLinkPage() {
                     />
                   </div>
                 )}
-                {/* Telegram Sharing Options */}
                 <div className="flex items-center justify-center gap-3 mt-3">
                   <button
                     onClick={() => shareViaTelegram(true)}
@@ -535,23 +547,22 @@ export default function PaymentLinkPage() {
                     />
                   </div>
                 )}
-                {/* Other Sharing Options */}
                 <div className="flex items-center justify-center gap-3 mt-3">
                   <button
                     onClick={shareViaEmail}
-                    className="px-4 py-2 !bg-slate-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-gray-600 transition-all duration-300 flex items-center gap-2"
+                    className="px-4 py-2 text-xs !text-white !rounded-xl !font-medium hover:!bg-gray-600 transition-all duration-300 flex items-center gap-2"
                   >
                     <FaEnvelope color="black" size={20}/>
                   </button>
                   <button
                     onClick={shareViaX}
-                    className="px-4 py-2 !bg-slate-500 text-xs !text-white !rounded-xl !font-medium hover:!bg-slate-600 transition-all duration-300 flex items-center gap-2"
+                    className="px-4 py-2 text-xs !text-white !rounded-xl !font-medium hover:!bg-slate-600 transition-all duration-300 flex items-center gap-2"
                   >
                     <XIcon />
                   </button>
                   <button
                     onClick={shareViaFarcaster}
-                    className="px-4 py-2 !bg-purple-400 text-xs !text-white !rounded-xl !font-medium hover:!bg-purple-300 transition-all duration-300 flex items-center gap-2"
+                    className="px-4 py-2  text-xs !text-white !rounded-xl !font-medium hover:!bg-purple-300 transition-all duration-300 flex items-center gap-2"
                   >
                     <FarcasterIcon />
                   </button>
@@ -564,7 +575,6 @@ export default function PaymentLinkPage() {
           )}
         </div>
 
-        {/* Recent Links Section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-3 bg-indigo-100 rounded-xl">
@@ -593,6 +603,9 @@ export default function PaymentLinkPage() {
                       Status
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Expires At
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -600,7 +613,7 @@ export default function PaymentLinkPage() {
                 <tbody className="bg-white">
                   {recentLinks.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center">
+                      <td colSpan={6} className="px-6 py-12 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <div className="p-4 bg-gray-100 rounded-2xl">
                             <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -635,6 +648,9 @@ export default function PaymentLinkPage() {
                           <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
                             {link.status}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-900">
+                          {link.expiresAt}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-xs">
                           <a
@@ -686,7 +702,7 @@ export default function PaymentLinkPage() {
             opacity: 1;
           }
           50% {
-            opacity: 0.７;
+            opacity: 0.7;
           }
         }
       `}</style>

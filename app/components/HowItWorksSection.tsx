@@ -160,11 +160,11 @@ export default function HowItWorksSection() {
             <span>Simple Process</span>
           </div>
           
-          <h2 className="text-3xl text-blue-700 sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">
+          <h2 className="text-2xl text-blue-700 sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">
             How It Works
           </h2>
           
-          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
+          <p className="text-xs sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
             Get started with NEDA Pay in just four simple steps. No complex setup, no lengthy onboarding.
           </p>
         </div>
@@ -193,24 +193,24 @@ export default function HowItWorksSection() {
 
                   {/* Content - Flex grow to fill available space */}
                   <div className="flex-grow mb-4 sm:mb-6">
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3 hover:text-blue-600 transition-colors">
+                    <h3 className="text-sm font-bold text-gray-800 mb-2 sm:mb-3 hover:text-blue-600 transition-colors">
                       {step.title}
                     </h3>
-                    <p className="text-gray-600 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base">
+                    <p className="text-gray-600 mb-3 sm:mb-4 leading-relaxed text-xs">
                       {step.description}
                     </p>
-                    <p className="text-xs sm:text-sm text-gray-500 italic">
+                    <p className="text-xs text-gray-500 italic">
                       {step.details}
                     </p>
                   </div>
 
                   {/* Visual Element */}
-                  <div className="flex justify-center mb-4 sm:mb-6">
+                  {/* <div className="flex justify-center mb-4 sm:mb-6">
                     {step.visual}
-                  </div>
+                  </div> */}
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mt-auto mx-auto">
+                  <div className="flex flex-wrap gap-2 mt-auto">
                     {step.tags.map((tag, tagIndex) => (
                       <span
                         key={tagIndex}
@@ -223,7 +223,7 @@ export default function HowItWorksSection() {
                   </div>
 
                   {/* Button */}
-                  <div className="flex justify-center mt-4 sm:mt-6 z-10">
+                  <div className="flex mt-4 sm:mt-6 z-10">
                     <button
                       onClick={handleCTAClick}
                       className={`inline-flex text-xs items-center px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl !bg-gradient-to-r ${step.buttonGradient} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer`}
@@ -265,7 +265,7 @@ export default function HowItWorksSection() {
                 className="inline-flex items-center px-6 py-3 !rounded-full !bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white !font-semibold !shadow-lg !hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
               >
             
-                <span>Ready to get Started?</span>
+                <span className="text-xs">Ready to get Started?</span>
                 
               </button>
               <span hidden={true}>

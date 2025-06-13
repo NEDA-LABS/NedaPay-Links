@@ -48,26 +48,25 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
   // Fetch exchange rates from a free API
   const fetchExchangeRates = async () => {
     try {
-      const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
+      const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
       const data = await response.json();
-      setExchangeRates(data.rates);
+      
+      // Filter rates to only include currencies in our currencies array
+      const filteredRates: ExchangeRates = {};
+      currencies.forEach(currency => {
+        if (data.rates[currency.code]) {
+          filteredRates[currency.code] = data.rates[currency.code];
+        }
+      });
+      
+      // Ensure USD is always included with rate of 1
+      filteredRates['USD'] = 1;
+      
+      setExchangeRates(filteredRates);
     } catch (error) {
       console.error('Failed to fetch exchange rates:', error);
-      // Fallback rates if API fails
-      setExchangeRates({
-        USD: 1,
-        EUR: 0.85,
-        GBP: 0.73,
-        TZS: 2300,
-        NGN: 470,
-        ZAR: 18.5,
-        IDR: 15000,
-        CAD: 1.35,
-        BRL: 5.2,
-        TRY: 27,
-        NZD: 1.65,
-        MXN: 18
-      });
+      // No fallback - let it fail gracefully
+      setExchangeRates({ USD: 1 });
     }
   };
 
@@ -202,12 +201,12 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-6xl mx-auto">
-        
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl mb-6 p-6">
-          <div className="flex flex-col md:flex-row md:justify-between">
-            <div className='flex justify-between w-full'>
-              <div>
+        <div className="h-[calc(100vh-4rem)] overflow-auto">
+          {/* Header */}
+          <div className="bg-white rounded-2xl shadow-xl mb-6 p-6">
+            <div className="flex flex-col md:flex-row md:justify-between">
+              <div className='flex justify-between w-full'>
+                <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Stablecoin Portfolio</h1>
                 <p className="text-gray-600">Track your stablecoin balances across different currencies</p>
               </div>
@@ -438,6 +437,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
         )}
       </div>
     </div>
+  </div>
   );
 };
 

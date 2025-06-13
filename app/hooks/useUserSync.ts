@@ -40,8 +40,8 @@ export function useUserSync() {
         
         // console.log('User synced successfully:', result.user); 
       } catch (error) {
-        console.log('privy user:', user);
-        console.error('Error syncing user:', error);
+        // console.log('privy user:', user);
+        // console.error('Error syncing user:', error);
         toast.error('Failed to sync user data');
 
       } finally {
@@ -80,7 +80,7 @@ export function useUserSync() {
       toast.success('Email added successfully!');
       return result.user;
     } catch (error) {
-      console.error('Error adding email:', error);
+      // console.error('Error adding email:', error);
       toast.error('Failed to add email');
       throw error;
     } finally {
@@ -88,7 +88,7 @@ export function useUserSync() {
     }
   };
 
-  console.log("user email", userData?.email);
+  // console.log("user email", userData?.email);
 
   return {
     userData,

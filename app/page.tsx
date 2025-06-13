@@ -75,8 +75,8 @@ function HomeContent() {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 bg-indigo-300/20 rounded-full blur-3xl"></div>
 
           <div className="flex flex-col gap-6">
-          <h1 className="!text-2xl  lg:!text-7xl font-bold tracking-tight bg-gradient-to-r from-blue-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse-slow leading-tight">
-        Revolutionize Your Business Payments
+          <h1 className="!text-2xl  lg:!text-5xl xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-blue-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse-slow leading-tight">
+          Unlock Seamless Payments Worldwide
       </h1>
             <p className="!text-l lg:!text-l  font-semibold text-slate-500 leading-relaxed drop-shadow-md">
               Accept Stablecoins, Swap instantly, Cash Out Easily
@@ -166,7 +166,7 @@ function HomeContent() {
 
         <div className="relative z-10 px-8 py-20 text-center text-white">
           {/* Enhanced Heading */}
-          <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
+          <h2 className="text-2xl font-bold mb-8 leading-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-100 drop-shadow-sm">
               Ready to accept
             </span>
@@ -186,7 +186,7 @@ function HomeContent() {
                       walletSelectorRef.current.triggerLogin();
                     }
                   }}
-                  className="group relative flex items-center justify-center !bg-white hover:!bg-gray-50 !text-gray-900 font-bold text-lg py-4 px-8 rounded-3xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
+                  className="group relative flex items-center justify-center !bg-white hover:!bg-gray-50 !text-gray-900 font-bold text-sm py-4 px-8 rounded-3xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
                   {/* Button Background Effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -263,7 +263,7 @@ function HomeContent() {
                   />
                 </svg>
               </div>
-              <span className="font-medium">No setup fees</span>
+              <span className="font-medium text-sm">No setup fees</span>
             </div>
 
             <div className="flex items-center text-blue-50 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20 hover:bg-white/15 transition-all duration-300">
@@ -281,7 +281,7 @@ function HomeContent() {
                   />
                 </svg>
               </div>
-              <span className="font-medium">Instant settlements</span>
+              <span className="font-medium text-sm">Instant settlements</span>
             </div>
 
             <div className="flex items-center text-blue-50 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20 hover:bg-white/15 transition-all duration-300">
@@ -299,7 +299,7 @@ function HomeContent() {
                   />
                 </svg>
               </div>
-              <span className="font-medium">Global stablecoins</span>
+              <span className="font-medium text-sm">Global stablecoins</span>
             </div>
           </div>
         </div>
