@@ -1418,7 +1418,7 @@ export default function MerchantDashboard() {
                 <div className="p-4 sm:p-5 border-t border-slate-200 bg-gradient-to-r from-indigo-50/50 to-blue-50/50 relative">
                   <div className="flex justify-center">
                     <a
-                      href="/transactions"
+                      href="/all-transactions"
                       className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white !bg-blue-500 rounded-md hover:!bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
                     >
                       <svg

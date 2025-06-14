@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -12,18 +12,18 @@ import {
   ChartData,
   LegendItem,
   Color,
-  Chart as ChartType,
 } from 'chart.js';
 import { stablecoins } from '../data/stablecoins';
+import { useTheme } from 'next-themes';
 
 // Register Chart.js components
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
-// Define types
+// Define the shape of the transaction
 interface Transaction {
   id: string;
   shortId: string;
-  date: string; // e.g., "YYYY-MM-DD HH:MM:SS"
+  date: string; // Expected format: "YYYY-MM-DD HH:MM:SS" or similar
   amount: string;
   currency: string;
   status: string;
@@ -32,36 +32,31 @@ interface Transaction {
   blockExplorerUrl: string;
 }
 
-interface Stablecoin {
-  baseToken: string;
-  flag: string;
-}
-
+// Define props for the component
 interface ChartComponentProps {
   transactions: Transaction[];
 }
 
-// Tailwind-aligned color map (unique colors)
+// Define color mapping based on the image attachment
 const colorMap: { [key: string]: string } = {
-  TSHC: '#2563eb', // blue-600
-  cNGN: '#16a34a', // green-600
-  NGNC: '#f59e0b', // amber-500
-  ZARP: '#7c3aed', // purple-600
-  IDRX: '#dc2626', // red-600
-  EURC: '#3b82f6', // blue-500
-  CADC: '#22c55e', // green-500
-  BRL: '#d97706', // amber-600
-  TRYB: '#9333ea', // purple-500
-  NZDD: '#ef4444', // red-500
-  MXNe: '#1d4ed8', // blue-700
-  USDC: '#15803d', // green-700
+  TSHC: '#00A1D6', // Blue
+  cNGN: '#00A65A', // Green
+  NGNC: '#F5A623', // Orange
+  ZARP: '#A100A1', // Purple
+  IDRX: '#D6323A', // Red
+  EURC: '#00A1D6', // Blue
+  CADC: '#00A65A', // Green
+  BRL: '#F5A623', // Orange
+  TRYB: '#A100A1', // Purple
+  NZDD: '#D6323A', // Red
+  MXNe: '#00A1D6', // Blue
+  USDC: '#00A65A', // Green
 };
 
-// Format date to YY-MM-DD HH:MM
+// Function to format date as YY-MM-DD HH:MM
 const formatDate = (dateStr: string): string => {
   try {
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) throw new Error('Invalid date');
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
@@ -69,42 +64,38 @@ const formatDate = (dateStr: string): string => {
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}`;
   } catch (e) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn(`Invalid date format: ${dateStr}`);
-    }
-    return dateStr.slice(0, 16) || 'Invalid';
+    console.warn(`Invalid date format: ${dateStr}`);
+    return dateStr;
   }
 };
 
-// Get chart data with gradient fills
+// Function to get chart data with validation
 const getMultiStablecoinHourlyRevenueData = (
-  transactions: Transaction[],
-  chartInstance: ChartType<'line', number[], string> | null
+  transactions: Transaction[]
 ): ChartData<'line', number[], string> => {
-  if (!transactions?.length || !Array.isArray(transactions)) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Invalid or empty transactions data');
-    }
+  if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+    console.warn('Invalid or empty transactions data');
     return { labels: [], datasets: [] };
   }
 
-  // Unique date-hour-minute labels
+  // Get unique date-hour-minute combinations
   const dateTimeSet = new Set<string>();
   transactions.forEach((tx) => {
-    if (tx.date && typeof tx.date === 'string' && tx.date.length >= 16) {
+    if (tx.date && typeof tx.date === 'string') {
+      // Slice to YYYY-MM-DD HH:MM (first 16 characters, assuming format like "YYYY-MM-DD HH:MM:SS")
       const dateTime = tx.date.slice(0, 16);
       dateTimeSet.add(dateTime);
     }
   });
   const labels = Array.from(dateTimeSet).sort();
 
-  // Unique stablecoin symbols
+  // Get unique stablecoin symbols
   const stablecoinSymbols = Array.from(new Set(transactions.map((tx) => tx.currency)));
 
-  // Generate datasets
+  // Generate datasets for each stablecoin
   const datasets = stablecoinSymbols.map((symbol) => {
-    const coin = stablecoins.find((c: Stablecoin) => c.baseToken === symbol);
-    const flag = coin?.flag || '🏳️';
+    const coin = stablecoins.find((c) => c.baseToken === symbol);
+    const flag = coin?.flag || '🌐';
     const data = labels.map((dateTime) => {
       const timeSum = transactions
         .filter((tx) => {
@@ -118,61 +109,50 @@ const getMultiStablecoinHourlyRevenueData = (
       return timeSum;
     });
 
-    // Create gradient fill
-    let gradientFill: string | CanvasGradient = colorMap[symbol] + '80';
-    if (chartInstance?.canvas) {
-      const ctx = chartInstance.canvas.getContext('2d');
-      if (ctx) {
-        const gradient = ctx.createLinearGradient(0, 0, 0, chartInstance.canvas.height);
-        gradient.addColorStop(0, colorMap[symbol] + '33'); // 20% opacity
-        gradient.addColorStop(1, colorMap[symbol] + '00'); // 0% opacity
-        gradientFill = gradient;
-      }
-    }
-
     return {
       label: `${flag} ${symbol}`,
       data,
-      fill: true,
-      tension: 0.3,
-      borderColor: colorMap[symbol],
-      backgroundColor: gradientFill,
-      pointBackgroundColor: colorMap[symbol],
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 2,
-      pointRadius: 4,
-      pointHoverRadius: 6,
+      fill: false,
+      tension: 0.2,
+      borderColor: colorMap[symbol] as Color,
+      backgroundColor: `${colorMap[symbol]}80` as Color, // 50% opacity
     };
   });
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('Chart Data:', { labels, datasets });
-    datasets.forEach((dataset) => {
-      if (dataset.data.length !== labels.length) {
-        console.error(`Dataset length mismatch for ${dataset.label}:`, {
-          dataLength: dataset.data.length,
-          labelsLength: labels.length,
-        });
-      }
-      dataset.data.forEach((value, i) => {
-        if (isNaN(value) || value < 0) {
-          console.warn(`Invalid data point at index ${i} for ${dataset.label}: ${value}`);
-        }
+  console.log('Chart Data:', { labels, datasets });
+
+  datasets.forEach((dataset) => {
+    if (dataset.data.length !== labels.length) {
+      console.error(`Dataset length mismatch for ${dataset.label}:`, {
+        dataLength: dataset.data.length,
+        labelsLength: labels.length,
       });
+    }
+    dataset.data.forEach((value, i) => {
+      if (isNaN(value) || value < 0) {
+        console.warn(`Invalid data point at index ${i} for ${dataset.label}: ${value}`);
+      }
     });
-  }
+  });
 
   return { labels, datasets };
 };
 
 const ChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
-  const chartRef = useRef<ChartType<'line', number[], string> | null>(null);
+  const { theme } = useTheme();
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(theme === 'dark');
+
+  useEffect(() => {
+    setIsDarkMode(theme === 'dark');
+  }, [theme]);
 
   const maxAmount = transactions
     .map((tx) => parseFloat(tx.amount.replace(/,/g, '')) || 0)
     .filter((num) => !isNaN(num))
     .reduce((max, num) => Math.max(max, num), 0);
   const suggestedMax = maxAmount > 0 ? maxAmount * 1.2 : 100;
+
+  const textColor = isDarkMode ? '#ffffff' : '#222222';
 
   const options: ChartOptions<'line'> = {
     responsive: true,
@@ -181,68 +161,66 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
       y: {
         beginAtZero: true,
         suggestedMax,
-        grid: { color: 'rgba(203, 213, 225, 0.2)' }, // slate-300/20
-        ticks: { color: '#475569', font: { size: 12 } }, // text-slate-600
+        grid: { color: isDarkMode ? 'rgba(159, 161, 160, 0.28)' : 'rgba(100, 102, 101, 0.17)' },
+        ticks: { color: isDarkMode ? '#fffff0' : '#4b5563' },
       },
       x: {
         grid: { display: false },
         ticks: {
-          color: '#475569', // text-slate-600
-          font: { size: 10 },
+          color: isDarkMode ? '#fffff0' : '#4b5563',
           callback: function (value) {
             const label = this.getLabelForValue(value as number);
             return formatDate(label);
           },
-          maxRotation: 45,
-          minRotation: 45,
         },
       },
     },
     plugins: {
       legend: {
-        position: 'top',
         labels: {
-          color: '#1e293b', // text-slate-800
-          font: { size: 10, weight: 600 },
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
+          color: textColor,
+          usePointStyle: false,
+          boxWidth: 20,
+          boxHeight: 9,
           padding: 10,
           generateLabels: (chart): LegendItem[] => {
             const { datasets } = chart.data;
-            if (!datasets?.length) return [];
+            if (!datasets || !datasets.length) return [];
             return datasets.map((ds, i) => {
               const labelString = ds.label || '';
               const match = labelString.match(/^(\S+)\s+(.+)$/);
-              const flag = match ? match[1] : '';
-              const code = match ? match[2] : labelString;
+              let flag = '', code = '';
+              if (match) {
+                flag = match[1];
+                code = match[2];
+              } else {
+                code = labelString;
+              }
               return {
                 text: `${flag} ${code}`.trim(),
-                fillStyle: ds.borderColor as Color, // Use borderColor for solid color
+                fillStyle: ds.borderColor as Color,
                 strokeStyle: ds.borderColor as Color,
                 hidden: !chart.isDatasetVisible(i),
                 index: i,
-                lineWidth: 1,
-                pointStyle: 'circle',
+                lineWidth: 2,
               };
             });
           },
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        titleColor: '#1e293b', // text-slate-800
-        bodyColor: '#1e293b',
-        borderColor: '#e2e8f0', // slate-200
-        borderWidth: 1,
-        padding: 10,
         callbacks: {
           label: function (context) {
             const ds = context.dataset;
             const label = ds.label || '';
             const match = label.match(/^(\S+)\s+(.+)$/);
-            const flag = match ? match[1] : '';
-            const code = match ? match[2] : label;
+            let flag = '', code = '';
+            if (match) {
+              flag = match[1];
+              code = match[2];
+            } else {
+              code = label;
+            }
             return `${flag} ${code}: ${context.parsed.y.toLocaleString()}`;
           },
           title: function (context) {
@@ -252,46 +230,11 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
         },
       },
     },
-    interaction: {
-      mode: 'index',
-      intersect: false,
-    },
   };
 
   return (
-    <div className="relative h-full w-full bg-white/95 backdrop-blur-sm rounded-lg p-2 animate-slide-in">
-      <Line
-        ref={chartRef}
-        data={getMultiStablecoinHourlyRevenueData(transactions, chartRef.current)}
-        options={options}
-      />
-      <style jsx global>{`
-        .animate-slide-in {
-          opacity: 0;
-          transform: translateY(10px);
-          animation: slideIn 0.6s ease-out forwards;
-        }
-
-        @keyframes slideIn {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-pulse-slow {
-          animation: pulseSlow 6s ease-in-out infinite;
-        }
-
-        @keyframes pulseSlow {
-          0%, 100% {
-            opacity: 0.3;
-          }
-          50% {
-            opacity: 0.6;
-          }
-        }
-      `}</style>
+    <div className="h-64 w-full" style={{ position: 'relative', maxHeight: '256px' }}>
+      <Line data={getMultiStablecoinHourlyRevenueData(transactions)} options={options} />
     </div>
   );
 };

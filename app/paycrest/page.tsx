@@ -3,6 +3,7 @@
 import React, { useEffect, useState, FormEvent } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import axios from 'axios';
+import { Loader2 } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { fetchTokenRate, fetchSupportedInstitutions, verifyAccount, fetchSupportedCurrencies } from '../utils/paycrest';
@@ -15,7 +16,8 @@ const PaymentForm: React.FC = () => {
   const [rate, setRate] = useState('');
   const [institution, setInstitution] = useState('');
   const [accountIdentifier, setAccountIdentifier] = useState('');
-  const [accountName, setAccountName] = useState('');
+  const [accountName, setAccountName] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
   const [memo, setMemo] = useState('');
   const [institutions, setInstitutions] = useState<Array<{ name: string; code: string; type: string }>>([]);
   const [error, setError] = useState('');
@@ -46,11 +48,14 @@ const PaymentForm: React.FC = () => {
 
   const handleVerifyAccount = async () => {
     try {
+      setIsLoading(true);
       const name = await verifyAccount(institution, accountIdentifier);
-      setAccountName(name === 'OK' ? '' : name);
+      setAccountName(name === 'OK' ? 'success' : name);
       setError('');
     } catch (err) {
       setError('Account verification failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -282,9 +287,17 @@ const PaymentForm: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleVerifyAccount}
-                    className="px-6 py-3 !bg-blue-500 hover:!bg-blue-600 !text-white !rounded-xl !font-medium transition-all duration-300"
+                    disabled={isLoading}
+                    className={`px-6 py-3 !bg-blue-500 hover:!bg-blue-600 !text-white !rounded-xl !font-medium transition-all duration-300 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    Verify Account
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      'Verify Account'
+                    )}
                   </button>
                   {accountName && (
                     <div className="p-4 bg-green-50 rounded-xl border border-green-200">

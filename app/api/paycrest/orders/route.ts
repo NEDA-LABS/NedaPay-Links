@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { initiatePaymentOrder } from '../../utils/paycrest';
+import { initiatePaymentOrder } from '../../../utils/paycrest';
 import { usePrivy } from '@privy-io/react-auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

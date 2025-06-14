@@ -60,6 +60,7 @@ export async function verifyAccount(institution: string, accountIdentifier: stri
     { institution, accountIdentifier },
     { headers }
   );
+  console.log("response account", response.data.data); //debugging
   return response.data.data;
 }
 
