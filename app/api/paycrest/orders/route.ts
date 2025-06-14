@@ -1,38 +1,42 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { initiatePaymentOrder } from '../../../utils/paycrest';
-import { usePrivy } from '@privy-io/react-auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { initiatePaymentOrder, Recipient } from '../../../utils/paycrest';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
-  }
+interface PaymentOrderRequest {
+  amount: number;
+  rate: number;
+  recipient: Recipient;
+  returnAddress?: string;
+  reference?: string;
+}
 
-  const { ready, authenticated, user, login } = usePrivy();
-  if (!ready || !authenticated) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const { amount, rate, recipient, returnAddress, reference } = req.body;
+    const body = await request.json() as PaymentOrderRequest;
 
     // Validate payload
-    if (!amount || !rate || !recipient) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    if (!body.amount || !body.rate || !body.recipient) {
+      return NextResponse.json(
+        { message: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     const order = await initiatePaymentOrder({
-      amount,
-      rate,
+      amount: body.amount,
+      rate: body.rate,
       network: 'base',
       token: 'USDC',
-      recipient,
-      returnAddress,
-      reference,
+      recipient: body.recipient,
+      returnAddress: body.returnAddress,
+      reference: body.reference,
     });
 
-    return res.status(200).json(order);
+    return NextResponse.json(order);
   } catch (error) {
     console.error('Error initiating payment order:', error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

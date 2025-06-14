@@ -9,7 +9,7 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-interface Recipient {
+export interface Recipient {
   institution: string;
   accountIdentifier: string;
   accountName: string;
