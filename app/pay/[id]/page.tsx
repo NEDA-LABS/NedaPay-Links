@@ -53,7 +53,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
     };
 
     validateLink();
-  }, [params.id, searchParams]);
+  }, [searchParams]);
 
   const handleCopy = () => {
     if (merchantAddress) {

@@ -482,14 +482,14 @@ export default function PayWithWallet({
           <div className="flex flex-col gap-2 items-center">
             <a
               href={`metamask://dapp/${typeof window !== 'undefined' ? window.location.host + window.location.pathname + window.location.search : ''}`}
-              className="!bg-orange-500 hover:!bg-orange-600  dark:!text-white rounded-lg font-semibold transition" style={{color: "#4169E1", textDecoration: "underline"}}
+              className="px-4 py-2 !bg-orange-500 hover:!bg-orange-600  dark:!text-white rounded-lg font-semibold transition"
             >
             Open in MetaMask
               
             </a>
             <a
               href={`cbwallet://dapp?url=${typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : ''}`}
-              className="!bg-blue-600 hover:  !bg-blue-700 dark:!text-white !rounded-lg font-semibold transition" style={{color: "#4169E1", textDecoration: "underline"}}
+              className="px-4 py-2 !bg-blue-600 hover:  !bg-blue-700 dark:!text-white !rounded-lg font-semibold transition"
             >
               Open in Coinbase Wallet
             </a>

@@ -82,7 +82,7 @@ export default function HowItWorksSection() {
       number: "03",
       icon: DollarSign,
       title: "Receive Payments",
-      description: "Customers pay using their NEDA Pay app and you receive stablecoins instantly",
+      description: "Customers pay using any wallet / fund from bank account and receive stablecoins payments instantly that you can withdraw to bank",
       details: "Real-time notifications and automatic balance updates",
       color: "green",
       gradient: "from-green-400 to-emerald-400",

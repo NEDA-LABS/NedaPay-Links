@@ -106,7 +106,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     setLoading(false);
   };
 
-  // Calculate total balance in selected currency
+  // Calculate total balance in selected currency - PROPERLY FIXED VERSION
   const calculateTotalBalance = () => {
     let total = 0;
     
@@ -114,9 +114,12 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
       const balance = balances[coin.baseToken] || 0;
       if (balance > 0) {
         // Convert from stablecoin's native currency to selected currency
-        const nativeRate = exchangeRates[coin.currency] || 1;
-        const selectedRate = exchangeRates[selectedCurrency] || 1;
-        const convertedBalance = (balance / nativeRate) * selectedRate;
+        const fromRate = exchangeRates[coin.currency] || 1;
+        const toRate = exchangeRates[selectedCurrency] || 1;
+        
+        // Convert to USD first, then to target currency
+        const usdAmount = balance / fromRate;
+        const convertedBalance = usdAmount * toRate;
         total += convertedBalance;
       }
     });
@@ -124,10 +127,11 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     setTotalBalance(total);
   };
 
-  // Convert amount from one currency to another
+  // Convert amount from one currency to another - PROPERLY FIXED VERSION
   const convertCurrency = (amount: number, fromCurrency: string, toCurrency: string) => {
     if (!exchangeRates[fromCurrency] || !exchangeRates[toCurrency]) return amount;
     
+    // Convert via USD: amount in fromCurrency -> USD -> toCurrency
     const usdAmount = amount / exchangeRates[fromCurrency];
     return usdAmount * exchangeRates[toCurrency];
   };

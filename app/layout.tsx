@@ -8,6 +8,12 @@ import AppToaster from './components/Toaster';
 export const metadata: Metadata = {
   title: 'NEDA Pay Merchant Portal',
   description: 'Merchant dashboard for NEDA Pay stablecoin ecosystem',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 export default function RootLayout({

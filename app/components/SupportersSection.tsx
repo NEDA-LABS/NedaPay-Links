@@ -33,20 +33,10 @@ export default function BuiltOnBaseSection() {
       <div className="max-w-4xl mx-auto relative">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 text-sm font-semibold mb-6 border border-blue-200/60 shadow-sm backdrop-blur-sm">
-            <div className="mr-3 p-1 bg-white rounded-full shadow-sm border border-blue-100">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-            </div>
-            <span>Powered by</span>
-          </div>
           
           <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
             Built on Base
           </h2>
-          
-          <p className="text-lg text-blue-800/80 max-w-2xl mx-auto leading-relaxed">
-            Leveraging the power and security of Base blockchain infrastructure for next-generation decentralized applications
-          </p>
         </div>
 
         {/* Base Integration Card */}
@@ -64,9 +54,7 @@ export default function BuiltOnBaseSection() {
               </div>
 
               {/* Content */}
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-4">
-                Base Blockchain Integration
-              </h3>
+              
               
               <p className="text-blue-700/80 text-lg mb-8 max-w-lg leading-relaxed">
                 Delivering fast, secure, and cost-effective transactions.
