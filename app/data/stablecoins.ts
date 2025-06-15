@@ -16,7 +16,7 @@ export const stablecoins = [
     region: 'Nigeria',
     flag: '🇳🇬',
     currency: 'NGN',
-    baseToken: 'CNGN',
+    baseToken: 'cNGN',
     name: 'Nigerian Naira Coin',
     address: '0x46C85152bFe9f96829aA94755D9f915F9B10EF5F', // Updated to correct cNGN address
     issuer: 'Convexity',

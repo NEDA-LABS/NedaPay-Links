@@ -141,3 +141,10 @@ model InvoiceLineItem {
   createdAt   DateTime @default(now())
   Invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
+
+model OffRampTransaction {
+  id           String        @unique
+  createdAt    DateTime      @default(now()) 
+  merchantId   String
+  status       String
+}

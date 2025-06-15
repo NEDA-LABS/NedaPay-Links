@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Header from "../components/Header";
-import { useAccount } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { stablecoins } from "../data/stablecoins";
 import { ethers } from "ethers";
@@ -132,18 +132,16 @@ const getPaymentMethodsData = (balances: Record<string, string>) => {
         label: "Currency Distribution",
         data,
         backgroundColor: [
-          "rgba(59, 130, 246, 0.8)",
-          "rgba(236, 72, 153, 0.8)",
-          "rgba(16, 185, 129, 0.8)",
-          "rgba(245, 158, 11, 0.8)",
-          "rgba(139, 92, 246, 0.8)",
+          "rgba(59, 130, 246, 0.8)", // Blue
+          "rgba(139, 92, 246, 0.8)", // Purple
+          "rgba(79, 70, 229, 0.8)", // Indigo
+          "rgba(255, 255, 255, 0.8)", // White
         ],
         borderColor: [
-          "rgb(59, 130, 246)",
-          "rgb(236, 72, 153)",
-          "rgb(16, 185, 129)",
-          "rgb(245, 158, 11)",
-          "rgb(139, 92, 246)",
+          "rgb(59, 130, 246)", // Blue
+          "rgb(139, 92, 246)", // Purple
+          "rgb(79, 70, 229)", // Indigo
+          "rgb(255, 255, 255)", // White
         ],
         borderWidth: 1,
       },
@@ -153,7 +151,8 @@ const getPaymentMethodsData = (balances: Record<string, string>) => {
 
 export default function AnalyticsContent() {
   const [dateRange, setDateRange] = useState("7d");
-  const { address, isConnected } = useAccount();
+  const { user, authenticated } = usePrivy();
+  const address = user?.wallet?.address;
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [balances, setBalances] = useState<Record<string, string>>({});
@@ -167,7 +166,7 @@ export default function AnalyticsContent() {
 
   useEffect(() => {
     setIsDarkMode(theme === "dark");
-    console.log("AnalyticsContent isDarkMode:", theme === "dark"); // Debug
+    console.log("AnalyticsContent isDarkMode:", theme === "dark");
   }, [theme]);
 
   // Memoized provider
@@ -186,11 +185,11 @@ export default function AnalyticsContent() {
         "wallet_connected=true"
       );
 
-      if (!isConnected && !walletConnected && !cookieWalletConnected) {
+      if (!authenticated && !walletConnected && !cookieWalletConnected) {
         router.push("/?walletRequired=true");
       }
     }
-  }, [isConnected, router]);
+  }, [authenticated, router]);
 
   // Fetch balances and transactions
   useEffect(() => {
@@ -290,8 +289,8 @@ export default function AnalyticsContent() {
 
       setIsLoading(false);
     }
-    if (isConnected && address) fetchData();
-  }, [isConnected, address, provider]);
+    if (authenticated && address) fetchData();
+  }, [authenticated, address, provider]);
 
   // Date range filtering
   const now = new Date();
@@ -354,9 +353,9 @@ export default function AnalyticsContent() {
   const previousAvgTx = previousTxs.length > 0 ? previousRevenue / previousTxs.length : 0;
   const avgTxChange = computePercentageChange(currentAvg, previousAvgTx);
 
-  console.log("Filtered transactions:", filteredTxs); // Debug
-  console.log("Current revenue:", currentRevenue, "Previous revenue:", previousRevenue); // Debug
-  console.log("Current tx count:", currentTxCount, "Previous tx count:", previousTxCount); // Debug
+  console.log("Filtered transactions:", filteredTxs);
+  console.log("Current revenue:", currentRevenue, "Previous revenue:", previousRevenue);
+  console.log("Current tx count:", currentTxCount, "Previous tx count:", previousTxCount);
 
   // Chart data
   const revenueData = {
@@ -365,39 +364,39 @@ export default function AnalyticsContent() {
       {
         label: "Revenue",
         data: filteredTxs.map((tx) => Number(tx.amount)),
-        borderColor: "rgb(59, 130, 246)",
+        borderColor: "rgb(59, 130, 246)", // Blue
         backgroundColor: "rgba(59, 130, 246, 0.5)",
         tension: 0.3,
       },
     ],
   };
 
-  const transactionsData = { transactions: filteredTxs }; // Fixed: Pass raw transactions
-  console.log("transactionsData for Bar chart:", transactionsData); // Debug
+  const transactionsData = { transactions: filteredTxs };
+  console.log("transactionsData for Bar chart:", transactionsData);
 
   const currencyDistributionData = getPaymentMethodsData(filteredBalances);
 
-  console.log("darkmode analytics page:", isDarkMode); // Debug
+  console.log("darkmode analytics page:", isDarkMode);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-white dark:bg-gray-900 dark:text-white">
+    <div className="flex flex-col min-h-screen bg-white">
       <Header />
-      <div className="global my-4">
+      <div className="my-6 px-4">
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 px-3 py-1 border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium"
+          className="!bg-indigo-600 !rounded-lg px-4 py-2 text-white font-medium hover:!bg-indigo-700 transition-colors"
         >
           <span aria-hidden="true">←</span> Back
         </button>
       </div>
-      <div className="global flex-grow">
-        {!isConnected || !address ? (
-          <div className="container mx-auto max-w-6xl px-4 py-12">
-            <p className="text-red-500">Please connect your wallet to view analytics.</p>
+      <div className="flex-grow">
+        {!authenticated || !address ? (
+          <div className="container mx-auto max-w-7xl px-4 py-12">
+            <p className="text-red-500 font-medium">Please connect your wallet to view analytics.</p>
           </div>
         ) : (
-          <div className="container mx-auto max-w-6xl px-4 py-12">
-            {error && <div className="text-red-500 mb-4">{error}</div>}
+          <div className="container mx-auto max-w-7xl px-4 py-12">
+            {error && <div className="text-red-500 font-medium mb-6">{error}</div>}
             {/* Controls */}
             <div className="flex flex-wrap gap-4 items-center mb-8">
               <CurrencyFilter
@@ -406,82 +405,54 @@ export default function AnalyticsContent() {
                 onChange={setSelectedCurrency}
               />
               <button
-                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                className="!bg-blue-600 !rounded-lg px-4 py-2 text-white font-medium hover:!bg-blue-700 transition-colors disabled:!bg-blue-300"
                 onClick={() => exportTransactionsToCSV(filteredTxs)}
                 disabled={filteredTxs.length === 0}
               >
-                Export CSV
+                Export to CSV
               </button>
             </div>
             <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2 text-slate-800 dark:text-slate-100">
-                Analytics
+              <h1 className="text-3xl font-bold mb-2 text-blue-900">
+                Analytics Dashboard
               </h1>
-              <p className="text-slate-600 dark:text-slate-300 text-base">
-                Detailed reports and business insights
+              <p className="text-gray-600 text-base">
+                Comprehensive insights and reports for your business
               </p>
             </div>
 
             {/* Date range selector */}
             <div className="mb-8">
-              <div className="inline-flex rounded-md shadow-sm" role="group">
-                <button
-                  type="button"
-                  onClick={() => setDateRange("7d")}
-                  className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
-                    dateRange === "7d"
-                      ? "bg-primary text-white"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                  } border border-slate-200 dark:border-slate-600`}
-                >
-                  7 Days
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDateRange("30d")}
-                  className={`px-4 py-2 text-sm font-medium ${
-                    dateRange === "30d"
-                      ? "bg-primary text-white"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                  } border-t border-b border-slate-200 dark:border-slate-600`}
-                >
-                  30 Days
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDateRange("90d")}
-                  className={`px-4 py-2 text-sm font-medium ${
-                    dateRange === "90d"
-                      ? "bg-primary text-white"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                  } border-t border-b border-slate-200 dark:border-slate-600`}
-                >
-                  90 Days
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDateRange("all")}
-                  className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
-                    dateRange === "all"
-                      ? "bg-primary text-white"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                  } border border-slate-200 dark:border-slate-600`}
-                >
-                  All Time
-                </button>
+              <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+                {["7d", "30d", "90d", "all"].map((range) => (
+                  <button
+                    key={range}
+                    type="button"
+                    onClick={() => setDateRange(range)}
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                      dateRange === range
+                        ? "!bg-purple-600 !text-white"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    } ${
+                      range === "7d" ? "!rounded-l-lg" : range === "all" ? "!rounded-r-lg" : ""
+                    } border-r border-gray-200 last:border-r-0`}
+                  >
+                    {range === "7d" ? "7 Days" : range === "30d" ? "30 Days" : range === "90d" ? "90 Days" : "All Time"}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Stats cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
                   Total Revenue
                 </h3>
                 {isTransactionLoading ? (
-                  <p className="text-sm text-blue-600 dark:text-blue-300">Loading...</p>
+                  <p className="text-sm text-blue-600">Loading...</p>
                 ) : !transactions.length ? (
-                  <p className="text-3xl font-bold text-primary">0</p>
+                  <p className="text-3xl font-bold text-blue-600">0</p>
                 ) : (
                   (() => {
                     const sums: Record<string, number> = {};
@@ -493,7 +464,7 @@ export default function AnalyticsContent() {
                     if (entries.length === 1) {
                       const [currency, sum] = entries[0];
                       return (
-                        <p className="text-3xl font-bold text-primary">
+                        <p className="text-3xl font-bold text-blue-600">
                           {sum.toLocaleString()} {currency}
                         </p>
                       );
@@ -503,7 +474,7 @@ export default function AnalyticsContent() {
                         {entries.map(([currency, sum]) => (
                           <div
                             key={currency}
-                            className="text-sm text-primary font-semibold"
+                            className="text-sm text-blue-600 font-semibold"
                           >
                             {sum.toLocaleString()} {currency}
                           </div>
@@ -514,9 +485,7 @@ export default function AnalyticsContent() {
                 )}
                 <p
                   className={`text-sm mt-2 flex items-center ${
-                    revenueChange >= 0
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-red-600 dark:text-red-400"
+                    revenueChange >= 0 ? "text-green-600" : "text-red-600"
                   }`}
                 >
                   <svg
@@ -530,7 +499,7 @@ export default function AnalyticsContent() {
                       d={
                         revenueChange >= 0
                           ? "M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586l3.293-3.293A1 1 0 0112 7z"
-                          : "M12 13a1 1 0 110 2h-5a1 1 0 01-1-1V9a1 1 0 112 0v2.586l-4.293-4.293a1 1 0 011.414 0L16 9.586l4.293-4.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0L13 9.414l-3.293 3.293A1 1 0 0112 13z"
+                          : "M12 13a1 1 0 110 2h-5a1 1 0 01-1-1V9a1 1 0 112 0v2.586l-4.293-4.293a1 1 0 01-1.414 0L16 9.586l4.293-4.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0L13 9.414l-3.293 3.293A1 1 0 0112 13z"
                       }
                       clipRule="evenodd"
                     />
@@ -539,20 +508,18 @@ export default function AnalyticsContent() {
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
                   Transactions
                 </h3>
                 {isTransactionLoading ? (
-                  <p className="text-sm text-blue-600 dark:text-blue-300">Loading...</p>
+                  <p className="text-sm text-blue-600">Loading...</p>
                 ) : (
-                  <p className="text-3xl font-bold text-primary">{filteredTxs.length}</p>
+                  <p className="text-3xl font-bold text-blue-600">{filteredTxs.length}</p>
                 )}
                 <p
                   className={`text-sm mt-2 flex items-center ${
-                    txCountChange >= 0
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-red-600 dark:text-red-400"
+                    txCountChange >= 0 ? "text-green-600" : "text-red-600"
                   }`}
                 >
                   <svg
@@ -575,14 +542,14 @@ export default function AnalyticsContent() {
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
                   Average Transaction
                 </h3>
                 {isTransactionLoading ? (
-                  <p className="text-sm text-blue-600 dark:text-blue-300">Loading...</p>
+                  <p className="text-sm text-blue-600">Loading...</p>
                 ) : !filteredTxs.length ? (
-                  <p className="text-3xl font-bold text-primary">0</p>
+                  <p className="text-3xl font-bold text-blue-600">0</p>
                 ) : (
                   (() => {
                     const sums: Record<string, { sum: number; count: number }> = {};
@@ -596,7 +563,7 @@ export default function AnalyticsContent() {
                     if (entries.length === 1) {
                       const [currency, { sum, count }] = entries[0];
                       return (
-                        <p className="text-3xl font-bold text-primary">
+                        <p className="text-3xl font-bold text-blue-600">
                           {(sum / count).toLocaleString(undefined, {
                             maximumFractionDigits: 2,
                           })}{" "}
@@ -609,7 +576,7 @@ export default function AnalyticsContent() {
                         {entries.map(([currency, { sum, count }]) => (
                           <div
                             key={currency}
-                            className="text-sm text-primary font-semibold"
+                            className="text-sm text-blue-600 font-semibold"
                           >
                             {(sum / count).toLocaleString(undefined, {
                               maximumFractionDigits: 2,
@@ -623,9 +590,7 @@ export default function AnalyticsContent() {
                 )}
                 <p
                   className={`text-sm mt-2 flex items-center ${
-                    avgTxChange >= 0
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-red-600 dark:text-red-400"
+                    avgTxChange >= 0 ? "text-green-600" : "text-red-600"
                   }`}
                 >
                   <svg
@@ -651,12 +616,12 @@ export default function AnalyticsContent() {
 
             {/* Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">
                   Revenue Over Time
                 </h3>
                 {isTransactionLoading ? (
-                  <p className="text-sm text-blue-600 dark:text-blue-300 text-center">Loading...</p>
+                  <p className="text-sm text-blue-600 text-center">Loading...</p>
                 ) : (
                   <div className="h-64">
                     <RevenueLineChart data={revenueData} />
@@ -664,12 +629,12 @@ export default function AnalyticsContent() {
                 )}
               </div>
 
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">
                   Transactions Per Day
                 </h3>
                 {isTransactionLoading ? (
-                  <p className="text-sm text-blue-600 dark:text-blue-300 text-center">Loading...</p>
+                  <p className="text-sm text-blue-600 text-center">Loading...</p>
                 ) : (
                   <div className="h-64">
                     <TransactionsBarChart data={transactionsData} />
@@ -679,12 +644,12 @@ export default function AnalyticsContent() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">
                   Currency Distribution
                 </h3>
                 {isLoading ? (
-                  <p className="text-sm text-blue-600 dark:text-blue-300 text-center">Loading...</p>
+                  <p className="text-sm text-blue-600 text-center">Loading...</p>
                 ) : (
                   <div className="h-64">
                     <CurrencyDoughnutChart data={currencyDistributionData} />
@@ -692,34 +657,34 @@ export default function AnalyticsContent() {
                 )}
               </div>
 
-              <div className="col-span-1 md:col-span-2 bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
-                  Filtered Transactions
+              <div className="col-span-1 md:col-span-2 bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">
+                  Transaction History
                 </h3>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead className="bg-slate-50 dark:bg-slate-700">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Date
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Amount
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Currency
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {isTransactionLoading ? (
                         <tr>
                           <td
                             colSpan={4}
-                            className="px-6 py-4 text-center text-slate-500 dark:text-slate-300"
+                            className="px-6 py-4 text-center text-gray-500"
                           >
                             Loading...
                           </td>
@@ -728,7 +693,7 @@ export default function AnalyticsContent() {
                         <tr>
                           <td
                             colSpan={4}
-                            className="px-6 py-4 text-center text-slate-500 dark:text-slate-300"
+                            className="px-6 py-4 text-center text-gray-500"
                           >
                             No transactions found
                           </td>
@@ -736,17 +701,17 @@ export default function AnalyticsContent() {
                       ) : (
                         filteredTxs.map((tx, idx) => (
                           <tr key={tx.id || idx}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
-                              <p className="dark:text-white">{tx.date}</p>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {tx.date}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
-                              <p className="dark:text-white">{tx.amount}</p>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {tx.amount}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
-                              <p className="dark:text-white">{tx.currency}</p>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {tx.currency}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                 {tx.status}
                               </span>
                             </td>
@@ -755,7 +720,7 @@ export default function AnalyticsContent() {
                       )}
                     </tbody>
                   </table>
-                  <div className="mt-4 text-sm text-slate-600 dark:text-slate-300">
+                  <div className="mt-4 text-sm text-gray-600">
                     Showing {filteredTxs.length} of {transactions.length} transactions
                   </div>
                 </div>

@@ -303,7 +303,7 @@ const PaymentForm: React.FC = () => {
                     required
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-6">
-                    <span className="text-gray-500 font-medium">USDC</span>
+                    <span className="text-gray-500 font-medium text-sm">USDC</span>
                   </div>
                 </div>
               </div>
@@ -318,7 +318,7 @@ const PaymentForm: React.FC = () => {
                     id="fiat"
                     value={fiat}
                     onChange={(e) => { setFiat(e.target.value); fetchInstitutions(); }}
-                    className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                   >
                     {currencies.map((currency) => (
                       <option key={currency.code} value={currency.code}>
@@ -362,7 +362,7 @@ const PaymentForm: React.FC = () => {
               {/* Institution Selection */}
               <div className="group">
                 <label htmlFor="institution" className="block text-sm font-semibold text-gray-700 mb-3">
-                  Bank Institution
+                  Choose Bank or Mobile Network Institution
                 </label>
                 <div className="relative">
                   <select
@@ -370,7 +370,7 @@ const PaymentForm: React.FC = () => {
                     value={institution}
                     onChange={(e) => setInstitution(e.target.value)}
                     onFocus={fetchInstitutions}
-                    className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                     required
                   >
                     <option value="">Select Bank Institution</option>
@@ -398,7 +398,7 @@ const PaymentForm: React.FC = () => {
                   id="accountNumber"
                   value={accountIdentifier}
                   onChange={(e) => setAccountIdentifier(e.target.value)}
-                  className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                  className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                   placeholder="Enter your account number"
                   required
                 />
@@ -414,7 +414,7 @@ const PaymentForm: React.FC = () => {
                   id="accountName"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
-                  className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                  className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                   placeholder="Enter account holder's name"
                   required
                 />
@@ -426,7 +426,7 @@ const PaymentForm: React.FC = () => {
                   type="button"
                   onClick={handleVerifyAccount}
                   disabled={isLoading || !institution || !accountIdentifier || !accountName}
-                  className={`w-full px-6 py-3 !bg-blue-500 hover:!bg-blue-600 !text-white !rounded-xl !font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full text-sm px-6 py-3 !bg-blue-500 hover:!bg-blue-600 !text-white !rounded-xl !font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">
@@ -453,7 +453,7 @@ const PaymentForm: React.FC = () => {
                   id="memo"
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
-                  className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
+                  className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
                   rows={3}
                   placeholder="Add a memo for this transaction..."
                   required
@@ -477,7 +477,7 @@ const PaymentForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading || !rate || !isAccountVerified}
-                className="w-full py-4 px-8 !bg-gradient-to-r !from-emerald-600 !to-blue-600 hover:!from-emerald-700 hover:!to-blue-700 !text-white !font-semibold text-lg !rounded-2xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full py-4 px-8 !bg-gradient-to-r !from-emerald-600 !to-blue-600 hover:!from-emerald-700 hover:!to-blue-700 !text-white !font-semibold text-sm !rounded-2xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <div className="flex items-center justify-center gap-3">
                   {isLoading ? (
@@ -495,7 +495,7 @@ const PaymentForm: React.FC = () => {
         )}
 
         {/* Information Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        {/* <div className="grid md:grid-cols-3 gap-6 mb-12">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-emerald-100 rounded-lg">
@@ -531,7 +531,7 @@ const PaymentForm: React.FC = () => {
             </div>
             <p className="text-gray-600 text-sm">Competitive exchange rates with transparent pricing and minimal fees.</p>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <Footer />

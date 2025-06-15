@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid amount format' }, { status: 400 });
   }
 
-  if (!/^[A-Z]{3,10}$/.test(currency)) {
+  if (!/^[A-Z]{3,10}$/i.test(currency)) {
     return NextResponse.json({ error: 'Invalid currency format' }, { status: 400 });
   }
 
