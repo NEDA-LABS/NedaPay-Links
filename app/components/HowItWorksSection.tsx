@@ -206,7 +206,7 @@ export default function HowItWorksSection() {
           <div className="hidden xl:block absolute top-32 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-300 via-indigo-300 via-green-300 to-purple-300 opacity-40"></div>
           
           {/* Steps Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
             {steps.map((step, index) => (
               <div key={index} className="relative group h-full">
                 {/* Step Card with equal heights */}

@@ -97,7 +97,7 @@ export const stablecoins = [
     baseToken: 'BRL',
     decimals: 18,
     name: 'Brazilian Real Coin',
-    address: '0x043eB4B75d0805c43D7C834902E335621983Cf03', // CADC address confirmed
+    address: '0xE9185Ee218cae427aF7B9764A011bb89FeA761B4', // address confirmed
     issuer: 'Transfero',
     description: 'Stablecoin pegged 1:1 to the Brazilian Real (BRL)',
     website: 'https://stablecoins.earth',
@@ -110,7 +110,7 @@ export const stablecoins = [
     baseToken: 'TRYB',
     decimals: 6,
     name: 'Turkish Lira Coin',
-    address: '0x043eB4B75d0805c43D7C834902E335621983Cf03', // CADC address confirmed
+    address: '0xFb8718a69aed7726AFb3f04D2Bd4bfDE1BdCb294', // address confirmed
     issuer: 'BiLira',
     description: 'Stablecoin pegged 1:1 to the Turkish Lira (TRY)',
     website: 'https://stablecoins.earth',
@@ -136,7 +136,7 @@ export const stablecoins = [
     baseToken: 'MXNe',
     decimals: 6,
     name: 'Mexican Peso Coin',
-    address: '0x043eB4B75d0805c43D7C834902E335621983Cf03', // CADC address confirmed
+    address: '0x269caE7Dc59803e5C596c95756faEeBb6030E0aF', // address confirmed
     issuer: 'Etherfuse/Brale',
     description: 'Stablecoin pegged 1:1 to the Mexican Peso (MXN)',
     website: 'https://stablecoins.earth',

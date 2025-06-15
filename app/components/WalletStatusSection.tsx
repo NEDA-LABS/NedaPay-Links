@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle, Copy, Check, Wallet, ExternalLink, Shield } from 'lucide-react';
+import MiniBalanceTracker from '../dashboard/MiniBalanceTracker';
 
 interface WalletStatusSectionProps {
   selectedWalletAddress?: string;
@@ -23,7 +24,7 @@ export default function WalletStatusSection({ selectedWalletAddress, selectedWal
 
   return (
     <div className="mx-auto flex-1">
-      <div className=" sm:p-6 bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden backdrop-blur-md">
+      <div className="sm:p-6 bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden backdrop-blur-md">
         
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-blue-500/5 rounded-2xl"></div>
@@ -48,8 +49,10 @@ export default function WalletStatusSection({ selectedWalletAddress, selectedWal
               </p>
             </div>
           </div>
-          
-
+          {/* MiniBalanceTracker Integration */}
+          <div className="flex items-center">
+            <MiniBalanceTracker />
+          </div>
         </div>
 
         {/* Wallet Details Card */}
