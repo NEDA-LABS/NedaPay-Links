@@ -28,6 +28,7 @@ import HowItWorksSection from "./components/HowItWorksSection";
 import FaqSection from "./components/FaqSection";
 import HeroFlags from "./components/HeroFlags";
 import Supporters from "./components/SupportersSection";
+import YouTubeEmbedButton from "./components/YouTubeEmbedButton";
 
 function HomeContent() {
   const [mounted, setMounted] = useState(false);
@@ -95,10 +96,7 @@ function HomeContent() {
                 >
                   <span className="text-xs sm:text-sm lg:text-lg">Start with Email or Wallet</span>                </button>
                 
-                <button className="group flex items-center gap-3 !px-4 !py-2 sm:!px-8 sm:!py-4 text-gray-700 hover:text-gray-900 font-medium !rounded-2xl !border !border-gray-200 hover:!border-gray-300 hover:!bg-white/50 transition-all duration-300">
-                  <PlayCircle className="w-5 h-5" />
-                  <span className="text-xs sm:text-sm">Watch Demo</span>
-                </button>
+                <YouTubeEmbedButton />
                 
                 <span hidden={true}>
                   <WalletSelector ref={walletSelectorRef} />
