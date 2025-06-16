@@ -287,7 +287,7 @@ const PaymentForm: React.FC = () => {
         {authenticated && activeWallet && (
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-2xl border border-white/20 mb-12">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
               <p className="text-gray-600">Follow the steps below to convert your USDC to fiat and receive funds in your bank or mobile account.</p>
             </div>
 
@@ -296,7 +296,7 @@ const PaymentForm: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 1</span>
-                  <h3 className="text-lg font-semibold text-gray-900">Enter Amount and Currency</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">Enter Amount and Currency</h3>
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="group">
@@ -309,8 +309,8 @@ const PaymentForm: React.FC = () => {
                         id="amount"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
-                        placeholder="0.00"
+                        className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                        placeholder="minimum 0.6 usdc"
                         required
                       />
                       <div className="absolute inset-y-0 right-0 flex items-center pr-6">
@@ -373,7 +373,7 @@ const PaymentForm: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 2</span>
-                  <h3 className="text-lg font-semibold text-gray-900">Recipient Details</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">Recipient Details</h3>
                 </div>
                 <div className="group">
                   <label htmlFor="institution" className="block text-sm font-semibold text-gray-700 mb-3">
@@ -415,7 +415,7 @@ const PaymentForm: React.FC = () => {
                     placeholder="Enter account or mobile number"
                     required
                   />
-                  <p className="text-sm text-gray-500 mt-2">For mobile numbers, include the country code (e.g., +2341234567890).</p>
+                  <p className="text-sm text-red-400 mt-2">For mobile numbers include country code (e.g., +2341234567890).</p>
                 </div>
                 <div className="group">
                   <label htmlFor="accountName" className="block text-sm font-semibold text-gray-700 mb-3">
@@ -460,7 +460,7 @@ const PaymentForm: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 3</span>
-                  <h3 className="text-lg font-semibold text-gray-900">Transaction Memo</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">Transaction Description</h3>
                 </div>
                 <div className="group">
                   <label htmlFor="memo" className="block text-sm font-semibold text-gray-700 mb-3">
