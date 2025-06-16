@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const merchantId = searchParams.get('merchantId');
-  if (!merchantId || !/^[0-9a-fA-F]{40}$/.test(merchantId)) {
+  if (!merchantId || !/^0x[a-fA-F0-9]{40}$/.test(merchantId)) {
     return NextResponse.json({ error: 'Invalid merchantId' }, { status: 400 });
   }
 

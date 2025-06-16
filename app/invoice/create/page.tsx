@@ -1,16 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaFileInvoiceDollar, FaCirclePlus, FaPlus } from "react-icons/fa6";
+import { usePrivy } from "@privy-io/react-auth";
 
 import Header from '../../components/Header';
 import { stablecoins } from '../../data/stablecoins';
 
 export default function CreateInvoicePage() {
+  const { authenticated, user } = usePrivy();
+  const walletAddress = user?.wallet?.address;
+  const isConnected = authenticated && !!walletAddress;
+
+  const merchantAddress = walletAddress;
+
   const router = useRouter();
   const [recipient, setRecipient] = useState("");
   const [email, setEmail] = useState("");
+  const [senderId, setSenderId] = useState("");
   const [paymentCollection, setPaymentCollection] = useState("one-time");
   const [dueDate, setDueDate] = useState(() => {
     const today = new Date();
@@ -20,12 +28,52 @@ export default function CreateInvoicePage() {
   const [currency, setCurrency] = useState(stablecoinOptions[0]?.baseToken || "USDC");
   const [lineItems, setLineItems] = useState([{ description: "", amount: "" }]);
   const [status, setStatus] = useState<string | null>(null);
+  const [paymentLink, setPaymentLink] = useState("");
+  const [paymentLinks, setPaymentLinks] = useState<{ id: string; url: string; createdAt: string }[]>([]);
 
   const handleLineItemChange = (idx: number, field: string, value: string) => {
     setLineItems((prev) => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
   };
   const addLineItem = () => setLineItems([...lineItems, { description: "", amount: "" }]);
 
+  // Fetch recent payment links
+  useEffect(() => {
+    const fetchPaymentLinks = async () => {
+      // Only fetch if we have a merchant address
+      if (!merchantAddress) {
+        console.log("No merchant address available");
+        return;
+      }
+      
+      try {
+        console.log("Fetching payment links for:", merchantAddress);
+        const res = await fetch(`/api/payment-links?merchantId=${merchantAddress}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          console.log("Fetched payment links:", data);
+          
+          // Sort by createdAt (descending) and take top 3
+          const sortedLinks = data
+            .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 3);
+          setPaymentLinks(sortedLinks);
+        } else {
+          const errorData = await res.json();
+          console.error("Failed to fetch payment links:", errorData);
+        }
+      } catch (err) {
+        console.error("Failed to fetch payment links:", err);
+      }
+    };
+    
+    fetchPaymentLinks();
+  }, [merchantAddress]);
+
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
@@ -34,14 +82,15 @@ export default function CreateInvoicePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          merchantId: "some-merchant-id", // Replace with dynamic merchant ID
+          merchantId: senderId,
           recipient,
           email,
           paymentCollection,
           dueDate,
           currency,
           lineItems,
-        })
+          paymentLink, // Include payment link in payload
+        }),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -140,6 +189,28 @@ export default function CreateInvoicePage() {
               </div>
             </div>
 
+             {/* Business Information Section */}
+             <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                Sender Information
+              </h3>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-semibold mb-3 text-gray-700">
+                    Business/ Company/ Individual Name
+                  </label>
+                  <input
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    placeholder="Enter your Name"
+                    value={senderId}
+                    onChange={e => setSenderId(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Payment Settings Section */}
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -191,6 +262,39 @@ export default function CreateInvoicePage() {
                       </option>
                     ))}
                   </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Link Section */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                Payment Link
+              </h3>
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-3 text-gray-700">
+                    Select or Paste Payment Link
+                  </label>
+                  <select
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm mb-4"
+                    value={paymentLink}
+                    onChange={e => setPaymentLink(e.target.value)}
+                  >
+                    <option value="">Select a recent payment link</option>
+                    {paymentLinks.map((link) => (
+                      <option key={link.id} value={link.url} style={{ whiteSpace: 'normal', wordBreak: 'break-all', maxWidth: '50%' }}>
+                        {link.url} (Created: {new Date(link.createdAt).toLocaleDateString()})
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    placeholder="Or paste a payment link"
+                    value={paymentLink}
+                    onChange={e => setPaymentLink(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -290,8 +394,9 @@ export default function CreateInvoicePage() {
                   </span>
                 )}
               </button>
+              
             </div>
-
+            <span className="text-xs text-pink-400 pl-2">Recepient should check Junk Email if not received</span>
             {/* Status Messages */}
             {status === "success" && (
               <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-700 rounded-xl">
