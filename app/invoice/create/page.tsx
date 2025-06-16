@@ -81,12 +81,12 @@ export default function CreateInvoicePage() {
             <FaFileInvoiceDollar className="w-4 h-4" />
             Invoice Creation
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          <h1 className="text-2xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
             <span className="block bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
               Create New Invoice
             </span>
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Generate professional crypto invoices with ease and send them instantly to your clients.
           </p>
         </div>
@@ -98,8 +98,8 @@ export default function CreateInvoicePage() {
               <FaFileInvoiceDollar className="text-3xl text-purple-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Invoice Details</h2>
-              <p className="text-gray-600">Fill in the information below to create your invoice</p>
+              <h2 className="text-lg font-bold text-gray-900">Invoice Details</h2>
+              <p className="text-gray-600 text-sm">Fill in the information below to create your invoice</p>
             </div>
           </div>
 

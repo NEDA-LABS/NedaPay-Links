@@ -1,46 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useWallets } from '@privy-io/react-auth';
-import { X, Clock, CheckCircle, XCircle, AlertCircle, ExternalLink } from 'lucide-react';
-import { fetchAllOrders } from '../utils/paycrest';
-import axios from 'axios';
+import { X, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import axios from 'axios';
 
-interface PaymentOrder {
+interface OffRampTransaction {
   id: string;
-  amount: string;
-  amountPaid: string;
-  token: string;
-  network: string;
-  reference: string;
-  recipient: {
-    institution: string;
-    accountIdentifier: string;
-    accountName: string;
-    memo: string;
-  };
-  fromAddress: string;
-  returnAddress: string;
-  receiveAddress: string;
   createdAt: string;
-  updatedAt: string;
-  txHash: string;
+  merchantId: string;
   status: string;
-  rate: string;
 }
-
-interface OrderHistoryResponse {
-  message: string;
-  status: string;
-  data: {
-    total: number;
-    page: number;
-    pageSize: number;
-    orders: PaymentOrder[];
-  };
-}
-
-const client_id = process.env.PAYCREST_CLIENT_ID;
-
 
 const getStatusIcon = (status: string) => {
   switch (status.toLowerCase()) {
@@ -87,7 +56,7 @@ const formatDate = (dateString: string) => {
 const OrderHistoryModal = () => {
   const { wallets } = useWallets();
   const [isOpen, setIsOpen] = useState(false);
-  const [orders, setOrders] = useState<PaymentOrder[]>([]);
+  const [orders, setOrders] = useState<OffRampTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,53 +64,29 @@ const OrderHistoryModal = () => {
 
   const userAddress = wallets[0]?.address;
 
-  interface FetchOrdersResponse {
-    message: string;
-    status: string;
-    data: {
-      total: number;
-      page: number;
-      pageSize: number;
-      orders: PaymentOrder[];
-    };
-  }
-
   const fetchOrderHistory = async (page = 1) => {
     if (!userAddress) return;
-  
+
     setLoading(true);
     setError(null);
-  
+
     try {
-      const params = {
-        page,
-        pageSize: 10, // Adjust based on your needs
-      };
-      const response = await fetch("https://api.paycrest.io/v1/sender/orders", {
-        headers: {
-          "Content-Type": "application/json",
-          "API-Key": `${client_id}`,
+      const response = await axios.get('/api/paycrest/orders-history', {
+        params: {
+          wallet: userAddress,
+          page,
+          pageSize: 10,
         },
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
-      let res = await response.json();
+      const res = response.data;
 
-      console.log("response debugg", res) //debugging
       if (res.status !== 'success') {
         throw new Error('Failed to fetch orders');
       }
-  
-      // Filter orders by user's address
-      const userOrders = res.data.orders.filter(
-        (order: PaymentOrder) => order.fromAddress.toLowerCase() === userAddress.toLowerCase()
-      );
-  
-      console.log("user orders", userOrders); // Debugging
-      setOrders(userOrders);
-      setTotalPages(Math.ceil(res.data.total / (params.pageSize || 10)));
+
+      setOrders(res.data.transactions);
+      setTotalPages(Math.ceil(res.data.total / 10));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load order history';
       setError(errorMessage);
@@ -161,7 +106,7 @@ const OrderHistoryModal = () => {
     setCurrentPage(page);
     fetchOrderHistory(page);
   };
-  
+
   const modalContent = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
@@ -209,9 +154,6 @@ const OrderHistoryModal = () => {
                       <div className="flex items-center gap-3">
                         {getStatusIcon(order.status)}
                         <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {order.amount} {order.token}
-                          </h3>
                           <p className="text-sm text-gray-500">
                             {formatDate(order.createdAt)}
                           </p>
@@ -221,44 +163,6 @@ const OrderHistoryModal = () => {
                         {order.status.toUpperCase()}
                       </span>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600 mb-1">Recipient</p>
-                        <p className="font-medium text-gray-900">{order.recipient?.accountName}</p>
-                        <p className="text-gray-500">{order.recipient?.institution}</p>
-                        <p className="text-gray-500">{order.recipient?.accountIdentifier}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-gray-600 mb-1">Transaction Details</p>
-                        <p className="text-gray-900">Network: <span className="font-medium">{order.network?.toUpperCase()}</span></p>
-                        <p className="text-gray-900">Rate: <span className="font-medium">{order.rate}</span></p>
-                        {order.reference && (
-                          <p className="text-gray-900">Reference: <span className="font-medium">{order.reference}</span></p>
-                        )}
-                      </div>
-                    </div>
-
-                    {order.recipient?.memo && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <p className="text-gray-600 text-sm mb-1">Memo</p>
-                        <p className="text-gray-900 text-sm">{order.recipient.memo}</p>
-                      </div>
-                    )}
-
-                    {order.txHash && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <a
-                          href={`https://basescan.org/tx/${order.txHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm"
-                        >
-                          View Transaction <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

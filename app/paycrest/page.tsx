@@ -166,7 +166,7 @@ const PaymentForm: React.FC = () => {
       const tx = await usdcContract.transfer(receiveAddress, amountInWei);
       await tx.wait();
 
-      setSuccess(`Payment order initiated! Transaction Hash: ${tx.hash}, Receive address: ${receiveAddress}, Reference: ${reference}, Amount: ${orderAmount}, Network: base, Token: USDC, Fee: ${senderFee}, Transaction Fee: ${transactionFee}, Valid Until: ${validUntil}`);
+      setSuccess(`Payment order initiated! Transaction Hash: ${tx.hash}\nReceive address: ${receiveAddress}\nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);
       setError('');
     } catch (err) {
       console.error('Payment order error:', err);

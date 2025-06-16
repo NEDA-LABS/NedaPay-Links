@@ -6,11 +6,11 @@ const prisma = new PrismaClient();
 
 // Setup Nodemailer transporter with Mailtrap
 const transporter = nodemailer.createTransport({
-  host: 'sandbox.smtp.mailtrap.io',
-  port: 2525,
+  host: 'live.smtp.mailtrap.io',
+  port: 587,
   auth: {
-    user: process.env.MAILTRAP_USER!,
-    pass: process.env.MAILTRAP_PASS!,
+    user: "api",
+    pass: process.env.MAILTRAP_NEDAPAY_DOMAIN_TOKEN!,
   },
 });
 
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
     // Send email using Nodemailer
     await transporter.sendMail({
-      from: `"Invoice Service" <nedapay@demomailtrap.co>`,
+      from: `"Invoice Service" <hello@nedapay.xyz>`,
       to: email,
       subject: `New Invoice from ${merchantId}`,
       html: htmlContent,

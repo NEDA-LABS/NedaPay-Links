@@ -185,8 +185,7 @@ export default function PaymentLinkPage() {
     const sanitizedDescription = sanitizeInput(description);
 
     try {
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const response = await fetch("/api/payment-links", {
         method: "POST",
         headers: {
