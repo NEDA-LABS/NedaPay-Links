@@ -76,6 +76,45 @@ export default function PayWithWallet({
     }
   };
 
+// function to create notification
+const createNotification = async (
+  transactionId: string,
+  merchantId: string,
+  amount: string,
+  currency: string,
+  description: string | undefined
+) => {
+  try {
+    const message = description
+      ? `Payment received: ${amount} ${currency} for ${description}`
+      : `Payment received: ${amount} ${currency}`;
+
+    const response = await fetch("/api/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        recipient: merchantId,
+        type: "payment_received",
+        status: "unseen",
+        relatedTransactionId: transactionId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      // console.error("Failed to create notification:", errorData);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    // console.error("Error creating notification:", error);
+    return false;
+  }
+};
+
   // Function to update transaction status to Completed
   const updateTransactionStatus = async (
     txHash: string,
@@ -100,12 +139,27 @@ export default function PayWithWallet({
           status: "Completed",
         }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Failed to update transaction:", errorData);
         return false;
       }
+  
+      // Get the updated transaction to get its ID for notification
+      const updatedTransaction = await response.json();
+      
+      // Create notification after successful transaction update
+      if (updatedTransaction) {
+        await createNotification(
+          updatedTransaction.id,
+          merchantId,
+          amount,
+          currency,
+          description
+        );
+      }
+  
       return true;
     } catch (dbError) {
       console.error("Error updating transaction in database:", dbError);

@@ -74,7 +74,6 @@ model Transaction {
   txHash       String
   createdAt    DateTime      @default(now())
   invoiceId    String?       @unique
-  invoice      Invoice?      @relation("TransactionInvoice")
   Notification Notification? @relation("TransactionNotification")
 }
 
@@ -93,7 +92,6 @@ model PaymentLink {
   signature    String        @default("")
   linkId       String?       @unique
   invoice      Invoice?      @relation("PaymentLinkInvoice")
-  Notification Notification? @relation("PaymentLinkNotification")
 }
 
 model Notification {
@@ -104,10 +102,6 @@ model Notification {
   status               String
   createdAt            DateTime     @default(now())
   relatedTransactionId String?      @unique
-  relatedPaymentLinkId String?      @unique
-  relatedInvoiceId     String?      @unique
-  relatedInvoice       Invoice?     @relation("InvoiceNotification", fields: [relatedInvoiceId], references: [id])
-  relatedPaymentLink   PaymentLink? @relation("PaymentLinkNotification", fields: [relatedPaymentLinkId], references: [id])
   relatedTransaction   Transaction? @relation("TransactionNotification", fields: [relatedTransactionId], references: [id])
 }
 
@@ -125,12 +119,9 @@ model Invoice {
   sentAt            DateTime?
   paidAt            DateTime?
   canceledAt        DateTime?
-  transactionId     String?           @unique
   paymentLinkId     String?           @unique
   paymentLink       PaymentLink?      @relation("PaymentLinkInvoice", fields: [paymentLinkId], references: [id])
-  transaction       Transaction?      @relation("TransactionInvoice", fields: [transactionId], references: [id])
   lineItems         InvoiceLineItem[]
-  Notification      Notification?     @relation("InvoiceNotification")
 }
 
 model InvoiceLineItem {

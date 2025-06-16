@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { CheckCircle, Copy, Check, Wallet, ExternalLink, Shield } from 'lucide-react';
 import MiniBalanceTracker from '../dashboard/MiniBalanceTracker';
+import OrderHistoryModal from '../paycrest/OfframpStatus';
+
+
 
 interface WalletStatusSectionProps {
   selectedWalletAddress?: string;
@@ -50,8 +53,9 @@ export default function WalletStatusSection({ selectedWalletAddress, selectedWal
             </div>
           </div>
           {/* MiniBalanceTracker Integration */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-col gap-2">
             <MiniBalanceTracker />
+            <OrderHistoryModal />
           </div>
         </div>
 

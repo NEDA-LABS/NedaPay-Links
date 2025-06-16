@@ -109,6 +109,11 @@ const PaymentForm: React.FC = () => {
       return;
     }
 
+    if (!rate) {
+      setError('Please fetch the exchange rate before proceeding.');
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -283,181 +288,194 @@ const PaymentForm: React.FC = () => {
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-2xl border border-white/20 mb-12">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
-              <p className="text-gray-600">Convert your crypto to fiat and receive funds directly in your bank account</p>
+              <p className="text-gray-600">Follow the steps below to convert your USDC to fiat and receive funds in your bank or mobile account.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Amount Input */}
-              <div className="group">
-                <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 mb-3">
-                  Amount (USDC)
-                </label>
-                <div className="relative">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Step 1: Amount and Currency */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 1</span>
+                  <h3 className="text-lg font-semibold text-gray-900">Enter Amount and Currency</h3>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="group">
+                    <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 mb-3">
+                      Amount (USDC)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        id="amount"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                        placeholder="0.00"
+                        required
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-6">
+                        <span className="text-gray-500 font-medium text-sm">USDC</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="group">
+                    <label htmlFor="fiat" className="block text-sm font-semibold text-gray-700 mb-3">
+                      Fiat Currency
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="fiat"
+                        value={fiat}
+                        onChange={(e) => { setFiat(e.target.value); fetchInstitutions(); setInstitution(''); setIsAccountVerified(false); }}
+                        className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                      >
+                        <option value="">Select Currency</option>
+                        {currencies.map((currency) => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.name} ({currency.code})
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="group">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-gray-700">Exchange Rate</label>
+                    <button
+                      type="button"
+                      onClick={handleFetchRate}
+                      disabled={!amount || !fiat}
+                      className="px-4 py-2 !bg-emerald-500 hover:!bg-emerald-600 !text-white !rounded-xl !font-medium transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Fetch Rate
+                    </button>
+                  </div>
+                  {rate && (
+                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 mt-3 animate-fade-in">
+                      <p className="text-emerald-800 font-medium">
+                        1 USDC = {rate} {fiat}
+                      </p>
+                      <p className="text-emerald-600 text-sm mt-1">
+                        You will receive approximately {(parseFloat(amount) * parseFloat(rate)).toFixed(2)} {fiat}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Step 2: Recipient Details */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 2</span>
+                  <h3 className="text-lg font-semibold text-gray-900">Recipient Details</h3>
+                </div>
+                <div className="group">
+                  <label htmlFor="institution" className="block text-sm font-semibold text-gray-700 mb-3">
+                    Choose Bank or Mobile Network
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="institution"
+                      value={institution}
+                      onChange={(e) => { setInstitution(e.target.value); setIsAccountVerified(false); }}
+                      onFocus={fetchInstitutions}
+                      className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                      required
+                    >
+                      <option value="">Select Institution</option>
+                      {institutions.map((inst) => (
+                        <option key={inst.code} value={inst.code}>
+                          {inst.name} {inst.type === 'mobile' ? '(Mobile Network)' : '(Bank)'}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div className="group">
+                  <label htmlFor="accountNumber" className="block text-sm font-semibold text-gray-700 mb-3">
+                    Account or Mobile Number
+                  </label>
                   <input
-                    type="number"
-                    id="amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
-                    placeholder="0.00"
+                    type="text"
+                    id="accountNumber"
+                    value={accountIdentifier}
+                    onChange={(e) => { setAccountIdentifier(e.target.value); setIsAccountVerified(false); }}
+                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    placeholder="Enter account or mobile number"
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-6">
-                    <span className="text-gray-500 font-medium text-sm">USDC</span>
-                  </div>
+                  <p className="text-sm text-gray-500 mt-2">For mobile numbers, include the country code (e.g., +2341234567890).</p>
                 </div>
-              </div>
-
-              {/* Fiat Currency Selection */}
-              <div className="group">
-                <label htmlFor="fiat" className="block text-sm font-semibold text-gray-700 mb-3">
-                  Fiat Currency
-                </label>
-                <div className="relative">
-                  <select
-                    id="fiat"
-                    value={fiat}
-                    onChange={(e) => { setFiat(e.target.value); fetchInstitutions(); }}
-                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
-                  >
-                    {currencies.map((currency) => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.name} ({currency.code})
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
+                <div className="group">
+                  <label htmlFor="accountName" className="block text-sm font-semibold text-gray-700 mb-3">
+                    Account Name
+                  </label>
+                  <input
+                    type="text"
+                    id="accountName"
+                    value={accountName}
+                    onChange={(e) => { setAccountName(e.target.value); setIsAccountVerified(false); }}
+                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    placeholder="Enter the exact account holder's name"
+                    required
+                  />
+                  <p className="text-sm text-gray-500 mt-2">Ensure the name matches the account holder's name exactly.</p>
                 </div>
-              </div>
-
-              {/* Exchange Rate Section */}
-              <div className="group">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-semibold text-gray-700">Exchange Rate</label>
+                <div className="group">
                   <button
                     type="button"
-                    onClick={handleFetchRate}
-                    disabled={!amount}
-                    className="px-4 py-2 !bg-emerald-500 hover:!bg-emerald-600 !text-white !rounded-xl !font-medium transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleVerifyAccount}
+                    disabled={isLoading || !institution || !accountIdentifier || !accountName}
+                    className={`w-full text-sm px-6 py-3 !bg-blue-500 hover:!bg-blue-600 !text-white !rounded-xl !font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    Fetch Rate
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Verifying...
+                      </div>
+                    ) : (
+                      'Verify Account'
+                    )}
                   </button>
-                </div>
-                {rate && (
-                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                    <p className="text-emerald-800 font-medium">
-                      1 USDC = {rate} {fiat}
-                    </p>
-                    <p className="text-emerald-600 text-sm mt-1">
-                      You will receive approximately {(parseFloat(amount) * parseFloat(rate)).toFixed(2)} {fiat}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Institution Selection */}
-              <div className="group">
-                <label htmlFor="institution" className="block text-sm font-semibold text-gray-700 mb-3">
-                  Choose Bank or Mobile Network Institution
-                </label>
-                <div className="relative">
-                  <select
-                    id="institution"
-                    value={institution}
-                    onChange={(e) => setInstitution(e.target.value)}
-                    onFocus={fetchInstitutions}
-                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
-                    required
-                  >
-                    <option value="">Select Bank Institution</option>
-                    {institutions.map((inst) => (
-                      <option key={inst.code} value={inst.code}>
-                        {inst.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Account Number */}
-              <div className="group">
-                <label htmlFor="accountNumber" className="block text-sm font-semibold text-gray-700 mb-3">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  id="accountNumber"
-                  value={accountIdentifier}
-                  onChange={(e) => setAccountIdentifier(e.target.value)}
-                  className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
-                  placeholder="Enter your account number"
-                  required
-                />
-              </div>
-
-              {/* Account Name */}
-              <div className="group">
-                <label htmlFor="accountName" className="block text-sm font-semibold text-gray-700 mb-3">
-                  Account Name
-                </label>
-                <input
-                  type="text"
-                  id="accountName"
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
-                  placeholder="Enter account holder's name"
-                  required
-                />
-              </div>
-
-              {/* Verify Account Button */}
-              <div className="group">
-                <button
-                  type="button"
-                  onClick={handleVerifyAccount}
-                  disabled={isLoading || !institution || !accountIdentifier || !accountName}
-                  className={`w-full text-sm px-6 py-3 !bg-blue-500 hover:!bg-blue-600 !text-white !rounded-xl !font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Verifying...
+                  {isAccountVerified && (
+                    <div className="p-4 bg-green-50 rounded-xl border border-green-200 mt-3 animate-fade-in">
+                      <p className="text-green-800 font-medium">Account Verified Successfully</p>
                     </div>
-                  ) : (
-                    'Verify Account'
                   )}
-                </button>
-                {isAccountVerified && (
-                  <div className="p-4 bg-green-50 rounded-xl border border-green-200 mt-3">
-                    <p className="text-green-800 font-medium">Account Verified</p>
-                  </div>
-                )}
+                </div>
               </div>
 
-              {/* Memo */}
-              <div className="group">
-                <label htmlFor="memo" className="block text-sm font-semibold text-gray-700 mb-3">
-                  Transaction Memo
-                </label>
-                <textarea
-                  id="memo"
-                  value={memo}
-                  onChange={(e) => setMemo(e.target.value)}
-                  className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
-                  rows={3}
-                  placeholder="Add a memo for this transaction..."
-                  required
-                />
+              {/* Step 3: Transaction Memo */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 3</span>
+                  <h3 className="text-lg font-semibold text-gray-900">Transaction Memo</h3>
+                </div>
+                <div className="group">
+                  <label htmlFor="memo" className="block text-sm font-semibold text-gray-700 mb-3">
+                    Transaction Memo
+                  </label>
+                  <textarea
+                    id="memo"
+                    value={memo}
+                    onChange={(e) => setMemo(e.target.value)}
+                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
+                    rows={3}
+                    placeholder="Add a memo for this transaction..."
+                    required
+                  />
+                </div>
               </div>
 
               {/* Error and Success Messages */}
@@ -474,64 +492,31 @@ const PaymentForm: React.FC = () => {
               )}
 
               {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoading || !rate || !isAccountVerified}
-                className="w-full py-4 px-8 !bg-gradient-to-r !from-emerald-600 !to-blue-600 hover:!from-emerald-700 hover:!to-blue-700 !text-white !font-semibold text-sm !rounded-2xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                <div className="flex items-center justify-center gap-3">
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
-                  )}
-                  {isLoading ? 'Processing...' : 'Initiate Offramp Payment'}
-                </div>
-              </button>
+              <div className="space-y-4">
+                <button
+                  type="submit"
+                  disabled={isLoading || !rate || !isAccountVerified}
+                  className="w-full py-4 px-8 !bg-gradient-to-r !from-emerald-600 !to-blue-600 hover:!from-emerald-700 hover:!to-blue-700 !text-white !font-semibold text-sm !rounded-2xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    {isLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                    )}
+                    {isLoading ? 'Processing...' : 'Initiate Offramp Payment'}
+                  </div>
+                </button>
+                <p className="text-sm text-gray-600 text-center">
+                  If the transaction fails, funds will be refunded to your wallet address.
+                </p>
+              </div>
             </form>
           </div>
         )}
 
-        {/* Information Cards */}
-        {/* <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900">Fast Processing</h3>
-            </div>
-            <p className="text-gray-600 text-sm">Receive funds in your bank account within minutes of transaction completion.</p>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900">Secure Transfers</h3>
-            </div>
-            <p className="text-gray-600 text-sm">Bank-grade security with encrypted transactions and verified account validation.</p>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900">Best Rates</h3>
-            </div>
-            <p className="text-gray-600 text-sm">Competitive exchange rates with transparent pricing and minimal fees.</p>
-          </div>
-        </div> */}
       </div>
 
       <Footer />

@@ -119,8 +119,6 @@ const getMultiStablecoinHourlyRevenueData = (
     };
   });
 
-  console.log('Chart Data:', { labels, datasets });
-
   datasets.forEach((dataset) => {
     if (dataset.data.length !== labels.length) {
       console.error(`Dataset length mismatch for ${dataset.label}:`, {

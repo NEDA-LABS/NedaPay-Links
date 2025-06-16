@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initiatePaymentOrder, Recipient } from '../../../utils/paycrest';
+import { initiatePaymentOrder, Recipient, fetchAllOrders } from '../../../utils/paycrest';
 
 interface PaymentOrderRequest {
   amount: number;
@@ -8,6 +8,34 @@ interface PaymentOrderRequest {
   returnAddress?: string;
   reference?: string;
 }
+
+
+// export async function GET(req: NextRequest) {
+//   console.log("debugging orders req",req)
+//   try {
+//     const { searchParams } = new URL(req.url);
+    
+//     const params = {
+//       ordering: searchParams.get('ordering') || undefined,
+//       status: searchParams.get('status') || undefined,
+//       token: searchParams.get('token') || undefined,
+//       network: searchParams.get('network') || undefined,
+//       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : undefined,
+//       pageSize: searchParams.get('pageSize') ? parseInt(searchParams.get('pageSize')!) : undefined,
+//     };
+
+//     const orders = await fetchAllOrders(params);
+    
+    
+//     return NextResponse.json(orders);
+//   } catch (error) {
+//     console.error('Error fetching orders:', error);
+//     return NextResponse.json(
+//       { error: 'Failed to fetch orders' },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 export async function POST(request: NextRequest) {
   try {

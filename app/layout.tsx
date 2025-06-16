@@ -6,8 +6,17 @@ import { Providers } from './providers';
 import AppToaster from './components/Toaster';
 
 export const metadata: Metadata = {
-  title: 'NEDA Pay Merchant Portal',
-  description: 'Merchant dashboard for NEDA Pay stablecoin ecosystem',
+  title: 'NEDAPay',
+  description: 'Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
+  keywords: ['NEDAPay', 'Stablecoins', 'Swap', 'Cash Out', 'Track Transactions'],
+  authors: [{ name: 'NEDAPay' }],
+  openGraph: {
+    title: 'NEDAPay',
+    description: 'Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
+    type: 'website',
+    locale: 'en',
+    siteName: 'NEDAPay',
+  },
 };
 
 export default function RootLayout({

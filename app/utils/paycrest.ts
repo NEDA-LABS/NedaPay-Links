@@ -9,6 +9,50 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
+// Add this interface after your existing interfaces
+interface PaymentOrder {
+  id: string;
+  amount: string;
+  amountPaid: string;
+  amountReturned: string;
+  token: string;
+  senderFee: string;
+  transactionFee: string;
+  rate: string;
+  network: string;
+  gatewayId: string;
+  reference: string;
+  recipient: Recipient;
+  fromAddress: string;
+  returnAddress: string;
+  receiveAddress: string;
+  feeAddress: string;
+  createdAt: string;
+  updatedAt: string;
+  txHash: string;
+  status: string;
+}
+
+interface FetchOrdersResponse {
+  message: string;
+  status: string;
+  data: {
+    total: number;
+    page: number;
+    pageSize: number;
+    orders: PaymentOrder[];
+  };
+}
+
+interface FetchOrdersParams {
+  ordering?: string;
+  status?: string;
+  token?: string;
+  network?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export interface Recipient {
   institution: string;
   accountIdentifier: string;
@@ -72,4 +116,14 @@ export async function fetchSupportedInstitutions(currencyCode: string): Promise<
 export async function fetchSupportedCurrencies(): Promise<Array<{ code: string; name: string; shortName: string; decimals: number; symbol: string; marketRate: string }>> {
   const response = await axios.get(`${PAYCREST_API_URL}/v1/currencies`, { headers });
   return response.data.data;
+}
+
+export async function fetchAllOrders(): Promise<FetchOrdersResponse> {
+  try {
+    const response = await fetch(`${PAYCREST_API_URL}/v1/sender/orders/`, { headers });
+    return response.json(); 
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    throw new Error('Failed to fetch orders: An unexpected error occurred');
+  }
 }
