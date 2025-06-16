@@ -31,7 +31,6 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
     
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
-      // Prevent body scroll when sidebar is open
       document.body.style.overflow = "hidden";
     }
     
@@ -77,23 +76,23 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300"
+        className="fixed inset-0 bg-indigo-900/60 backdrop-blur-sm z-50 transition-opacity duration-300"
         onClick={onClose}
       />
       
       {/* Sidebar */}
       <div className={`
-        fixed top-0 right-0 bg-white dark:bg-slate-800 rounded-l
-        shadow-2xl z-50 w-64 transform transition-transform duration-300 ease-in-out
+        fixed top-0 right-0 bg-white rounded-l-2xl
+        shadow-xl z-50 w-72 transform transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "translate-x-full"}
       `}>
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-slate-200">
-          <h2 className="text-xl font-semibold text-slate-900">Menu</h2>
+        <div className="flex justify-between items-center p-6 border-b border-blue-100">
+          <h2 className="text-xl font-bold text-indigo-900">Menu</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:!text-slate-600 transition-colors"
+            className="text-blue-500 hover:text-indigo-600 transition-colors"
             aria-label="Close sidebar"
           >
             <X className="w-6 h-6" />
@@ -102,11 +101,10 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
         
         {/* Navigation */}
         <nav className="p-6 space-y-2">
-          
           {/* Always visible items */}
           <button
             onClick={handleHowItWorksClick}
-            className="flex items-center space-x-3 p-3 rounded-lg hover:!bg-slate-100 transition-colors w-full text-left"
+            className="flex items-center space-x-3 p-3 !rounded-lg hover:!bg-blue-50 !text-blue-700 hover:text-indigo-900 transition-colors w-full text-left font-medium"
           >
             <svg
               className="w-5 h-5"
@@ -127,7 +125,7 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
           
           <button
             onClick={handleFAQClick}
-            className="flex items-center space-x-3 p-3 rounded-lg hover:!bg-slate-100 transition-colors w-full text-left"
+            className="flex items-center space-x-3 p-3 !rounded-lg hover:!bg-blue-50 !text-blue-700 hover:text-indigo-900 transition-colors w-full text-left font-medium"
           >
             <HelpCircle className="w-5 h-5" />
             <span>FAQ</span>
@@ -136,15 +134,11 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
           {/* Authenticated user items */}
           {authenticated && (
             <>
-              <div className="border-t border-slate-200 my-4 pt-4">
-                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2 px-3">
-                  Account
-                </p>
-              </div>
+              <div className="border-t border-blue-100 my-4"></div>
               
               <Link
                 href="/settings"
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors"
+                className="flex items-center space-x-3 p-3 !rounded-lg hover:!bg-blue-50 !text-blue-700 hover:text-indigo-900 transition-colors font-medium"
                 onClick={onClose}
               >
                 <Settings className="w-5 h-5" />
@@ -153,7 +147,7 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
               
               <Link
                 href="/payment-link"
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors"
+                className="flex items-center space-x-3 p-3 !rounded-lg hover:!bg-blue-50 !text-blue-700 hover:text-indigo-900 transition-colors font-medium"
                 onClick={onClose}
               >
                 <LinkIcon className="w-5 h-5" />
@@ -162,22 +156,18 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
               
               <Link
                 href="/invoice"
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors"
+                className="flex items-center space-x-3 p-3 !rounded-lg hover:!bg-blue-50 !text-blue-700 hover:text-indigo-900 transition-colors font-medium"
                 onClick={onClose}
               >
                 <Receipt className="w-5 h-5" />
                 <span>Send Invoice</span>
               </Link>
               
-              <div className="border-t border-slate-200 dark:border-slate-700 my-4 pt-4">
-                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium mb-2 px-3">
-                  Actions
-                </p>
-              </div>
+              <div className="border-t border-blue-100 my-4"></div>
               
               <Link
                 href="/paycrest"
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors"
+                className="flex items-center space-x-3 p-3 !rounded-lg hover:!bg-blue-50 !text-blue-700 hover:text-indigo-900 transition-colors font-medium"
                 onClick={onClose}
               >
                 <Zap className="w-5 h-5" />
@@ -186,7 +176,7 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
               
               <Link
                 href="#swap"
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors"
+                className="flex items-center space-x-3 p-3 !rounded-lg hover:!bg-blue-50 !text-blue-700 hover:text-indigo-900 transition-colors font-medium"
                 onClick={onClose}
               >
                 <Repeat className="w-5 h-5" />
@@ -194,7 +184,6 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
               </Link>
             </>
           )}
-          
         </nav>
       </div>
     </>
