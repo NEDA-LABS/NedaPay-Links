@@ -4,6 +4,7 @@ import './globals.css';
 import './components/name-fallback.css';
 import { Providers } from './providers';
 import AppToaster from './components/Toaster';
+import {Analytics} from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: 'NEDAPay',
@@ -39,7 +40,7 @@ export default function RootLayout({
             <main className="flex-grow">{children}</main>
           </Providers>
         </div>
-        
+        <Analytics />
       </body>
     </html>
   );
