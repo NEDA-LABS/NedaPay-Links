@@ -101,7 +101,7 @@ export async function POST(req: Request) {
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
                 <span style="color: #6b7280; font-weight: 500;">Merchant:</span>
-                <span style="color: #1f2937; font-weight: 600;">${merchantId}</span>
+                <span style="color: #1f2937; font-weight: 600;">${sender}</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
                 <span style="color: #6b7280; font-weight: 500;">Payment Method:</span>
