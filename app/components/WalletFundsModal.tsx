@@ -36,6 +36,7 @@ interface Token {
   type: string;
   address?: string;
   flag?: string;
+  currency?: string;
 }
 
 interface TokenBalance {
@@ -43,8 +44,13 @@ interface TokenBalance {
   balance: string;
   decimals: number;
   contractAddress?: string;
-  usdValue?: number;
+  usdValue: number;
   flag?: string;
+  currency?: string;
+}
+
+interface ExchangeRates {
+  [currency: string]: number;
 }
 
 const erc20BalanceOfAbi = [{
@@ -111,10 +117,44 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
   const [gasEstimate, setGasEstimate] = useState<string>('');
   const [isValidAddress, setIsValidAddress] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({ USD: 1 });
 
   const embeddedWallet = wallets.find(wallet => 
     wallet.walletClientType === 'privy' && wallet.address === walletAddress
   );
+
+  // Fetch exchange rates from API
+  const fetchExchangeRates = useCallback(async () => {
+    try {
+      const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      const data = await response.json();
+      const filteredRates: ExchangeRates = {
+        USD: 1,
+        EUR: data.rates.EUR || 1,
+        GBP: data.rates.GBP || 1,
+        TZS: data.rates.TZS || 1,
+        NGN: data.rates.NGN || 1,
+        ZAR: data.rates.ZAR || 1,
+        IDR: data.rates.IDR || 1,
+        CAD: data.rates.CAD || 1,
+        BRL: data.rates.BRL || 1,
+        TRY: data.rates.TRY || 1,
+        NZD: data.rates.NZD || 1,
+        MXN: data.rates.MXN || 1,
+      };
+      setExchangeRates(filteredRates);
+    } catch (error) {
+      console.error('Failed to fetch exchange rates:', error);
+      setExchangeRates({ USD: 1 });
+    }
+  }, []);
+
+  // Convert token balance to USD
+  const convertToUSD = (balance: number, currency: string): number => {
+    if (!exchangeRates[currency]) return balance;
+    const usdAmount = balance / exchangeRates[currency];
+    return usdAmount;
+  };
 
   const fetchBalances = useCallback(async () => {
     if (!walletAddress || !embeddedWallet) return;
@@ -122,80 +162,70 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
     try {
       const provider = await embeddedWallet.getEthereumProvider();
       const tokens: Token[] = [
-        { symbol: 'ETH', decimals: 18, type: 'native', flag: undefined },
+        { symbol: 'ETH', decimals: 18, type: 'native', currency: 'USD' },
         ...stablecoins.filter(sc => sc.chainId === base.id).map(sc => ({
           symbol: sc.baseToken,
           address: sc.address,
           decimals: sc.decimals as number,
           type: 'erc20',
-          flag: sc.flag
+          flag: sc.flag,
+          currency: sc.currency || 'USD'
         }))
       ];
-      const balancePromises = tokens.map(async (token) => {
-        try {
-          if (token.type === 'native') {
-            const balanceHex = await provider.request({
-              method: 'eth_getBalance',
-              params: [walletAddress, 'latest']
-            });
-            const balance = BigInt(balanceHex);
-            const formattedBalance = formatUnits(balance, token.decimals);
-            return {
-              symbol: token.symbol,
-              balance: formattedBalance,
-              decimals: token.decimals,
-              contractAddress: undefined,
-              usdValue: 0,
-              flag: token.flag
-            };
-          } else {
-            const data = encodeFunctionData({
-              abi: erc20BalanceOfAbi,
-              functionName: 'balanceOf',
-              args: [walletAddress]
-            });
-            if (!token.address) {
-              throw new Error(`Token ${token.symbol} does not have an address`);
-            }
-            const balanceHex = await provider.request({
-              method: 'eth_call',
-              params: [{ to: token.address, data }, 'latest']
-            });
-            const balance = BigInt(balanceHex);
-            const formattedBalance = formatUnits(balance, token.decimals);
-            return {
-              symbol: token.symbol,
-              balance: formattedBalance,
-              decimals: token.decimals,
-              contractAddress: token.address,
-              usdValue: 0,
-              flag: token.flag
-            };
-          }
-        } catch (error) {
-          console.error(`Error fetching balance for ${token.symbol}:`, error);
-          return {
-            symbol: token.symbol,
-            balance: '0',
-            decimals: token.decimals,
-            contractAddress: token.type === 'erc20' ? token.address : undefined,
-            usdValue: 0,
-            flag: token.flag
-          };
-        }
+
+      // Batch eth_call requests for ERC20 tokens
+      const erc20Tokens = tokens.filter(t => t.type === 'erc20' && t.address);
+      const ethBalancePromise = provider.request({
+        method: 'eth_getBalance',
+        params: [walletAddress, 'latest']
       });
-      const tokenBalances = await Promise.all(balancePromises);
+
+      const erc20BalancePromises = erc20Tokens.map(token => {
+        const data = encodeFunctionData({
+          abi: erc20BalanceOfAbi,
+          functionName: 'balanceOf',
+          args: [walletAddress]
+        });
+        return provider.request({
+          method: 'eth_call',
+          params: [{ to: token.address!, data }, 'latest']
+        }).catch(error => {
+          console.error(`Error fetching balance for ${token.symbol}:`, error);
+          return '0';
+        });
+      });
+
+      const [ethBalanceHex, ...erc20BalanceHexes] = await Promise.all([
+        ethBalancePromise,
+        ...erc20BalancePromises
+      ]);
+
+      const tokenBalances = tokens.map((token, index) => {
+        const balanceHex = token.type === 'native' ? ethBalanceHex : erc20BalanceHexes[index - 1];
+        const balance = BigInt(balanceHex);
+        const formattedBalance = formatUnits(balance, token.decimals);
+        const balanceNumber = parseFloat(formattedBalance);
+        const usdValue = token.symbol === 'ETH' ? balanceNumber * 3500 : convertToUSD(balanceNumber, token.currency || 'USD');
+        return {
+          symbol: token.symbol,
+          balance: formattedBalance,
+          decimals: token.decimals,
+          contractAddress: token.type === 'erc20' ? token.address : undefined,
+          usdValue: usdValue,
+          flag: token.flag,
+          currency: token.currency
+        };
+      });
+
       setBalances(tokenBalances);
-      if (tokenBalances.length > 0) {
+      if (tokenBalances.length > 0 && !selectedToken) {
         setSelectedToken(tokenBalances[0]);
       }
-    } catch (error) {
-      console.error('Error fetching balances:', error);
-      toast.error('Failed to fetch wallet balances');
-    } finally {
+    } 
+      finally {
       setIsLoading(false);
     }
-  }, [walletAddress, embeddedWallet]);
+  }, [walletAddress, embeddedWallet, exchangeRates, selectedToken]);
 
   const handleFundWallet = async () => {
     try {
@@ -349,7 +379,10 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
   }, [recipientAddress]);
 
   useEffect(() => {
-    if (isOpen && walletAddress) fetchBalances();
+    if (isOpen && walletAddress) {
+      fetchExchangeRates();
+      fetchBalances();
+    }
   }, [isOpen, walletAddress, fetchBalances]);
 
   useEffect(() => {
@@ -418,7 +451,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
 
         <ModalBody>
           <div className="text-4xl font-bold text-gray-900 mb-6">
-            ${totalBalance.toFixed(2)}
+            ${totalBalance.toFixed(8)}
           </div>
 
           {step === 'select' && (
@@ -429,7 +462,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                   disabled={!selectedToken || parseFloat(selectedToken?.balance || '0') <= 0}
                   variant="secondary"
                 >
-                  Transfer
+                  Send
                 </Button>
                 <Button variant="primary" onClick={handleFundWallet}>
                   Fund Wallet
@@ -472,23 +505,16 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="animate-pulse flex items-center justify-between p-4">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-[--bg-secondary] rounded-full mr-3"></div>
-                          <div className="space-y-2">
-                            <div className="h-4 border-[--border-color] rounded w-12"></div>
-                            <div className="bg-[--bg-secondary] rounded w-4"></div>
-                          </div>
-                        </div>
-                        <div className="h-5 bg-[--bg-secondary] rounded w-16"></div>
-                      </div>
-                    ))}
+              <div className="space-y-4 relative">
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <svg className="animate-spin h-8 w-8 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                   </div>
-                ) : (
+                )}
+                {balances.length > 0 ? (
                   balances.map((token, index) => (
                     <TokenCard
                       key={index}
@@ -507,11 +533,15 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-gray-900">
-                          ${(token.usdValue || 0).toFixed(4)}
+                          ${token.usdValue.toFixed(4)}
                         </div>
                       </div>
                     </TokenCard>
                   ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    No balances available
+                  </div>
                 )}
               </div>
 

@@ -1,8 +1,6 @@
-
 "use client";
-
 import Link from "next/link";
-import { Twitter, Github, BookOpen } from "lucide-react";
+import {FaXTwitter, FaGithub, FaMedium, FaDiscord} from "react-icons/fa6";
 
 export default function Footer() {
   return (
@@ -19,16 +17,30 @@ export default function Footer() {
           </Link>
         </div>
 
+        {/* Center - Join Community */}
+        <div className="flex items-center gap-2 text-slate-600">
+          <a
+            href="https://discord.gg/2H3dQzruRV"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors duration-300"
+            aria-label="Discord Community"
+          >
+            <span>Join our community Today</span>
+            <FaDiscord className="w-5 h-5" />
+          </a>
+        </div>
+
         {/* Right Side - Social Icons */}
         <div className="flex space-x-4">
           <a
-            href="https://x.com/NedaLabs"
+            href="https://x.com/NedaPay_xyz"
             target="_blank"
             rel="noopener noreferrer"
             className="text-slate-500 hover:text-blue-600 transition-colors duration-300"
             aria-label="X / Twitter"
           >
-            <Twitter className="w-5 h-5" strokeWidth={2.5} />
+            <FaXTwitter className="w-5 h-5" strokeWidth={2.5} />
           </a>
           <a
             href="https://medium.com/@nedalabs"
@@ -37,7 +49,7 @@ export default function Footer() {
             className="text-slate-500 hover:text-blue-600 transition-colors duration-300"
             aria-label="Medium"
           >
-            <BookOpen className="w-5 h-5" strokeWidth={2.5} />
+            <FaMedium className="w-5 h-5" strokeWidth={2.5} />
           </a>
           <a
             href="https://github.com/0xMgwan/NedaPay/tree/main/merchant-portal"
@@ -46,7 +58,7 @@ export default function Footer() {
             className="text-slate-500 hover:text-blue-600 transition-colors duration-300"
             aria-label="GitHub"
           >
-            <Github className="w-5 h-5" strokeWidth={2.5} />
+            <FaGithub className="w-5 h-5" strokeWidth={2.5} />
           </a>
         </div>
       </div>

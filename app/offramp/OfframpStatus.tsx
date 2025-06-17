@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useWallets } from '@privy-io/react-auth';
+import { useWallets,usePrivy } from '@privy-io/react-auth';
 import { X, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
@@ -54,7 +54,7 @@ const formatDate = (dateString: string) => {
 };
 
 const OrderHistoryModal = () => {
-  const { wallets } = useWallets();
+  const { user } = usePrivy();
   const [isOpen, setIsOpen] = useState(false);
   const [orders, setOrders] = useState<OffRampTransaction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,7 @@ const OrderHistoryModal = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const userAddress = wallets[0]?.address;
+  const userAddress = user?.wallet?.address;
 
   const fetchOrderHistory = async (page = 1) => {
     if (!userAddress) return;
