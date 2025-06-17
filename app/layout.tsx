@@ -7,16 +7,19 @@ import AppToaster from './components/Toaster';
 import {Analytics} from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
-  title: 'NEDAPay',
+  title: 'NedaPay',
   description: 'Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
-  keywords: ['NEDAPay', 'Stablecoins', 'Swap', 'Cash Out', 'Track Transactions'],
-  authors: [{ name: 'NEDAPay' }],
+  keywords: ['NedaPay', 'Stablecoins', 'Swap', 'Cash Out', 'Track Transactions'],
+  authors: [{ name: 'NedaPay' }],
   openGraph: {
     title: 'NedaPay',
     description: 'Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
     type: 'website',
     locale: 'en',
-    siteName: 'NEDAPay',
+    siteName: 'NedaPay',
+  },
+  icons: {
+    icon: '/favicon.png',
   },
 };
 
@@ -32,7 +35,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" type="image/png" href="https://nedapay.xyz/NEDApayLogo.png" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
       </head>
       <body className="bg-white text-black dark:text-white">
         <div className="flex flex-col min-h-screen">
