@@ -203,11 +203,11 @@ const PaymentForm: React.FC = () => {
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
             </svg>
-            Crypto to Fiat Offramp
+            Stablecoins to Fiat Offramp
           </div>
           <h1 className="text-2xl md:text-6xl font-extrabold text-gray-900 mb-4 tracking-tight">
             <span className="block bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-              Convert Crypto to Cash
+              Convert your Stablecoins to Cash
             </span>
           </h1>
           <p className="text-sm md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
