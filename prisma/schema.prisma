@@ -109,6 +109,7 @@ model Invoice {
   id                String            @id @default(uuid())
   merchantId        String
   recipient         String
+  sender            String            @default("not given")
   email             String
   paymentCollection String
   dueDate           DateTime

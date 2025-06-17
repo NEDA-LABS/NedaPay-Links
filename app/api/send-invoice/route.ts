@@ -11,7 +11,7 @@ const client = new MailtrapClient({
 
 export async function POST(req: Request) {
   try {
-    const { merchantId, recipient, email, paymentCollection, dueDate, currency, lineItems, paymentLink } = await req.json();
+    const { merchantId, recipient,sender, email, paymentCollection, dueDate, currency, lineItems, paymentLink } = await req.json();
 
     // Validate payment link if provided
     let paymentLinkRecord = null;
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
       data: {
         merchantId,
         recipient,
+        sender,
         email,
         paymentCollection,
         dueDate: new Date(dueDate),
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Invoice from ${merchantId}</title>
+      <title>Invoice from ${sender}</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
@@ -183,14 +184,14 @@ export async function POST(req: Request) {
     `;
 
     // Send email using Mailtrap client
-    const sender = {
+    const senderEmail = {
       name: "Invoice Service",
       email: `${process.env.MAILTRAP_INVOICE_EMAIL}`
     };
 
     try {
       const emailResult = await client.send({
-        from: sender,
+        from: senderEmail,
         to: [{ email: email }],
         subject: `Invoice #${invoice.id} from ${merchantId} - Due ${new Date(dueDate).toLocaleDateString()}`,
         html: htmlContent,

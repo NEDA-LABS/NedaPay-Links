@@ -82,8 +82,9 @@ export default function CreateInvoicePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          merchantId: senderId,
+          merchantId: merchantAddress,
           recipient,
+          sender: senderId,
           email,
           paymentCollection,
           dueDate,
@@ -275,7 +276,7 @@ export default function CreateInvoicePage() {
               <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label className="block text-sm font-semibold mb-3 text-gray-700">
-                    Select or Paste Payment Link
+                    Select or Paste Payment Link (<span className="text-blue-500 text-xs">payment link can't be attached in more than one invoice</span>)
                   </label>
                   <select
                     className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm mb-4"
@@ -396,7 +397,7 @@ export default function CreateInvoicePage() {
               </button>
               
             </div>
-            <span className="text-xs text-pink-400 pl-2">Recepient should check Junk Email if not received</span>
+            <span className="text-xs font-bold text-blue-500 pl-2">Recepient should check Junk Email if not received</span>
             {/* Status Messages */}
             {status === "success" && (
               <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-700 rounded-xl">
