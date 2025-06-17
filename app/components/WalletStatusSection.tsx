@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle, Copy, Check, Wallet, ExternalLink, Shield } from 'lucide-react';
 import MiniBalanceTracker from '../dashboard/MiniBalanceTracker';
-import OrderHistoryModal from '../paycrest/OfframpStatus';
+import OrderHistoryModal from '../offramp/OfframpStatus';
 
 
 

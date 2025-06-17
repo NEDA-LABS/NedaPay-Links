@@ -704,7 +704,7 @@ export default function MerchantDashboard() {
                           </button>
                           <button
                             onClick={() => {
-                              router.push("/paycrest");
+                              router.push("/offramp");
                             }}
                             className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
                           >

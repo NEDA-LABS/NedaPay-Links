@@ -166,7 +166,7 @@ export default function Sidebar({ isOpen, onClose, authenticated }: SidebarProps
               <div className="border-t border-blue-100 my-4"></div>
               
               <Link
-                href="/paycrest"
+                href="/offramp"
                 className="flex items-center space-x-3 p-3 !rounded-lg hover:!bg-blue-50 !text-blue-700 hover:text-indigo-900 transition-colors font-medium"
                 onClick={onClose}
               >
