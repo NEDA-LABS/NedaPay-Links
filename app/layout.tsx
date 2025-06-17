@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   keywords: ['NEDAPay', 'Stablecoins', 'Swap', 'Cash Out', 'Track Transactions'],
   authors: [{ name: 'NEDAPay' }],
   openGraph: {
-    title: 'NEDAPay',
+    title: 'NedaPay',
     description: 'Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
     type: 'website',
     locale: 'en',
@@ -32,6 +32,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" type="image/png" href="https://nedapay.xyz/NEDApayLogo.png" />
       </head>
       <body className="bg-white text-black dark:text-white">
         <div className="flex flex-col min-h-screen">
