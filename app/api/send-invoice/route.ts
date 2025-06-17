@@ -79,7 +79,7 @@ export async function POST(req: Request) {
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
           <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;">Invoice</h1>
-          <p style="color:rgb(0, 57, 243); margin: 8px 0 0 0; font-size: 16px;">Payment Request</p>
+          <p style="color:#ffffff; margin: 8px 0 0 0; font-size: 16px;">Payment Request</p>
         </div>
 
         <!-- Content -->
