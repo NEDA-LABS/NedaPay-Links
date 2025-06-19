@@ -29,6 +29,7 @@ import FaqSection from "./components/FaqSection";
 import HeroFlags from "./components/HeroFlags";
 import Supporters from "./components/SupportersSection";
 import YouTubeEmbedButton from "./components/YouTubeEmbedButton";
+import RatesComponents from "./offramp/RatesComponents";
 
 function HomeContent() {
   const [mounted, setMounted] = useState(false);
@@ -77,7 +78,7 @@ function HomeContent() {
 
           <div className="flex flex-col gap-6">
           <h1 className="!text-2xl  lg:!text-5xl xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-blue-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse-slow leading-tight">
-          Unlock Seamless Payments Worldwide
+          Unlock Seamless Payments Globally
       </h1>
             <p className="!text-l lg:!text-l  font-semibold text-slate-500 leading-relaxed drop-shadow-md">
               Accept Stablecoins, Swap instantly, Cash Out Easily
@@ -126,6 +127,7 @@ function HomeContent() {
           <div className="flex flex-col items-right gap-4">
             <HeroFeaturesHomePage />
             <HeroFlags />
+            <RatesComponents/>
           </div>
         </div>
         

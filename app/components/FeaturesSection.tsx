@@ -103,7 +103,7 @@ export default function EnhancedFeaturesSection() {
           </div>
 
           <h2 className="text-2xl font-bold mb-4 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Everything You Need to Accept Crypto Payments
+            Everything You Need to Accept Stablecoin Payments
           </h2>
 
           <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto text-xs">
