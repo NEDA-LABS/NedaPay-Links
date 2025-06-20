@@ -22,7 +22,7 @@ interface RateCache {
 const CACHE_DURATION = 25000; // 25 seconds
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
-const DISPLAY_INTERVAL = 2000; // 3 seconds per currency pair
+const DISPLAY_INTERVAL = 3000; // 3 seconds per currency set
 const FADE_DURATION = 1000; // Fade animation duration in ms
 
 const CurrencyRatesWidget = () => {
@@ -141,7 +141,7 @@ const CurrencyRatesWidget = () => {
       setIsRefreshing(false);
       abortControllerRef.current = null;
     }
-  }, [isRateStale, fetchRateWithRetry]);
+  }, [isRateStale, fetchRateWithRetry, rateCache]);
 
   useEffect(() => {
     const initializeWidget = async () => {
@@ -166,7 +166,7 @@ const CurrencyRatesWidget = () => {
       }, 30000);
 
       displayIntervalRef.current = setInterval(() => {
-        setCurrentIndex(prev => (prev + 1) % Math.ceil(currencies.length / 2));
+        setCurrentIndex(prev => (prev + 1) % Math.ceil(currencies.length / 4));
       }, DISPLAY_INTERVAL);
     }
 
@@ -190,85 +190,157 @@ const CurrencyRatesWidget = () => {
   }, []);
 
   const displayCurrencies = useMemo(() => {
-    const start = currentIndex * 2;
-    return currencies.slice(start, start + 2);
+    const start = currentIndex * 4;
+    return currencies.slice(start, start + 4);
   }, [currentIndex, currencies]);
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-indigo-800 text-sm justify-center">
-        <Activity className="w-4 h-4 text-indigo-600" />
-        <span>Loading rates...</span>
+      <div className="bg-gray-900 rounded-lg p-6 shadow-2xl border border-gray-800">
+        <div className="flex items-center justify-center gap-3">
+          <Activity className="w-5 h-5 text-green-400 animate-pulse" />
+          <span className="text-gray-300 text-xs font-medium">Loading exchange rates...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 text-red-600 text-sm">
-        <AlertCircle className="w-4 h-4" />
-        <span>{error}</span>
-        <button
-          onClick={handleManualRefresh}
-          className="flex items-center gap-1 text-xs text-red-600 hover:text-red-800 transition-colors"
-          disabled={isRefreshing}
-        >
-          <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Retry
-        </button>
+      <div className="bg-gray-900 rounded-lg p-6 shadow-2xl border border-red-900/50">
+        <div className="flex items-center justify-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-400" />
+          <span className="text-red-300 text-xs font-medium">{error}</span>
+          <button
+            onClick={handleManualRefresh}
+            className="flex items-center gap-2 px-3 py-1 text-xs text-red-300 hover:text-red-100 
+                       bg-red-900/30 hover:bg-red-900/50 rounded-md transition-all duration-200
+                       border border-red-800/50 hover:border-red-700/50"
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
+  const containerStyle = {
+    animation: `fadeInSlide ${DISPLAY_INTERVAL}ms ease-in-out infinite`,
+    minHeight: '4rem'
+  };
+
+  const rateItemStyle = {
+    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)',
+    border: '1px solid rgba(34, 197, 94, 0.2)',
+    transition: 'all 0.3s ease'
+  };
+
+  const statusDotStyle = {
+    animation: 'pulse 2s infinite'
+  };
+
   return (
-    <div className="relative text-indigo-800 justify-center items-center">
-      <style jsx>{`
-        @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateY(8px); }
-          15% { opacity: 1; transform: translateY(0); }
-          85% { opacity: 1; transform: translateY(0); }
-          100% { opacity: 0; transform: translateY(-8px); }
-        }
+    <div className="bg-gray-900 rounded-lg shadow-2xl border-4 !border-purple-800 w-[60%] items-center mx-auto">
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes fadeInSlide {
+            0% { opacity: 0; transform: translateX(20px); }
+            15% { opacity: 1; transform: translateX(0); }
+            85% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(-20px); }
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          .rate-item:hover {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%) !important;
+            border-color: rgba(34, 197, 94, 0.3) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+          }
+          .refresh-button {
+            transition: all 0.2s ease;
+          }
+          .refresh-button:hover {
+            transform: scale(1.05);
+          }
+        `
+      }} />
 
-        .currency-container {
-          animation: fadeInOut ${DISPLAY_INTERVAL}ms ease-in-out infinite;
-          min-height: 3rem;
-          background-color: #eef2ff; /* Light indigo-50 */
-          border-radius: 8px;
-          padding: 8px 12px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .refresh-button:hover {
-          transform: scale(1.1);
-          color: #4f46e5; /* indigo-600 */
-        }
-      `}</style>
-
-      <div className="flex items-center gap-4 justify-center">
-        <div className="currency-container flex flex-col sm:flex-row sm:gap-4 border !border-blue-500">
-          {displayCurrencies.map((currency) => {
-            const cached = rateCache[currency.code];
-            const isStale = cached?.isStale || false;
-            const rate = cached ? cached.rate : currency.marketRate;
-
-            return (
-              <div key={currency.code} className="flex items-center gap-2 justify-center">
-                <span className="text-xs font-medium !text-indigo-500">
-                  1 USDC = {formatRate(rate, currency)} {currency.code}
-                </span>
-                {isStale && (
-                  <AlertCircle className="w-3 h-3 text-yellow-500" />
-                )}
-              </div>
-            );
-          })}
+      {/* Header */}
+      <div className="bg-gray-800/50 px-6 py-3 border-b border-gray-700/50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 bg-green-400 rounded-full" style={statusDotStyle}></div>
+            <h3 className="text-white text-xs tracking-wide">
+              LIVE EXCHANGE RATES
+            </h3>
+            <span className="text-gray-400 text-xs font-mono">USDC/FIAT</span>
+          </div>
+          
+          {/* <button
+            onClick={handleManualRefresh}
+            className="refresh-button flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 
+                       hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded-md
+                       border border-gray-600/50 hover:border-gray-500/50"
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Updating...' : 'Refresh'}
+          </button> */}
         </div>
       </div>
 
+      {/* Rates Display */}
+      <div className="">
+        <div className="currency-container " style={containerStyle}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            {displayCurrencies.map((currency) => {
+              const cached = rateCache[currency.code];
+              const isStale = cached?.isStale || false;
+              const rate = cached ? cached.rate : currency.marketRate;
+
+              return (
+                <div key={currency.code} className="rounded-lg p-2" style={rateItemStyle}>
+                  <div className="flex flex-row items-center">
+                    <div className="flex items-center gap-2">
+                      {/* <span className="text-gray-400 text-xs font-mono">
+                        {currency.symbol}
+                      </span> */}
+                      <span className="text-white font-semibold text-[0.65rem]">
+                        {currency.code}
+                      </span>
+                    </div>
+                    {isStale && (
+                      <AlertCircle className="w-3 h-3 text-yellow-400" />
+                    )}
+                  </div>
+                  
+                  <div className="">
+                    {/* <div className="text-gray-400 text-xs mb-1">1 USDC =</div> */}
+                    <div className="text-green-400 font-mono font-bold text-xs">
+                      {formatRate(rate, currency)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
       {lastUpdateTime > 0 && (
-        <div className="text-xs text-indigo-500 mt-1 justify-center items-center mx-auto text-center">
-          Updated: {new Date(lastUpdateTime).toLocaleTimeString()}
+        <div className="bg-gray-800/30 py-1 border-t border-gray-700/30">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+            <span className="text-gray-400 text-[0.6rem] font-mono">
+              Last updated: {new Date(lastUpdateTime).toLocaleTimeString()}
+            </span>
+          </div>
         </div>
       )}
     </div>
