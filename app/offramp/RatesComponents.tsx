@@ -242,7 +242,7 @@ const CurrencyRatesWidget = () => {
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg shadow-2xl border-4 !border-purple-800 w-[60%] items-center mx-auto">
+    <div className="bg-gray-900 rounded-lg shadow-2xl border-4 !border-purple-800 md:w-[60%] items-center mx-auto">
       <style dangerouslySetInnerHTML={{
         __html: `
           @keyframes fadeInSlide {
