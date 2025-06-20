@@ -53,7 +53,7 @@ export default function WalletStatusSection({ selectedWalletAddress, selectedWal
             </div>
           </div>
           {/* MiniBalanceTracker Integration */}
-          <div className="flex items-center flex-col gap-2">
+          <div className="flex items-center flex-col gap-2 pt-2">
             <MiniBalanceTracker />
             <OrderHistoryModal />
           </div>

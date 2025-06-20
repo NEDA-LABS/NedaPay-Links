@@ -28,67 +28,98 @@ export async function POST(request: NextRequest) {
     switch (event) {
       case 'payment_order.pending':
         console.log('Payment order pending:', data);
-        
         // Create new transaction record as pending
         await prisma.offRampTransaction.create({
           data: {
             id: data.id,
             merchantId: data.fromAddress,
-            status: 'pending'
+            status: 'pending',
+            amount: data.amount,
+            currency: data.recipient?.currency,
+            accountName: data.recipient?.accountName,
+            accountNumber: data.recipient?.accountIdentifier,
+            institution: data.recipient?.institution
           }
         });
         break;
 
       case 'payment_order.settled':
         console.log('Payment order settled:', data);
-        
         // Update transaction status to settled
         await prisma.offRampTransaction.upsert({
           where: { id: data.id },
-          update: { 
+          update: {
             status: 'settled',
-            merchantId: data.fromAddress
+            merchantId: data.fromAddress,
+            amount: data.amount,
+            currency: data.recipient?.currency,
+            accountName: data.recipient?.accountName,
+            accountNumber: data.recipient?.accountIdentifier,
+            institution: data.recipient?.institution
           },
           create: {
             id: data.id,
             merchantId: data.fromAddress,
-            status: 'settled'
+            status: 'settled',
+            amount: data.amount,
+            currency: data.recipient?.currency,
+            accountName: data.recipient?.accountName,
+            accountNumber: data.recipient?.accountIdentifier,
+            institution: data.recipient?.institution
           }
         });
         break;
 
       case 'payment_order.expired':
         console.log('Payment order expired:', data);
-        
         // Update transaction status to expired
         await prisma.offRampTransaction.upsert({
           where: { id: data.id },
-          update: { 
+          update: {
             status: 'expired',
-            merchantId: data.fromAddress
+            merchantId: data.fromAddress,
+            amount: data.amount,
+            currency: data.recipient?.currency,
+            accountName: data.recipient?.accountName,
+            accountNumber: data.recipient?.accountIdentifier,
+            institution: data.recipient?.institution
           },
           create: {
             id: data.id,
             merchantId: data.fromAddress,
-            status: 'expired'
+            status: 'expired',
+            amount: data.amount,
+            currency: data.recipient?.currency,
+            accountName: data.recipient?.accountName,
+            accountNumber: data.recipient?.accountIdentifier,
+            institution: data.recipient?.institution
           }
         });
         break;
 
       case 'payment_order.refunded':
         console.log('Payment order refunded:', data);
-        
         // Update transaction status to refunded
         await prisma.offRampTransaction.upsert({
           where: { id: data.id },
-          update: { 
+          update: {
             status: 'refunded',
-            merchantId: data.fromAddress
+            merchantId: data.fromAddress,
+            amount: data.amount,
+            currency: data.recipient?.currency,
+            accountName: data.recipient?.accountName,
+            accountNumber: data.recipient?.accountIdentifier,
+            institution: data.recipient?.institution
           },
           create: {
             id: data.id,
             merchantId: data.fromAddress,
-            status: 'refunded'
+            status: 'refunded',
+            amount: data.amount,
+            currency: data.recipient?.currency,
+            accountName: data.recipient?.accountName,
+            accountNumber: data.recipient?.accountIdentifier,
+            institution: data.recipient?.institution
           }
         });
         break;
@@ -98,7 +129,6 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ message: 'Webhook received' }, { status: 200 });
-
   } catch (error) {
     console.error('Webhook processing error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     // Find user by wallet address
     const user = await prisma.user.findUnique({
       where: { wallet },
-      select: { id: true },
+      select: { wallet: true },
     });
 
     if (!user) {
@@ -30,16 +30,21 @@ export async function GET(request: Request) {
       );
     }
 
-    // Fetch offramp transactions for the user's merchantId
+    // Fetch offramp transactions for the user's merchantId with all fields
     const transactions = await prisma.offRampTransaction.findMany({
       where: {
-        merchantId: user.id,
+        merchantId: user.wallet!,
       },
       select: {
         id: true,
         createdAt: true,
         status: true,
         merchantId: true,
+        amount: true,
+        currency: true,
+        accountName: true,
+        accountNumber: true,
+        institution: true,
       },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -51,7 +56,7 @@ export async function GET(request: Request) {
     // Count total transactions for pagination
     const total = await prisma.offRampTransaction.count({
       where: {
-        merchantId: user.id,
+        merchantId: user.wallet!,
       },
     });
 

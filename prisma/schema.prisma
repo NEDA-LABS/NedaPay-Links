@@ -139,4 +139,9 @@ model OffRampTransaction {
   createdAt    DateTime      @default(now()) 
   merchantId   String
   status       String
+  amount       String        @default("...")
+  currency     String        @default("...")
+  accountName  String        @default("...")
+  accountNumber String       @default("...")
+  institution  String        @default("...")
 }
