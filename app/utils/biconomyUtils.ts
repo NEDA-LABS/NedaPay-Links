@@ -1,6 +1,7 @@
 import { createBicoBundlerClient, createBicoPaymasterClient, toNexusAccount } from "@biconomy/abstractjs";
 import { base } from "viem/chains";
 import { http, parseEther } from "viem";
+import { createWalletClient, custom } from 'viem';
 import { privateKeyToAccount } from "viem/accounts";
 
 // Biconomy configuration
@@ -8,21 +9,37 @@ const BUNDLER_URL = process.env.BICONOMY_BUNDLER_URL!;
 const PAYMASTER_URL = process.env.BICONOMY_PAYMASTER_URL!;
 
 // Initialize Biconomy Nexus client
-export async function initBiconomyClient(signerPrivateKey: `0x${string}`) {
-  const privateKey = signerPrivateKey;
-  const account = privateKeyToAccount(privateKey);
+export async function initBiconomyClient(wallet: any) {
+  if (!wallet) {
+    throw new Error('No wallet provided');
+  }
 
-  const nexusClient = await createBicoBundlerClient({
-    account: await toNexusAccount({
-      signer: account,
+  try {
+    // Get the Ethereum provider from Privy wallet
+    const provider = await wallet.getEthereumProvider();
+    
+    // Create a viem wallet client from the provider
+    const walletClient = createWalletClient({
+      account: wallet.address as `0x${string}`,
       chain: base,
-      transport: http(),
-    }),
-    transport: http(BUNDLER_URL),
-    paymaster: createBicoPaymasterClient({ paymasterUrl: PAYMASTER_URL })
-  });
-
-  return nexusClient;
+      transport: custom(provider)
+    });
+    
+    const nexusClient = await createBicoBundlerClient({
+      account: await toNexusAccount({
+        signer: walletClient,
+        chain: base,
+        transport: http('https://mainnet.base.org'),
+      }),
+      transport: http("https://bundler.biconomy.io/api/v3/8453/bundler_3Zd5UiobiThrL2wFnwNw9ZgN"),
+      paymaster: createBicoPaymasterClient({ paymasterUrl: "https://paymaster.biconomy.io/api/v1/8453/DmE8Uzv_2.fa526c1b-0bde-48bd-b0a9-888a060ff57a" })
+    });
+    
+    return nexusClient;
+  } catch (error) {
+    console.error('Error creating wallet client:', error);
+    throw error;
+  }
 }
 
 // Send gasless USDC transfer

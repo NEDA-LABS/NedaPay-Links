@@ -19,7 +19,7 @@ const USDC_ABI = [
 ];
 
 const PaymentForm: React.FC = () => {
-  const { authenticated, login, connectWallet } = usePrivy();
+  const { authenticated, login, connectWallet, user } = usePrivy();
   const { wallets } = useWallets();
   const [amount, setAmount] = useState('');
   const [fiat, setFiat] = useState('NGN');
@@ -38,7 +38,7 @@ const PaymentForm: React.FC = () => {
 
   // Get the active wallet
   const activeWallet = wallets.length > 0 ? wallets[0] : null;
-
+  console.log("activeWallet", activeWallet); //debugg
   const address = activeWallet?.address;
 
   const fetchInstitutions = async () => {
@@ -54,12 +54,26 @@ const PaymentForm: React.FC = () => {
     fetchCurrencies();
   }, []);
 
+  console.log("wallets length", wallets.length)
+  console.log("address", address)
   useEffect(() => {
-    // Initialize Biconomy client when wallet is connected
     const initializeBiconomy = async () => {
-      if (address) {
+      if (address && wallets.length > 0) {
         try {
-          const client = await initBiconomyClient(address as `0x${string}`); // You may need to pass a private key or use wallet provider
+          // Try to find any available wallet (prioritize embedded, then external)
+          const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy');
+          const externalWallet = wallets.find(wallet => wallet.walletClientType !== 'privy');
+          
+          // Use embedded wallet if available, otherwise use external
+          const walletToUse = embeddedWallet || externalWallet;
+          
+          if (!walletToUse) {
+            throw new Error('No wallet found');
+          }
+          
+          console.log('Using wallet type:', walletToUse.walletClientType);
+          const client = await initBiconomyClient(walletToUse);
+          console.log("client debugggg", client);
           setNexusClient(client);
         } catch (err) {
           console.error('Biconomy initialization error:', err);
@@ -67,8 +81,9 @@ const PaymentForm: React.FC = () => {
         }
       }
     };
+    
     initializeBiconomy();
-  }, [address]);
+  }, [address, wallets]);
 
   const fetchCurrencies = async () => {
     try {
