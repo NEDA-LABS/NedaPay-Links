@@ -80,17 +80,24 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
         }
       }
 
-      // Fallback to external wallet (e.g., MetaMask) if no Privy provider
+      // Fallback to external wallet (e.g., MetaMask, Coinbase) if no Privy provider
       if (!provider && window.ethereum) {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        // Request accounts if not already connected
-        const accounts = await provider.listAccounts();
-        if (accounts.length === 0) {
-          try {
-            await window.ethereum.request({ method: 'eth_requestAccounts' });
-          } catch (error) {
-            errorList.push('Failed to connect to external wallet. Please try again.');
+        // Check if we have a valid Ethereum provider
+        if (typeof window.ethereum.request === 'function') {
+          // Create provider
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          
+          // Request accounts if not already connected
+          const accounts = await provider.listAccounts();
+          if (accounts.length === 0) {
+            try {
+              await window.ethereum.request({ method: 'eth_requestAccounts' });
+            } catch (error) {
+              errorList.push('Failed to connect to external wallet. Please try again.');
+            }
           }
+        } else {
+          errorList.push('Detected Ethereum provider but it lacks request method. Please try refreshing or using a different wallet.');
         }
       }
 

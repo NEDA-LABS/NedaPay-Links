@@ -4,10 +4,11 @@ import React, { useEffect, useState, FormEvent } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { Loader2, Network } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { fetchTokenRate, fetchSupportedInstitutions, verifyAccount, fetchSupportedCurrencies } from '../utils/paycrest';
+import { initBiconomyClient, sendGaslessUsdcTransfer } from '../utils/biconomyUtils';
 
 // USDC contract address on Base mainnet
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
@@ -33,9 +34,12 @@ const PaymentForm: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [currencies, setCurrencies] = useState<Array<{ code: string; name: string; shortName: string; decimals: number; symbol: string; marketRate: string }>>([]);
   const [isAccountVerified, setIsAccountVerified] = useState(false);
+  const [nexusClient, setNexusClient] = useState<any>(null);
 
   // Get the active wallet
   const activeWallet = wallets.length > 0 ? wallets[0] : null;
+
+  const address = activeWallet?.address;
 
   const fetchInstitutions = async () => {
     try {
@@ -49,6 +53,22 @@ const PaymentForm: React.FC = () => {
   useEffect(() => {
     fetchCurrencies();
   }, []);
+
+  useEffect(() => {
+    // Initialize Biconomy client when wallet is connected
+    const initializeBiconomy = async () => {
+      if (address) {
+        try {
+          const client = await initBiconomyClient(address as `0x${string}`); // You may need to pass a private key or use wallet provider
+          setNexusClient(client);
+        } catch (err) {
+          console.error('Biconomy initialization error:', err);
+          setError('Failed to initialize gasless transaction client');
+        }
+      }
+    };
+    initializeBiconomy();
+  }, [address]);
 
   const fetchCurrencies = async () => {
     try {
@@ -114,6 +134,11 @@ const PaymentForm: React.FC = () => {
       return;
     }
 
+    if (!nexusClient) {
+      setError('Gasless transaction client not initialized.');
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -128,7 +153,7 @@ const PaymentForm: React.FC = () => {
         }
       }
 
-      // Get wallet provider and signer
+      // Get wallet provider and signer for balance check
       const provider = new ethers.providers.Web3Provider(await activeWallet.getEthereumProvider());
       const signer = provider.getSigner();
 
@@ -150,7 +175,7 @@ const PaymentForm: React.FC = () => {
 
       const { receiveAddress, amount: orderAmount, reference, senderFee, transactionFee, validUntil } = response.data.data;
 
-      // Initialize USDC contract
+      // Initialize USDC contract for balance check
       const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
       const decimals = await usdcContract.decimals();
       const amountInWei = ethers.utils.parseUnits(amount, decimals);
@@ -162,18 +187,17 @@ const PaymentForm: React.FC = () => {
         return;
       }
 
-      // Send USDC transaction
-      const tx = await usdcContract.transfer(receiveAddress, amountInWei);
-      await tx.wait();
+      // Send gasless USDC transaction using Biconomy
+      const { hash, receipt } = await sendGaslessUsdcTransfer(nexusClient, receiveAddress, amount);
 
-      setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);
+      setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}\nTransaction Hash: ${hash}`);
       setError('');
     } catch (err) {
       console.error('Payment order error:', err);
       if (axios.isAxiosError(err)) {
         setError(`Failed to initiate payment order: ${err.response?.data?.message || err.message}`);
       } else {
-        setError('Failed to initiate payment order or send transaction');
+        setError('Failed to initiate payment order or send gasless transaction');
       }
     } finally {
       setIsLoading(false);
@@ -277,7 +301,7 @@ const PaymentForm: React.FC = () => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-green-600 font-medium">Ready for Base Network</p>
+                <p className="text-sm text-green-600 font-medium">Ready for Base Network (Gasless)</p>
               </div>
             </div>
           </div>
@@ -493,10 +517,10 @@ const PaymentForm: React.FC = () => {
 
               {/* Submit Button */}
               <div className="space-y-4">
-              <span className="text-sm text-blue-400">make sure you have fetched rate and verified account before initiating payment</span>
+                <span className="text-sm text-blue-400">Make sure you have fetched rate and verified account before initiating payment</span>
                 <button
                   type="submit"
-                  disabled={isLoading || !rate || !isAccountVerified}
+                  disabled={isLoading || !rate || !isAccountVerified || !nexusClient}
                   className="w-full py-4 px-8 !bg-gradient-to-r !from-emerald-600 !to-blue-600 hover:!from-emerald-700 hover:!to-blue-700 !text-white !font-semibold text-sm !rounded-2xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   <div className="flex items-center justify-center gap-3">
@@ -507,7 +531,7 @@ const PaymentForm: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     )}
-                    {isLoading ? 'Processing...' : 'Initiate Offramp Payment'}
+                    {isLoading ? 'Processing...' : 'Initiate Gasless Offramp Payment'}
                   </div>
                 </button>
                 <p className="text-sm text-gray-600 text-center">
@@ -517,7 +541,6 @@ const PaymentForm: React.FC = () => {
             </form>
           </div>
         )}
-
       </div>
 
       <Footer />
