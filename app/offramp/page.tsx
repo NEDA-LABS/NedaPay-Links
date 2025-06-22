@@ -1,14 +1,16 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState, FormEvent } from 'react';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { usePrivy, useWallets, useSign7702Authorization, useSignAuthorization } from '@privy-io/react-auth';
 import axios from 'axios';
 import { ethers } from 'ethers';
 import { Loader2 } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { fetchTokenRate, fetchSupportedInstitutions, verifyAccount, fetchSupportedCurrencies } from '../utils/paycrest';
-import { initBiconomyClient, sendGaslessUsdcTransfer } from '../utils/biconomyUtils';
+import { createWalletClient, custom, http } from 'viem';
+import { base } from 'viem/chains';
+import { createMeeClient, toMultichainNexusAccount } from '@biconomy/abstractjs';
 
 // USDC contract address on Base mainnet
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
@@ -17,10 +19,186 @@ const USDC_ABI = [
   'function balanceOf(address account) public view returns (uint256)',
   'function decimals() public view returns (uint8)',
 ];
+const NEXUS_IMPLEMENTATION_ADDRESS = '0x000000004F43C49e93C970E84001853a70923B03';
+
+const initializeBiconomy = async (
+  embeddedWallet: any,
+  signAuthorization: (params: { contractAddress: `0x${string}`; chainId: number }) => Promise<any>
+) => {
+  try {
+    // Ensure wallet is connected and has an address
+    if (!embeddedWallet?.address) {
+      throw new Error('Wallet not connected or address not available');
+    }
+
+    console.log('Starting Biconomy initialization with wallet:', embeddedWallet.address);
+
+    // Switch to Base chain first
+    await embeddedWallet.switchChain(base.id);
+    console.log('Switched to Base chain');
+    
+    // Get Ethereum provider
+    const provider = await embeddedWallet.getEthereumProvider();
+    
+    if (!provider) {
+      throw new Error('Ethereum provider not available');
+    }
+
+    // Wait a bit for provider to be ready
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Create viem wallet client with proper account setup
+    const walletClient = createWalletClient({
+      account: embeddedWallet.address as `0x${string}`,
+      chain: base,
+      transport: custom(provider),
+    });
+
+    // Verify wallet client has signing capabilities
+    if (!walletClient.account) {
+      throw new Error('Wallet client account not properly configured');
+    }
+
+    console.log('Wallet client created successfully');
+
+    // Create multichain Nexus account with proper signer configuration
+    const nexusAccount = await toMultichainNexusAccount({
+      chains: [base],
+      transports: [http()],
+      signer: walletClient,
+      accountAddress: embeddedWallet.address as `0x${string}`,
+    });
+
+    console.log('Nexus account created:', nexusAccount);
+
+    // Sign authorization for EIP-7702
+    try {
+      const authorization = await signAuthorization({
+        contractAddress: NEXUS_IMPLEMENTATION_ADDRESS,
+        chainId: base.id
+      });
+      console.log('Authorization signed successfully');
+
+      // Create MEE client
+      const meeClient = await createMeeClient({
+        account: nexusAccount,
+      });
+
+      console.log('MEE client created successfully');
+
+      return { meeClient, nexusAccount, authorization };
+    } catch (authError) {
+      console.error('Authorization signing failed:', authError);
+      throw new Error(`Failed to sign authorization: ${authError instanceof Error ? authError.message : 'Unknown error'}`);
+    }
+
+  } catch (error) {
+    console.error('Biconomy initialization failed:', error);
+    throw new Error(`Failed to initialize Biconomy client: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+const executeGasAbstractedTransaction = async (
+  meeClient: any,
+  authorization: any,
+  toAddress: string,
+  amountInWei: bigint,
+  walletAddress: string
+) => {
+  try {
+    // Validate inputs
+    if (!meeClient) {
+      throw new Error('MEE client not initialized');
+    }
+    
+    if (!authorization) {
+      throw new Error('Authorization not provided');
+    }
+
+    if (!ethers.utils.isAddress(toAddress)) {
+      throw new Error('Invalid recipient address');
+    }
+
+    console.log('Executing gas abstracted transaction:', {
+      toAddress,
+      amountInWei: amountInWei.toString(),
+      walletAddress
+    });
+
+    // Create USDC transfer data
+    const usdcInterface = new ethers.utils.Interface([
+      'function transfer(address to, uint256 amount) public returns (bool)',
+    ]);
+
+    const transferData = usdcInterface.encodeFunctionData('transfer', [toAddress, amountInWei]);
+
+    // Execute gas abstracted transaction
+    try {
+      const { hash } = await meeClient.execute({
+        authorization,
+        delegate: true,
+        feeToken: {
+          address: USDC_ADDRESS,
+          chainId: base.id,
+        },
+        instructions: [{
+          chainId: base.id,
+          calls: [{
+            to: USDC_ADDRESS,
+            value: 0n,
+            data: transferData,
+          }],
+        }],
+      });
+
+      console.log('Transaction executed, hash:', hash);
+
+      // Wait for transaction receipt
+      const receipt = await meeClient.waitForSupertransactionReceipt({ hash });
+      console.log('Transaction receipt:', receipt);
+      
+      return receipt;
+    } catch (executeError) {
+      console.error('Execute transaction error:', executeError);
+      throw new Error(`Transaction execution failed: ${executeError instanceof Error ? executeError.message : 'Unknown error'}`);
+    }
+
+  } catch (error) {
+    console.error('Gas abstracted transaction failed:', error);
+    throw new Error(`Failed to execute gas abstracted transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+const executeNormalTransaction = async (
+  wallet: any,
+  toAddress: string,
+  amountInWei: bigint
+) => {
+  try {
+    // Get provider and signer
+    const provider = new ethers.providers.Web3Provider(await wallet.getEthereumProvider());
+    const signer = provider.getSigner();
+    const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+
+    // Execute normal transfer
+    const tx = await usdcContract.transfer(toAddress, amountInWei);
+    console.log('Normal transaction sent:', tx.hash);
+
+    // Wait for transaction receipt
+    const receipt = await tx.wait();
+    console.log('Transaction receipt:', receipt);
+    
+    return receipt;
+  } catch (error) {
+    console.error('Normal transaction failed:', error);
+    throw new Error(`Failed to execute normal transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
 
 const PaymentForm: React.FC = () => {
-  const { authenticated, login, connectWallet, user } = usePrivy();
+  const { authenticated, login, connectWallet } = usePrivy();
   const { wallets } = useWallets();
+  const { signAuthorization } = useSign7702Authorization();
   const [amount, setAmount] = useState('');
   const [fiat, setFiat] = useState('NGN');
   const [rate, setRate] = useState('');
@@ -34,12 +212,11 @@ const PaymentForm: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [currencies, setCurrencies] = useState<Array<{ code: string; name: string; shortName: string; decimals: number; symbol: string; marketRate: string }>>([]);
   const [isAccountVerified, setIsAccountVerified] = useState(false);
-  const [nexusClient, setNexusClient] = useState<any>(null);
+  const [biconomyClient, setBiconomyClient] = useState<any>(null);
 
   // Get the active wallet
   const activeWallet = wallets.length > 0 ? wallets[0] : null;
-  console.log("activeWallet", activeWallet); //debugg
-  const address = activeWallet?.address;
+  const isEmbeddedWallet = activeWallet?.walletClientType === 'privy';
 
   const fetchInstitutions = async () => {
     try {
@@ -54,36 +231,55 @@ const PaymentForm: React.FC = () => {
     fetchCurrencies();
   }, []);
 
-  console.log("wallets length", wallets.length)
-  console.log("address", address)
+  // Initialize Biconomy only for embedded wallets
   useEffect(() => {
-    const initializeBiconomy = async () => {
-      if (address && wallets.length > 0) {
+    const initBiconomy = async () => {
+      if (isEmbeddedWallet && activeWallet && signAuthorization && activeWallet.address) {
         try {
-          // Try to find any available wallet (prioritize embedded, then external)
-          const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy');
-          const externalWallet = wallets.find(wallet => wallet.walletClientType !== 'privy');
+          setError(''); // Clear any previous errors
           
-          // Use embedded wallet if available, otherwise use external
-          const walletToUse = embeddedWallet || externalWallet;
-          
-          if (!walletToUse) {
-            throw new Error('No wallet found');
+          // Ensure wallet is ready
+          if (!activeWallet.chainId || activeWallet.chainId.toString() !== base.id.toString()) {
+            console.log('Switching to Base chain...');
+            await activeWallet.switchChain(base.id);
+            // Wait for chain switch to complete
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
+
+          // Create a wrapper for signAuthorization with proper error handling
+          const signAuth = async (params: { contractAddress: `0x${string}`; chainId: number }) => {
+            try {
+              console.log('Attempting to sign authorization with params:', params);
+              const result = await signAuthorization({
+                ...params,
+                chainId: base.id
+              });
+              console.log('Authorization signed:', result);
+              return result;
+            } catch (error) {
+              console.error('Sign authorization error:', error);
+              throw error;
+            }
+          };
+
+          const { meeClient, authorization } = await initializeBiconomy(activeWallet, signAuth);
+          setBiconomyClient({ meeClient, authorization });
+          console.log('Biconomy initialized successfully');
           
-          console.log('Using wallet type:', walletToUse.walletClientType);
-          const client = await initBiconomyClient(walletToUse);
-          console.log("client debugggg", client);
-          setNexusClient(client);
-        } catch (err) {
-          console.error('Biconomy initialization error:', err);
-          setError('Failed to initialize gasless transaction client');
+        } catch (error) {
+          console.error('Failed to initialize Biconomy:', error);
+          setError(`Failed to initialize Biconomy: ${error instanceof Error ? error.message : 'Unknown error'}. Please try reconnecting your wallet.`);
         }
       }
     };
-    
-    initializeBiconomy();
-  }, [address, wallets]);
+
+    // Add a delay to ensure wallet is fully ready
+    const timer = setTimeout(() => {
+      initBiconomy();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [activeWallet, signAuthorization, isEmbeddedWallet]);
 
   const fetchCurrencies = async () => {
     try {
@@ -149,28 +345,22 @@ const PaymentForm: React.FC = () => {
       return;
     }
 
-    if (!nexusClient) {
-      setError('Gasless transaction client not initialized.');
-      return;
-    }
-
     try {
       setIsLoading(true);
 
-      // Switch to Base network
-      if (activeWallet.switchChain) {
-        try {
-          await activeWallet.switchChain(8453); // Base mainnet chain ID
-        } catch (switchError) {
-          console.warn('Could not switch to Base network:', switchError);
-          setError('Failed to switch to Base network. Please ensure your wallet is on Base.');
-          return;
-        }
-      }
-
-      // Get wallet provider and signer for balance check
+      // Get provider and signer for balance check
       const provider = new ethers.providers.Web3Provider(await activeWallet.getEthereumProvider());
       const signer = provider.getSigner();
+      const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+      const decimals = await usdcContract.decimals();
+      const amountInWei = ethers.utils.parseUnits(amount, decimals);
+
+      // Check wallet balance
+      const balance = await usdcContract.balanceOf(activeWallet.address);
+      if (balance.lt(amountInWei)) {
+        setError('Insufficient USDC balance in your wallet.');
+        return;
+      }
 
       // Initiate payment order
       const response = await axios.post('/api/paycrest/orders', {
@@ -190,29 +380,34 @@ const PaymentForm: React.FC = () => {
 
       const { receiveAddress, amount: orderAmount, reference, senderFee, transactionFee, validUntil } = response.data.data;
 
-      // Initialize USDC contract for balance check
-      const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
-      const decimals = await usdcContract.decimals();
-      const amountInWei = ethers.utils.parseUnits(amount, decimals);
-
-      // Check wallet balance
-      const balance = await usdcContract.balanceOf(activeWallet.address);
-      if (balance.lt(amountInWei)) {
-        setError('Insufficient USDC balance in your wallet.');
-        return;
+      // Execute transaction based on wallet type
+      let receipt;
+      if (isEmbeddedWallet && biconomyClient) {
+        // Use gas abstraction for embedded wallets
+        receipt = await executeGasAbstractedTransaction(
+          biconomyClient.meeClient,
+          biconomyClient.authorization,
+          receiveAddress,
+          amountInWei.toBigInt(),
+          activeWallet.address
+        );
+      } else {
+        // Use normal transaction for other wallets
+        receipt = await executeNormalTransaction(
+          activeWallet,
+          receiveAddress,
+          amountInWei.toBigInt()
+        );
       }
 
-      // Send gasless USDC transaction using Biconomy
-      const { hash, receipt } = await sendGaslessUsdcTransfer(nexusClient, receiveAddress, amount);
-
-      setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}\nTransaction Hash: ${hash}`);
+      setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);
       setError('');
     } catch (err) {
       console.error('Payment order error:', err);
       if (axios.isAxiosError(err)) {
         setError(`Failed to initiate payment order: ${err.response?.data?.message || err.message}`);
       } else {
-        setError('Failed to initiate payment order or send gasless transaction');
+        setError('Failed to initiate payment order or send transaction');
       }
     } finally {
       setIsLoading(false);
@@ -283,7 +478,7 @@ const PaymentForm: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-orange-100">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.4 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <div className="flex-1">
@@ -306,7 +501,7 @@ const PaymentForm: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-green-100">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div className="flex-1">
@@ -316,7 +511,10 @@ const PaymentForm: React.FC = () => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-green-600 font-medium">Ready for Base Network (Gasless)</p>
+                <p className="text-sm text-green-600 font-medium">Ready for Base Network</p>
+                {isEmbeddedWallet && (
+                  <p className="text-xs text-blue-500 mt-1">(Gas abstraction enabled,fees will be deducted from usdc instead of eth)</p>
+                )}
               </div>
             </div>
           </div>
@@ -377,7 +575,7 @@ const PaymentForm: React.FC = () => {
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
                         <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
                     </div>
@@ -436,8 +634,8 @@ const PaymentForm: React.FC = () => {
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
                       <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </div>
                   </div>
                 </div>
@@ -488,8 +686,8 @@ const PaymentForm: React.FC = () => {
                     )}
                   </button>
                   {isAccountVerified && (
-                    <div className="p-4 bg-green-50 rounded-xl border border-green-200 mt-3 animate-fade-in">
-                      <p className="text-green-800 font-medium">Account Verified Successfully</p>
+                    <div className="p-4 bg-green-50 rounded-xl border border-green-200 mt-3 animate-pulse-y">
+                      <p className="text-green-800 font-medium text-xs">Account Number Verified Successfully, Double check to make sure it's yours. The System only Verifies the Number </p>
                     </div>
                   )}
                 </div>
@@ -519,23 +717,23 @@ const PaymentForm: React.FC = () => {
 
               {/* Error and Success Messages */}
               {error && (
-                <div className="p-4 bg-red-50 rounded-xl border border-red-200 animate-fade-in">
+                <div className="p-4 bg-red-50 rounded-xl border border-red-200 animate-pulse-y">
                   <p className="text-red-800 font-medium">{error}</p>
                 </div>
               )}
 
               {success && (
-                <div className="p-4 bg-green-50 rounded-xl border border-green-200 animate-fade-in">
+                <div className="p-4 bg-green-50 rounded-xl border border-green-200 animate-pulse-y">
                   <p className="text-green-800 font-medium">{success}</p>
                 </div>
               )}
 
               {/* Submit Button */}
               <div className="space-y-4">
-                <span className="text-sm text-blue-400">Make sure you have fetched rate and verified account before initiating payment</span>
+                <span className="text-sm text-blue-400">make sure you have fetched rate and verified account before initiating payment</span>
                 <button
                   type="submit"
-                  disabled={isLoading || !rate || !isAccountVerified || !nexusClient}
+                  disabled={isLoading || !rate || !isAccountVerified || (isEmbeddedWallet && !biconomyClient)}
                   className="w-full py-4 px-8 !bg-gradient-to-r !from-emerald-600 !to-blue-600 hover:!from-emerald-700 hover:!to-blue-700 !text-white !font-semibold text-sm !rounded-2xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   <div className="flex items-center justify-center gap-3">
@@ -543,10 +741,10 @@ const PaymentForm: React.FC = () => {
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     )}
-                    {isLoading ? 'Processing...' : 'Initiate Gasless Offramp Payment'}
+                    {isLoading ? 'Processing...' : 'Initiate Offramp Payment'}
                   </div>
                 </button>
                 <p className="text-sm text-gray-600 text-center">
@@ -556,6 +754,7 @@ const PaymentForm: React.FC = () => {
             </form>
           </div>
         )}
+
       </div>
 
       <Footer />

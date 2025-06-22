@@ -55,10 +55,10 @@ const MiniBalanceTracker = () => {
         }
       }
       if (!provider && window.ethereum) {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
+        provider = new ethers.providers.Web3Provider(window.ethereum as any);
         const accounts = await provider.listAccounts();
         if (accounts.length === 0) {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          await (window.ethereum as any).request({ method: 'eth_requestAccounts' });
         }
       }
       setWalletProvider(provider);

@@ -17,8 +17,9 @@
     "@coinbase/onchainkit": "^0.38.7",
     "@emailjs/browser": "^4.4.1",
     "@heroicons/react": "^2.2.0",
+    "@permissionless/wagmi": "^0.1.4",
     "@prisma/client": "^6.8.2",
-    "@privy-io/react-auth": "^2.15.1",
+    "@privy-io/react-auth": "^2.16.0",
     "@privy-io/wagmi": "^1.0.3",
     "@rhinestone/module-sdk": "^0.2.7",
     "@tanstack/react-query": "^5.74.4",
@@ -32,6 +33,7 @@
     "@web3modal/ethereum": "^2.7.1",
     "@web3modal/react": "^2.7.1",
     "@zerodev/ecdsa-validator": "^5.4.9",
+    "@zerodev/permissions": "^5.5.9",
     "@zerodev/sdk": "^5.4.38",
     "axios": "^1.9.0",
     "buffer": "^6.0.3",
@@ -63,7 +65,7 @@
     "speakeasy": "^2.0.0",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
-    "viem": "^2.31.3",
+    "viem": "^2.31.4",
     "wagmi": "^2.14.16"
   },
   "devDependencies": {
