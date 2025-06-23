@@ -101,6 +101,9 @@ export default function Header() {
                     NEDAPay
                   </span>
                 </div>
+                <span className="text-[0.6rem] z-10 text-slate-800 font-bold flex items-center justify-center">
+                    BETA
+                  </span>
               </div>
             </Link>
           </div>

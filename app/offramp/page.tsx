@@ -31,11 +31,11 @@ const initializeBiconomy = async (
       throw new Error('Wallet not connected or address not available');
     }
 
-    console.log('Starting Biconomy initialization with wallet:', embeddedWallet.address);
+    // console.log('Starting Biconomy initialization with wallet:', embeddedWallet.address);
 
     // Switch to Base chain first
     await embeddedWallet.switchChain(base.id);
-    console.log('Switched to Base chain');
+    // console.log('Switched to Base chain');
     
     // Get Ethereum provider
     const provider = await embeddedWallet.getEthereumProvider();
@@ -59,7 +59,7 @@ const initializeBiconomy = async (
       throw new Error('Wallet client account not properly configured');
     }
 
-    console.log('Wallet client created successfully');
+    // console.log('Wallet client created successfully');
 
     // Create multichain Nexus account with proper signer configuration
     const nexusAccount = await toMultichainNexusAccount({
@@ -69,7 +69,7 @@ const initializeBiconomy = async (
       accountAddress: embeddedWallet.address as `0x${string}`,
     });
 
-    console.log('Nexus account created:', nexusAccount);
+    // console.log('Nexus account created:', nexusAccount);
 
     // Sign authorization for EIP-7702
     try {
@@ -77,14 +77,14 @@ const initializeBiconomy = async (
         contractAddress: NEXUS_IMPLEMENTATION_ADDRESS,
         chainId: base.id
       });
-      console.log('Authorization signed successfully');
+      // console.log('Authorization signed successfully');
 
       // Create MEE client
       const meeClient = await createMeeClient({
         account: nexusAccount,
       });
 
-      console.log('MEE client created successfully');
+      // console.log('MEE client created successfully');
 
       return { meeClient, nexusAccount, authorization };
     } catch (authError) {
@@ -119,11 +119,11 @@ const executeGasAbstractedTransaction = async (
       throw new Error('Invalid recipient address');
     }
 
-    console.log('Executing gas abstracted transaction:', {
-      toAddress,
-      amountInWei: amountInWei.toString(),
-      walletAddress
-    });
+    // console.log('Executing gas abstracted transaction:', {
+    //   toAddress,
+    //   amountInWei: amountInWei.toString(),
+    //   walletAddress
+    // });
 
     // Create USDC transfer data
     const usdcInterface = new ethers.utils.Interface([
@@ -151,11 +151,11 @@ const executeGasAbstractedTransaction = async (
         }],
       });
 
-      console.log('Transaction executed, hash:', hash);
+      // console.log('Transaction executed, hash:', hash);
 
       // Wait for transaction receipt
       const receipt = await meeClient.waitForSupertransactionReceipt({ hash });
-      console.log('Transaction receipt:', receipt);
+      // console.log('Transaction receipt:', receipt);
       
       return receipt;
     } catch (executeError) {
@@ -182,15 +182,15 @@ const executeNormalTransaction = async (
 
     // Execute normal transfer
     const tx = await usdcContract.transfer(toAddress, amountInWei);
-    console.log('Normal transaction sent:', tx.hash);
+    // console.log('Normal transaction sent:', tx.hash);
 
     // Wait for transaction receipt
     const receipt = await tx.wait();
-    console.log('Transaction receipt:', receipt);
+    // console.log('Transaction receipt:', receipt);
     
     return receipt;
   } catch (error) {
-    console.error('Normal transaction failed:', error);
+    // console.error('Normal transaction failed:', error);
     throw new Error(`Failed to execute normal transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
@@ -240,7 +240,7 @@ const PaymentForm: React.FC = () => {
           
           // Ensure wallet is ready
           if (!activeWallet.chainId || activeWallet.chainId.toString() !== base.id.toString()) {
-            console.log('Switching to Base chain...');
+            // console.log('Switching to Base chain...');
             await activeWallet.switchChain(base.id);
             // Wait for chain switch to complete
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -249,25 +249,25 @@ const PaymentForm: React.FC = () => {
           // Create a wrapper for signAuthorization with proper error handling
           const signAuth = async (params: { contractAddress: `0x${string}`; chainId: number }) => {
             try {
-              console.log('Attempting to sign authorization with params:', params);
+              // console.log('Attempting to sign authorization with params:', params);
               const result = await signAuthorization({
                 ...params,
                 chainId: base.id
               });
-              console.log('Authorization signed:', result);
+              // console.log('Authorization signed:', result);
               return result;
             } catch (error) {
-              console.error('Sign authorization error:', error);
+              // console.error('Sign authorization error:', error);
               throw error;
             }
           };
 
           const { meeClient, authorization } = await initializeBiconomy(activeWallet, signAuth);
           setBiconomyClient({ meeClient, authorization });
-          console.log('Biconomy initialized successfully');
+          //console.log('Biconomy initialized successfully');
           
         } catch (error) {
-          console.error('Failed to initialize Biconomy:', error);
+          //console.error('Failed to initialize Biconomy:', error);
           setError(`Failed to initialize Biconomy: ${error instanceof Error ? error.message : 'Unknown error'}. Please try reconnecting your wallet.`);
         }
       }
@@ -403,7 +403,7 @@ const PaymentForm: React.FC = () => {
       setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);
       setError('');
     } catch (err) {
-      console.error('Payment order error:', err);
+      //console.error('Payment order error:', err);
       if (axios.isAxiosError(err)) {
         setError(`Failed to initiate payment order: ${err.response?.data?.message || err.message}`);
       } else {
@@ -415,7 +415,7 @@ const PaymentForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen width-[90%] bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
       <Header />
 
       {/* Back Button */}
