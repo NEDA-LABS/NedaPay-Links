@@ -45,7 +45,7 @@ const initializeBiconomy = async (
     }
 
     // Wait a bit for provider to be ready
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Create viem wallet client with proper account setup
     const walletClient = createWalletClient({
