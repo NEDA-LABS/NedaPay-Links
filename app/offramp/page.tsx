@@ -505,7 +505,7 @@ const PaymentForm: React.FC = () => {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-green-900">Wallet Connected</h3>
+                <h3 className="font-semibold text-green-900 text-sm">Wallet Connected</h3>
                 <p className="text-green-700 text-sm mt-1 font-mono">
                   {activeWallet.address?.slice(0, 6)}...{activeWallet.address?.slice(-4)}
                 </p>
@@ -524,20 +524,20 @@ const PaymentForm: React.FC = () => {
         {authenticated && activeWallet && (
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-2xl border border-white/20 mb-12">
             <div className="mb-8">
-              <h2 className="text-lg font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
-              <p className="text-gray-600">Follow the steps below to convert your USDC to fiat and receive funds in your bank or mobile account.</p>
+              <h2 className="text-sm font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
+              <p className="text-gray-600 text-xs">Follow the steps below to convert your USDC to fiat and receive funds in your bank or mobile account.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Step 1: Amount and Currency */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 1</span>
-                  <h3 className="text-sm font-semibold text-gray-900">Enter Amount and Currency</h3>
+                  <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 1</span>
+                  <h3 className="text-xs font-semibold text-gray-900">Enter Amount and Currency</h3>
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="group">
-                    <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 mb-3">
+                    <label htmlFor="amount" className="block text-xs font-semibold text-gray-700 mb-3">
                       Amount (USDC)
                     </label>
                     <div className="relative">
@@ -546,17 +546,17 @@ const PaymentForm: React.FC = () => {
                         id="amount"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                        className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                         placeholder="minimum 1 usdc"
                         required
                       />
                       <div className="absolute inset-y-0 right-0 flex items-center pr-6">
-                        <span className="text-gray-500 font-medium text-sm">USDC</span>
+                        <span className="text-gray-500 font-medium text-xs">USDC</span>
                       </div>
                     </div>
                   </div>
                   <div className="group">
-                    <label htmlFor="fiat" className="block text-sm font-semibold text-gray-700 mb-3">
+                    <label htmlFor="fiat" className="block text-xs font-semibold text-gray-700 mb-3">
                       Fiat Currency
                     </label>
                     <div className="relative">
@@ -564,7 +564,7 @@ const PaymentForm: React.FC = () => {
                         id="fiat"
                         value={fiat}
                         onChange={(e) => { setFiat(e.target.value); fetchInstitutions(); setInstitution(''); setIsAccountVerified(false); }}
-                        className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                        className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                       >
                         <option value="">Select Currency</option>
                         {currencies.map((currency) => (
@@ -583,22 +583,22 @@ const PaymentForm: React.FC = () => {
                 </div>
                 <div className="group">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-gray-700">Exchange Rate</label>
+                    <label className="text-xs font-semibold text-gray-700">Exchange Rate</label>
                     <button
                       type="button"
                       onClick={handleFetchRate}
                       disabled={!amount || !fiat}
-                      className="px-4 py-2 !bg-emerald-500 hover:!bg-emerald-600 !text-white !rounded-xl !font-medium transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 !bg-emerald-500 hover:!bg-emerald-600 !text-white !rounded-xl !font-medium transition-all duration-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Fetch Rate
                     </button>
                   </div>
                   {rate && (
-                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 mt-3 animate-fade-in">
+                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 mt-3 animate-fade-in text-xs">
                       <p className="text-emerald-800 font-medium">
                         1 USDC = {rate} {fiat}
                       </p>
-                      <p className="text-emerald-600 text-sm mt-1">
+                      <p className="text-emerald-600 text-xs mt-1">
                         You will receive approximately {(parseFloat(amount) * parseFloat(rate)).toFixed(2)} {fiat}
                       </p>
                     </div>
@@ -609,11 +609,11 @@ const PaymentForm: React.FC = () => {
               {/* Step 2: Recipient Details */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 2</span>
-                  <h3 className="text-sm font-semibold text-gray-900">Recipient Details</h3>
+                  <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 2</span>
+                  <h3 className="text-xs font-semibold text-gray-900">Recipient Details</h3>
                 </div>
                 <div className="group">
-                  <label htmlFor="institution" className="block text-sm font-semibold text-gray-700 mb-3">
+                  <label htmlFor="institution" className="block text-xs font-semibold text-gray-700 mb-3">
                     Choose Bank or Mobile Network
                   </label>
                   <div className="relative">
@@ -622,7 +622,7 @@ const PaymentForm: React.FC = () => {
                       value={institution}
                       onChange={(e) => { setInstitution(e.target.value); setIsAccountVerified(false); }}
                       onFocus={fetchInstitutions}
-                      className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                      className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                       required
                     >
                       <option value="">Select Institution</option>
@@ -640,7 +640,7 @@ const PaymentForm: React.FC = () => {
                   </div>
                 </div>
                 <div className="group">
-                  <label htmlFor="accountNumber" className="block text-sm font-semibold text-gray-700 mb-3">
+                  <label htmlFor="accountNumber" className="block text-xs font-semibold text-gray-700 mb-3">
                     Account or Mobile Number
                   </label>
                   <input
@@ -648,14 +648,14 @@ const PaymentForm: React.FC = () => {
                     id="accountNumber"
                     value={accountIdentifier}
                     onChange={(e) => { setAccountIdentifier(e.target.value); setIsAccountVerified(false); }}
-                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                     placeholder="Enter account or mobile number"
                     required
                   />
-                  <p className="text-sm text-blue-400 mt-2">For mobile numbers include country code (e.g., +2341234567890).</p>
+                  <p className="text-xs text-blue-400 mt-2">For mobile numbers include country code (e.g., +2341234567890).</p>
                 </div>
                 <div className="group">
-                  <label htmlFor="accountName" className="block text-sm font-semibold text-gray-700 mb-3">
+                  <label htmlFor="accountName" className="block text-xs font-semibold text-gray-700 mb-3">
                     Account Name
                   </label>
                   <input
@@ -663,11 +663,11 @@ const PaymentForm: React.FC = () => {
                     id="accountName"
                     value={accountName}
                     onChange={(e) => { setAccountName(e.target.value); setIsAccountVerified(false); }}
-                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                     placeholder="Enter the exact account holder's name"
                     required
                   />
-                  <p className="text-sm text-gray-500 mt-2">Ensure the name matches the account holder's name exactly.</p>
+                  <p className="text-xs text-gray-500 mt-2">Ensure the name matches the account holder's name exactly.</p>
                 </div>
                 <div className="group">
                   <button
@@ -696,11 +696,11 @@ const PaymentForm: React.FC = () => {
               {/* Step 3: Transaction Memo */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 3</span>
-                  <h3 className="text-sm font-semibold text-gray-900">Transaction Description</h3>
+                  <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 3</span>
+                  <h3 className="text-xs font-semibold text-gray-900">Transaction Description</h3>
                 </div>
                 <div className="group">
-                  <label htmlFor="memo" className="block text-sm font-semibold text-gray-700 mb-3">
+                  <label htmlFor="memo" className="block text-xs font-semibold text-gray-700 mb-3">
                     Transaction Memo
                   </label>
                   <textarea
@@ -730,7 +730,7 @@ const PaymentForm: React.FC = () => {
 
               {/* Submit Button */}
               <div className="space-y-4">
-                <span className="text-sm text-blue-400">make sure you have fetched rate and verified account before initiating payment</span>
+                <span className="text-xs text-green-400"><span className="font-semibold text-xs">important:</span> fetch rate and verify account before initiating payment</span>
                 <button
                   type="submit"
                   disabled={isLoading || !rate || !isAccountVerified || (isEmbeddedWallet && !biconomyClient)}
@@ -747,7 +747,7 @@ const PaymentForm: React.FC = () => {
                     {isLoading ? 'Processing...' : 'Initiate Offramp Payment'}
                   </div>
                 </button>
-                <p className="text-sm text-gray-600 text-center">
+                <p className="text-xs text-gray-600 text-center">
                   If the transaction fails, funds will be refunded to your wallet address.
                 </p>
               </div>
