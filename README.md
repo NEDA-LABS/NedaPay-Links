@@ -1,6 +1,5 @@
 # NEDA Pay 
-
-A robust, multi-chain merchant dashboard for the NEDA Pay ecosystem. Built with Next.js, React, ethers.js, wagmi, and Coinbase OnchainKit, it allows merchants to view real-time balances, connect wallets, and manage stablecoins across supported EVM networks.
+dashboard for the NEDA Pay ecosystem. Built with Next.js, React, ethers.js, wagmi, Privy, and Coinbase OnchainKit, it allows merchants to view real-time balances, connect wallets, manage stablecoins in Base Network, and seamlessly offramp to fiat.
 
 ---
 
@@ -9,28 +8,25 @@ A robust, multi-chain merchant dashboard for the NEDA Pay ecosystem. Built with 
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
   - [Aerodrome Swaps](#aerodrome-swaps)
+  - [Privy Authentication](#privy-authentication)
+  - [Fiat Offramping](#fiat-offramping)
   - [Architecture](#architecture)
-    - [Key Files](#key-files)
-  - [Getting Started](#getting-started)
-    - [Prerequisites](#prerequisites)
-    - [Installation](#installation)
-    - [Running Locally](#running-locally)
-    - [Environment Variables](#environment-variables)
-  - [Wallet Connection \& Persistence](#wallet-connection--persistence)
-  - [Stablecoin Management](#stablecoin-management)
-  - [Smart Wallets](#smart-wallets)
-  - [Error Handling](#error-handling)
-  - [Deployment](#deployment)
-  - [Security](#security)
-  - [Contributing](#contributing)
-  - [FAQ](#faq)
-  - [For further questions or support, please open an issue on GitHub or contact the NEDA Pay team.](#for-further-questions-or-support-please-open-an-issue-on-github-or-contact-the-neda-pay-team)
-  - [License](#license)
-  - [Contact](#contact)
 
 ---
 
 ## Features
+
+- **Privy Authentication System:**
+  - Seamless authentication with both embedded wallets and external wallets (EOAs).
+  - Supports social login with Farcaster, email authentication, and traditional wallet connections.
+  - Built-in wallet creation for users without existing wallets.
+  - Persistent authentication state across sessions.
+
+- **Fiat Offramping:**
+  - Direct USDC to fiat conversion with integrated payment processors.
+  - Support for multiple fiat currencies and payment methods.
+  - Gas abstraction for embedded wallet users - no need to hold ETH for transaction fees.
+  - Yet to do KYC integration for compliance requirements.
 
 - **Aerodrome DEX Integration:**
   - Robust, direct integration with Aerodrome for on-chain swaps.
@@ -39,21 +35,23 @@ A robust, multi-chain merchant dashboard for the NEDA Pay ecosystem. Built with 
   - All token amounts and outputs are formatted with the correct decimals for each stablecoin.
 
 - **Multi-Wallet Support:**
-  - Connect with MetaMask or Coinbase Wallet (via wagmi connectors).
+  - Connect with MetaMask, Coinbase Wallet, and others by wallet connect or use Privy's embedded wallets.
   - Persistent wallet connection state across all pages.
   - ENS (.eth) and Base Name (.base) resolution for user-friendly display.
+
 - **Stablecoin Balances:**
   - Real-time fetching of ERC-20 balances for supported stablecoins (e.g., cNGN, ZARP, EURC, etc.).
   - Each stablecoin entry now includes an explicit `decimals` field for precise formatting and conversion.
   - Shows all stablecoins, but only fetches balances for tokens deployed on the connected network.
+
 - **Network Detection:**
   - Detects the connected network and prompts users to switch if not on Base Mainnet.
   - Only fetches balances for tokens on the current chain (using `chainId`).
-- **Smart Wallets:**
-  - Create and manage smart wallets for enhanced security and lower fees.
+
 - **Error Handling:**
   - Per-token error icons and tooltips for contract call failures (e.g., missing `decimals()` function).
   - Suppresses uncaught contract errors in the browser console.
+
 - **User Experience:**
   - Clean, modern UI with clear feedback for network and token issues.
   - Swap modal displays user-friendly quotes and output estimates, clamped to the correct number of decimals for each token.
@@ -70,149 +68,54 @@ A robust, multi-chain merchant dashboard for the NEDA Pay ecosystem. Built with 
 
 ---
 
+## Privy Authentication
+
+NEDA Pay uses Privy for comprehensive authentication and wallet management:
+
+- **Embedded Wallets:**
+  - Users can create wallets directly within the application.
+  - No need to download additional wallet extensions.
+  - Secured by Privy's infrastructure with MPC (Multi-Party Computation).
+  - Gas abstraction available - users don't need to hold ETH for transaction fees.
+
+- **External Wallet Support:**
+  - Full compatibility with existing EOAs (Externally Owned Accounts).
+  - Supports MetaMask, Coinbase Wallet, WalletConnect, and other popular wallets.
+  - Seamless switching between embedded and external wallets.
+
+- **Authentication Methods:**
+  - Social logins (Farcaster).
+  - Email authentication.
+  - Traditional wallet connection.
+
+---
+
+## Fiat Offramping
+
+Comprehensive fiat offramping solution integrated directly into the merchant dashboard:
+
+- **USDC to Fiat Conversion:**
+  - Direct conversion from USDC to local fiat currencies.
+  - Competitive exchange rates with real-time pricing.
+  - Support for multiple fiat currencies based on merchant location.
+
+- **Gas Abstraction:**
+  - Embedded wallet users enjoy gasless transactions during offramping.
+  - Transaction fees are automatically deducted from the conversion amount.
+  - No need to maintain ETH balances for gas fees.
+
+- **Compliance & KYC:**
+  - In progress
+
+---
+
 ## Architecture
 
 - **Frontend:** Next.js (App Router), React, Tailwind CSS
-- **Wallets:** wagmi, ethers.js, Coinbase OnchainKit
+- **Authentication:** Privy (embedded wallets + EOA support)
+- **Wallets:** wagmi, ethers.js, Coinbase OnchainKit, viem
 - **State Management:** React Context (GlobalWalletContext)
 - **Stablecoin Data:** TypeScript config in `app/data/stablecoins.ts`
-- **Smart Wallets:** Simulated and real support (see `WalletSelector.tsx`)
 
-### Key Files
-- `app/components/WalletSelector.tsx` — Wallet connection, ENS/Base Name display, smart wallet creation
-- `app/data/stablecoins.ts` — Supported stablecoins and chain config
-- `app/utils/getBaseName.ts` — Utility for Base Name (.base) resolution
-- `app/providers.tsx` — App-wide providers (wagmi, OnchainKit, etc.)
 
 ---
-
-## Getting Started
-
-### Prerequisites
-- Node.js (>=18)
-- npm, yarn, or pnpm
-
-### Installation
-```bash
-cd merchant-portal
-npm install
-# or
-yarn install
-```
-
-### Running Locally
-```bash
-npm run dev
-# or
-yarn dev
-```
-Visit [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Environment Variables
-- Configure RPC endpoints and wallet connection settings in `.env.local` if needed.
-- No sensitive keys are stored in the frontend.
-
----
-
-## Wallet Connection & Persistence
-
-- Wallet connection state is persistent across all pages (MetaMask and Coinbase Wallet supported via wagmi and Coinbase OnchainKit).
-- Users only need to connect once for the entire merchant dashboard session.
-- **Connect Wallet:**
-  - Use MetaMask or Coinbase Wallet.
-  - Connection state is managed globally via `GlobalWalletContext`.
-  - Users only need to connect once; state persists across navigation.
-  - Wallet connection is stored in both `localStorage` and cookies for SSR compatibility.
-  - Disconnecting clears state and storage.
-- **ENS & Base Name Resolution:**
-  - ENS names are resolved using OnchainKit (`useName` with chainId 1).
-  - Base names are resolved via a custom hook and utility (`getBaseName`).
-  - Fallback logic: `.base` > `.eth` > address.
-
----
-
-## Stablecoin Management
-
-- Each supported stablecoin is defined in `app/data/stablecoins.ts` with its correct on-chain decimals for accurate display and conversion.
-- If you add a new stablecoin, ensure you specify its `decimals` value to guarantee proper quoting and formatting in the UI.
-- All supported stablecoins are listed in `app/data/stablecoins.ts`.
-- Each token includes a `chainId` property (e.g., `8453` for Base Mainnet, `11155111` for Sepolia Testnet).
-- Only tokens matching the connected network are queried for balances.
-- Real-time fetching using ethers.js and wagmi.
-- UI displays all tokens, with '0' balance for those not on the current network.
-
----
-
-## Smart Wallets
-- Users can create a smart wallet for enhanced security and lower fees.
-- **Production Deployment:** The NedaPaySmartWalletFactory contract is deployed and verified on Base Mainnet at:
-  - `0x46358DA741d3456dBAEb02995979B2722C3b8722` ([View on Basescan](https://basescan.org/address/0x46358DA741d3456dBAEb02995979B2722C3b8722#code))
-- **Frontend Integration:**
-  - Update your environment variables or frontend config to use this contract address for all mainnet interactions.
-  - Example: Add `NEXT_PUBLIC_FACTORY_ADDRESS=0x46358DA741d3456dBAEb02995979B2722C3b8722` to your `.env.local` file.
-  - The factory contract supports smart wallet creation and management for NEDA Pay users.
-- Creation is handled in `WalletSelector.tsx`.
-- UI shows smart wallet status and allows switching between EOA and smart wallet.
-
----
-
-## Error Handling
-- Token contract errors (e.g., failed `decimals()` or `balanceOf`) are handled gracefully.
-- UI shows a warning icon and tooltip for affected tokens.
-- Errors are logged as warnings (not as uncaught exceptions).
-- Wallet connection errors are caught and surfaced in the UI.
-
----
-
-## Deployment
-- Deploy to Vercel, Netlify, or your preferred provider.
-- Ensure environment variables are set for production RPC endpoints.
-- Static assets and frontend code only; no backend required.
-
----
-
-## Security
-- No private keys or sensitive credentials are stored in the frontend.
-- All wallet interactions occur client-side via injected providers (MetaMask, Coinbase Wallet).
-- Always verify addresses and transactions before proceeding.
-- Never expose your seed phrase or private key.
-
----
-
-## Contributing
-1. Fork the repo and create your branch (`git checkout -b feature/my-feature`).
-2. Commit your changes (`git commit -am 'Add new feature'`).
-3. Push to the branch (`git push origin feature/my-feature`).
-4. Create a Pull Request.
-
----
-
-## FAQ
-
-**Q: Why doesn't my .base name show up?**
-- Ensure your wallet address has a registered .base name. The dashboard uses a custom utility to resolve Base Names. If not found, it falls back to ENS or address.
-
-**Q: How do I add a new stablecoin?**
-- Edit `app/data/stablecoins.ts` and add your token config. Make sure to specify the correct `chainId`.
-
-**Q: Can I use other wallets?**
-- Only MetaMask and Coinbase Wallet are supported out of the box, but wagmi can be extended for more connectors.
-
-**Q: Is my wallet safe?**
-- All wallet interactions are client-side. Never enter your seed phrase or private key anywhere on the dashboard.
-
-**Q: How do I report a bug or request a feature?**
-- Open an issue or pull request on GitHub.
-
----
-
-For further questions or support, please open an issue on GitHub or contact the NEDA Pay team.
----
-
-## License
-MIT
-
----
-
-## Contact
-For support or questions, contact the NEDA Pay team at [https://nedapay.app](https://nedapay.app)
