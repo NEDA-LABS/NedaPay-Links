@@ -21,6 +21,36 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.png',
   },
+  other: {
+    'Content-Security-Policy': `
+      script-src 
+        'self' 
+        'unsafe-eval' 
+        https://auth.privy.io 
+        https://cdnjs.cloudflare.com 
+        https://*.biconomy.io 
+        https://*.walletconnect.org 
+        https://*.infura.io 
+        https://*.alchemy.com;
+      object-src 'none';
+      base-uri 'self';
+      frame-src 
+        'self' 
+        https://auth.privy.io 
+        https://*.walletconnect.org;
+      connect-src 
+        'self' 
+        https: 
+        wss:;
+      img-src 
+        'self' 
+        https: 
+        data:;
+      style-src 
+        'self' 
+        'unsafe-inline';
+    `.replace(/\s+/g, ' ').trim()
+  }
 };
 
 export default function RootLayout({

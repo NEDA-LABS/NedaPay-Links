@@ -97,7 +97,7 @@ export default function Header() {
                   <Image src="/NEDApayLogo.png" alt="Logo" width={20} height={20} />
                 </div>
                 <div className="flex justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="text-sm relative z-10 text-slate-800 font-extrabold drop-shadow-lg p-1">
+                  <span className="text-sm relative z-10 text-slate-800 font-extrabold drop-shadow-lg p-1 hidden md:!flex">
                     NEDAPay
                   </span>
                 </div>

@@ -11,7 +11,6 @@ import { fetchTokenRate, fetchSupportedInstitutions, verifyAccount, fetchSupport
 import { createWalletClient, custom, http } from 'viem';
 import { base } from 'viem/chains';
 import { createMeeClient, toMultichainNexusAccount } from '@biconomy/abstractjs';
-
 // USDC contract address on Base mainnet
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const USDC_ABI = [
@@ -39,19 +38,19 @@ const initializeBiconomy = async (
     
     // Get Ethereum provider
     const provider = await embeddedWallet.getEthereumProvider();
-    
+    console.log("debug", provider);
     if (!provider) {
       throw new Error('Ethereum provider not available');
     }
 
     // Wait a bit for provider to be ready
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Create viem wallet client with proper account setup
     const walletClient = createWalletClient({
       account: embeddedWallet.address as `0x${string}`,
       chain: base,
-      transport: custom(provider),
+      transport: custom(provider as any),
     });
 
     // Verify wallet client has signing capabilities
@@ -200,7 +199,7 @@ const PaymentForm: React.FC = () => {
   const { wallets } = useWallets();
   const { signAuthorization } = useSign7702Authorization();
   const [amount, setAmount] = useState('');
-  const [fiat, setFiat] = useState('NGN');
+  const [fiat, setFiat] = useState('TZS');
   const [rate, setRate] = useState('');
   const [institution, setInstitution] = useState('');
   const [accountIdentifier, setAccountIdentifier] = useState('');
@@ -213,6 +212,7 @@ const PaymentForm: React.FC = () => {
   const [currencies, setCurrencies] = useState<Array<{ code: string; name: string; shortName: string; decimals: number; symbol: string; marketRate: string }>>([]);
   const [isAccountVerified, setIsAccountVerified] = useState(false);
   const [biconomyClient, setBiconomyClient] = useState<any>(null);
+  
 
   // Get the active wallet
   const activeWallet = wallets.length > 0 ? wallets[0] : null;
@@ -243,7 +243,7 @@ const PaymentForm: React.FC = () => {
             // console.log('Switching to Base chain...');
             await activeWallet.switchChain(base.id);
             // Wait for chain switch to complete
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
 
           // Create a wrapper for signAuthorization with proper error handling
@@ -524,8 +524,8 @@ const PaymentForm: React.FC = () => {
         {authenticated && activeWallet && (
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-2xl border border-white/20 mb-12">
             <div className="mb-8">
-              <h2 className="text-lg font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
-              <p className="text-gray-600">Follow the steps below to convert your USDC to fiat and receive funds in your bank or mobile account.</p>
+              <h2 className="text-sm font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
+              <p className="text-gray-600 text-sm">Follow the steps below to convert your USDC to fiat and receive funds in your bank or mobile account.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -550,9 +550,9 @@ const PaymentForm: React.FC = () => {
                         placeholder="minimum 1 usdc"
                         required
                       />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-6">
+                      {/* <div className="absolute inset-y-0 right-0 flex items-center pr-6">
                         <span className="text-gray-500 font-medium text-sm">USDC</span>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                   <div className="group">
