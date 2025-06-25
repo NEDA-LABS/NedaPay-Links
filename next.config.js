@@ -33,7 +33,9 @@ const nextConfig = {
     '@coinbase/onchainkit', 
     'viem', 
     'next-themes',
-    'ethers'
+    'ethers',
+    '@biconomy/abstractjs',
+    '@biconomy/mexa'
   ],
   // Use standard Next.js settings
   poweredByHeader: false,
@@ -42,7 +44,7 @@ const nextConfig = {
   trailingSlash: false,
   // Ensure proper handling of SVG and other static assets
   images: {
-    // domains: ['nedapay.xyz'],
+    // remotePatterns: ['nedapay.xyz'],
     dangerouslyAllowSVG: true,
   },
 };

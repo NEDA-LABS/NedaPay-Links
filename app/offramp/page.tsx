@@ -1,204 +1,42 @@
 "use client";
 
 import React, { useEffect, useState, FormEvent } from 'react';
-import { usePrivy, useWallets, useSign7702Authorization, useSignAuthorization } from '@privy-io/react-auth';
+import { usePrivy, useWallets, useSign7702Authorization } from '@privy-io/react-auth';
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle, Info } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { fetchTokenRate, fetchSupportedInstitutions, verifyAccount, fetchSupportedCurrencies } from '../utils/paycrest';
-import { createWalletClient, custom, http } from 'viem';
-import { base } from 'viem/chains';
-import { createMeeClient, toMultichainNexusAccount } from '@biconomy/abstractjs';
+import { 
+  fetchTokenRate, 
+  fetchSupportedInstitutions, 
+  verifyAccount, 
+  fetchSupportedCurrencies 
+} from '../utils/paycrest';
+import { 
+  initializeBiconomy, 
+  executeGasAbstractedTransfer,
+  type BiconomyClient,
+  type WalletType
+} from '../utils/biconomy';
 
-// USDC contract address on Base mainnet
+import { base } from 'viem/chains';
+
+// Constants
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const USDC_ABI = [
   'function transfer(address to, uint256 amount) public returns (bool)',
   'function balanceOf(address account) public view returns (uint256)',
   'function decimals() public view returns (uint8)',
 ];
-const NEXUS_IMPLEMENTATION_ADDRESS = '0x000000004F43C49e93C970E84001853a70923B03';
-
-const initializeBiconomy = async (
-  embeddedWallet: any,
-  signAuthorization: (params: { contractAddress: `0x${string}`; chainId: number }) => Promise<any>
-) => {
-  try {
-    // Ensure wallet is connected and has an address
-    if (!embeddedWallet?.address) {
-      throw new Error('Wallet not connected or address not available');
-    }
-
-    // console.log('Starting Biconomy initialization with wallet:', embeddedWallet.address);
-
-    // Switch to Base chain first
-    await embeddedWallet.switchChain(base.id);
-    // console.log('Switched to Base chain');
-    
-    // Get Ethereum provider
-    const provider = await embeddedWallet.getEthereumProvider();
-    
-    if (!provider) {
-      throw new Error('Ethereum provider not available');
-    }
-
-    // Wait a bit for provider to be ready
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
-    // Create viem wallet client with proper account setup
-    const walletClient = createWalletClient({
-      account: embeddedWallet.address as `0x${string}`,
-      chain: base,
-      transport: custom(provider),
-    });
-
-    // Verify wallet client has signing capabilities
-    if (!walletClient.account) {
-      throw new Error('Wallet client account not properly configured');
-    }
-
-    // console.log('Wallet client created successfully');
-
-    // Create multichain Nexus account with proper signer configuration
-    const nexusAccount = await toMultichainNexusAccount({
-      chains: [base],
-      transports: [http()],
-      signer: walletClient,
-      accountAddress: embeddedWallet.address as `0x${string}`,
-    });
-
-    // console.log('Nexus account created:', nexusAccount);
-
-    // Sign authorization for EIP-7702
-    try {
-      const authorization = await signAuthorization({
-        contractAddress: NEXUS_IMPLEMENTATION_ADDRESS,
-        chainId: base.id
-      });
-      // console.log('Authorization signed successfully');
-
-      // Create MEE client
-      const meeClient = await createMeeClient({
-        account: nexusAccount,
-      });
-
-      // console.log('MEE client created successfully');
-
-      return { meeClient, nexusAccount, authorization };
-    } catch (authError) {
-      console.error('Authorization signing failed:', authError);
-      throw new Error(`Failed to sign authorization: ${authError instanceof Error ? authError.message : 'Unknown error'}`);
-    }
-
-  } catch (error) {
-    console.error('Biconomy initialization failed:', error);
-    throw new Error(`Failed to initialize Biconomy client: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-};
-
-const executeGasAbstractedTransaction = async (
-  meeClient: any,
-  authorization: any,
-  toAddress: string,
-  amountInWei: bigint,
-  walletAddress: string
-) => {
-  try {
-    // Validate inputs
-    if (!meeClient) {
-      throw new Error('MEE client not initialized');
-    }
-    
-    if (!authorization) {
-      throw new Error('Authorization not provided');
-    }
-
-    if (!ethers.utils.isAddress(toAddress)) {
-      throw new Error('Invalid recipient address');
-    }
-
-    // console.log('Executing gas abstracted transaction:', {
-    //   toAddress,
-    //   amountInWei: amountInWei.toString(),
-    //   walletAddress
-    // });
-
-    // Create USDC transfer data
-    const usdcInterface = new ethers.utils.Interface([
-      'function transfer(address to, uint256 amount) public returns (bool)',
-    ]);
-
-    const transferData = usdcInterface.encodeFunctionData('transfer', [toAddress, amountInWei]);
-
-    // Execute gas abstracted transaction
-    try {
-      const { hash } = await meeClient.execute({
-        authorization,
-        delegate: true,
-        feeToken: {
-          address: USDC_ADDRESS,
-          chainId: base.id,
-        },
-        instructions: [{
-          chainId: base.id,
-          calls: [{
-            to: USDC_ADDRESS,
-            value: 0n,
-            data: transferData,
-          }],
-        }],
-      });
-
-      // console.log('Transaction executed, hash:', hash);
-
-      // Wait for transaction receipt
-      const receipt = await meeClient.waitForSupertransactionReceipt({ hash });
-      // console.log('Transaction receipt:', receipt);
-      
-      return receipt;
-    } catch (executeError) {
-      console.error('Execute transaction error:', executeError);
-      throw new Error(`Transaction execution failed: ${executeError instanceof Error ? executeError.message : 'Unknown error'}`);
-    }
-
-  } catch (error) {
-    console.error('Gas abstracted transaction failed:', error);
-    throw new Error(`Failed to execute gas abstracted transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-};
-
-const executeNormalTransaction = async (
-  wallet: any,
-  toAddress: string,
-  amountInWei: bigint
-) => {
-  try {
-    // Get provider and signer
-    const provider = new ethers.providers.Web3Provider(await wallet.getEthereumProvider());
-    const signer = provider.getSigner();
-    const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
-
-    // Execute normal transfer
-    const tx = await usdcContract.transfer(toAddress, amountInWei);
-    // console.log('Normal transaction sent:', tx.hash);
-
-    // Wait for transaction receipt
-    const receipt = await tx.wait();
-    // console.log('Transaction receipt:', receipt);
-    
-    return receipt;
-  } catch (error) {
-    // console.error('Normal transaction failed:', error);
-    throw new Error(`Failed to execute normal transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-};
 
 const PaymentForm: React.FC = () => {
+  // Authentication and wallet state
   const { authenticated, login, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const { signAuthorization } = useSign7702Authorization();
+  
+  // Form state
   const [amount, setAmount] = useState('');
   const [fiat, setFiat] = useState('NGN');
   const [rate, setRate] = useState('');
@@ -210,13 +48,49 @@ const PaymentForm: React.FC = () => {
   const [institutions, setInstitutions] = useState<Array<{ name: string; code: string; type: string }>>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [currencies, setCurrencies] = useState<Array<{ code: string; name: string; shortName: string; decimals: number; symbol: string; marketRate: string }>>([]);
+  const [currencies, setCurrencies] = useState<Array<{ code: string; name: string }>>([]);
   const [isAccountVerified, setIsAccountVerified] = useState(false);
-  const [biconomyClient, setBiconomyClient] = useState<any>(null);
+  const [biconomyClient, setBiconomyClient] = useState<BiconomyClient | null>(null);
+  const [gasAbstractionFailed, setGasAbstractionFailed] = useState(false);
 
   // Get the active wallet
-  const activeWallet = wallets.length > 0 ? wallets[0] : null;
+  const activeWallet = wallets[0] as WalletType | undefined;
   const isEmbeddedWallet = activeWallet?.walletClientType === 'privy';
+
+  // Initialize Biconomy when wallet is ready
+  useEffect(() => {
+    const initBiconomy = async () => {
+      if (isEmbeddedWallet && activeWallet && signAuthorization) {
+        try {
+          await activeWallet.switchChain(base.id);
+          const client = await initializeBiconomy(activeWallet, signAuthorization);
+          setBiconomyClient(client);
+          setGasAbstractionFailed(false);
+        } catch (err) {
+          console.warn('Biconomy initialization failed, falling back to normal transaction:', err);
+          setGasAbstractionFailed(true);
+          setBiconomyClient(null);
+        }
+      }
+    };
+
+    if (activeWallet?.address) {
+      initBiconomy();
+    }
+  }, [activeWallet, signAuthorization, isEmbeddedWallet]);
+
+  // Fetch supported currencies on mount
+  useEffect(() => {
+    const loadCurrencies = async () => {
+      try {
+        const data = await fetchSupportedCurrencies();
+        setCurrencies(data);
+      } catch (err) {
+        setError('Failed to load currencies');
+      }
+    };
+    loadCurrencies();
+  }, []);
 
   const fetchInstitutions = async () => {
     try {
@@ -227,79 +101,14 @@ const PaymentForm: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchCurrencies();
-  }, []);
-
-  // Initialize Biconomy only for embedded wallets
-  useEffect(() => {
-    const initBiconomy = async () => {
-      if (isEmbeddedWallet && activeWallet && signAuthorization && activeWallet.address) {
-        try {
-          setError(''); // Clear any previous errors
-          
-          // Ensure wallet is ready
-          if (!activeWallet.chainId || activeWallet.chainId.toString() !== base.id.toString()) {
-            // console.log('Switching to Base chain...');
-            await activeWallet.switchChain(base.id);
-            // Wait for chain switch to complete
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-
-          // Create a wrapper for signAuthorization with proper error handling
-          const signAuth = async (params: { contractAddress: `0x${string}`; chainId: number }) => {
-            try {
-              // console.log('Attempting to sign authorization with params:', params);
-              const result = await signAuthorization({
-                ...params,
-                chainId: base.id
-              });
-              // console.log('Authorization signed:', result);
-              return result;
-            } catch (error) {
-              // console.error('Sign authorization error:', error);
-              throw error;
-            }
-          };
-
-          const { meeClient, authorization } = await initializeBiconomy(activeWallet, signAuth);
-          setBiconomyClient({ meeClient, authorization });
-          //console.log('Biconomy initialized successfully');
-          
-        } catch (error) {
-          //console.error('Failed to initialize Biconomy:', error);
-          setError(`Failed to initialize Biconomy: ${error instanceof Error ? error.message : 'Unknown error'}. Please try reconnecting your wallet.`);
-        }
-      }
-    };
-
-    // Add a delay to ensure wallet is fully ready
-    const timer = setTimeout(() => {
-      initBiconomy();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [activeWallet, signAuthorization, isEmbeddedWallet]);
-
-  const fetchCurrencies = async () => {
-    try {
-      const data = await fetchSupportedCurrencies();
-      setCurrencies(data);
-    } catch (err) {
-      setError('Failed to fetch currencies');
-    }
-  };
-
   const handleVerifyAccount = async () => {
+    if (!institution || !accountIdentifier) return;
+    
     try {
       setIsLoading(true);
-      const response = await verifyAccount(institution, accountIdentifier);
-      if (response === 'OK' || typeof response === 'string') {
-        setIsAccountVerified(true);
-        setError('');
-      } else {
-        setError('Account verification failed');
-      }
+      await verifyAccount(institution, accountIdentifier);
+      setIsAccountVerified(true);
+      setError('');
     } catch (err) {
       setError('Account verification failed');
     } finally {
@@ -308,6 +117,8 @@ const PaymentForm: React.FC = () => {
   };
 
   const handleFetchRate = async () => {
+    if (!amount || !fiat) return;
+    
     try {
       const fetchedRate = await fetchTokenRate('USDC', parseFloat(amount), fiat);
       setRate(fetchedRate);
@@ -317,254 +128,265 @@ const PaymentForm: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    // Clear rate when amount or currency changes
+    setRate('');
+    setError('');
+  }, [amount, fiat]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!authenticated) {
-      login();
-      return;
-    }
-
-    if (!activeWallet) {
-      setError('No wallet connected. Please connect a wallet first.');
-      return;
-    }
-
-    if (!activeWallet.address) {
-      setError('Wallet address not available. Please reconnect your wallet.');
-      return;
-    }
-
-    if (!isAccountVerified) {
-      setError('Please verify the account before proceeding.');
-      return;
-    }
-
-    if (!rate) {
-      setError('Please fetch the exchange rate before proceeding.');
-      return;
-    }
+    if (!authenticated) return login();
+    if (!activeWallet?.address) return setError('Wallet not connected');
+    if (!isAccountVerified) return setError('Please verify account first');
+    if (!rate) return setError('Please fetch exchange rate first');
 
     try {
       setIsLoading(true);
 
-      // Get provider and signer for balance check
+      // Check balance
       const provider = new ethers.providers.Web3Provider(await activeWallet.getEthereumProvider());
       const signer = provider.getSigner();
       const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+      
       const decimals = await usdcContract.decimals();
       const amountInWei = ethers.utils.parseUnits(amount, decimals);
-
-      // Check wallet balance
+      
       const balance = await usdcContract.balanceOf(activeWallet.address);
       if (balance.lt(amountInWei)) {
-        setError('Insufficient USDC balance in your wallet.');
-        return;
+        throw new Error('Insufficient USDC balance');
       }
 
-      // Initiate payment order
-      const response = await axios.post('/api/paycrest/orders', {
+      // Create payment order
+      const orderResponse = await axios.post('/api/paycrest/orders', {
         amount: parseFloat(amount),
         rate: parseFloat(rate),
         network: 'base',
         token: 'USDC',
-        recipient: {
-          institution,
-          accountIdentifier,
-          accountName,
-          memo,
-        },
+        recipient: { institution, accountIdentifier, accountName, memo },
         returnAddress: activeWallet.address,
         reference: `order-${Date.now()}`,
       });
 
-      const { receiveAddress, amount: orderAmount, reference, senderFee, transactionFee, validUntil } = response.data.data;
+      const { receiveAddress } = orderResponse.data.data;
 
-      // Execute transaction based on wallet type
-      let receipt;
-      if (isEmbeddedWallet && biconomyClient) {
-        // Use gas abstraction for embedded wallets
-        receipt = await executeGasAbstractedTransaction(
-          biconomyClient.meeClient,
-          biconomyClient.authorization,
-          receiveAddress,
-          amountInWei.toBigInt(),
-          activeWallet.address
-        );
+      // Execute transaction
+      if (isEmbeddedWallet && biconomyClient && !gasAbstractionFailed) {
+        try {
+          await executeGasAbstractedTransfer(
+            biconomyClient,
+            receiveAddress,
+            amountInWei.toBigInt(),
+            USDC_ADDRESS,
+            USDC_ABI
+          );
+        } catch (gasError) {
+          console.warn('Gas abstracted transfer failed, falling back to normal transaction:', gasError);
+          // Fallback to normal transaction
+          const tx = await usdcContract.transfer(receiveAddress, amountInWei);
+          await tx.wait();
+        }
       } else {
-        // Use normal transaction for other wallets
-        receipt = await executeNormalTransaction(
-          activeWallet,
-          receiveAddress,
-          amountInWei.toBigInt()
-        );
+        // Normal transaction for external wallets or when gas abstraction fails
+        const tx = await usdcContract.transfer(receiveAddress, amountInWei);
+        await tx.wait();
       }
 
-      setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);
+      setSuccess('Payment successful!');
       setError('');
     } catch (err) {
-      //console.error('Payment order error:', err);
-      if (axios.isAxiosError(err)) {
-        setError(`Failed to initiate payment order: ${err.response?.data?.message || err.message}`);
-      } else {
-        setError('Failed to initiate payment order or send transaction');
-      }
+      setError(err instanceof Error ? err.message : 'Payment failed');
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen width-[90%] bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
-      <Header />
-
-      {/* Back Button */}
-      <div className="container mx-auto max-w-6xl px-4 pt-6">
-        <button
-          onClick={() => window.history.back()}
-          className="group flex items-center gap-2 px-4 py-2 !bg-white/80 !backdrop-blur-sm !border !border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
-        >
-          <span className="group-hover:-translate-x-1 transition-transform duration-300">←</span>
-          Back
-        </button>
-      </div>
-
-      <div className="container mx-auto max-w-4xl px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-8 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-200/30 to-blue-200/30 blur-3xl rounded-4xl"></div>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium animate-pulse">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
-            </svg>
-            Stablecoins to Fiat Offramp
+  const renderFeeInfo = () => {
+    if (isEmbeddedWallet && biconomyClient && !gasAbstractionFailed) {
+      return (
+        <div className="p-3 bg-green-50 rounded-lg border border-green-200 mb-4">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-green-800 font-medium text-xs">Gas Abstraction Active</p>
+              <p className="text-green-700 text-xs mt-1">
+                Transaction fees will be automatically deducted from your USDC balance.
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl md:text-6xl font-extrabold text-gray-900 mb-4 tracking-tight">
-            <span className="block bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-              Convert your Stablecoins to Cash
-            </span>
-          </h1>
-          <p className="text-sm md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Seamlessly convert your USDC to local currency with instant bank transfers.
-          </p>
+        </div>
+      );
+    } else {
+      return (
+        <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 mb-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-amber-800 font-medium text-xs">Transaction Fees Required</p>
+              <p className="text-amber-700 text-xs mt-1">
+                You need a small amount of ETH in your wallet to pay for Base network transaction fees.
+                {gasAbstractionFailed && " (Gas abstraction unavailable)"}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
+      <div className="fixed inset-0 overflow-y-auto">
+        <Header />
+
+        {/* Back Button */}
+        <div className="container mx-auto max-w-4xl px-4 pt-6">
+          <button
+            onClick={() => window.history.back()}
+            className="group flex items-center gap-2 px-4 py-2 !bg-white/90 backdrop-blur-sm border border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-md transition-all duration-200 text-sm font-medium text-gray-700 hover:text-gray-900"
+          >
+            <span className="group-hover:-translate-x-1 transition-transform duration-200">←</span>
+            Back
+          </button>
         </div>
 
-        {/* Authentication Status */}
-        {!authenticated && (
-          <div className="mb-8 p-6 rounded-2xl border-2 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-amber-100">
-                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-amber-900">Authentication Required</h3>
-                <p className="text-amber-700 text-sm mt-1">Please login to access the offramp service</p>
-              </div>
-              <button
-                onClick={login}
-                className="px-6 py-3 !bg-gradient-to-r !from-blue-600 !to-blue-500 hover:!from-blue-700 hover:!to-blue-600 !text-white !font-semibold !rounded-xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-              >
-                Login with Privy
-              </button>
+        <div className="container mx-auto max-w-4xl px-4 py-6">
+          {/* Hero Section */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium mb-4">
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+              </svg>
+              Stablecoins to Fiat Offramp
             </div>
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 tracking-tight">
+              <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Convert USDC to Cash
+              </span>
+            </h1>
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+              Seamlessly convert your USDC to local currency with instant bank transfers.
+            </p>
           </div>
-        )}
 
-        {/* Wallet Connection Status */}
-        {authenticated && !activeWallet && (
-          <div className="mb-8 p-6 rounded-2xl border-2 bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-orange-100">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.4 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-orange-900">Wallet Connection Required</h3>
-                <p className="text-orange-700 text-sm mt-1">Please connect a wallet to proceed with the offramp</p>
-              </div>
-              <button
-                onClick={connectWallet}
-                className="px-6 py-3 !bg-gradient-to-r !from-emerald-600 !to-emerald-500 hover:!from-emerald-700 hover:!to-emerald-600 !text-white !font-semibold !rounded-xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-              >
-                Connect Wallet
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Wallet Info */}
-        {authenticated && activeWallet && (
-          <div className="mb-8 p-6 rounded-2xl border-2 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-green-100">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-green-900 text-sm">Wallet Connected</h3>
-                <p className="text-green-700 text-sm mt-1 font-mono">
-                  {activeWallet.address?.slice(0, 6)}...{activeWallet.address?.slice(-4)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-green-600 font-medium">Ready for Base Network</p>
-                {isEmbeddedWallet && (
-                  <p className="text-xs text-blue-500 mt-1">(Gas abstraction enabled,fees will be deducted from usdc instead of eth)</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main Form Card */}
-        {authenticated && activeWallet && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-2xl border border-white/20 mb-12">
-            <div className="mb-8">
-              <h2 className="text-sm font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
-              <p className="text-gray-600 text-xs">Follow the steps below to convert your USDC to fiat and receive funds in your bank or mobile account.</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Step 1: Amount and Currency */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 1</span>
-                  <h3 className="text-xs font-semibold text-gray-900">Enter Amount and Currency</h3>
+          {/* Authentication Status */}
+          {!authenticated && (
+            <div className="mb-6 p-4 rounded-xl border bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-100">
+                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
                 </div>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="group">
-                    <label htmlFor="amount" className="block text-xs font-semibold text-gray-700 mb-3">
-                      Amount (USDC)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        id="amount"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
-                        placeholder="minimum 1 usdc"
-                        required
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-6">
-                        <span className="text-gray-500 font-medium text-xs">USDC</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-900 text-sm">Authentication Required</h3>
+                  <p className="text-amber-700 text-xs mt-1">Please login to access the offramp service</p>
+                </div>
+                <button
+                  onClick={login}
+                  className="px-4 py-2 !  bg-gradient-to-r !from-blue-600 !to-blue-500 hover:!from-blue-700 hover:!to-blue-600 text-white font-semibold !rounded-lg !shadow-md hover:!shadow-lg !transition-all !duration-200 text-sm"
+                >
+                  Login with Privy
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Wallet Connection Status */}
+          {authenticated && !activeWallet && (
+            <div className="mb-6 p-4 rounded-xl border bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-100">
+                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.4 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-orange-900 text-sm">Wallet Connection Required</h3>
+                  <p className="text-orange-700 text-xs mt-1">Please connect a wallet to proceed with the offramp</p>
+                </div>
+                <button
+                  onClick={connectWallet}
+                  className="px-4 py-2 !bg-gradient-to-r !from-emerald-600 !to-emerald-500 hover:!from-emerald-700 hover:!to-emerald-600 text-white font-semibold !rounded-lg !shadow-md hover:!shadow-lg !transition-all !duration-200 text-sm"
+                >
+                  Connect Wallet
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Wallet Info */}
+          {authenticated && activeWallet && (
+            <div className="mb-6 p-4 rounded-xl border bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-green-900 text-sm">Wallet Connected</h3>
+                  <p className="text-green-700 text-xs mt-1 font-mono">
+                    {activeWallet.address?.slice(0, 6)}...{activeWallet.address?.slice(-4)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-green-600 font-medium">Base Network Ready</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Main Form Card */}
+          {authenticated && activeWallet && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/50 mb-8">
+              <div className="mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
+                <p className="text-gray-600 text-sm">Follow the steps below to convert your USDC to fiat and receive funds in your account.</p>
+              </div>
+
+              {/* Fee Information */}
+              {renderFeeInfo()}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Step 1: Amount and Currency */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-2 py-1">Step 1</span>
+                    <h3 className="text-sm font-semibold text-gray-900">Enter Amount and Currency</h3>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+                        Amount (USDC)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          id="amount"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
+                          placeholder="Minimum 1 USDC"
+                          min="1"
+                          step="0.01"
+                          required
+                        />
+                        {/* <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                          <span className="text-gray-500 font-medium text-sm">USDC</span>
+                        </div> */}
                       </div>
                     </div>
-                  </div>
-                  <div className="group">
-                    <label htmlFor="fiat" className="block text-xs font-semibold text-gray-700 mb-3">
-                      Fiat Currency
-                    </label>
-                    <div className="relative">
+                    <div>
+                      <label htmlFor="fiat" className="block text-sm font-medium text-gray-700 mb-2">
+                        Fiat Currency
+                      </label>
                       <select
                         id="fiat"
                         value={fiat}
                         onChange={(e) => { setFiat(e.target.value); fetchInstitutions(); setInstitution(''); setIsAccountVerified(false); }}
-                        className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                        className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
                       >
                         <option value="">Select Currency</option>
                         {currencies.map((currency) => (
@@ -573,56 +395,49 @@ const PaymentForm: React.FC = () => {
                           </option>
                         ))}
                       </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-gray-700">Exchange Rate</label>
+                      <button
+                        type="button"
+                        onClick={handleFetchRate}
+                        disabled={!amount || !fiat}
+                        className="px-3 py-1 !bg-blue-500 hover:!bg-blue-600 text-white !rounded-lg !font-medium !transition-all !duration-200 !text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Fetch Rate
+                      </button>
+                    </div>
+                    {rate && (
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-blue-800 font-medium text-sm">
+                          1 USDC = {rate} {fiat}
+                        </p>
+                        <p className="text-blue-600 text-sm mt-1">
+                          You will receive approximately {(parseFloat(amount) * parseFloat(rate)).toFixed(2)} {fiat}
+                        </p>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
-                <div className="group">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-gray-700">Exchange Rate</label>
-                    <button
-                      type="button"
-                      onClick={handleFetchRate}
-                      disabled={!amount || !fiat}
-                      className="px-4 py-2 !bg-emerald-500 hover:!bg-emerald-600 !text-white !rounded-xl !font-medium transition-all duration-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Fetch Rate
-                    </button>
-                  </div>
-                  {rate && (
-                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 mt-3 animate-fade-in text-xs">
-                      <p className="text-emerald-800 font-medium">
-                        1 USDC = {rate} {fiat}
-                      </p>
-                      <p className="text-emerald-600 text-xs mt-1">
-                        You will receive approximately {(parseFloat(amount) * parseFloat(rate)).toFixed(2)} {fiat}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              {/* Step 2: Recipient Details */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 2</span>
-                  <h3 className="text-xs font-semibold text-gray-900">Recipient Details</h3>
-                </div>
-                <div className="group">
-                  <label htmlFor="institution" className="block text-xs font-semibold text-gray-700 mb-3">
-                    Choose Bank or Mobile Network
-                  </label>
-                  <div className="relative">
+                {/* Step 2: Recipient Details */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-2 py-1">Step 2</span>
+                    <h3 className="text-sm font-semibold text-gray-900">Recipient Details</h3>
+                  </div>
+                  <div>
+                    <label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-2">
+                      Choose Bank or Mobile Network
+                    </label>
                     <select
                       id="institution"
                       value={institution}
                       onChange={(e) => { setInstitution(e.target.value); setIsAccountVerified(false); }}
                       onFocus={fetchInstitutions}
-                      className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                      className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
                       required
                     >
                       <option value="">Select Institution</option>
@@ -632,162 +447,130 @@ const PaymentForm: React.FC = () => {
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
                   </div>
-                </div>
-                <div className="group">
-                  <label htmlFor="accountNumber" className="block text-xs font-semibold text-gray-700 mb-3">
-                    Account or Mobile Number
-                  </label>
-                  <input
-                    type="text"
-                    id="accountNumber"
-                    value={accountIdentifier}
-                    onChange={(e) => { setAccountIdentifier(e.target.value); setIsAccountVerified(false); }}
-                    className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
-                    placeholder="Enter account or mobile number"
-                    required
-                  />
-                  <p className="text-xs text-blue-400 mt-2">For mobile numbers include country code (e.g., +2341234567890).</p>
-                </div>
-                <div className="group">
-                  <label htmlFor="accountName" className="block text-xs font-semibold text-gray-700 mb-3">
-                    Account Name
-                  </label>
-                  <input
-                    type="text"
-                    id="accountName"
-                    value={accountName}
-                    onChange={(e) => { setAccountName(e.target.value); setIsAccountVerified(false); }}
-                    className="w-full px-6 py-4 text-xs rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
-                    placeholder="Enter the exact account holder's name"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-2">Ensure the name matches the account holder's name exactly.</p>
-                </div>
-                <div className="group">
-                  <button
-                    type="button"
-                    onClick={handleVerifyAccount}
-                    disabled={isLoading || !institution || !accountIdentifier || !accountName}
-                    className={`w-full text-sm px-6 py-3 !bg-blue-500 hover:!bg-blue-600 !text-white !rounded-xl !font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Verifying...
+                  <div>
+                    <label htmlFor="accountNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                      Account or Mobile Number
+                    </label>
+                    <input
+                      type="text"
+                      id="accountNumber"
+                      value={accountIdentifier}
+                      onChange={(e) => { setAccountIdentifier(e.target.value); setIsAccountVerified(false); }}
+                      className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
+                      placeholder="Enter account or mobile number"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">For mobile numbers include country code (e.g., +2341234567890)</p>
+                  </div>
+                  <div>
+                    <label htmlFor="accountName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Account Name
+                    </label>
+                    <input
+                      type="text"
+                      id="accountName"
+                      value={accountName}
+                      onChange={(e) => { setAccountName(e.target.value); setIsAccountVerified(false); }}
+                      className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
+                      placeholder="Enter the exact account holder's name"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Ensure the name matches exactly</p>
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleVerifyAccount}
+                      disabled={isLoading || !institution || !accountIdentifier || !accountName}
+                      className="w-full px-4 py-3 !bg-indigo-500 hover:!bg-indigo-600 text-white !rounded-lg !font-medium !transition-all !duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Verifying...
+                        </div>
+                      ) : (
+                        'Verify Account'
+                      )}
+                    </button>
+                    {isAccountVerified && (
+                      <div className="p-3 bg-green-50 rounded-lg border border-green-200 mt-2">
+                        <p className="text-green-800 font-medium text-sm">✓ Account verified successfully</p>
+                        <p className="text-green-700 text-xs mt-1">Please double-check that this is your account</p>
                       </div>
-                    ) : (
-                      'Verify Account'
                     )}
-                  </button>
-                  {isAccountVerified && (
-                    <div className="p-4 bg-green-50 rounded-xl border border-green-200 mt-3 animate-pulse-y">
-                      <p className="text-green-800 font-medium text-xs">Account Number Verified Successfully, Double check to make sure it's yours. The System only Verifies the Number </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Step 3: Transaction Memo */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-3 py-1">Step 3</span>
-                  <h3 className="text-xs font-semibold text-gray-900">Transaction Description</h3>
-                </div>
-                <div className="group">
-                  <label htmlFor="memo" className="block text-xs font-semibold text-gray-700 mb-3">
-                    Transaction Memo
-                  </label>
-                  <textarea
-                    id="memo"
-                    value={memo}
-                    onChange={(e) => setMemo(e.target.value)}
-                    className="w-full px-6 py-4 text-sm rounded-2xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
-                    rows={3}
-                    placeholder="Add a memo for this transaction..."
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Error and Success Messages */}
-              {error && (
-                <div className="p-4 bg-red-50 rounded-xl border border-red-200 animate-pulse-y">
-                  <p className="text-red-800 font-medium">{error}</p>
-                </div>
-              )}
-
-              {success && (
-                <div className="p-4 bg-green-50 rounded-xl border border-green-200 animate-pulse-y">
-                  <p className="text-green-800 font-medium">{success}</p>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <div className="space-y-4">
-                <span className="text-xs text-green-400"><span className="font-semibold text-xs">important:</span> fetch rate and verify account before initiating payment</span>
-                <button
-                  type="submit"
-                  disabled={isLoading || !rate || !isAccountVerified || (isEmbeddedWallet && !biconomyClient)}
-                  className="w-full py-4 px-8 !bg-gradient-to-r !from-emerald-600 !to-blue-600 hover:!from-emerald-700 hover:!to-blue-700 !text-white !font-semibold text-sm !rounded-2xl !shadow-lg hover:!shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  <div className="flex items-center justify-center gap-3">
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                      </svg>
-                    )}
-                    {isLoading ? 'Processing...' : 'Initiate Offramp Payment'}
                   </div>
-                </button>
-                <p className="text-xs text-gray-600 text-center">
-                  If the transaction fails, funds will be refunded to your wallet address.
-                </p>
-              </div>
-            </form>
-          </div>
-        )}
+                </div>
 
+                {/* Step 3: Transaction Memo */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-2 py-1">Step 3</span>
+                    <h3 className="text-sm font-semibold text-gray-900">Transaction Description</h3>
+                  </div>
+                  <div>
+                    <label htmlFor="memo" className="block text-sm font-medium text-gray-700 mb-2">
+                      Transaction Memo
+                    </label>
+                    <textarea
+                      id="memo"
+                      value={memo}
+                      onChange={(e) => setMemo(e.target.value)}
+                      className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white resize-none"
+                      rows={3}
+                      placeholder="Add a memo for this transaction..."
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Error and Success Messages */}
+                {error && (
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                    <p className="text-red-800 font-medium text-sm">{error}</p>
+                  </div>
+                )}
+
+                {success && (
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <p className="text-green-800 font-medium text-sm">{success}</p>
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <div className="space-y-3">
+                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <p className="text-amber-800 text-sm font-medium">⚠️ Important:</p>
+                    <p className="text-amber-700 text-xs mt-1">Fetch rate and verify account before initiating payment</p>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading || !rate || !isAccountVerified}
+                    className="w-full py-4 px-6 !bg-gradient-to-r !from-blue-600 !to-indigo-600 hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold text-sm !rounded-lg !shadow-lg hover:!shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                      )}
+                      {isLoading ? 'Processing Payment...' : 'Initiate Offramp Payment'}
+                    </div>
+                  </button>
+                  <p className="text-xs text-gray-600 text-center">
+                    Funds will be refunded to your wallet if the transaction fails
+                  </p>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+
+        <Footer />
       </div>
-
-      <Footer />
-
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
-        }
-
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.7;
-          }
-        }
-      `}</style>
     </div>
   );
 };
