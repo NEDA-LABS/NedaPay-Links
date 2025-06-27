@@ -263,7 +263,7 @@ const OrderHistoryModal = () => {
     <>
       <button
         onClick={handleOpenModal}
-        className="px-3 py-2 !border !border-blue-600 !bg-slate-50 hover:!bg-blue-700 text-black hover:!text-white font-medium !rounded-3xl transition-colors duration-200 flex items-center gap-2 text-xs"
+        className="px-3 py-3 w-full !border !border-blue-600 !bg-slate-50 hover:!bg-blue-700 text-black hover:!text-white font-medium !rounded-lg transition-colors duration-200 flex items-center gap-2 text-sm"
       >
         <Clock className="w-4 h-4" />
         Offramp History

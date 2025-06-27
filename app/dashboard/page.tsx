@@ -600,7 +600,7 @@ export default function MerchantDashboard() {
         <div className="flex-grow">
           <div className="container mx-auto px-4 py-12">
             <div className="mb-8">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="relative p-2">
                   <div className="absolute -top-2 -left-2 w-16 h-16 bg-blue-300/10 rounded-full blur-xl"></div>
                   <div>
@@ -623,33 +623,34 @@ export default function MerchantDashboard() {
                 )}
               </div>
               <div className="py-4 flex flex-col md:!flex-row items-stretch gap-2">
-                <div className=" sm:p-6 flex-1 bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden backdrop-blur-md">
+                <div className=" p-6 flex-1 bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden backdrop-blur-md">
                   {/* Background Accents */}
                   <div className="absolute inset-0 bg-white/5 backdrop-blur-xl"></div>
                   <div className="absolute -top-6 -left-6 w-32 h-32 bg-blue-800/20 rounded-full blur-2xl animate-pulse-slow"></div>
                   <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-indigo-800/20 rounded-full blur-2xl animate-pulse-slow"></div>
                   <div>
-                    <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="relative flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8">
                       <div className="flex-1">
-                        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white mb-2 flex items-center gap-2 animate-slide-in p-2">
+                        <h2 className="text-xl lg:text-2xl font-semibold text-white mb-3 flex items-center gap-3">
                           Welcome Back
                           {selectedWalletAddress && (
-                            <span className="inline-flex items-center px-2 py-0.5 bg-white/10 rounded-md text-sm sm:text-base font-medium text-white/90 backdrop-blur-sm">
+                            <span className="inline-flex items-center px-3 py-1 bg-white/15 rounded-lg text-sm font-medium text-white/95 backdrop-blur-sm border border-white/10">
                               <BasenameDisplay
                                 address={selectedWalletAddress}
-                                basenameClassName="text-sm sm:text-base font-semibold text-white/90"
+                                basenameClassName="text-sm font-semibold text-white/95"
                                 isMobile={false}
                               />
                             </span>
                           )}
                         </h2>
-                        <p className="text-sm sm:text-base text-white/80 mb-4 animate-slide-in animation-delay-100 max-w-md p-2">
+
+                        <p className="text-white/80 mb-6 max-w-lg leading-relaxed">
                           {(() => {
                             const messages = [
-                              "Unleash your business potential with NEDA Pay’s seamless crypto payments.",
+                              "Unleash your business potential with NEDA Pay's seamless crypto payments.",
                               "Your dashboard is live—ready to scale your transactions?",
-                              "Empower your growth with NEDA Pay’s cutting-edge tools.",
-                              "Support at your fingertips—let’s elevate your business today.",
+                              "Empower your growth with NEDA Pay's cutting-edge tools.",
+                              "Support at your fingertips—let's elevate your business today.",
                               "Transform payments into opportunities with NEDA Pay.",
                             ];
                             return messages[
@@ -657,172 +658,78 @@ export default function MerchantDashboard() {
                             ];
                           })()}
                         </p>
-                        <div className="flex flex-row gap-4 animate-slide-in animation-delay-200 mt-8 p-1">
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                           <button
                             onClick={() => {
                               setIsLoadingPaymentLink(true);
                               router.push("/payment-link");
                             }}
-                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="!bg-white !text-blue-600 hover:!bg-blue-50 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={isLoadingPaymentLink}
                           >
-                            <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
-                            <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
-                            <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
-                              {isLoadingPaymentLink ? (
-                                <div className="flex items-center gap-2">
-                                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                                  <p className="font-semibold text-blue-600">
-                                    Processing...
-                                  </p>
-                                </div>
-                              ) : (
-                                <>
-                                  <div className="flex items-center gap-2">
-                                    
-                                      Create Payment Link
-                                    <FaArrowRight/>
-                                  </div>
-                                </>
-                              )}
-                            </span>
+                            {isLoadingPaymentLink ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                Payment Link
+                                <FaArrowRight className="h-3.5 w-3.5" />
+                              </>
+                            )}
                           </button>
+
                           <button
                             onClick={() => {
                               router.push("#swap");
                             }}
-                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed hidden md:!flex"
+                            className="!bg-white/90 !text-blue-600 hover:!bg-white px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md hidden lg:!flex"
                           >
-                            <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
-                            <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
-                            <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
-                              <>
-                                Swap Coins
-                                <Repeat />
-                              </>
-                            </span>
+                            Swap Coins
+                            <Repeat className="h-4 w-4" />
                           </button>
+
                           <button
                             onClick={() => {
                               router.push("/offramp");
                             }}
-                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="!bg-white/90 !text-blue-600 hover:!bg-white px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
                           >
-                            <span className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-blue-400 group-hover:animate-border-pulse"></span>
-                            <span className="absolute inset-0 bg-blue-200/0 group-hover:bg-blue-200/20 transition-all duration-300"></span>
-                            <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:text-blue-700 group-hover:-translate-y-0.5">
-                              <span>Transfer to Fiat</span>
-                              <FaMoneyBill />
-                            </span>
+                            Transfer to Fiat
+                            <FaMoneyBill className="h-4 w-4" />
                           </button>
+
                           <button
                             onClick={() => {
                               setIsLoadingSettings(true);
                               router.push("/settings");
                             }}
-                            className="relative !bg-white/80 backdrop-blur-sm px-5 py-2 text-blue-600 rounded-md text-sm sm:text-base font-semibold border border-white/30 overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed hidden md:!flex"
+                            className="!bg-white/80 !text-blue-600 hover:!bg-white/90 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 items-center justify-center gap-2 border border-white/20 hover:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed hidden lg:!flex"
                             disabled={isLoadingSettings}
                           >
-                            <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></span>
-                            <span className="relative px-2 flex items-center justify-center gap-2 transition-all duration-300 group-hover:-translate-y-0.5">
-                              {isLoadingSettings ? (
-                                <span>Loading...</span>
-                              ) : (
-                                <>
-                                  Customize Dashboard
-                                  <FaArrowRight />
-                                </>
-                              )}
-                            </span>
+                            {isLoadingSettings ? (
+                              "Loading..."
+                            ) : (
+                              <>
+                                Customize Dashboard
+                                <FaArrowRight className="h-3.5 w-3.5" />
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
-                      <div className="hidden md:block">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-400 flex items-center justify-center shadow-md transition-all duration-300 hover:scale-110 hover:rotate-6 animate-slide-in animation-delay-300">
+
+                      <div className="hidden lg:block">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                           <DollarSign
-                            className="w-7 h-7 text-white"
+                            className="w-8 h-8 text-white"
                             strokeWidth={2.5}
                           />
                         </div>
                       </div>
                     </div>
-
-                    {/* Subtle Shimmer Effect */}
-                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                      <div className="absolute w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-                    </div>
-
-                    <style jsx global>{`
-                      /* Slide-in animation */
-                      .animate-slide-in {
-                        opacity: 0;
-                        transform: translateY(15px);
-                        animation: slideIn 0.6s ease-out forwards;
-                      }
-
-                      .animation-delay-100 {
-                        animation-delay: 0.1s;
-                      }
-
-                      .animation-delay-200 {
-                        animation-delay: 0.2s;
-                      }
-
-                      .animation-delay-300 {
-                        animation-delay: 0.3s;
-                      }
-
-                      @keyframes slideIn {
-                        to {
-                          opacity: 1;
-                          transform: translateY(0);
-                        }
-                      }
-
-                      /* Slow pulse for background accents */
-                      .animate-pulse-slow {
-                        animation: pulseSlow 6s ease-in-out infinite;
-                      }
-
-                      @keyframes pulseSlow {
-                        0%,
-                        100% {
-                          opacity: 0.4;
-                        }
-                        50% {
-                          opacity: 0.7;
-                        }
-                      }
-
-                      /* Shimmer effect */
-                      .animate-shimmer {
-                        transform: translateX(-100%);
-                        animation: shimmer 3s infinite linear;
-                      }
-
-                      @keyframes shimmer {
-                        100% {
-                          transform: translateX(100%);
-                        }
-                      }
-
-                      /* Border pulse for primary button */
-                      .animate-border-pulse {
-                        animation: borderPulse 2s linear infinite;
-                      }
-
-                      @keyframes borderPulse {
-                        0% {
-                          border-color: rgba(59, 130, 246, 0.4);
-                        }
-                        50% {
-                          border-color: rgba(59, 130, 246, 0.8);
-                        }
-                        100% {
-                          border-color: rgba(59, 130, 246, 0.4);
-                        }
-                      }
-                    `}</style>
                   </div>
                 </div>
                 <WalletStatusSection
@@ -1489,7 +1396,10 @@ export default function MerchantDashboard() {
                   }
                 `}</style>
               </div>
-              <div id='swap' className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl border-2 !border-blue-500">
+              <div
+                id="swap"
+                className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl border-2 !border-blue-500"
+              >
                 <div className="p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                   <h2 className="text-base sm:text-xl font-semibold text-gray-900 flex items-center">
                     <svg

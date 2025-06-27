@@ -3,8 +3,6 @@ import { CheckCircle, Copy, Check, Wallet, ExternalLink, Shield } from 'lucide-r
 import MiniBalanceTracker from '../dashboard/MiniBalanceTracker';
 import OrderHistoryModal from '../offramp/OfframpStatus';
 
-
-
 interface WalletStatusSectionProps {
   selectedWalletAddress?: string;
   selectedWalletType?: string;
@@ -26,96 +24,82 @@ export default function WalletStatusSection({ selectedWalletAddress, selectedWal
   };
 
   return (
-    <div className="mx-auto flex-1">
-      <div className="sm:p-6 bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden backdrop-blur-md">
-        
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-blue-500/5 rounded-2xl"></div>
-        <div className="absolute top-4 right-4 w-20 h-20 bg-gradient-to-br from-emerald-200/30 to-blue-200/30 rounded-full blur-xl"></div>
-        
-        {/* Status Indicator */}
-        <div className="relative flex items-start justify-between mb-6">
-          <div className="flex items-center space-x-3">
+    <div className="sm:w-1/2">
+      <div className="bg-gradient-to-br from-blue-600/90 to-indigo-600/90 rounded-xl shadow-lg h-full">
+        {/* Compact Header */}
+        <div className="px-4 py-3 flex flex-col lg:!flex-row items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-lg">
-                <CheckCircle className="w-4 h-4 text-slate-800" />
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 text-blue-600" />
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border border-white"></div>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2 pt-2">
-                Wallet Connected
-                <Shield className="w-5 h-5 text-emerald-600" />
-              </h2>
-              <p className="text-white text-sm">
-                Your wallet is securely connected and ready to use
-              </p>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-lg font-semibold text-white">Wallet Connected</h2>
+              </div>
+              <p className="text-blue-100 text-xs">Secure connection active</p>
             </div>
           </div>
-          {/* MiniBalanceTracker Integration */}
-          <div className="flex items-center flex-col gap-2 pt-2">
+          
+          <div className="flex items-center gap-2">
             <MiniBalanceTracker />
             <OrderHistoryModal />
           </div>
         </div>
 
-        {/* Wallet Details Card */}
-        <div className="relative bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <Wallet className="w-4 h-4 text-slate-600" />
-              <span className="text-sm font-semibold text-slate-700">Wallet Address</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
-                {selectedWalletType?.toUpperCase() || 'CONNECTED'}
-              </span>
-            </div>
-          </div>
-
+        {/* Compact Wallet Details */}
+        <div className="border-t border-white/20 px-4 py-3 flex mt-5 my-auto mx-auto w-full">
           {selectedWalletAddress ? (
-            <div className="flex items-center justify-between bg-slate-50 rounded-lg p-3">
-              <div className="flex items-center space-x-3">
-                <div className="font-mono text-sm text-slate-800 bg-white px-3 py-1.5 rounded-md shadow-sm">
-                  {formatAddress(selectedWalletAddress)}
+            <div className="flex flex-col lg:!flex-row w-full items-center gap-4">
+              <div className="flex-1 flex items-center">
+                <div className="bg-white flex items-center gap-2 min-w-0 flex-1 px-4 py-3 rounded-lg">
+                  <Wallet className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm text-gray-800 font-medium">
+                        {formatAddress(selectedWalletAddress)}
+                      </span>
+                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-medium">
+                        {selectedWalletType?.toUpperCase() || 'CONNECTED'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex gap-2 items-end">
                 <button
                   onClick={handleCopyAddress}
-                  className="group relative inline-flex items-center px-3 py-1.5 !bg-slate-700 hover:!bg-slate-800 text-white text-xs font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-                  title="Copy full address"
+                  className="h-8 px-3 !bg-gray-700 hover:!bg-gray-800 text-white text-xs font-medium rounded-md flex items-center transition-colors duration-200 gap-1.5"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-3 h-3 mr-1.5" />
-                      Copied!
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Copied</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3 h-3 mr-1.5" />
-                      Copy
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy</span>
                     </>
                   )}
                 </button>
                 
                 <button
                   onClick={() => window.open(`https://etherscan.io/address/${selectedWalletAddress}`, '_blank')}
-                  className="inline-flex items-center px-3 py-1.5 !bg-blue-600 hover:!bg-blue-700 text-white text-xs font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  title="View on explorer"
+                  className="h-8 px-3 !bg-blue-600 hover:!bg-blue-700 text-white text-xs font-medium !rounded-md flex items-center transition-colors duration-200 gap-1.5"
                 >
-                  <ExternalLink className="w-3 h-3 mr-1.5" />
-                  View
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Explorer</span>
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center py-6 text-slate-500">
-              <div className="text-center">
-                <Wallet className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                <p className="text-sm">No wallet connected</p>
-              </div>
+            <div className="flex items-center py-2 text-gray-500">
+              <Wallet className="w-4 h-4 mr-2 text-gray-400" />
+              <p className="text-sm">No wallet connected</p>
             </div>
           )}
         </div>

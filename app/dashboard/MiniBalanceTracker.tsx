@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from 'ethers';
 import { stablecoins } from '../data/stablecoins';
+import { Loader2 } from 'lucide-react';
 
 interface StablecoinBalances {
   [token: string]: number;
@@ -177,10 +178,10 @@ const MiniBalanceTracker = () => {
   }, [authenticated, address, walletProvider, fetchAllBalances]);
 
   return (
-    <div className="inline-flex items-center bg-white rounded-full shadow-md border border-gray-200 p-2 space-x-2">
+    <div className="inline-flex items-center bg-white rounded-lg shadow-md border border-gray-200 p-2 space-x-2">
       <div className="text-sm font-semibold text-gray-900">
         {loading ? (
-          <span>Loading...</span>
+          <Loader2 className="animate-spin"/>
         ) : (
           <span>
             {getCurrencySymbol(selectedCurrency)}
