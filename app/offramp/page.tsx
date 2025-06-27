@@ -14,11 +14,17 @@ import {
   fetchSupportedCurrencies 
 } from '../utils/paycrest';
 import { 
-  initializeBiconomy, 
-  executeGasAbstractedTransfer,
-  type BiconomyClient,
-  type WalletType
-} from '../utils/biconomy';
+  initializeBiconomy as initializeBiconomyEmbedded,
+  executeGasAbstractedTransfer as executeGasAbstractedTransferEmbedded,
+  type BiconomyClient as BiconomyEmbeddedClient
+} from '../utils/biconomyEmbedded';
+import { 
+  initializeBiconomy as initializeBiconomyExternal,
+  executeGasAbstractedTransfer as executeGasAbstractedTransferExternal,
+  type BiconomyClient as BiconomyExternalClient
+} from '../utils/biconomyExternal';
+
+import { WalletType } from '../utils/biconomyExternal';
 
 import { base } from 'viem/chains';
 
@@ -50,34 +56,42 @@ const PaymentForm: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [currencies, setCurrencies] = useState<Array<{ code: string; name: string }>>([]);
   const [isAccountVerified, setIsAccountVerified] = useState(false);
-  const [biconomyClient, setBiconomyClient] = useState<BiconomyClient | null>(null);
+  const [biconomyEmbeddedClient, setBiconomyEmbeddedClient] = useState<BiconomyEmbeddedClient | null>(null);
+  const [biconomyExternalClient, setBiconomyExternalClient] = useState<BiconomyExternalClient | null>(null);
   const [gasAbstractionFailed, setGasAbstractionFailed] = useState(false);
+  const [gasAbstractionInitializing, setGasAbstractionInitializing] = useState(false);
 
   // Get the active wallet
   const activeWallet = wallets[0] as WalletType | undefined;
   const isEmbeddedWallet = activeWallet?.walletClientType === 'privy';
-  const wallet = wallets.find(wallet => wallet.walletClientType === 'privy') as WalletType;
 
   // Initialize Biconomy when wallet is ready
   useEffect(() => {
     const initBiconomy = async () => {
-      if (isEmbeddedWallet && wallet && signAuthorization) {
-        try {
-          await wallet.switchChain(base.id);
-          const client = await initializeBiconomy(wallet, signAuthorization);
-          setBiconomyClient(client);
-          setGasAbstractionFailed(false);
-        } catch (err) {
-          console.warn('Biconomy initialization failed, falling back to normal transaction:', err);
-          setGasAbstractionFailed(true);
-          setBiconomyClient(null);
+      if (!activeWallet?.address) return;
+      
+      setGasAbstractionInitializing(true);
+      setGasAbstractionFailed(false);
+      
+      try {
+        if (isEmbeddedWallet && signAuthorization) {
+          await activeWallet.switchChain(base.id);
+          const client = await initializeBiconomyEmbedded(activeWallet, signAuthorization);
+          setBiconomyEmbeddedClient(client);
+        } else if (!isEmbeddedWallet) {
+          await activeWallet.switchChain(base.id);
+          const client = await initializeBiconomyExternal(activeWallet);
+          setBiconomyExternalClient(client);
         }
+      } catch (err) {
+        console.warn('Biconomy initialization failed:', err);
+        setGasAbstractionFailed(true);
+      } finally {
+        setGasAbstractionInitializing(false);
       }
     };
 
-    if (activeWallet?.address) {
-      initBiconomy();
-    }
+    initBiconomy();
   }, [activeWallet, signAuthorization, isEmbeddedWallet]);
 
   // Fetch supported currencies on mount
@@ -173,15 +187,26 @@ const PaymentForm: React.FC = () => {
       const { receiveAddress, amount: orderAmount, reference, senderFee, transactionFee, validUntil } = orderResponse.data.data;
 
       // Execute transaction
-      if (isEmbeddedWallet && biconomyClient && !gasAbstractionFailed) {
+      if (!gasAbstractionFailed) {
         try {
-          await executeGasAbstractedTransfer(
-            biconomyClient,
-            receiveAddress,
-            amountInWei.toBigInt(),
-            USDC_ADDRESS,
-            USDC_ABI
-          );
+          if (isEmbeddedWallet && biconomyEmbeddedClient) {
+            await executeGasAbstractedTransferEmbedded(
+              biconomyEmbeddedClient,
+              receiveAddress,
+              amountInWei.toBigInt(),
+              USDC_ADDRESS,
+              USDC_ABI
+            );
+          } else if (!isEmbeddedWallet && biconomyExternalClient) {
+            await executeGasAbstractedTransferExternal(
+              biconomyExternalClient,
+              receiveAddress as `0x${string}`,
+              amountInWei.toBigInt(),
+              USDC_ADDRESS as `0x${string}`
+            );
+          } else {
+            throw new Error('Gas abstraction client not ready');
+          }
         } catch (gasError) {
           console.warn('Gas abstracted transfer failed, falling back to normal transaction:', gasError);
           // Fallback to normal transaction
@@ -189,13 +214,13 @@ const PaymentForm: React.FC = () => {
           await tx.wait();
         }
       } else {
-        // Normal transaction for external wallets or when gas abstraction fails
+        // Normal transaction
         const tx = await usdcContract.transfer(receiveAddress, amountInWei);
         await tx.wait();
       }
 
-
-      setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);      setError('');
+      setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);
+      setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed');
     } finally {
@@ -204,7 +229,23 @@ const PaymentForm: React.FC = () => {
   };
 
   const renderFeeInfo = () => {
-    if (isEmbeddedWallet && biconomyClient && !gasAbstractionFailed) {
+    if (gasAbstractionInitializing) {
+      return (
+        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 mb-4">
+          <div className="flex items-start gap-2">
+            <Loader2 className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0 animate-spin" />
+            <div>
+              <p className="text-blue-800 font-medium text-xs">Initializing Gas Abstraction</p>
+              <p className="text-blue-700 text-xs mt-1">
+                Setting up fee sponsorship. This may take a moment...
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    if (!gasAbstractionFailed && (biconomyEmbeddedClient || biconomyExternalClient)) {
       return (
         <div className="p-3 bg-green-50 rounded-lg border border-green-200 mb-4">
           <div className="flex items-start gap-2">
@@ -212,7 +253,7 @@ const PaymentForm: React.FC = () => {
             <div>
               <p className="text-green-800 font-medium text-xs">Gas Abstraction Active</p>
               <p className="text-green-700 text-xs mt-1">
-                Transaction fees will be automatically deducted from your USDC balance. <a className="!text-blue-600 hover:underline" href="https://blog.ambire.com/gas-abstraction-explained/" target="_blank">Learn more about gas abstraction</a>
+                Transaction fees will be paid in usdc instead of eth. <a className="!text-blue-600 hover:underline" href="https://blog.ambire.com/gas-abstraction-explained/" target="_blank">Learn more</a>
               </p>
             </div>
           </div>
@@ -226,7 +267,7 @@ const PaymentForm: React.FC = () => {
             <div>
               <p className="text-amber-800 font-medium text-xs">Transaction Fees Required</p>
               <p className="text-amber-700 text-xs mt-1">
-                You need a small amount of ETH in your wallet to pay for Base network transaction fees.
+                You need ETH in your wallet to pay for Base network transaction fees.
                 {gasAbstractionFailed && " (Gas abstraction unavailable)"}
               </p>
             </div>
@@ -237,125 +278,125 @@ const PaymentForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
+    <div className="min-h-screen bg-gray-50 overflow-hidden">
       <div className="fixed inset-0 overflow-y-auto">
         <Header />
-
+  
         {/* Back Button */}
-        <div className="container mx-auto max-w-4xl px-4 pt-6">
+        <div className="container mx-auto max-w-4xl px-6 pt-6">
           <button
             onClick={() => window.history.back()}
-            className="group flex items-center gap-2 px-4 py-2 !bg-white/90 backdrop-blur-sm border border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-md transition-all duration-200 text-sm font-medium text-gray-700 hover:text-gray-900"
+            className="group flex items-center gap-2 px-3 py-2 !bg-white !border !border-gray-300 !rounded-md hover:!bg-gray-50 hover:!border-gray-400 transition-all duration-200 text-sm text-gray-700 hover:text-gray-900"
           >
-            <span className="group-hover:-translate-x-1 transition-transform duration-200">←</span>
+            <span className="group-hover:-translate-x-0.5 transition-transform duration-200">←</span>
             Back
           </button>
         </div>
-
-        <div className="container mx-auto max-w-4xl px-4 py-6">
+  
+        <div className="container mx-auto max-w-4xl px-6 py-8">
           {/* Hero Section */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium mb-4">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium mb-4 border border-blue-200">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
               </svg>
               Stablecoins to Fiat Offramp
             </div>
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 tracking-tight">
-              <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Convert USDC to Cash
-              </span>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Convert USDC to Cash
             </h1>
             <p className="text-sm text-gray-600 max-w-2xl mx-auto">
               Seamlessly convert your USDC to local currency with instant bank transfers.
             </p>
           </div>
-
+  
           {/* Authentication Status */}
           {!authenticated && (
-            <div className="mb-6 p-4 rounded-xl border bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+            <div className="mb-6 p-4 rounded-md border border-amber-200 bg-amber-50">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-100">
-                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 rounded-md bg-amber-100">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-amber-900 text-sm">Authentication Required</h3>
+                  <h3 className="font-medium text-amber-900 text-sm">Authentication Required</h3>
                   <p className="text-amber-700 text-xs mt-1">Please login to access the offramp service</p>
                 </div>
                 <button
                   onClick={login}
-                  className="px-4 py-2 !  bg-gradient-to-r !from-blue-600 !to-blue-500 hover:!from-blue-700 hover:!to-blue-600 text-white font-semibold !rounded-lg !shadow-md hover:!shadow-lg !transition-all !duration-200 text-sm"
+                  className="px-4 py-2 !bg-blue-600 hover:!bg-blue-700 !text-white !font-medium !rounded-md !transition-colors !duration-200 text-base"
                 >
                   Login with Privy
                 </button>
               </div>
             </div>
           )}
-
+  
           {/* Wallet Connection Status */}
           {authenticated && !activeWallet && (
-            <div className="mb-6 p-4 rounded-xl border bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
+            <div className="mb-6 p-4 rounded-md border border-orange-200 bg-orange-50">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-orange-100">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 rounded-md bg-orange-100">
+                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.4 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-orange-900 text-sm">Wallet Connection Required</h3>
+                  <h3 className="font-medium text-orange-900 text-sm">Wallet Connection Required</h3>
                   <p className="text-orange-700 text-xs mt-1">Please connect a wallet to proceed with the offramp</p>
                 </div>
                 <button
                   onClick={connectWallet}
-                  className="px-4 py-2 !bg-gradient-to-r !from-emerald-600 !to-emerald-500 hover:!from-emerald-700 hover:!to-emerald-600 text-white font-semibold !rounded-lg !shadow-md hover:!shadow-lg !transition-all !duration-200 text-sm"
+                  className="px-4 py-2 !bg-emerald-600 hover:!bg-emerald-700 !text-white !font-medium !rounded-md !transition-colors !duration-200 text-base"
                 >
                   Connect Wallet
                 </button>
               </div>
             </div>
           )}
-
+  
           {/* Wallet Info */}
           {authenticated && activeWallet && (
-            <div className="mb-6 p-4 rounded-xl border bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+            <div className="mb-6 p-4 rounded-md border border-green-200 bg-green-50">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 rounded-md bg-green-100">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-green-900 text-sm">Wallet Connected</h3>
+                  <h3 className="font-medium text-green-900 text-sm">Wallet Connected</h3>
                   <p className="text-green-700 text-xs mt-1 font-mono">
                     {activeWallet.address?.slice(0, 6)}...{activeWallet.address?.slice(-4)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-green-600 font-medium">Base Network Ready</p>
+                  <p className="text-xs text-green-600 font-medium">
+                    {isEmbeddedWallet ? 'Base Network Ready' : 'not ready'}
+                  </p>
                 </div>
               </div>
             </div>
           )}
-
+  
           {/* Main Form Card */}
           {authenticated && activeWallet && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/50 mb-8">
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mb-8">
               <div className="mb-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-2">Initiate Offramp Payment</h2>
-                <p className="text-gray-600 text-sm">Follow the steps below to convert your USDC to fiat and receive funds in your account.</p>
+                <h2 className="text-base font-semibold text-gray-900 mb-2">Initiate Offramp Payment</h2>
+                <p className="text-gray-600 text-xs">Follow the steps below to convert your USDC to fiat and receive funds in your account.</p>
               </div>
-
+  
               {/* Fee Information */}
               {renderFeeInfo()}
-
+  
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Step 1: Amount and Currency */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-2 py-1">Step 1</span>
-                    <h3 className="text-sm font-semibold text-gray-900">Enter Amount and Currency</h3>
+                    <span className="text-xs font-medium text-gray-700 bg-gray-100 rounded px-2 py-1">Step 1</span>
+                    <h3 className="text-sm font-medium text-gray-900">Enter Amount and Currency</h3>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
@@ -368,15 +409,12 @@ const PaymentForm: React.FC = () => {
                           id="amount"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
-                          className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
+                          className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
                           placeholder="Minimum 1 USDC"
                           min="1"
                           step="0.01"
                           required
                         />
-                        {/* <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-                          <span className="text-gray-500 font-medium text-sm">USDC</span>
-                        </div> */}
                       </div>
                     </div>
                     <div>
@@ -387,7 +425,7 @@ const PaymentForm: React.FC = () => {
                         id="fiat"
                         value={fiat}
                         onChange={(e) => { setFiat(e.target.value); fetchInstitutions(); setInstitution(''); setIsAccountVerified(false); }}
-                        className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
+                        className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
                       >
                         <option value="">Select Currency</option>
                         {currencies.map((currency) => (
@@ -405,29 +443,29 @@ const PaymentForm: React.FC = () => {
                         type="button"
                         onClick={handleFetchRate}
                         disabled={!amount || !fiat}
-                        className="px-3 py-1 !bg-blue-500 hover:!bg-blue-600 text-white !rounded-lg !font-medium !transition-all !duration-200 !text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1 !bg-blue-600 hover:!bg-blue-700 !text-white !rounded-md !font-medium !transition-colors !duration-200 !text-base disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Fetch Rate
                       </button>
                     </div>
                     {rate && (
-                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
                         <p className="text-blue-800 font-medium text-sm">
                           1 USDC = {rate} {fiat}
                         </p>
-                        <p className="text-blue-600 text-sm mt-1">
+                        <p className="text-blue-600 text-xs mt-1">
                           You will receive approximately {(parseFloat(amount) * parseFloat(rate)).toFixed(2)} {fiat}
                         </p>
                       </div>
                     )}
                   </div>
                 </div>
-
+  
                 {/* Step 2: Recipient Details */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-2 py-1">Step 2</span>
-                    <h3 className="text-sm font-semibold text-gray-900">Recipient Details</h3>
+                    <span className="text-xs font-medium text-gray-700 bg-gray-100 rounded px-2 py-1">Step 2</span>
+                    <h3 className="text-sm font-medium text-gray-900">Recipient Details</h3>
                   </div>
                   <div>
                     <label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-2">
@@ -438,7 +476,7 @@ const PaymentForm: React.FC = () => {
                       value={institution}
                       onChange={(e) => { setInstitution(e.target.value); setIsAccountVerified(false); }}
                       onFocus={fetchInstitutions}
-                      className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
+                      className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
                       required
                     >
                       <option value="">Select Institution</option>
@@ -458,7 +496,7 @@ const PaymentForm: React.FC = () => {
                       id="accountNumber"
                       value={accountIdentifier}
                       onChange={(e) => { setAccountIdentifier(e.target.value); setIsAccountVerified(false); }}
-                      className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
+                      className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
                       placeholder="Enter account or mobile number"
                       required
                     />
@@ -473,7 +511,7 @@ const PaymentForm: React.FC = () => {
                       id="accountName"
                       value={accountName}
                       onChange={(e) => { setAccountName(e.target.value); setIsAccountVerified(false); }}
-                      className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white"
+                      className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
                       placeholder="Enter the exact account holder's name"
                       required
                     />
@@ -484,7 +522,7 @@ const PaymentForm: React.FC = () => {
                       type="button"
                       onClick={handleVerifyAccount}
                       disabled={isLoading || !institution || !accountIdentifier || !accountName}
-                      className="w-full px-4 py-3 !bg-indigo-500 hover:!bg-indigo-600 text-white !rounded-lg !font-medium !transition-all !duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      className="w-full px-4 py-2 !bg-indigo-600 hover:!bg-indigo-700 !text-white !rounded-md !font-medium !transition-colors !duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base"
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center">
@@ -496,19 +534,19 @@ const PaymentForm: React.FC = () => {
                       )}
                     </button>
                     {isAccountVerified && (
-                      <div className="p-3 bg-green-50 rounded-lg border border-green-200 mt-2">
+                      <div className="p-3 bg-green-50 rounded-md border border-green-200 mt-2">
                         <p className="text-green-800 font-medium text-sm">✓ Account verified successfully</p>
                         <p className="text-green-700 text-xs mt-1">Please double-check that this is your account</p>
                       </div>
                     )}
                   </div>
                 </div>
-
+  
                 {/* Step 3: Transaction Memo */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-700 bg-gray-100 rounded-full px-2 py-1">Step 3</span>
-                    <h3 className="text-sm font-semibold text-gray-900">Transaction Description</h3>
+                    <span className="text-xs font-medium text-gray-700 bg-gray-100 rounded px-2 py-1">Step 3</span>
+                    <h3 className="text-sm font-medium text-gray-900">Transaction Description</h3>
                   </div>
                   <div>
                     <label htmlFor="memo" className="block text-sm font-medium text-gray-700 mb-2">
@@ -518,37 +556,37 @@ const PaymentForm: React.FC = () => {
                       id="memo"
                       value={memo}
                       onChange={(e) => setMemo(e.target.value)}
-                      className="w-full px-4 py-3 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 bg-white resize-none"
+                      className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white resize-none"
                       rows={3}
                       placeholder="Add a memo for this transaction..."
                       required
                     />
                   </div>
                 </div>
-
+  
                 {/* Error and Success Messages */}
                 {error && (
-                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                  <div className="p-3 bg-red-50 rounded-md border border-red-200">
                     <p className="text-red-800 font-medium text-sm">{error}</p>
                   </div>
                 )}
-
+  
                 {success && (
-                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="p-3 bg-green-50 rounded-md border border-green-200">
                     <p className="text-green-800 font-medium text-sm">{success}</p>
                   </div>
                 )}
-
+  
                 {/* Submit Button */}
                 <div className="space-y-3">
-                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <div className="p-3 bg-amber-50 rounded-md border border-amber-200">
                     <p className="text-amber-800 text-sm font-medium">⚠️ Important:</p>
                     <p className="text-amber-700 text-xs mt-1">Fetch rate and verify account before initiating payment</p>
                   </div>
                   <button
                     type="submit"
                     disabled={isLoading || !rate || !isAccountVerified}
-                    className="w-full py-4 px-6 !bg-gradient-to-r !from-blue-600 !to-indigo-600 hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold text-sm !rounded-lg !shadow-lg hover:!shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 px-6 !bg-blue-600 hover:!bg-blue-700 !text-white !font-medium text-base !rounded-md !transition-colors !duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center justify-center gap-2">
                       {isLoading ? (
@@ -569,7 +607,7 @@ const PaymentForm: React.FC = () => {
             </div>
           )}
         </div>
-
+  
         <Footer />
       </div>
     </div>
