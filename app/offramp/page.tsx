@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, FormEvent } from 'react';
+import React, { useEffect, useState, FormEvent, useMemo } from 'react';
 import { usePrivy, useWallets, useSign7702Authorization } from '@privy-io/react-auth';
 import axios from 'axios';
 import { ethers } from 'ethers';
@@ -36,6 +36,10 @@ const USDC_ABI = [
   'function decimals() public view returns (uint8)',
 ];
 
+// Fee estimates
+const GAS_ABSTRACTED_FEE_USDC = 0.023; // Estimated fee for gas abstracted transactions in USDC
+const GAS_NORMAL_FEE_ETH = 0.0005; // Estimated fee for normal transactions in ETH
+
 const PaymentForm: React.FC = () => {
   // Authentication and wallet state
   const { authenticated, login, connectWallet } = usePrivy();
@@ -60,10 +64,24 @@ const PaymentForm: React.FC = () => {
   const [biconomyExternalClient, setBiconomyExternalClient] = useState<BiconomyExternalClient | null>(null);
   const [gasAbstractionFailed, setGasAbstractionFailed] = useState(false);
   const [gasAbstractionInitializing, setGasAbstractionInitializing] = useState(false);
+  
+  // Balance states
+  const [balance, setBalance] = useState<string>('0');
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [usdcToFiatRate, setUsdcToFiatRate] = useState<number | null>(null);
 
   // Get the active wallet
   const activeWallet = wallets[0] as WalletType | undefined;
   const isEmbeddedWallet = activeWallet?.walletClientType === 'privy';
+
+  // Calculate derived values
+  const gasAbstractionActive = !gasAbstractionFailed && (biconomyEmbeddedClient || biconomyExternalClient);
+  const estimatedFee = gasAbstractionActive ? GAS_ABSTRACTED_FEE_USDC : GAS_NORMAL_FEE_ETH;
+  const feeCurrency = gasAbstractionActive ? 'USDC' : 'ETH';
+  
+  const amountNum = parseFloat(amount) || 0;
+  const totalDeduction = gasAbstractionActive ? amountNum + estimatedFee : amountNum;
+  const receiveAmount = amountNum > 0 && rate ? ((amountNum - (amountNum * 0.01)) * parseFloat(rate)).toFixed(2) : '0.00';
 
   // Initialize Biconomy when wallet is ready
   useEffect(() => {
@@ -106,6 +124,49 @@ const PaymentForm: React.FC = () => {
     };
     loadCurrencies();
   }, []);
+
+  // Fetch balance when wallet changes
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!activeWallet?.address) {
+        setBalance('0');
+        return;
+      }
+      
+      try {
+        setBalanceLoading(true);
+        const provider = new ethers.providers.Web3Provider(
+          await activeWallet.getEthereumProvider()
+        );
+        const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, provider);
+        
+        const decimals = await usdcContract.decimals();
+        const balance = await usdcContract.balanceOf(activeWallet.address);
+        setBalance(ethers.utils.formatUnits(balance, decimals));
+      } catch (err) {
+        console.error('Failed to fetch balance', err);
+        setError('Failed to load balance');
+      } finally {
+        setBalanceLoading(false);
+      }
+    };
+    
+    fetchBalance();
+  }, [activeWallet]);
+
+  // Fetch USDC to fiat rate for fee display
+  useEffect(() => {
+    const fetchUsdcToFiat = async () => {
+      try {
+        const rate = await fetchTokenRate('USDC', 1, fiat);
+        setUsdcToFiatRate(parseFloat(rate));
+      } catch (err) {
+        console.error('Failed to fetch USDC rate', err);
+      }
+    };
+    
+    if (fiat) fetchUsdcToFiat();
+  }, [fiat]);
 
   const fetchInstitutions = async () => {
     try {
@@ -168,9 +229,16 @@ const PaymentForm: React.FC = () => {
       const decimals = await usdcContract.decimals();
       const amountInWei = ethers.utils.parseUnits(amount, decimals);
       
+      // New: Balance check with fee consideration
       const balance = await usdcContract.balanceOf(activeWallet.address);
-      if (balance.lt(amountInWei)) {
-        throw new Error('Insufficient USDC balance');
+      const requiredBalance = gasAbstractionActive
+        ? amountInWei.add(ethers.utils.parseUnits(GAS_ABSTRACTED_FEE_USDC.toString(), decimals))
+        : amountInWei;
+      
+      if (balance.lt(requiredBalance)) {
+        throw new Error(
+          `Insufficient USDC balance. Need ${ethers.utils.formatUnits(requiredBalance, decimals)} USDC`
+        );
       }
 
       // Create payment order
@@ -247,31 +315,121 @@ const PaymentForm: React.FC = () => {
     
     if (!gasAbstractionFailed && (biconomyEmbeddedClient || biconomyExternalClient)) {
       return (
-        <div className="p-3 bg-green-50 rounded-lg border border-green-200 mb-4">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-green-800 font-medium text-xs">Gas Abstraction Active</p>
-              <p className="text-green-700 text-xs mt-1">
-                Transaction fees will be paid in usdc instead of eth. <a className="!text-blue-600 hover:underline" href="https://blog.ambire.com/gas-abstraction-explained/" target="_blank">Learn more</a>
-              </p>
+        <div className="space-y-3 mb-4">
+          <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-green-800 font-medium text-xs">Gas Abstraction Active</p>
+                <p className="text-green-700 text-xs mt-1">
+                  Transaction fees will be paid in USDC instead of ETH. <a className="!text-blue-600 hover:underline" href="https://blog.ambire.com/gas-abstraction-explained/" target="_blank">Learn more</a>
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-xs">Available Balance:</span>
+                {balanceLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                ) : (
+                  <span className="font-medium text-xs">
+                    {parseFloat(balance).toLocaleString(undefined, {
+                      maximumFractionDigits: 6
+                    })} USDC
+                  </span>
+                )}
+              </div>
+              {usdcToFiatRate && (
+                <div className="text-xs text-gray-500 mt-1">
+                  ≈ {(parseFloat(balance) * usdcToFiatRate).toLocaleString(undefined, {
+                    maximumFractionDigits: 2
+                  })} {fiat}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-xs">Estimated Fee:</span>
+                <span className="font-medium text-xs">
+                  {estimatedFee} {feeCurrency}
+                </span>
+              </div>
+              {usdcToFiatRate && feeCurrency === 'USDC' && (
+                <div className="text-xs text-gray-500 mt-1">
+                  ≈ {(estimatedFee * usdcToFiatRate).toLocaleString(undefined, {
+                    maximumFractionDigits: 2
+                  })} {fiat}
+                </div>
+              )}
             </div>
           </div>
         </div>
       );
     } else {
       return (
-        <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 mb-4">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-amber-800 font-medium text-xs">Transaction Fees Required</p>
-              <p className="text-amber-700 text-xs mt-1">
-                You need ETH in your wallet to pay for Base network transaction fees.
-                {gasAbstractionFailed && " (Gas abstraction unavailable)"}
-              </p>
+        <div className="space-y-3 mb-4">
+          <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-amber-800 font-medium text-xs">Transaction Fees Required</p>
+                <p className="text-amber-700 text-xs mt-1">
+                  You need ETH in your wallet to pay for Base network transaction fees.
+                  {gasAbstractionFailed && " (Gas abstraction unavailable)"}
+                </p>
+              </div>
             </div>
           </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm">Available Balance:</span>
+                {balanceLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                ) : (
+                  <span className="font-medium">
+                    {parseFloat(balance).toLocaleString(undefined, {
+                      maximumFractionDigits: 6
+                    })} USDC
+                  </span>
+                )}
+              </div>
+              {usdcToFiatRate && (
+                <div className="text-xs text-gray-500 mt-1">
+                  ≈ {(parseFloat(balance) * usdcToFiatRate).toLocaleString(undefined, {
+                    maximumFractionDigits: 2
+                  })} {fiat}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm">Estimated Fee:</span>
+                <span className="font-medium">
+                  {estimatedFee} {feeCurrency}
+                </span>
+              </div>
+              {usdcToFiatRate && feeCurrency === 'ETH' && (
+                <div className="text-xs text-gray-500 mt-1">
+                  ≈ {(estimatedFee * (usdcToFiatRate * 2000)).toLocaleString(undefined, {
+                    maximumFractionDigits: 2
+                  })} {fiat}*
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {feeCurrency === 'ETH' && (
+            <p className="text-xs text-gray-500">
+              *ETH fee estimate based on current market rates. Actual fee may vary.
+            </p>
+          )}
         </div>
       );
     }
@@ -416,6 +574,9 @@ const PaymentForm: React.FC = () => {
                           required
                         />
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Available: {balanceLoading ? 'Loading...' : balance} USDC
+                      </p>
                     </div>
                     <div>
                       <label htmlFor="fiat" className="block text-sm font-medium text-gray-700 mb-2">
@@ -450,12 +611,19 @@ const PaymentForm: React.FC = () => {
                     </div>
                     {rate && (
                       <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
-                        <p className="text-blue-800 font-medium text-sm">
-                          1 USDC = {rate} {fiat}
-                        </p>
-                        <p className="text-blue-600 text-xs mt-1">
-                          You will receive approximately {(parseFloat(amount) * parseFloat(rate)).toFixed(2)} {fiat}
-                        </p>
+                        <div className="grid grid-rows-1 gap-2">
+                          <div>
+                            <p className="text-blue-800 font-medium text-sm">
+                              1 USDC = {rate} {fiat}
+                            </p>
+                          </div>
+                          <div className="border-l border-blue-200 pl-3">
+                            <p className="text-green-700 font-medium text-sm">You will receive:</p>
+                            <p className="text-green-800 font-semibold">
+                              {receiveAmount} {fiat}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

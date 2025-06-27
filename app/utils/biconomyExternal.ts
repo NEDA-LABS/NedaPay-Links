@@ -32,7 +32,7 @@ export const initializeBiconomy = async (
 
   // Ensure we're on Base chain (updated from Base mainnet)
   await wallet.switchChain(base.id);
-  console.log('Switched to Base chain successfully');
+//   console.log('Switched to Base chain successfully');
   
   const provider = await wallet.getEthereumProvider();
   if (!provider) {
@@ -53,14 +53,14 @@ export const initializeBiconomy = async (
     signer: walletClient
   });
 
-  console.log('Nexus smart account created successfully');
+//   console.log('Nexus smart account created successfully');
 
   // Create MEE client
   const meeClient = await createMeeClient({
     account: smartAccount
   });
 
-  console.log('Biconomy MEE client initialized successfully');
+//   console.log('Biconomy MEE client initialized successfully');
   return { meeClient, smartAccount, walletClient };
 };
 
@@ -71,11 +71,11 @@ export const executeGasAbstractedTransfer = async (
   amountInWei: bigint,
   tokenAddress: `0x${string}`
 ): Promise<any> => {
-  console.log('Starting gas-abstracted transfer with Fusion Quote:', {
-    toAddress,
-    amountInWei: amountInWei.toString(),
-    tokenAddress
-  });
+//   console.log('Starting gas-abstracted transfer with Fusion Quote:', {
+//     toAddress,
+//     amountInWei: amountInWei.toString(),
+//     tokenAddress
+//   });
 
   // Validate inputs
   if (!biconomyClient.meeClient || !biconomyClient.smartAccount) {
@@ -95,7 +95,7 @@ export const executeGasAbstractedTransfer = async (
       }
     });
 
-    console.log('Transfer instruction built successfully');
+//   console.log('Transfer instruction built successfully');
 
     // Get fusion quote
     const fusionQuote = await biconomyClient.meeClient.getFusionQuote({
@@ -111,28 +111,28 @@ export const executeGasAbstractedTransfer = async (
       }
     });
 
-    console.log('Fusion quote received');
+//   console.log('Fusion quote received');
 
     // Execute the fusion quote
     const { hash } = await biconomyClient.meeClient.executeFusionQuote({ 
       fusionQuote 
     });
 
-    console.log('Transaction hash:', hash);
+//   console.log('Transaction hash:', hash);
 
     // Get MEE scan link
     const meeScanLink = getMeeScanLink(hash);
-    console.log('MEE Scan link:', meeScanLink);
+//   console.log('MEE Scan link:', meeScanLink);
 
     // Wait for transaction completion
     const receipt = await biconomyClient.meeClient.waitForSupertransactionReceipt({ 
-      hash 
+      hash
     });
 
-    console.log('Transaction completed successfully:', {
-      status: receipt.transactionStatus,
-      hash: receipt.hash
-    });
+    // console.log('Transaction completed successfully:', {
+    //   status: receipt.transactionStatus,
+    //   hash: receipt.hash
+    // });
 
     return {
       receipt,
@@ -155,10 +155,10 @@ export const executeBatchGasAbstractedTransfer = async (
   }>,
   tokenAddress: `0x${string}`
 ): Promise<any> => {
-  console.log('Starting batch gas-abstracted transfer:', {
-    transferCount: transfers.length,
-    tokenAddress
-  });
+//   console.log('Starting batch gas-abstracted transfer:', {
+//     transferCount: transfers.length,
+//     tokenAddress
+//   });
 
   if (!biconomyClient.meeClient || !biconomyClient.smartAccount) {
     throw new Error('Biconomy client not properly initialized');
@@ -181,7 +181,7 @@ export const executeBatchGasAbstractedTransfer = async (
       )
     );
 
-    console.log('Batch transfer instructions built successfully');
+//   console.log('Batch transfer instructions built successfully');
 
     // Calculate total amount
     const totalAmount = transfers.reduce((sum, transfer) => sum + transfer.amountInWei, 0n);
@@ -200,28 +200,28 @@ export const executeBatchGasAbstractedTransfer = async (
       }
     });
 
-    console.log('Batch fusion quote received');
+//   console.log('Batch fusion quote received');
 
     // Execute the fusion quote
     const { hash } = await biconomyClient.meeClient.executeFusionQuote({ 
       fusionQuote 
     });
 
-    console.log('Batch transaction hash:', hash);
+//   console.log('Batch transaction hash:', hash);
 
     // Get MEE scan link
     const meeScanLink = getMeeScanLink(hash);
-    console.log('MEE Scan link:', meeScanLink);
+//   console.log('MEE Scan link:', meeScanLink);
 
     // Wait for transaction completion
     const receipt = await biconomyClient.meeClient.waitForSupertransactionReceipt({ 
       hash 
     });
 
-    console.log('Batch transaction completed successfully:', {
-      status: receipt.transactionStatus,
-      hash: receipt.hash
-    });
+//   console.log('Batch transaction completed successfully:', {
+//     status: receipt.transactionStatus,
+//     hash: receipt.hash
+//   });
 
     return {
       receipt,
@@ -230,7 +230,7 @@ export const executeBatchGasAbstractedTransfer = async (
     };
 
   } catch (error) {
-    console.error('Error executing batch gas-abstracted transfer:', error);
+//   console.error('Error executing batch gas-abstracted transfer:', error);
     throw error;
   }
 };
