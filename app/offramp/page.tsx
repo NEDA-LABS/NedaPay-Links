@@ -170,7 +170,7 @@ const PaymentForm: React.FC = () => {
         reference: `order-${Date.now()}`,
       });
 
-      const { receiveAddress } = orderResponse.data.data;
+      const { receiveAddress, amount: orderAmount, reference, senderFee, transactionFee, validUntil } = orderResponse.data.data;
 
       // Execute transaction
       if (isEmbeddedWallet && biconomyClient && !gasAbstractionFailed) {
@@ -194,8 +194,8 @@ const PaymentForm: React.FC = () => {
         await tx.wait();
       }
 
-      setSuccess('Payment successful!');
-      setError('');
+
+      setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);      setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed');
     } finally {

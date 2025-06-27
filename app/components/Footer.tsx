@@ -20,7 +20,7 @@ export default function Footer() {
         {/* Center - Join Community */}
         <div className="flex items-center gap-2 text-slate-600">
           <a
-            href="https://discord.gg/2H3dQzruRV"
+            href="https://discord.com/invite/2H3dQzruRV"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors duration-300"
