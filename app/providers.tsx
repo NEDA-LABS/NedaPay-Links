@@ -23,13 +23,7 @@ const wagmiConfig = createPrivyConfig({
   // ],
   ssr: true,
   transports: {
-    [base.id]: fallback([
-      http(process.env.NEXT_PUBLIC_COINBASE_BASE_RPC),
-      http("https://mainnet.base.org"),
-      http("https://base-mainnet.g.alchemy.com/v2/demo"),
-      http("https://base.llamarpc.com"),
-      http("https://1rpc.io/base"),
-    ]),
+    [base.id]: http()
   },
 });
 

@@ -56,14 +56,15 @@ const PaymentForm: React.FC = () => {
   // Get the active wallet
   const activeWallet = wallets[0] as WalletType | undefined;
   const isEmbeddedWallet = activeWallet?.walletClientType === 'privy';
+  const wallet = wallets.find(wallet => wallet.walletClientType === 'privy') as WalletType;
 
   // Initialize Biconomy when wallet is ready
   useEffect(() => {
     const initBiconomy = async () => {
-      if (isEmbeddedWallet && activeWallet && signAuthorization) {
+      if (isEmbeddedWallet && wallet && signAuthorization) {
         try {
-          await activeWallet.switchChain(base.id);
-          const client = await initializeBiconomy(activeWallet, signAuthorization);
+          await wallet.switchChain(base.id);
+          const client = await initializeBiconomy(wallet, signAuthorization);
           setBiconomyClient(client);
           setGasAbstractionFailed(false);
         } catch (err) {
@@ -211,7 +212,7 @@ const PaymentForm: React.FC = () => {
             <div>
               <p className="text-green-800 font-medium text-xs">Gas Abstraction Active</p>
               <p className="text-green-700 text-xs mt-1">
-                Transaction fees will be automatically deducted from your USDC balance.
+                Transaction fees will be automatically deducted from your USDC balance. <a className="!text-blue-600 hover:underline" href="https://blog.ambire.com/gas-abstraction-explained/" target="_blank">Learn more about gas abstraction</a>
               </p>
             </div>
           </div>

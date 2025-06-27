@@ -12,6 +12,7 @@ export type BiconomyClient = {
 export type SignAuthorizationFunction = (params: {
   contractAddress: `0x${string}`;
   chainId: number;
+  nonce: number;
 }) => Promise<any>;
 
 export type WalletType = {
@@ -42,45 +43,34 @@ export const initializeBiconomy = async (
     throw new Error('Ethereum provider not available');
   }
 
-  console.log('Provider configured successfully', provider)
-
-  // Create viem wallet client
-  const walletClient = createWalletClient({
-    account: wallet.address,
-    chain: base,
-    transport: custom(provider),
-  });
-
-  if (!walletClient.account) {
-    throw new Error('Wallet client account not properly configured');
-  }
-  console.log('Wallet client configured successfully', walletClient)
+  // console.log('Provider configured successfully', provider)
 
   // Create Nexus account
   const nexusAccount = await toMultichainNexusAccount({
     chains: [base],
     transports: [http()],
-    signer: walletClient,
+    signer: await wallet.getEthereumProvider(),
     accountAddress: wallet.address,
   });
 
-  console.log('Nexus account created successfully', nexusAccount)
+  // console.log('Nexus account created successfully', nexusAccount)
 
   // Sign authorization
   const authorization = await signAuthorization({
     contractAddress: NEXUS_IMPLEMENTATION_ADDRESS,
-    chainId: base.id,  
+    chainId: base.id,
+    nonce: 0,
     
   });
 
-  console.log('Authorization signed successfully', authorization)
+  // console.log('Authorization signed successfully', authorization)
 
   // Create MEE client
   const meeClient = await createMeeClient({
     account: nexusAccount,
   });
 
-  console.log('Biconomy client initialized successfully', meeClient)
+  // console.log('Biconomy client initialized successfully', meeClient)
   return { meeClient, authorization };
 };
 
@@ -107,19 +97,19 @@ export const executeGasAbstractedTransfer = async (
     throw new Error('Invalid recipient address');
   }
 
-  console.log('Creating token transfer data for:', {
-    toAddress,
-    amountInWei: amountInWei.toString(),
-    tokenAddress
-  });
+  // console.log('Creating token transfer data for:', {
+  //   toAddress,
+  //   amountInWei: amountInWei.toString(),
+  //   tokenAddress
+  // });
   const tokenInterface = new ethers.utils.Interface(tokenAbi);
   const transferData = tokenInterface.encodeFunctionData('transfer', [toAddress, amountInWei]);
-  console.log('Transfer data created:', transferData);
+  // console.log('Transfer data created:', transferData);
 
-  console.log('Executing transaction with authorization:', {
-    hasAuthorization: !!biconomyClient.authorization,
-    feeToken: tokenAddress
-  });
+  // console.log('Executing transaction with authorization:', {
+  //   hasAuthorization: !!biconomyClient.authorization,
+  //   feeToken: tokenAddress
+  // });
   const { hash } = await biconomyClient.meeClient.execute({
     authorization: biconomyClient.authorization,
     delegate: true,
@@ -136,19 +126,19 @@ export const executeGasAbstractedTransfer = async (
       }],
     }],
   });
-  console.log('Transaction hash:', hash);
+  // console.log('Transaction hash:', hash);
 
-  console.log('Waiting for transaction receipt for hash:', hash);
+  // console.log('Waiting for transaction receipt for hash:', hash);
   const receipt = await biconomyClient.meeClient.waitForSupertransactionReceipt({ hash });
-  console.log('Transaction receipt received:', {
-    status: receipt.status,
-    transactionHash: receipt.transactionHash,
-    blockNumber: receipt.blockNumber
-  });
+  // console.log('Transaction receipt received:', {
+  //   status: receipt.status,
+  //   transactionHash: receipt.transactionHash,
+  //   blockNumber: receipt.blockNumber
+  // });
 
-  console.log('Transaction completed successfully with receipt:', {
-    status: receipt.status,
-    transactionHash: receipt.transactionHash
-  });
+  // console.log('Transaction completed successfully with receipt:', {
+  //   status: receipt.status,
+  //   transactionHash: receipt.transactionHash
+  // });
   return receipt;
 };
