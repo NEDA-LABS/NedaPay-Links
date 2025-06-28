@@ -531,7 +531,7 @@ const PaymentForm: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-green-600 font-medium">
-                    {isEmbeddedWallet ? 'Base Network Ready' : 'not ready'}
+                    Base Network Ready
                   </p>
                 </div>
               </div>
@@ -569,7 +569,7 @@ const PaymentForm: React.FC = () => {
                           onChange={(e) => setAmount(e.target.value)}
                           className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
                           placeholder="Minimum 1 USDC"
-                          min="1"
+                          min="0.5"
                           step="0.01"
                           required
                         />

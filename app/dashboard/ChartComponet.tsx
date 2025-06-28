@@ -1,23 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Line } from 'react-chartjs-2';
+import { useState, useEffect, useMemo } from 'react';
 import {
-  Chart as ChartJS,
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
-  ChartOptions,
-  ChartData,
-  LegendItem,
-  Color,
-} from 'chart.js';
+  ResponsiveContainer
+} from 'recharts';
 import { stablecoins } from '../data/stablecoins';
 import { useTheme } from 'next-themes';
-
-// Register Chart.js components
-ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
 // Define the shape of the transaction
 interface Transaction {
@@ -37,6 +30,13 @@ interface ChartComponentProps {
   transactions: Transaction[];
 }
 
+// Chart data point interface
+interface ChartDataPoint {
+  dateTime: string;
+  formattedDateTime: string;
+  [key: string]: string | number; // Dynamic keys for each stablecoin
+}
+
 // Define color mapping based on the image attachment
 const colorMap: { [key: string]: string } = {
   TSHC: '#00A1D6', // Blue
@@ -50,7 +50,7 @@ const colorMap: { [key: string]: string } = {
   TRYB: '#A100A1', // Purple
   NZDD: '#D6323A', // Red
   MXNe: '#00A1D6', // Blue
-  USDC: '#00A65A', // Green
+  USDC: '#F5A623', // Green
 };
 
 // Function to format date as YY-MM-DD HH:MM
@@ -69,71 +69,65 @@ const formatDate = (dateStr: string): string => {
   }
 };
 
-// Function to get chart data with validation
-const getMultiStablecoinHourlyRevenueData = (
-  transactions: Transaction[]
-): ChartData<'line', number[], string> => {
-  if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
-    console.warn('Invalid or empty transactions data');
-    return { labels: [], datasets: [] };
+// Custom tooltip component
+const CustomTooltip: React.FC<any> = ({ 
+  active, 
+  payload, 
+  label 
+}) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="text-gray-900 font-medium mb-2">
+          {formatDate(label as string)}
+        </p>
+        {payload.map((entry: any, index: number) => {
+          const currency = entry.dataKey as string;
+          const coin = stablecoins.find((c) => c.baseToken === currency);
+          const flag = coin?.flag || '🌐';
+          
+          return (
+            <p 
+              key={index} 
+              className="text-sm"
+              style={{ color: entry.color }}
+            >
+              {`${flag} ${currency}: ${entry.value?.toLocaleString()}`}
+            </p>
+          );
+        })}
+      </div>
+    );
   }
+  return null;
+};
 
-  // Get unique date-hour-minute combinations
-  const dateTimeSet = new Set<string>();
-  transactions.forEach((tx) => {
-    if (tx.date && typeof tx.date === 'string') {
-      // Slice to YYYY-MM-DD HH:MM (first 16 characters, assuming format like "YYYY-MM-DD HH:MM:SS")
-      const dateTime = tx.date.slice(0, 16);
-      dateTimeSet.add(dateTime);
-    }
-  });
-  const labels = Array.from(dateTimeSet).sort();
-
-  // Get unique stablecoin symbols
-  const stablecoinSymbols = Array.from(new Set(transactions.map((tx) => tx.currency)));
-
-  // Generate datasets for each stablecoin
-  const datasets = stablecoinSymbols.map((symbol) => {
-    const coin = stablecoins.find((c) => c.baseToken === symbol);
-    const flag = coin?.flag || '🌐';
-    const data = labels.map((dateTime) => {
-      const timeSum = transactions
-        .filter((tx) => {
-          const txDateTime = tx.date.slice(0, 16);
-          return tx.currency === symbol && txDateTime === dateTime;
-        })
-        .reduce((sum, tx) => {
-          const amount = parseFloat(tx.amount.replace(/,/g, '')) || 0;
-          return sum + (isNaN(amount) ? 0 : amount);
-        }, 0);
-      return timeSum;
-    });
-
-    return {
-      label: `${flag} ${symbol}`,
-      data,
-      fill: false,
-      tension: 0.2,
-      borderColor: colorMap[symbol] as Color,
-      backgroundColor: `${colorMap[symbol]}80` as Color, // 50% opacity
-    };
-  });
-
-  datasets.forEach((dataset) => {
-    if (dataset.data.length !== labels.length) {
-      console.error(`Dataset length mismatch for ${dataset.label}:`, {
-        dataLength: dataset.data.length,
-        labelsLength: labels.length,
-      });
-    }
-    dataset.data.forEach((value, i) => {
-      if (isNaN(value) || value < 0) {
-        console.warn(`Invalid data point at index ${i} for ${dataset.label}: ${value}`);
-      }
-    });
-  });
-
-  return { labels, datasets };
+// Custom legend component
+const CustomLegend: React.FC<any> = ({ payload }) => {
+  return (
+    <div className="flex flex-wrap justify-center gap-4 mt-4">
+      {payload?.map((entry: any, index: number) => {
+        const currency = entry.dataKey;
+        const coin = stablecoins.find((c) => c.baseToken === currency);
+        const flag = coin?.flag || '🌐';
+        
+        return (
+          <div 
+            key={index} 
+            className="flex items-center gap-2 text-sm"
+          >
+            <div 
+              className="w-3 h-3 rounded"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-gray-700">
+              {`${flag} ${currency}`}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 const ChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
@@ -144,95 +138,112 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
     setIsDarkMode(theme === 'dark');
   }, [theme]);
 
-  const maxAmount = transactions
-    .map((tx) => parseFloat(tx.amount.replace(/,/g, '')) || 0)
-    .filter((num) => !isNaN(num))
-    .reduce((max, num) => Math.max(max, num), 0);
-  const suggestedMax = maxAmount > 0 ? maxAmount * 1.2 : 100;
+  // Process data for Recharts format
+  const chartData = useMemo(() => {
+    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+      console.warn('Invalid or empty transactions data');
+      return [];
+    }
 
+    // Get unique date-time combinations
+    const dateTimeSet = new Set<string>();
+    transactions.forEach((tx) => {
+      if (tx.date && typeof tx.date === 'string') {
+        const dateTime = tx.date.slice(0, 16);
+        dateTimeSet.add(dateTime);
+      }
+    });
+    const sortedDateTimes = Array.from(dateTimeSet).sort();
+
+    // Get unique stablecoin symbols
+    const stablecoinSymbols = Array.from(new Set(transactions.map((tx) => tx.currency)));
+
+    // Create data points
+    const data: ChartDataPoint[] = sortedDateTimes.map((dateTime) => {
+      const dataPoint: ChartDataPoint = {
+        dateTime,
+        formattedDateTime: formatDate(dateTime),
+      };
+
+      // Add data for each stablecoin
+      stablecoinSymbols.forEach((symbol) => {
+        const timeSum = transactions
+          .filter((tx) => {
+            const txDateTime = tx.date.slice(0, 16);
+            return tx.currency === symbol && txDateTime === dateTime;
+          })
+          .reduce((sum, tx) => {
+            const amount = parseFloat(tx.amount.replace(/,/g, '')) || 0;
+            return sum + (isNaN(amount) ? 0 : amount);
+          }, 0);
+        
+        dataPoint[symbol] = timeSum;
+      });
+
+      return dataPoint;
+    });
+
+    return data;
+  }, [transactions]);
+
+  // Get unique stablecoin symbols for rendering lines
+  const stablecoinSymbols = useMemo(() => {
+    return Array.from(new Set(transactions.map((tx) => tx.currency)));
+  }, [transactions]);
+
+  const gridColor = isDarkMode ? 'rgba(159, 161, 160, 0.28)' : 'rgba(100, 102, 101, 0.17)';
   const textColor = isDarkMode ? '#ffffff' : '#222222';
-
-  const options: ChartOptions<'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      y: {
-        beginAtZero: true,
-        suggestedMax,
-        grid: { color: isDarkMode ? 'rgba(159, 161, 160, 0.28)' : 'rgba(100, 102, 101, 0.17)' },
-        ticks: { color: isDarkMode ? '#fffff0' : '#4b5563' },
-      },
-      x: {
-        grid: { display: false },
-        ticks: {
-          color: isDarkMode ? '#fffff0' : '#4b5563',
-          callback: function (value) {
-            const label = this.getLabelForValue(value as number);
-            return formatDate(label);
-          },
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        labels: {
-          color: textColor,
-          usePointStyle: false,
-          boxWidth: 20,
-          boxHeight: 9,
-          padding: 10,
-          generateLabels: (chart): LegendItem[] => {
-            const { datasets } = chart.data;
-            if (!datasets || !datasets.length) return [];
-            return datasets.map((ds, i) => {
-              const labelString = ds.label || '';
-              const match = labelString.match(/^(\S+)\s+(.+)$/);
-              let flag = '', code = '';
-              if (match) {
-                flag = match[1];
-                code = match[2];
-              } else {
-                code = labelString;
-              }
-              return {
-                text: `${flag} ${code}`.trim(),
-                fillStyle: ds.borderColor as Color,
-                strokeStyle: ds.borderColor as Color,
-                hidden: !chart.isDatasetVisible(i),
-                index: i,
-                lineWidth: 2,
-              };
-            });
-          },
-        },
-      },
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            const ds = context.dataset;
-            const label = ds.label || '';
-            const match = label.match(/^(\S+)\s+(.+)$/);
-            let flag = '', code = '';
-            if (match) {
-              flag = match[1];
-              code = match[2];
-            } else {
-              code = label;
-            }
-            return `${flag} ${code}: ${context.parsed.y.toLocaleString()}`;
-          },
-          title: function (context) {
-            const label = context[0].label;
-            return formatDate(label);
-          },
-        },
-      },
-    },
-  };
+  const axisColor = isDarkMode ? '#fffff0' : '#4b5563';
 
   return (
-    <div className="h-64 w-full" style={{ position: 'relative', maxHeight: '256px' }}>
-      <Line data={getMultiStablecoinHourlyRevenueData(transactions)} options={options} />
+    <div className="h-64 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={chartData}
+          margin={{
+            top: 20,
+            right: 30,
+            left: 20,
+            bottom: 60,
+          }}
+        >
+          <CartesianGrid 
+            strokeDasharray="3 3" 
+            stroke={gridColor}
+            horizontal={true}
+            vertical={false}
+          />
+          <XAxis
+            dataKey="dateTime"
+            tick={{ fill: axisColor, fontSize: 12 }}
+            tickFormatter={formatDate}
+            stroke={axisColor}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            tick={{ fill: axisColor, fontSize: 12 }}
+            stroke={axisColor}
+            tickFormatter={(value) => value.toLocaleString()}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend content={<CustomLegend />} />
+          
+          {stablecoinSymbols.map((symbol) => (
+            <Line
+              key={symbol}
+              type="monotone"
+              dataKey={symbol}
+              stroke={colorMap[symbol] || '#8884d8'}
+              strokeWidth={2.5}
+              dot={{ fill: colorMap[symbol], strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, stroke: colorMap[symbol], strokeWidth: 2 }}
+              connectNulls={false}
+              animationDuration={1000}
+              animationEasing="ease-in-out"
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 };

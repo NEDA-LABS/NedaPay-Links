@@ -1,11 +1,14 @@
-import {
-  Color,
-  ChartOptions,
-} from "chart.js";
-import { Doughnut } from "react-chartjs-2";
-import { stablecoins } from "../data/stablecoins";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useTheme } from "next-themes";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend
+} from 'recharts';
+import { stablecoins } from "../data/stablecoins";
 
 interface Transaction {
   id: string;
@@ -23,6 +26,14 @@ interface ChartComponentProps {
   transactions: Transaction[];
 }
 
+interface PieDataPoint {
+  name: string;
+  value: number;
+  flag: string;
+  currency: string;
+  color: string;
+}
+
 // Define color mapping based on the image attachment
 const colorMap: { [key: string]: string } = {
   TSHC: '#00A1D6', // Blue
@@ -36,49 +47,76 @@ const colorMap: { [key: string]: string } = {
   TRYB: '#A100A1', // Purple
   NZDD: '#D6323A', // Red
   MXNe: '#00A1D6', // Blue
-  USDC: '#00A65A', // Green
+  USDC: '#F5A623', // Green
 };
 
-const getPaymentMethodsData = (transactions: any[]) => {
-  const grouped: Record<string, { count: number; flag: string }> = {};
-  transactions.forEach((tx) => {
-    const symbol = tx.currency;
-    if (!grouped[symbol]) {
-      const coin = stablecoins.find((c) => c.baseToken === symbol);
-      grouped[symbol] = { count: 0, flag: coin?.flag || "🌐" };
-    }
-    grouped[symbol].count++;
-  });
-  const entries = Object.entries(grouped).filter(
-    ([sym, data]) => data.count > 0
+// Custom tooltip component
+const CustomTooltip: React.FC<any> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload as PieDataPoint;
+    const percentage = ((data.value / payload[0].payload.totalTransactions) * 100).toFixed(1);
+    
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="text-gray-900 font-medium">
+          {`${data.flag} ${data.currency}`}
+        </p>
+        <p className="text-sm text-gray-600">
+          {`Transactions: ${data.value.toLocaleString()}`}
+        </p>
+        <p className="text-sm text-gray-600">
+          {`Percentage: ${percentage}%`}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom legend component
+const CustomLegend: React.FC<any> = ({ payload }) => {
+  return (
+    <div className="flex flex-wrap justify-center gap-3 mt-4">
+      {payload?.map((entry: any, index: number) => (
+        <div 
+          key={index} 
+          className="flex items-center gap-2 text-sm"
+        >
+          <div 
+            className="w-3 h-3 rounded"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-gray-700">
+            {`${entry.payload.flag} ${entry.payload.currency}`}
+          </span>
+        </div>
+      ))}
+    </div>
   );
+};
 
-  // Sort symbols to match stablecoin order for consistent color assignment
-  const stablecoinOrder = stablecoins.map((c) => c.baseToken);
-  const labels = entries
-    .sort(([a], [b]) => stablecoinOrder.indexOf(a) - stablecoinOrder.indexOf(b))
-    .map(([symbol]) => symbol);
+// Custom label function for the pie slices
+const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  if (percent < 0.05) return null; // Don't show labels for slices smaller than 5%
+  
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-  const data = entries
-    .sort(([a], [b]) => stablecoinOrder.indexOf(a) - stablecoinOrder.indexOf(b))
-    .map(([_, d]) => d.count);
-
-  // Map colors based on currency symbols
-  const backgroundColor: Color[] = labels.map((symbol) => `${colorMap[symbol]}CC`); // 80% opacity
-  const borderColor: Color[] = labels.map((symbol) => colorMap[symbol]);
-
-  return {
-    labels,
-    datasets: [
-      {
-        label: "Payment Methods",
-        data,
-        backgroundColor,
-        borderColor,
-        borderWidth: 1,
-      },
-    ],
-  };
+  return (
+    <text 
+      x={x} 
+      y={y} 
+      fill="white" 
+      textAnchor={x > cx ? 'start' : 'end'} 
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight="bold"
+    >
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
 };
 
 const PieChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
@@ -86,52 +124,82 @@ const PieChartComponent: React.FC<ChartComponentProps> = ({ transactions }) => {
   const { theme } = useTheme();
 
   useEffect(() => {
-    theme === 'dark' ? setIsDarkMode(true) : setIsDarkMode(false);
-  }, [theme, setIsDarkMode]);
+    setIsDarkMode(theme === 'dark');
+  }, [theme]);
 
-  const options: ChartOptions<"doughnut"> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          color: isDarkMode ? "#9ca3af" : "#4b5563",
-          padding: 20,
-          font: { size: 12 },
-          usePointStyle: false,
-          boxWidth: 20,
-          boxHeight: 9,
-          generateLabels: (chart) => {
-            const { datasets } = chart.data;
-            if (!datasets || !datasets.length) return [];
-            const backgroundColor = datasets[0].backgroundColor as Color[];
-            const borderColor = datasets[0].borderColor as Color[];
-            return datasets[0].data.map((_, i) => {
-              const symbol = chart.data.labels![i] as string;
-              const coin = stablecoins.find((c) => c.baseToken === symbol);
-              const flag = coin?.flag || "🌐";
-              return {
-                text: `${flag} ${symbol}`,
-                fillStyle: backgroundColor[i],
-                strokeStyle: borderColor[i],
-                lineWidth: 1,
-                hidden: false,
-                index: i,
-              };
-            });
-          },
-        },
-      },
-    },
-  };
+  // Process data for pie chart
+  const pieData = useMemo(() => {
+    const grouped: Record<string, { count: number; flag: string }> = {};
+    
+    transactions.forEach((tx) => {
+      const symbol = tx.currency;
+      if (!grouped[symbol]) {
+        const coin = stablecoins.find((c) => c.baseToken === symbol);
+        grouped[symbol] = { count: 0, flag: coin?.flag || "🌐" };
+      }
+      grouped[symbol].count++;
+    });
+
+    const entries = Object.entries(grouped).filter(
+      ([_, data]) => data.count > 0
+    );
+
+    // Sort symbols to match stablecoin order for consistent color assignment
+    const stablecoinOrder = stablecoins.map((c) => c.baseToken);
+    const sortedEntries = entries.sort(
+      ([a], [b]) => stablecoinOrder.indexOf(a) - stablecoinOrder.indexOf(b)
+    );
+
+    const totalTransactions = sortedEntries.reduce((sum, [_, data]) => sum + data.count, 0);
+
+    const data: PieDataPoint[] = sortedEntries.map(([symbol, data]) => ({
+      name: `${data.flag} ${symbol}`,
+      value: data.count,
+      flag: data.flag,
+      currency: symbol,
+      color: colorMap[symbol] || '#8884d8',
+      totalTransactions // Add total for percentage calculation
+    }));
+
+    return data;
+  }, [transactions]);
 
   return (
-    <div
-      className="h-64 w-full"
-      style={{ position: "relative", maxHeight: "256px" }}
-    >
-      <Doughnut data={getPaymentMethodsData(transactions)} options={options} />
+    <div className="h-64 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={pieData}
+            cx="50%"
+            cy="45%"
+            labelLine={false}
+            label={renderCustomLabel}
+            outerRadius={80}
+            innerRadius={30} // Creates a doughnut effect
+            fill="#8884d8"
+            dataKey="value"
+            animationBegin={0}
+            animationDuration={1000}
+            animationEasing="ease-out"
+          >
+            {pieData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={entry.color}
+                stroke={entry.color}
+                strokeWidth={1}
+              />
+            ))}
+          </Pie>
+          <Tooltip content={<CustomTooltip />} />
+          <Legend 
+            content={<CustomLegend />}
+            wrapperStyle={{
+              paddingTop: '20px'
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   );
 };
