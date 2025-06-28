@@ -391,13 +391,13 @@ export default function InvoicePage() {
                               >
                                 <FaEye className="w-4 h-4" />
                               </button>
-                              <button
+                              {/* <button
                                 onClick={() => handleEdit(invoice.id)}
                                 className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200"
                                 title="Edit Invoice"
                               >
                                 <FaEdit className="w-4 h-4" />
-                              </button>
+                              </button> */}
                               <button
                                 onClick={() => handleDownload(invoice)}
                                 className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors duration-200"

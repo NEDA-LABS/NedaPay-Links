@@ -67,8 +67,60 @@ export async function POST() {
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }
 
-export async function PUT() {
-  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+export async function PUT(req: Request) {
+  try {
+    const { linkId, paidAt } = await req.json();
+
+    if (!linkId || !paidAt) {
+      return NextResponse.json(
+        { error: 'Missing required fields: linkId and paidAt' },
+        { status: 400 }
+      );
+    }
+
+    // Find the payment link first
+    const paymentLink = await prisma.paymentLink.findUnique({
+      where: { linkId },
+      include: { invoice: true }
+    });
+
+    if (!paymentLink) {
+      return NextResponse.json(
+        { error: 'Payment link not found' },
+        { status: 404 }
+      );
+    }
+
+    if (!paymentLink.invoice) {
+      return NextResponse.json(
+        { error: 'No invoice associated with this payment link' },
+        { status: 404 }
+      );
+    }
+
+    // Update the invoice to paid status
+    const updatedInvoice = await prisma.invoice.update({
+      where: { id: paymentLink.invoice.id },
+      data: {
+        status: 'paid',
+        paidAt: new Date(paidAt)
+      }
+    });
+
+    return NextResponse.json({
+      message: 'Invoice updated successfully',
+      invoice: updatedInvoice
+    });
+
+  } catch (error) {
+    console.error('Error updating invoice:', error);
+    return NextResponse.json(
+      { error: 'Failed to update invoice' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 export async function DELETE() {

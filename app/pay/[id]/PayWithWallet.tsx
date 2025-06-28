@@ -24,11 +24,13 @@ export default function PayWithWallet({
   amount,
   currency,
   description,
+  linkId
 }: {
   to: string;
   amount: string;
   currency: string;
   description?: string;
+  linkId: string;
 }) {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +78,32 @@ export default function PayWithWallet({
     }
   };
 
+// Function to update invoice status to paid
+const updateInvoiceToPaid = async (linkId: string) => {
+  try {
+    const response = await fetch(`/api/send-invoice/invoices/`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        linkId,
+        paidAt: new Date().toISOString(),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Failed to update invoice:", errorData);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error updating invoice:", error);
+    return false;
+  }
+};
+
 // function to create notification
 const createNotification = async (
   transactionId: string,
@@ -122,7 +150,7 @@ const createNotification = async (
     walletAddress: string,
     amount: string,
     currency: string,
-    description: string | undefined
+    description: string | undefined,
   ) => {
     try {
       const response = await fetch(`/api/transactions?txHash=${txHash}`, {
@@ -159,6 +187,9 @@ const createNotification = async (
           description
         );
       }
+
+      // Update invoice to paid status
+      await updateInvoiceToPaid(linkId);
   
       return true;
     } catch (dbError) {
@@ -256,7 +287,7 @@ const createNotification = async (
         return;
       }
 
-      await window.ethereum.request({ method: "eth_requestAccounts" });
+      await (window as any).ethereum.request({ method: "eth_requestAccounts" });
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const walletAddress = await signer.getAddress();

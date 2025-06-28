@@ -156,7 +156,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        <PayWithWallet to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} />
+        <PayWithWallet to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} linkId={params.id} />
 
         <div className="text-center text-sm text-gray-600 bg-amber-50 p-4 rounded-xl">
           <p className="mb-1">

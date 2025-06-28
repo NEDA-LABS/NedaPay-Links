@@ -54,7 +54,8 @@ const statusConfig = {
   Pending: {
     color: "text-yellow-700 !bg-yellow-100 !border-yellow-200",
     icon: Clock,
-    darkColor: "dark:text-yellow-300 dark:bg-yellow-900/30 dark:border-yellow-700",
+    darkColor:
+      "dark:text-yellow-300 dark:bg-yellow-900/30 dark:border-yellow-700",
   },
   Completed: {
     color: "text-green-700 !bg-green-100 !border-green-200",
@@ -77,7 +78,7 @@ const statusConfig = {
 const currencySymbols: { [key: string]: string } = stablecoins.reduce(
   (acc, coin) => ({
     ...acc,
-    [coin.baseToken]: coin.currency === "USD" ? "$" : coin.currency, // Use currency code as symbol, default to $ for USD
+     // Use currency code as symbol, default to $ for USD
   }),
   {} as { [key: string]: string }
 );
@@ -87,7 +88,8 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   // Filter state
@@ -109,7 +111,9 @@ export default function TransactionsPage() {
 
     try {
       setRefreshing(true);
-      const response = await fetch(`/api/transactions?merchantId=${user.wallet?.address}`);
+      const response = await fetch(
+        `/api/transactions?merchantId=${user.wallet?.address}`
+      );
       if (response.ok) {
         const data = await response.json();
         setTransactions(data);
@@ -153,10 +157,16 @@ export default function TransactionsPage() {
       }
 
       // Amount range filter
-      if (filters.amountRange.min && transaction.amount < parseFloat(filters.amountRange.min)) {
+      if (
+        filters.amountRange.min &&
+        transaction.amount < parseFloat(filters.amountRange.min)
+      ) {
         return false;
       }
-      if (filters.amountRange.max && transaction.amount > parseFloat(filters.amountRange.max)) {
+      if (
+        filters.amountRange.max &&
+        transaction.amount > parseFloat(filters.amountRange.max)
+      ) {
         return false;
       }
 
@@ -202,17 +212,44 @@ export default function TransactionsPage() {
 
   // Statistics
   const stats = useMemo(() => {
-    const total = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-    const completed = filteredTransactions.filter((t) => t.status === "Completed");
+    // Calculate totals by currency
+    const totalsByCurrency = filteredTransactions.reduce(
+      (acc, transaction) => {
+        const currency = transaction.currency;
+        if (!acc[currency]) {
+          acc[currency] = 0;
+        }
+        acc[currency] += transaction.amount;
+        return acc;
+      },
+      {} as { [key: string]: number }
+    );
+
+    const completed = filteredTransactions.filter(
+      (t) => t.status === "Completed"
+    );
     const pending = filteredTransactions.filter((t) => t.status === "Pending");
     const failed = filteredTransactions.filter((t) => t.status === "Failed");
 
+    // Calculate completed value by currency
+    const completedValueByCurrency = completed.reduce(
+      (acc, transaction) => {
+        const currency = transaction.currency;
+        if (!acc[currency]) {
+          acc[currency] = 0;
+        }
+        acc[currency] += transaction.amount;
+        return acc;
+      },
+      {} as { [key: string]: number }
+    );
+
     return {
-      total,
+      totalsByCurrency,
       completed: completed.length,
       pending: pending.length,
       failed: failed.length,
-      completedValue: completed.reduce((sum, t) => sum + t.amount, 0),
+      completedValueByCurrency,
     };
   }, [filteredTransactions]);
 
@@ -224,10 +261,17 @@ export default function TransactionsPage() {
   // Format currency
   const formatCurrency = (amount: number, currency: string) => {
     const symbol = currencySymbols[currency] || currency;
-    return `${symbol}${amount.toLocaleString(undefined, {
+    return `${symbol} ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
     })}`;
+  };
+
+  // Helper function to format currency totals for display
+  const formatCurrencyTotals = (totals: { [key: string]: number }) => {
+    return Object.entries(totals)
+      .map(([currency, amount]) => formatCurrency(amount, currency))
+      .join(" | ");
   };
 
   // Copy to clipboard
@@ -269,8 +313,8 @@ export default function TransactionsPage() {
         chain.chainId === 8453
           ? `https://basescan.org/tx/${txHash}`
           : chain.chainId === 11155111
-          ? `https://sepolia.etherscan.io/tx/${txHash}`
-          : "";
+            ? `https://sepolia.etherscan.io/tx/${txHash}`
+            : "";
       if (explorerUrl) {
         window.open(explorerUrl, "_blank");
       }
@@ -282,8 +326,12 @@ export default function TransactionsPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
         <div className="text-center">
           <CreditCard className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h2>
-          <p className="text-gray-600">Please sign in to view your transactions.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Authentication Required
+          </h2>
+          <p className="text-gray-600">
+            Please sign in to view your transactions.
+          </p>
         </div>
       </div>
     );
@@ -297,8 +345,12 @@ export default function TransactionsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Transactions</h1>
-              <p className="text-gray-600">Monitor and manage your payment transactions</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Transactions
+              </h1>
+              <p className="text-gray-600">
+                Monitor and manage your payment transactions
+              </p>
             </div>
             <div className="flex gap-3">
               <button
@@ -306,7 +358,9 @@ export default function TransactionsPage() {
                 disabled={refreshing}
                 className="flex items-center gap-2 px-4 py-2 !bg-white !border !border-gray-200 !rounded-lg hover:!bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+                <RefreshCw
+                  className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+                />
                 Refresh
               </button>
               <button
@@ -323,11 +377,30 @@ export default function TransactionsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Volume</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    ${stats.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Volume
                   </p>
+                  {Object.keys(stats.totalsByCurrency).length === 0 ? (
+                    <p className="text-2xl font-bold text-gray-900">$0.00</p>
+                  ) : Object.keys(stats.totalsByCurrency).length === 1 ? (
+                    <p className="text-2xl font-bold text-gray-900">
+                      {formatCurrencyTotals(stats.totalsByCurrency)}
+                    </p>
+                  ) : (
+                    <div className="space-y-1">
+                      {Object.entries(stats.totalsByCurrency).map(
+                        ([currency, amount]) => (
+                          <p
+                            key={currency}
+                            className="text-lg font-bold text-gray-900"
+                          >
+                            {formatCurrency(amount, currency)}
+                          </p>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="p-3 bg-blue-100 rounded-lg">
                   <DollarSign className="w-6 h-6 text-blue-600" />
@@ -339,7 +412,9 @@ export default function TransactionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {stats.completed}
+                  </p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-lg">
                   <CheckCircle className="w-6 h-6 text-green-600" />
@@ -351,7 +426,9 @@ export default function TransactionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {stats.pending}
+                  </p>
                 </div>
                 <div className="p-3 bg-yellow-100 rounded-lg">
                   <Clock className="w-6 h-6 text-yellow-600" />
@@ -363,7 +440,9 @@ export default function TransactionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Failed</p>
-                  <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {stats.failed}
+                  </p>
                 </div>
                 <div className="p-3 bg-red-100 rounded-lg">
                   <XCircle className="w-6 h-6 text-red-600" />
@@ -384,7 +463,9 @@ export default function TransactionsPage() {
                   type="text"
                   placeholder="Search by hash, wallet, or amount..."
                   value={filters.search}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, search: e.target.value }))
+                  }
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -396,7 +477,9 @@ export default function TransactionsPage() {
               >
                 <Filter className="w-4 h-4" />
                 Filters
-                <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
+                />
               </button>
             </div>
 
@@ -406,10 +489,17 @@ export default function TransactionsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Status Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
                     <select
                       value={filters.status}
-                      onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
+                      onChange={(e) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          status: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">All Statuses</option>
@@ -422,10 +512,17 @@ export default function TransactionsPage() {
 
                   {/* Currency Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Currency
+                    </label>
                     <select
                       value={filters.currency}
-                      onChange={(e) => setFilters((prev) => ({ ...prev, currency: e.target.value }))}
+                      onChange={(e) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          currency: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">All Currencies</option>
@@ -439,10 +536,17 @@ export default function TransactionsPage() {
 
                   {/* Date Range Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date Range
+                    </label>
                     <select
                       value={filters.dateRange}
-                      onChange={(e) => setFilters((prev) => ({ ...prev, dateRange: e.target.value }))}
+                      onChange={(e) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          dateRange: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">All Time</option>
@@ -455,7 +559,9 @@ export default function TransactionsPage() {
 
                   {/* Amount Range */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount Range</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount Range
+                    </label>
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -464,7 +570,10 @@ export default function TransactionsPage() {
                         onChange={(e) =>
                           setFilters((prev) => ({
                             ...prev,
-                            amountRange: { ...prev.amountRange, min: e.target.value },
+                            amountRange: {
+                              ...prev.amountRange,
+                              min: e.target.value,
+                            },
                           }))
                         }
                         className="w-full px-3 py-2 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -476,7 +585,10 @@ export default function TransactionsPage() {
                         onChange={(e) =>
                           setFilters((prev) => ({
                             ...prev,
-                            amountRange: { ...prev.amountRange, max: e.target.value },
+                            amountRange: {
+                              ...prev.amountRange,
+                              max: e.target.value,
+                            },
                           }))
                         }
                         className="w-full px-3 py-2 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -516,7 +628,9 @@ export default function TransactionsPage() {
           ) : paginatedTransactions.length === 0 ? (
             <div className="text-center py-12">
               <Wallet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No transactions found
+              </h3>
               <p className="text-gray-600">
                 {filteredTransactions.length === 0 && transactions.length > 0
                   ? "Try adjusting your filters to see more results."
@@ -550,7 +664,10 @@ export default function TransactionsPage() {
                     {paginatedTransactions.map((transaction) => {
                       const StatusIcon = statusConfig[transaction.status].icon;
                       return (
-                        <tr key={transaction.id} className="hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={transaction.id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="flex-shrink-0">
@@ -561,17 +678,21 @@ export default function TransactionsPage() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <p className="text-sm font-medium text-gray-900 truncate">
-                                    {transaction.txHash.slice(0, 10)}...{transaction.txHash.slice(-8)}
+                                    {transaction.txHash.slice(0, 10)}...
+                                    {transaction.txHash.slice(-8)}
                                   </p>
                                   <button
-                                    onClick={() => copyToClipboard(transaction.txHash)}
+                                    onClick={() =>
+                                      copyToClipboard(transaction.txHash)
+                                    }
                                     className="text-gray-400 hover:text-gray-600 transition-colors"
                                   >
                                     <Copy className="w-4 h-4" />
                                   </button>
                                 </div>
                                 <p className="text-sm text-gray-500 truncate">
-                                  {transaction.wallet.slice(0, 8)}...{transaction.wallet.slice(-6)}
+                                  {transaction.wallet.slice(0, 8)}...
+                                  {transaction.wallet.slice(-6)}
                                 </p>
                               </div>
                             </div>
@@ -579,14 +700,16 @@ export default function TransactionsPage() {
                           <td className="px-6 py-4">
                             <div className="text-sm">
                               <p className="font-medium text-gray-900">
-                                {formatCurrency(transaction.amount, transaction.currency)}
+                                {transaction.amount}
                               </p>
-                              <p className="text-gray-500">{transaction.currency}</p>
+                              <p className="text-gray-500">
+                                {transaction.currency}
+                              </p>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium border ${
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold border ${
                                 statusConfig[transaction.status].color
                               } ${statusConfig[transaction.status].darkColor}`}
                             >
@@ -597,17 +720,23 @@ export default function TransactionsPage() {
                           <td className="px-6 py-4">
                             <div className="text-sm">
                               <p className="text-gray-900">
-                                {new Date(transaction.createdAt).toLocaleDateString()}
+                                {new Date(
+                                  transaction.createdAt
+                                ).toLocaleDateString()}
                               </p>
                               <p className="text-gray-500">
-                                {new Date(transaction.createdAt).toLocaleTimeString()}
+                                {new Date(
+                                  transaction.createdAt
+                                ).toLocaleTimeString()}
                               </p>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => setSelectedTransaction(transaction)}
+                                onClick={() =>
+                                  setSelectedTransaction(transaction)
+                                }
                                 className="text-gray-400 hover:text-gray-600 transition-colors"
                               >
                                 <Eye className="w-4 h-4" />
@@ -615,9 +744,11 @@ export default function TransactionsPage() {
                               <button
                                 onClick={() => {
                                   const chainId = stablecoins.find(
-                                    (coin) => coin.baseToken === transaction.currency
+                                    (coin) =>
+                                      coin.baseToken === transaction.currency
                                   )?.chainId;
-                                  if (chainId) openInExplorer(transaction.txHash, chainId);
+                                  if (chainId)
+                                    openInExplorer(transaction.txHash, chainId);
                                 }}
                                 className="text-gray-400 hover:text-gray-600 transition-colors"
                               >
@@ -637,12 +768,17 @@ export default function TransactionsPage() {
                 <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
                   <div className="text-sm text-gray-500">
                     Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                    {Math.min(currentPage * itemsPerPage, filteredTransactions.length)} of{" "}
-                    {filteredTransactions.length} transactions
+                    {Math.min(
+                      currentPage * itemsPerPage,
+                      filteredTransactions.length
+                    )}{" "}
+                    of {filteredTransactions.length} transactions
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
                       disabled={currentPage === 1}
                       className="px-3 py-1 !border !border-gray-200 !rounded hover:!bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
@@ -666,7 +802,9 @@ export default function TransactionsPage() {
                       );
                     })}
                     <button
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.min(totalPages, currentPage + 1))
+                      }
                       disabled={currentPage === totalPages}
                       className="px-3 py-1 !border !border-gray-200 !rounded hover:!bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
@@ -685,7 +823,9 @@ export default function TransactionsPage() {
             <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Transaction Details</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Transaction Details
+                  </h3>
                   <button
                     onClick={() => setSelectedTransaction(null)}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -704,7 +844,9 @@ export default function TransactionsPage() {
                       {selectedTransaction.txHash}
                     </code>
                     <button
-                      onClick={() => copyToClipboard(selectedTransaction.txHash)}
+                      onClick={() =>
+                        copyToClipboard(selectedTransaction.txHash)
+                      }
                       className="text-blue-600 hover:text-blue-700 transition-colors"
                     >
                       <Copy className="w-4 h-4" />
@@ -721,7 +863,9 @@ export default function TransactionsPage() {
                       {selectedTransaction.wallet}
                     </code>
                     <button
-                      onClick={() => copyToClipboard(selectedTransaction.wallet)}
+                      onClick={() =>
+                        copyToClipboard(selectedTransaction.wallet)
+                      }
                       className="text-blue-600 hover:text-blue-700 transition-colors"
                     >
                       <Copy className="w-4 h-4" />
@@ -731,21 +875,31 @@ export default function TransactionsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount
+                    </label>
                     <p className="text-lg font-semibold text-gray-900">
-                      {formatCurrency(selectedTransaction.amount, selectedTransaction.currency)}
+                      {formatCurrency(
+                        selectedTransaction.amount,
+                        selectedTransaction.currency
+                      )}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium border ${
                         statusConfig[selectedTransaction.status].color
                       } ${statusConfig[selectedTransaction.status].darkColor}`}
                     >
-                      {React.createElement(statusConfig[selectedTransaction.status].icon, {
-                        className: "w-3 h-3",
-                      })}
+                      {React.createElement(
+                        statusConfig[selectedTransaction.status].icon,
+                        {
+                          className: "w-3 h-3",
+                        }
+                      )}
                       {selectedTransaction.status}
                     </span>
                   </div>
@@ -753,7 +907,9 @@ export default function TransactionsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Created
+                    </label>
                     <p className="text-sm text-gray-900">
                       {new Date(selectedTransaction.createdAt).toLocaleString()}
                     </p>
@@ -764,24 +920,32 @@ export default function TransactionsPage() {
                         Updated
                       </label>
                       <p className="text-sm text-gray-900">
-                        {new Date(selectedTransaction.updatedAt).toLocaleString()}
+                        {new Date(
+                          selectedTransaction.updatedAt
+                        ).toLocaleString()}
                       </p>
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                  <p className="text-sm text-gray-900">{selectedTransaction.currency}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Currency
+                  </label>
+                  <p className="text-sm text-gray-900">
+                    {selectedTransaction.currency}
+                  </p>
                 </div>
 
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => {
                       const chainId = stablecoins.find(
-                        (coin) => coin.baseToken === selectedTransaction.currency
+                        (coin) =>
+                          coin.baseToken === selectedTransaction.currency
                       )?.chainId;
-                      if (chainId) openInExplorer(selectedTransaction.txHash, chainId);
+                      if (chainId)
+                        openInExplorer(selectedTransaction.txHash, chainId);
                     }}
                     className="flex items-center gap-2 px-4 py-2 !bg-blue-600 text-white !rounded-lg hover:!bg-blue-700 transition-colors"
                   >
