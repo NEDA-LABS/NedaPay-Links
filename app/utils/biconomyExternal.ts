@@ -64,6 +64,8 @@ export const initializeBiconomy = async (
   return { meeClient, smartAccount, walletClient };
 };
 
+
+
 // Updated transfer function using Fusion Quote API
 export const executeGasAbstractedTransfer = async (
   biconomyClient: BiconomyClient,
@@ -76,6 +78,7 @@ export const executeGasAbstractedTransfer = async (
 //     amountInWei: amountInWei.toString(),
 //     tokenAddress
 //   });
+
 
   // Validate inputs
   if (!biconomyClient.meeClient || !biconomyClient.smartAccount) {
@@ -91,7 +94,7 @@ export const executeGasAbstractedTransfer = async (
         chainId: base.id,
         to: tokenAddress,
         functionName: 'transfer',
-        args: [toAddress as Hex, amountInWei]
+        args: [toAddress as Hex, amountInWei],
       }
     });
 
@@ -175,7 +178,7 @@ export const executeBatchGasAbstractedTransfer = async (
             chainId: base.id,
             to: tokenAddress,
             functionName: 'transfer',
-            args: [toAddress as Hex, amountInWei]
+            args: [toAddress as Hex, amountInWei],
           }
         })
       )

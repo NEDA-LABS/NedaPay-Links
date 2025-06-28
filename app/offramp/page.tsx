@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, FormEvent, useMemo } from 'react';
+import React, { useEffect, useState, FormEvent } from 'react';
 import { usePrivy, useWallets, useSign7702Authorization } from '@privy-io/react-auth';
 import axios from 'axios';
-import { ethers } from 'ethers';
+import { ethers, utils } from 'ethers';
 import { Loader2, AlertTriangle, Info } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -73,9 +73,10 @@ const PaymentForm: React.FC = () => {
   // Get the active wallet
   const activeWallet = wallets[0] as WalletType | undefined;
   const isEmbeddedWallet = activeWallet?.walletClientType === 'privy';
+  const isCoinbaseWallet = activeWallet?.walletClientType === 'coinbase_wallet';
 
   // Calculate derived values
-  const gasAbstractionActive = !gasAbstractionFailed && (biconomyEmbeddedClient || biconomyExternalClient);
+  const gasAbstractionActive = !gasAbstractionFailed && (biconomyEmbeddedClient || biconomyExternalClient) && !isCoinbaseWallet;
   const estimatedFee = gasAbstractionActive ? GAS_ABSTRACTED_FEE_USDC : GAS_NORMAL_FEE_ETH;
   const feeCurrency = gasAbstractionActive ? 'USDC' : 'ETH';
   
@@ -83,10 +84,10 @@ const PaymentForm: React.FC = () => {
   const totalDeduction = gasAbstractionActive ? amountNum + estimatedFee : amountNum;
   const receiveAmount = amountNum > 0 && rate ? ((amountNum - (amountNum * 0.01)) * parseFloat(rate)).toFixed(2) : '0.00';
 
-  // Initialize Biconomy when wallet is ready
+  // Initialize Biconomy when wallet is ready (skip for Coinbase wallet)
   useEffect(() => {
     const initBiconomy = async () => {
-      if (!activeWallet?.address) return;
+      if (!activeWallet?.address || isCoinbaseWallet) return;
       
       setGasAbstractionInitializing(true);
       setGasAbstractionFailed(false);
@@ -110,7 +111,7 @@ const PaymentForm: React.FC = () => {
     };
 
     initBiconomy();
-  }, [activeWallet, signAuthorization, isEmbeddedWallet]);
+  }, [activeWallet, signAuthorization, isEmbeddedWallet, isCoinbaseWallet]);
 
   // Fetch supported currencies on mount
   useEffect(() => {
@@ -210,6 +211,40 @@ const PaymentForm: React.FC = () => {
     setError('');
   }, [amount, fiat]);
 
+  const executeNormalTransaction = async (receiveAddress: string, amountInWei: ethers.BigNumber) => {
+    if (!window.ethereum) {
+      throw new Error("No wallet detected. Please install a Web3 wallet.");
+    }
+
+    await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+
+    const erc20ABI = [
+      "function transfer(address to, uint256 amount) public returns (bool)",
+      "function decimals() public view returns (uint8)",
+    ];
+    
+    const contract = new ethers.Contract(USDC_ADDRESS, erc20ABI, signer);
+
+    try {
+      const gasPrice = await provider.getGasPrice();
+      const gasLimit = await contract.estimateGas.transfer(receiveAddress, amountInWei);
+      const safeGasLimit = gasLimit.mul(120).div(100);
+
+      const txResponse = await contract.transfer(receiveAddress, amountInWei, {
+        gasPrice,
+        gasLimit: safeGasLimit,
+      });
+      
+      return txResponse;
+    } catch (error: any) {
+      console.warn("Gas estimation failed, trying without gas parameters:", error);
+      const txResponse = await contract.transfer(receiveAddress, amountInWei);
+      return txResponse;
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -229,7 +264,7 @@ const PaymentForm: React.FC = () => {
       const decimals = await usdcContract.decimals();
       const amountInWei = ethers.utils.parseUnits(amount, decimals);
       
-      // New: Balance check with fee consideration
+      // Balance check with fee consideration
       const balance = await usdcContract.balanceOf(activeWallet.address);
       const requiredBalance = gasAbstractionActive
         ? amountInWei.add(ethers.utils.parseUnits(GAS_ABSTRACTED_FEE_USDC.toString(), decimals))
@@ -255,7 +290,7 @@ const PaymentForm: React.FC = () => {
       const { receiveAddress, amount: orderAmount, reference, senderFee, transactionFee, validUntil } = orderResponse.data.data;
 
       // Execute transaction
-      if (!gasAbstractionFailed) {
+      if (gasAbstractionActive && !isCoinbaseWallet) {
         try {
           if (isEmbeddedWallet && biconomyEmbeddedClient) {
             await executeGasAbstractedTransferEmbedded(
@@ -278,13 +313,11 @@ const PaymentForm: React.FC = () => {
         } catch (gasError) {
           console.warn('Gas abstracted transfer failed, falling back to normal transaction:', gasError);
           // Fallback to normal transaction
-          const tx = await usdcContract.transfer(receiveAddress, amountInWei);
-          await tx.wait();
+          await executeNormalTransaction(receiveAddress, amountInWei);
         }
       } else {
-        // Normal transaction
-        const tx = await usdcContract.transfer(receiveAddress, amountInWei);
-        await tx.wait();
+        // Normal transaction for Coinbase wallet and other cases
+        await executeNormalTransaction(receiveAddress, amountInWei);
       }
 
       setSuccess(`Payment order initiated! \nReference: ${reference}\nAmount: ${orderAmount}\nNetwork: base\nToken: USDC\nFee: ${senderFee}\nTransaction Fee: ${transactionFee}\nValid Until: ${validUntil}`);
@@ -297,7 +330,7 @@ const PaymentForm: React.FC = () => {
   };
 
   const renderFeeInfo = () => {
-    if (gasAbstractionInitializing) {
+    if (gasAbstractionInitializing && !isCoinbaseWallet) {
       return (
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 mb-4">
           <div className="flex items-start gap-2">
@@ -307,6 +340,60 @@ const PaymentForm: React.FC = () => {
               <p className="text-blue-700 text-xs mt-1">
                 Setting up fee sponsorship. This may take a moment...
               </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isCoinbaseWallet) {
+      return (
+        <div className="space-y-3 mb-4">
+          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-blue-800 font-medium text-xs">Coinbase Wallet Detected</p>
+                <p className="text-blue-700 text-xs mt-1">
+                  USDC transfers in Coinbase Wallet have no gas fees on Base network.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-xs">Available Balance:</span>
+                {balanceLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                ) : (
+                  <span className="font-medium text-xs">
+                    {parseFloat(balance).toLocaleString(undefined, {
+                      maximumFractionDigits: 6
+                    })} USDC
+                  </span>
+                )}
+              </div>
+              {usdcToFiatRate && (
+                <div className="text-xs text-gray-500 mt-1">
+                  ≈ {(parseFloat(balance) * usdcToFiatRate).toLocaleString(undefined, {
+                    maximumFractionDigits: 2
+                  })} {fiat}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-xs">Network Fee:</span>
+                <span className="font-medium text-xs text-green-600">
+                  Free
+                </span>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                No gas fees for USDC transfers
+              </div>
             </div>
           </div>
         </div>
@@ -436,7 +523,7 @@ const PaymentForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
       <div className="fixed inset-0 overflow-y-auto">
         <Header />
   
@@ -444,35 +531,38 @@ const PaymentForm: React.FC = () => {
         <div className="container mx-auto max-w-4xl px-6 pt-6">
           <button
             onClick={() => window.history.back()}
-            className="group flex items-center gap-2 px-3 py-2 !bg-white !border !border-gray-300 !rounded-md hover:!bg-gray-50 hover:!border-gray-400 transition-all duration-200 text-sm text-gray-700 hover:text-gray-900"
+            className="group flex items-center gap-2 px-4 py-2 !bg-white/80 !backdrop-blur-sm !border !border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
           >
-            <span className="group-hover:-translate-x-0.5 transition-transform duration-200">←</span>
+            <span className="group-hover:-translate-x-1 transition-transform duration-300">←</span>
             Back
           </button>
         </div>
   
-        <div className="container mx-auto max-w-4xl px-6 py-8">
+        <div className="container mx-auto max-w-4xl px-6 py-8 lg:!w-[50%]">
           {/* Hero Section */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium mb-4 border border-blue-200">
+          <div className="text-center mb-8 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-200/30 to-blue-200/30 blur-3xl rounded-4xl"></div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-xs font-medium animate-pulse mb-4 border border-purple-200">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
               </svg>
               Stablecoins to Fiat Offramp
             </div>
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
-              Convert USDC to Cash
+              <span className="block bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Convert USDC to Cash
+              </span>
             </h1>
-            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto leading-relaxed">
               Seamlessly convert your USDC to local currency with instant bank transfers.
             </p>
           </div>
   
           {/* Authentication Status */}
           {!authenticated && (
-            <div className="mb-6 p-4 rounded-md border border-amber-200 bg-amber-50">
+            <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-md bg-amber-100">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100">
                   <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -483,7 +573,7 @@ const PaymentForm: React.FC = () => {
                 </div>
                 <button
                   onClick={login}
-                  className="px-4 py-2 !bg-blue-600 hover:!bg-blue-700 !text-white !font-medium !rounded-md !transition-colors !duration-200 text-base"
+                  className="px-4 py-2 !bg-gradient-to-r !from-purple-600 !to-blue-600 hover:!from-purple-700 hover:!to-blue-700 !text-white !font-medium !rounded-xl !shadow-lg hover:!shadow-xl !transition-all !duration-300 text-base transform hover:-translate-y-0.5"
                 >
                   Login with Privy
                 </button>
@@ -493,9 +583,9 @@ const PaymentForm: React.FC = () => {
   
           {/* Wallet Connection Status */}
           {authenticated && !activeWallet && (
-            <div className="mb-6 p-4 rounded-md border border-orange-200 bg-orange-50">
+            <div className="mb-6 p-4 rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-red-50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-md bg-orange-100">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-orange-100 to-red-100">
                   <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.4 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
@@ -506,7 +596,7 @@ const PaymentForm: React.FC = () => {
                 </div>
                 <button
                   onClick={connectWallet}
-                  className="px-4 py-2 !bg-emerald-600 hover:!bg-emerald-700 !text-white !font-medium !rounded-md !transition-colors !duration-200 text-base"
+                  className="px-4 py-2 !bg-gradient-to-r !from-emerald-600 !to-green-600 hover:!from-emerald-700 hover:!to-green-700 !text-white !font-medium !rounded-xl !shadow-lg hover:!shadow-xl !transition-all !duration-300 text-base transform hover:-translate-y-0.5"
                 >
                   Connect Wallet
                 </button>
@@ -516,9 +606,9 @@ const PaymentForm: React.FC = () => {
   
           {/* Wallet Info */}
           {authenticated && activeWallet && (
-            <div className="mb-6 p-4 rounded-md border border-green-200 bg-green-50">
+            <div className="mb-6 p-4 rounded-xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-md bg-green-100">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100">
                   <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -540,25 +630,35 @@ const PaymentForm: React.FC = () => {
   
           {/* Main Form Card */}
           {authenticated && activeWallet && (
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mb-8">
-              <div className="mb-6">
-                <h2 className="text-base font-semibold text-gray-900 mb-2">Initiate Offramp Payment</h2>
-                <p className="text-gray-600 text-xs">Follow the steps below to convert your USDC to fiat and receive funds in your account.</p>
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20 mb-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-4 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900 mb-2">Initiate Offramp Payment</h2>
+                  <p className="text-gray-600 text-xs">Follow the steps below to convert your USDC to fiat and receive funds in your account.</p>
+                </div>
               </div>
   
               {/* Fee Information */}
               {renderFeeInfo()}
   
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Step 1: Amount and Currency */}
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-700 bg-gray-100 rounded px-2 py-1">Step 1</span>
-                    <h3 className="text-sm font-medium text-gray-900">Enter Amount and Currency</h3>
+                    <span className="text-xs font-medium text-gray-700 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full px-3 py-1">Step 1</span>
+                    <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                      Enter Amount and Currency
+                    </h3>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="amount" className="block text-sm font-semibold mb-3 text-gray-700">
                         Amount (USDC)
                       </label>
                       <div className="relative">
@@ -567,7 +667,7 @@ const PaymentForm: React.FC = () => {
                           id="amount"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
-                          className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
+                          className="w-full px-4 py-4 text-base rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
                           placeholder="Minimum 1 USDC"
                           min="0.5"
                           step="0.01"
@@ -579,14 +679,14 @@ const PaymentForm: React.FC = () => {
                       </p>
                     </div>
                     <div>
-                      <label htmlFor="fiat" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="fiat" className="block text-sm font-semibold mb-3 text-gray-700">
                         Fiat Currency
                       </label>
                       <select
                         id="fiat"
                         value={fiat}
                         onChange={(e) => { setFiat(e.target.value); fetchInstitutions(); setInstitution(''); setIsAccountVerified(false); }}
-                        className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
+                        className="w-full px-4 py-4 text-base rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
                       >
                         <option value="">Select Currency</option>
                         {currencies.map((currency) => (
@@ -598,26 +698,26 @@ const PaymentForm: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-700">Exchange Rate</label>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-sm font-semibold text-gray-700">Exchange Rate</label>
                       <button
                         type="button"
                         onClick={handleFetchRate}
                         disabled={!amount || !fiat}
-                        className="px-3 py-1 !bg-blue-600 hover:!bg-blue-700 !text-white !rounded-md !font-medium !transition-colors !duration-200 !text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 !bg-gradient-to-r !from-purple-600 !to-blue-600 hover:!from-purple-700 hover:!to-blue-700 !text-white !rounded-xl !font-medium !shadow-lg hover:!shadow-xl !transition-all !duration-300 !text-base disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
                       >
                         Fetch Rate
                       </button>
                     </div>
                     {rate && (
-                      <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+                      <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 backdrop-blur-sm">
                         <div className="grid grid-rows-1 gap-2">
                           <div>
                             <p className="text-blue-800 font-medium text-sm">
                               1 USDC = {rate} {fiat}
                             </p>
                           </div>
-                          <div className="border-l border-blue-200 pl-3">
+                          <div className="border-l-2 border-blue-300 pl-3">
                             <p className="text-green-700 font-medium text-sm">You will receive:</p>
                             <p className="text-green-800 font-semibold">
                               {receiveAmount} {fiat}
@@ -630,13 +730,16 @@ const PaymentForm: React.FC = () => {
                 </div>
   
                 {/* Step 2: Recipient Details */}
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-700 bg-gray-100 rounded px-2 py-1">Step 2</span>
-                    <h3 className="text-sm font-medium text-gray-900">Recipient Details</h3>
+                    <span className="text-xs font-medium text-gray-700 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full px-3 py-1">Step 2</span>
+                    <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      Recipient Details
+                    </h3>
                   </div>
                   <div>
-                    <label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="institution" className="block text-sm font-semibold mb-3 text-gray-700">
                       Choose Bank or Mobile Network
                     </label>
                     <select
@@ -644,7 +747,7 @@ const PaymentForm: React.FC = () => {
                       value={institution}
                       onChange={(e) => { setInstitution(e.target.value); setIsAccountVerified(false); }}
                       onFocus={fetchInstitutions}
-                      className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
+                      className="w-full px-4 py-4 text-base rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
                       required
                     >
                       <option value="">Select Institution</option>
@@ -656,7 +759,7 @@ const PaymentForm: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="accountNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="accountNumber" className="block text-sm font-semibold mb-3 text-gray-700">
                       Account or Mobile Number
                     </label>
                     <input
@@ -664,14 +767,14 @@ const PaymentForm: React.FC = () => {
                       id="accountNumber"
                       value={accountIdentifier}
                       onChange={(e) => { setAccountIdentifier(e.target.value); setIsAccountVerified(false); }}
-                      className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
+                      className="w-full px-4 py-4 text-base rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
                       placeholder="Enter account or mobile number"
                       required
                     />
                     <p className="text-xs text-gray-500 mt-1">For mobile numbers include country code (e.g., +2341234567890)</p>
                   </div>
                   <div>
-                    <label htmlFor="accountName" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="accountName" className="block text-sm font-semibold mb-3 text-gray-700">
                       Account Name
                     </label>
                     <input
@@ -679,7 +782,7 @@ const PaymentForm: React.FC = () => {
                       id="accountName"
                       value={accountName}
                       onChange={(e) => { setAccountName(e.target.value); setIsAccountVerified(false); }}
-                      className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white"
+                      className="w-full px-4 py-4 text-base rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
                       placeholder="Enter the exact account holder's name"
                       required
                     />
@@ -690,7 +793,7 @@ const PaymentForm: React.FC = () => {
                       type="button"
                       onClick={handleVerifyAccount}
                       disabled={isLoading || !institution || !accountIdentifier || !accountName}
-                      className="w-full px-4 py-2 !bg-indigo-600 hover:!bg-indigo-700 !text-white !rounded-md !font-medium !transition-colors !duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                      className="w-full px-4 py-4 !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !text-white !rounded-xl !font-medium !shadow-lg hover:!shadow-xl !transition-all !duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base transform hover:-translate-y-0.5"
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center">
@@ -702,7 +805,7 @@ const PaymentForm: React.FC = () => {
                       )}
                     </button>
                     {isAccountVerified && (
-                      <div className="p-3 bg-green-50 rounded-md border border-green-200 mt-2">
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 mt-3 backdrop-blur-sm">
                         <p className="text-green-800 font-medium text-sm">✓ Account verified successfully</p>
                         <p className="text-green-700 text-xs mt-1">Please double-check that this is your account</p>
                       </div>
@@ -711,20 +814,23 @@ const PaymentForm: React.FC = () => {
                 </div>
   
                 {/* Step 3: Transaction Memo */}
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-700 bg-gray-100 rounded px-2 py-1">Step 3</span>
-                    <h3 className="text-sm font-medium text-gray-900">Transaction Description</h3>
+                    <span className="text-xs font-medium text-gray-700 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full px-3 py-1">Step 3</span>
+                    <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                      Transaction Description
+                    </h3>
                   </div>
                   <div>
-                    <label htmlFor="memo" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="memo" className="block text-sm font-semibold mb-3 text-gray-700">
                       Transaction Memo
                     </label>
                     <textarea
                       id="memo"
                       value={memo}
                       onChange={(e) => setMemo(e.target.value)}
-                      className="w-full px-3 py-2 text-base rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 bg-white resize-none"
+                      className="w-full px-4 py-4 text-base rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm resize-none"
                       rows={3}
                       placeholder="Add a memo for this transaction..."
                       required
@@ -734,27 +840,27 @@ const PaymentForm: React.FC = () => {
   
                 {/* Error and Success Messages */}
                 {error && (
-                  <div className="p-3 bg-red-50 rounded-md border border-red-200">
+                  <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200 backdrop-blur-sm">
                     <p className="text-red-800 font-medium text-sm">{error}</p>
                   </div>
                 )}
   
                 {success && (
-                  <div className="p-3 bg-green-50 rounded-md border border-green-200">
+                  <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 backdrop-blur-sm">
                     <p className="text-green-800 font-medium text-sm">{success}</p>
                   </div>
                 )}
   
                 {/* Submit Button */}
-                <div className="space-y-3">
-                  <div className="p-3 bg-amber-50 rounded-md border border-amber-200">
+                <div className="space-y-4">
+                  <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 backdrop-blur-sm">
                     <p className="text-amber-800 text-sm font-medium">⚠️ Important:</p>
                     <p className="text-amber-700 text-xs mt-1">Fetch rate and verify account before initiating payment</p>
                   </div>
                   <button
                     type="submit"
                     disabled={isLoading || !rate || !isAccountVerified}
-                    className="w-full py-3 px-6 !bg-blue-600 hover:!bg-blue-700 !text-white !font-medium text-base !rounded-md !transition-colors !duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 px-6 !bg-gradient-to-r !from-purple-600 !to-blue-600 hover:!from-purple-700 hover:!to-blue-700 !text-white !font-medium text-base !rounded-xl !shadow-lg hover:!shadow-xl !transition-all !duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
                   >
                     <div className="flex items-center justify-center gap-2">
                       {isLoading ? (
