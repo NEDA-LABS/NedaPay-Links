@@ -43,7 +43,7 @@ export const initializeBiconomy = async (
     throw new Error('Ethereum provider not available');
   }
 
-  // console.log('Provider configured successfully', provider)
+  console.log('Provider configured successfully', provider)
 
   // Create Nexus account
   const nexusAccount = await toMultichainNexusAccount({
