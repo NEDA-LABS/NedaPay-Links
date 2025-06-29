@@ -103,7 +103,7 @@ const PaymentForm: React.FC = () => {
     : amountNum;
   const receiveAmount =
     amountNum > 0 && rate
-      ? ((amountNum - amountNum * 0.01) * parseFloat(rate)).toFixed(2)
+      ? ((amountNum - amountNum * 0.005) * parseFloat(rate)).toFixed(2)
       : "0.00";
 
   // Initialize Biconomy when wallet is ready (skip for Coinbase wallet)
