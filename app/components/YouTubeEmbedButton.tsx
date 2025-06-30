@@ -5,7 +5,7 @@ const YouTubeEmbedButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Extract video ID from YouTube URL
-  const youtubeUrl = 'https://youtu.be/yKnwEMwoFXE';
+  const youtubeUrl = 'https://youtu.be/wzg7wT6gDrw';
   const videoId = youtubeUrl.split('/').pop();
   const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
 
