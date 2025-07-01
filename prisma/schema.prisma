@@ -19,6 +19,7 @@ model User {
   name             String?
   apiKeys          ApiKey[]
   merchantSettings MerchantSettings?
+  kycApplications  KYCApplication[]  // Added relationship
 }
 
 model MerchantSettings {
@@ -144,4 +145,146 @@ model OffRampTransaction {
   accountName  String        @default("...")
   accountNumber String       @default("...")
   institution  String        @default("...")
+}
+
+// KYC ---models
+// Enums
+enum ApplicationStatus {
+  DRAFT
+  PENDING_DOCUMENTS
+  PENDING_FINANCIAL_INFO
+  PENDING_REVIEW
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  REQUIRES_ADDITIONAL_INFO
+}
+
+enum DocumentType {
+  PASSPORT
+  DRIVERS_LICENSE
+  NATIONAL_ID
+  UTILITY_BILL
+  BANK_STATEMENT
+  CERTIFICATE_OF_INCORPORATION
+  MEMORANDUM_OF_ASSOCIATION
+  BOARD_RESOLUTION
+  SHAREHOLDER_REGISTER
+  FINANCIAL_STATEMENTS
+}
+
+enum DocumentStatus {
+  UPLOADED
+  VERIFIED
+  REJECTED
+  PENDING_REVIEW
+}
+
+enum UserType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum EmploymentStatus {
+  EMPLOYED
+  SELF_EMPLOYED
+  UNEMPLOYED
+  RETIRED
+  STUDENT
+}
+
+enum BusinessType {
+  CORPORATION
+  LLC
+  PARTNERSHIP
+  SOLE_PROPRIETORSHIP
+  NGO
+  GOVERNMENT
+}
+
+model KYCApplication {
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  wallet            String            @unique
+  email             String            @unique
+  status            ApplicationStatus @default(DRAFT)
+  submittedAt       DateTime?
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Personal Information
+  firstName         String?
+  middleName        String?
+  lastName          String?
+  dateOfBirth       DateTime?
+  nationality       String?
+  countryOfResidence String?
+  phoneNumber       String?
+  
+  // Address
+  street            String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?
+  
+  // Financial Information
+  sourceOfFunds     String?
+  expectedTransactionVolume String?
+  employmentStatus  EmploymentStatus?
+  annualIncome      String?
+  isPEP             Boolean          @default(false)
+  
+  // Legal Agreements
+  termsAccepted     Boolean          @default(false)
+  privacyAccepted   Boolean          @default(false)
+  acceptedAt        DateTime?
+  
+  // Relations
+  user              User?            @relation(fields: [userId], references: [privyUserId])
+  documents         Document[]
+  reviews           ApplicationReview[]
+  
+  @@map("kyc_applications")
+}
+
+model Document {
+  id                String         @id @default(cuid())
+  filename          String
+  originalName      String
+  fileSize          Int
+  mimeType          String
+  documentType      DocumentType
+  status            DocumentStatus @default(UPLOADED)
+  uploadedAt        DateTime       @default(now())
+  verifiedAt        DateTime?
+  rejectedAt        DateTime?
+  rejectionReason   String?
+  
+  // File storage information
+  storageKey        String         // S3 key or file path
+  storageUrl        String?        // Public URL if needed
+  
+  // Relations
+  kycApplicationId  String?
+  kycApplication    KYCApplication? @relation(fields: [kycApplicationId], references: [id], onDelete: Cascade)
+  
+  @@map("documents")
+}
+
+model ApplicationReview {
+  id                String         @id @default(cuid())
+  reviewerId        String         // Admin user ID
+  status            ApplicationStatus
+  comments          String?
+  reviewedAt        DateTime       @default(now())
+  
+  // Relations
+  kycApplicationId  String?
+  kycApplication    KYCApplication? @relation(fields: [kycApplicationId], references: [id], onDelete: Cascade)
+  
+  @@map("application_reviews")
 }
