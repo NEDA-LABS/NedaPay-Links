@@ -28,7 +28,7 @@ export function IdentityVerificationStep({ onNext, onPrevious }: IdentityVerific
   const { user } = usePrivy();
   const [documents, setDocuments] = useState<DocumentState[]>([
     {
-      type: DocumentType.PASSPORT,
+      type: DocumentType.NATIONAL_ID,
       title: 'Government-Issued ID',
       description: 'Upload a clear photo of your passport, driver\'s license, or national ID',
       status: VerificationStatus.PENDING,
@@ -51,6 +51,7 @@ export function IdentityVerificationStep({ onNext, onPrevious }: IdentityVerific
   ]);
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const walletAddress = user?.wallet?.address;
 
   const handleFileUpload = (docType: DocumentType, file: File) => {
     setDocuments(prev => prev.map(doc => 

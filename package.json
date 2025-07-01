@@ -47,6 +47,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-pdf/renderer": "^4.3.0",
     "@rhinestone/module-sdk": "^0.2.7",
+    "@supabase/supabase-js": "^2.50.2",
     "@tanstack/react-query": "^5.74.4",
     "@upstash/redis": "^1.35.0",
     "@vercel/analytics": "^1.5.0",

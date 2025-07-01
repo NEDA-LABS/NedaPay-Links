@@ -1,15 +1,19 @@
-
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { uploadToBucket, getPublicUrl } from '@/utils/supabase/supabase' // Adjust path as needed
 
 const prisma = new PrismaClient()
+
+// Define your Supabase storage bucket name here
+const STORAGE_BUCKET = 'master-verify' // Replace with your actual bucket name
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
     const applicationId = formData.get('applicationId') as string
-    
+    console.log("applicationId", applicationId);
+
     // Find or create the KYC application
     const kycApplication = await prisma.kYCApplication.findUnique({
       where: { wallet: applicationId }
@@ -25,24 +29,37 @@ export async function POST(request: NextRequest) {
     // Process each file and create Document records
     const documents = await Promise.all(
       files.map(async (file, index) => {
-        // Here you would typically upload the file to storage (e.g., S3)
-        // and get a storage key and URL
-        const storageKey = `kyc-documents/${applicationId}/${file.name}`
-        const storageUrl = `https://your-storage-bucket/${storageKey}`
+        try {
+          // Create a unique file path
+          const timestamp = Date.now()
+          const fileExtension = file.name.split('.').pop()
+          const fileName = `${timestamp}-${index}.${fileExtension}`
+          const filePath = `${applicationId}/${fileName}`
 
-        return prisma.document.create({
-          data: {
-            filename: file.name,
-            originalName: file.name,
-            fileSize: file.size,
-            mimeType: file.type,
-            documentType: 'PASSPORT', // You might want to pass this from frontend
-            status: 'UPLOADED',
-            storageKey,
-            storageUrl,
-            kycApplicationId: kycApplication.id
-          }
-        })
+          // Upload file to Supabase Storage
+          const uploadResult = await uploadToBucket(STORAGE_BUCKET, filePath, file)
+          
+          // Get public URL for the uploaded file
+          const publicUrl = getPublicUrl(STORAGE_BUCKET, filePath)
+
+          // Create document record in database
+          return prisma.document.create({
+            data: {
+              filename: fileName,
+              originalName: file.name,
+              fileSize: file.size,
+              mimeType: file.type,
+              documentType: 'NATIONAL_ID', // You might want to pass this from frontend
+              status: 'UPLOADED',
+              storageKey: filePath,
+              storageUrl: publicUrl,
+              kycApplicationId: kycApplication.id
+            }
+          })
+        } catch (uploadError) {
+          console.error(`Error uploading file ${file.name}:`, uploadError)
+          throw new Error(`Failed to upload file: ${file.name}`)
+        }
       })
     )
 
@@ -62,6 +79,7 @@ export async function POST(request: NextRequest) {
         documents: documents.map(doc => ({
           id: doc.id,
           filename: doc.filename,
+          originalName: doc.originalName,
           size: doc.fileSize,
           type: doc.mimeType,
           uploadedAt: doc.uploadedAt.toISOString(),
