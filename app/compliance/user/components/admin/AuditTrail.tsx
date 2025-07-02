@@ -1,69 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
 import { Search, Shield, User, Building, FileText, Download, Filter } from 'lucide-react';
-
-const MOCK_AUDIT_EVENTS = [
-  {
-    id: '1',
-    timestamp: '2024-01-15T14:30:00Z',
-    action: 'KYC_APPROVED',
-    user: 'Agent Smith',
-    subject: 'John Doe (KYC-001)',
-    details: 'KYC verification approved after document review',
-    ipAddress: '192.168.1.100',
-    userAgent: 'Chrome/96.0.4664.110',
-    riskLevel: 'LOW'
-  },
-  {
-    id: '2',
-    timestamp: '2024-01-15T14:15:00Z',
-    action: 'DOCUMENT_UPLOADED',
-    user: 'John Doe',
-    subject: 'Passport Document',
-    details: 'User uploaded passport document for KYC verification',
-    ipAddress: '203.0.113.45',
-    userAgent: 'Safari/14.1.2',
-    riskLevel: 'LOW'
-  },
-  {
-    id: '3',
-    timestamp: '2024-01-15T13:45:00Z',
-    action: 'KYB_REJECTED',
-    user: 'Agent Johnson',
-    subject: 'Tech Corp Inc (KYB-015)',
-    details: 'KYB verification rejected due to incomplete documentation',
-    ipAddress: '192.168.1.101',
-    userAgent: 'Firefox/95.0',
-    riskLevel: 'MEDIUM'
-  },
-  {
-    id: '4',
-    timestamp: '2024-01-15T13:30:00Z',
-    action: 'SANCTIONS_CHECK',
-    user: 'System',
-    subject: 'Global Sanctions Database',
-    details: 'Automated sanctions screening completed for 15 new applications',
-    ipAddress: 'System',
-    userAgent: 'System',
-    riskLevel: 'HIGH'
-  },
-  {
-    id: '5',
-    timestamp: '2024-01-15T12:15:00Z',
-    action: 'LOGIN_ATTEMPT',
-    user: 'Agent Brown',
-    subject: 'Admin Dashboard',
-    details: 'Successful login to compliance dashboard',
-    ipAddress: '192.168.1.102',
-    userAgent: 'Chrome/96.0.4664.110',
-    riskLevel: 'LOW'
-  }
-];
 
 const ACTION_TYPES = [
   'KYC_APPROVED',
@@ -80,6 +22,33 @@ export function AuditTrail() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAction, setFilterAction] = useState('all');
   const [filterUser, setFilterUser] = useState('all');
+  const [auditEvents, setAuditEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAuditLogs = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (filterAction !== 'all') params.append('action', filterAction);
+        if (filterUser !== 'all') params.append('user', filterUser);
+        if (searchTerm) params.append('search', searchTerm);
+        
+        const response = await fetch(`/api/admin/audit?${params.toString()}`);
+        const data = await response.json();
+        setAuditEvents(data);
+      } catch (error) {
+        console.error('Error fetching audit logs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchAuditLogs();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, filterAction, filterUser]);
 
   const getActionIcon = (action: string) => {
     if (action.includes('KYC') || action.includes('KYB')) {
@@ -119,17 +88,9 @@ export function AuditTrail() {
     return new Date(dateString).toLocaleString();
   };
 
-  const filteredEvents = MOCK_AUDIT_EVENTS.filter(event => {
-    const matchesSearch = searchTerm === '' || 
-      event.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.user.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesAction = filterAction === 'all' || event.action === filterAction;
-    const matchesUser = filterUser === 'all' || event.user === filterUser;
-    
-    return matchesSearch && matchesAction && matchesUser;
-  });
+  if (loading) {
+    return <div>Loading audit trail...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -186,12 +147,12 @@ export function AuditTrail() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            Audit Trail ({filteredEvents.length} events)
+            Audit Trail ({auditEvents.length} events)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredEvents.map((event) => (
+            {auditEvents.map((event) => (
               <div key={event.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
@@ -233,7 +194,7 @@ export function AuditTrail() {
             ))}
           </div>
 
-          {filteredEvents.length === 0 && (
+          {auditEvents.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               <Shield className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p>No audit events found matching your filters.</p>

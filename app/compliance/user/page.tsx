@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { KYCWizard } from './components/kyc/KYCWizard';
 import { KYBWizard } from './components/kyb/KYBWizard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { 
   Shield, 
   Users, 
@@ -21,10 +23,17 @@ import {
   Settings
 } from 'lucide-react';
 import './kyc.css';
+import {usePrivy} from '@privy-io/react-auth';
 
 const Index = () => {
   const [activeFlow, setActiveFlow] = useState<'home' | 'kyc' | 'kyb' | 'admin'>('home');
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'kyc_pending' | 'kyb_pending' | 'approved'>('none');
+  const {authenticated} = usePrivy();
+  const admin1 = process.env.NEXT_PUBLIC_ADMIN1!;
+  const admin2 = process.env.NEXT_PUBLIC_ADMIN2!;
+  const admin3 = process.env.NEXT_PUBLIC_ADMIN3!;
+  const {user} = usePrivy();
+  const currentAddress = user?.wallet?.address;
 
   const handleKYCComplete = () => {
     setVerificationStatus('kyc_pending');
@@ -38,12 +47,22 @@ const Index = () => {
 
   const renderHomeView = () => (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <Header />
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        <button
+          onClick={() => window.history.back()}
+          className="!group !flex !items-center !gap-2 !px-4 !py-2 !bg-white !border !border-gray-200 !rounded-full !text-sm !font-semibold !text-gray-700 !hover:bg-blue-50 !hover:shadow-md !transition-all !duration-300"
+        >
+          <span className="transform group-hover:-translate-x-1 transition-transform duration-200">←</span> Back
+        </button>
+      </div>
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
+        
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <Shield className="w-12 h-12 text-primary" />
-            <h1 className="text-4xl font-bold text-gray-900">SecurePayments</h1>
+            {/* <Shield className="w-12 h-12 text-primary" />
+            <h1 className="text-4xl font-bold text-gray-900">SecurePayments</h1> */}
           </div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Complete your identity verification to access our secure stablecoin payment platform
@@ -175,6 +194,8 @@ const Index = () => {
         </div>
 
         {/* Admin Access */}
+
+        {(currentAddress === admin1 || currentAddress === admin2 || currentAddress === admin3) && (
         <Card className="bg-gray-50 border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -193,7 +214,9 @@ const Index = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+        )}
+        </div>
+      <Footer />
     </div>
   );
 

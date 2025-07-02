@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     await prisma.kYCApplication.update({
       where: { id: kycApplication.id },
       data: {
-        status: 'PENDING_FINANCIAL_INFO'
+        status: 'PENDING_REVIEW'
       }
     })
 

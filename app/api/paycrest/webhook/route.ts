@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     switch (event) {
       case 'payment_order.pending':
-        console.log('Payment order pending:', data);
+        // console.log('Payment order pending:', data);
         // Create new transaction record as pending
         await prisma.offRampTransaction.create({
           data: {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'payment_order.settled':
-        console.log('Payment order settled:', data);
+        // console.log('Payment order settled:', data);
         // Update transaction status to settled
         await prisma.offRampTransaction.upsert({
           where: { id: data.id },
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'payment_order.expired':
-        console.log('Payment order expired:', data);
+        // console.log('Payment order expired:', data);
         // Update transaction status to expired
         await prisma.offRampTransaction.upsert({
           where: { id: data.id },
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'payment_order.refunded':
-        console.log('Payment order refunded:', data);
+        // console.log('Payment order refunded:', data);
         // Update transaction status to refunded
         await prisma.offRampTransaction.upsert({
           where: { id: data.id },

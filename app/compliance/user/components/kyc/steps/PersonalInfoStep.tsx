@@ -64,6 +64,7 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
       },
     },
   });
+  const [submittedInfo, setSubmittedInfo] = useState<boolean>(false);
 
   const onSubmit = async (data: PersonalInfo) => {
     try {
@@ -80,6 +81,8 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
         country: data.address.country,
       };
 
+      
+
       // Keep the address object in the data passed to onNext
       const response = await fetch('/api/kyc/personal-info', {
         method: 'POST',
@@ -93,6 +96,7 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       toast.success('Personal information submitted successfully');
+      setSubmittedInfo(true);
       onNext(data);
     } catch (error) {
       console.error('Error submitting KYC:', error);
@@ -350,7 +354,8 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
+        <div className="flex justify-between pt-6">
+          <p className="text-sm">Make sure to fill all the required fields correctly, if you click continue you can't go back</p>
           <Button type="submit" className="!px-8 border-2 !border-blue-500 hover:!bg-blue-500/80">
             Continue to Identity Verification
           </Button>

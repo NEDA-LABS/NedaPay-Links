@@ -7,6 +7,7 @@ import { Checkbox } from '../../ui/checkbox';
 import { Alert, AlertDescription } from '../../ui/alert';
 import { Separator } from '../../ui/separator';
 import { User, Shield, DollarSign, FileText, CheckCircle2, Clock } from 'lucide-react';
+import {usePrivy} from '@privy-io/react-auth';
 
 interface ReviewStepProps {
   formData: any;
@@ -18,27 +19,57 @@ export function ReviewStep({ formData, onSubmit, onPrevious }: ReviewStepProps) 
   const [hasAgreedToTerms, setHasAgreedToTerms] = useState(false);
   const [hasAgreedToPrivacy, setHasAgreedToPrivacy] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const {user} = usePrivy();
+  const wallet = user?.wallet?.address;
 
   const canSubmit = hasAgreedToTerms && hasAgreedToPrivacy;
 
   const handleSubmit = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !wallet) return;
 
     setIsSubmitting(true);
-    
-    // Simulate submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    onSubmit({
-      ...formData,
-      submittedAt: new Date().toISOString(),
-      status: 'SUBMITTED',
-      agreements: {
+    try {
+      // Prepare update data
+      const updateData = {
+        status: 'SUBMITTED',
+        submittedAt: new Date(),
+        termsAccepted: hasAgreedToTerms,
+        privacyAccepted: hasAgreedToPrivacy,
+        acceptedAt: new Date()
+      };
+
+      // Update KYC application using wallet as identifier
+      const response = await fetch('/api/kyc/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wallet,
+          updateData
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update KYC application');
+      }
+
+      // Update form state
+      onSubmit({
+        ...formData,
+        submittedAt: new Date().toISOString(),
+        status: 'SUBMITTED',
         termsAccepted: hasAgreedToTerms,
         privacyAccepted: hasAgreedToPrivacy,
         acceptedAt: new Date().toISOString(),
-      }
-    });
+      });
+
+    } catch (error) {
+      console.error('Error updating KYC:', error);
+      alert('Failed to update KYC application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -121,7 +152,7 @@ export function ReviewStep({ formData, onSubmit, onPrevious }: ReviewStepProps) 
       </Card>
 
       {/* Financial Information Summary */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5" />
@@ -159,7 +190,7 @@ export function ReviewStep({ formData, onSubmit, onPrevious }: ReviewStepProps) 
             </Alert>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Terms and Conditions */}
       <Card className="border-2 border-primary/20">
@@ -208,7 +239,7 @@ export function ReviewStep({ formData, onSubmit, onPrevious }: ReviewStepProps) 
           <Alert>
             <Clock className="h-4 w-4" />
             <AlertDescription>
-              <strong>Processing Time:</strong> Your KYC application will be reviewed within 1-3 business days. 
+              <strong>Processing Time:</strong> Your KYC application will be reviewed within few hours. 
               You will receive email notifications about the status of your verification.
             </AlertDescription>
           </Alert>

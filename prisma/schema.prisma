@@ -19,7 +19,8 @@ model User {
   name             String?
   apiKeys          ApiKey[]
   merchantSettings MerchantSettings?
-  kycApplications  KYCApplication[]  // Added relationship
+  kycApplications  KYCApplication[]
+  kybApplications  KYBApplication[]
 }
 
 model MerchantSettings {
@@ -251,6 +252,72 @@ model KYCApplication {
   @@map("kyc_applications")
 }
 
+model KYBApplication {
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  wallet            String            @unique
+  email             String            @unique
+  status            ApplicationStatus @default(DRAFT)
+  submittedAt       DateTime?
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Business Information
+  businessName      String?
+  registrationNumber String?
+  businessType      BusinessType?
+  incorporationDate DateTime?
+  taxId             String?
+  website           String?
+  description       String?
+  
+  // Business Address
+  street            String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?
+  
+  // Contact Information
+  contactEmail      String?
+  contactPhone      String?
+  
+  // Legal Agreements
+  termsAccepted     Boolean          @default(false)
+  privacyAccepted   Boolean          @default(false)
+  corporateAccepted Boolean          @default(false)
+  acceptedAt        DateTime?
+  
+  // Relations
+  user              User?            @relation(fields: [userId], references: [privyUserId])
+  documents         Document[]
+  // representatives   AuthorizedRepresentative[]
+  reviews           ApplicationReview[]
+  
+  @@map("kyb_applications")
+}
+
+// model AuthorizedRepresentative {
+//   id                String         @id @default(cuid())
+//   kybApplicationId  String
+//   firstName         String
+//   lastName          String
+//   position          String
+//   email             String
+//   phone             String?
+//   dateOfBirth       DateTime?
+//   nationality       String?
+//   isSignatory       Boolean        @default(false)
+//   createdAt         DateTime       @default(now())
+  
+//   // Relations
+//   kybApplication    KYBApplication @relation(fields: [kybApplicationId], references: [id], onDelete: Cascade)
+  
+//   @@map("authorized_representatives")
+// }
+
 model Document {
   id                String         @id @default(cuid())
   filename          String
@@ -271,6 +338,8 @@ model Document {
   // Relations
   kycApplicationId  String?
   kycApplication    KYCApplication? @relation(fields: [kycApplicationId], references: [id], onDelete: Cascade)
+  kybApplicationId  String?
+  kybApplication    KYBApplication? @relation(fields: [kybApplicationId], references: [id], onDelete: Cascade)
   
   @@map("documents")
 }
@@ -285,6 +354,23 @@ model ApplicationReview {
   // Relations
   kycApplicationId  String?
   kycApplication    KYCApplication? @relation(fields: [kycApplicationId], references: [id], onDelete: Cascade)
+  kybApplicationId  String?
+  kybApplication    KYBApplication? @relation(fields: [kybApplicationId], references: [id], onDelete: Cascade)
   
   @@map("application_reviews")
+}
+
+// Audit Trail
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entityType  String   // "KYCApplication", "KYBApplication", "Document", etc.
+  entityId    String
+  changes     Json?    // Store the changes made
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  @@map("audit_logs")
 }

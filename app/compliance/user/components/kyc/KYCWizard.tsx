@@ -6,7 +6,7 @@ import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
 import { PersonalInfoStep } from './steps/PersonalInfoStep';
 import { IdentityVerificationStep } from './steps/IdentityVerificationStep';
-import { FinancialInfoStep } from './steps/FinancialInfoStep';
+// import { FinancialInfoStep } from './steps/FinancialInfoStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { VerificationStep } from '../../types/kyc';
 import { CheckCircle, Circle, Clock } from 'lucide-react';
@@ -27,13 +27,13 @@ const STEPS: VerificationStep[] = [
     isCompleted: false,
     isActive: false,
   },
-  {
-    id: 'financial-info',
-    title: 'Financial Information',
-    description: 'Source of funds and transaction details',
-    isCompleted: false,
-    isActive: false,
-  },
+  // {
+  //   id: 'financial-info',
+  //   title: 'Financial Information',
+  //   description: 'Source of funds and transaction details',
+  //   isCompleted: false,
+  //   isActive: false,
+  // },
   {
     id: 'review',
     title: 'Review & Submit',
@@ -90,8 +90,8 @@ export function KYCWizard({ onComplete }: KYCWizardProps) {
         return <PersonalInfoStep onNext={handleStepComplete} initialData={formData} />;
       case 'identity-verification':
         return <IdentityVerificationStep onNext={handleStepComplete} onPrevious={handlePrevious} />;
-      case 'financial-info':
-        return <FinancialInfoStep onNext={handleStepComplete} onPrevious={handlePrevious} />;
+      // case 'financial-info':
+      //   return <FinancialInfoStep onNext={handleStepComplete} onPrevious={handlePrevious} />;
       case 'review':
         return <ReviewStep formData={formData} onSubmit={handleStepComplete} onPrevious={handlePrevious} />;
       default:

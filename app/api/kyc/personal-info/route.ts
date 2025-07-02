@@ -34,6 +34,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check for existing KYC application with the same wallet
+    const existingApplication = await prisma.kYCApplication.findUnique({
+      where: { wallet: data.wallet }
+    })
+
+    // Delete existing application if found
+    if (existingApplication) {
+      await prisma.kYCApplication.delete({
+        where: { wallet: data.wallet }
+      })
+    }
+
     // Create KYC application with personal info
     console.log('Creating KYC application with data:', {
       userId: data.userId,
@@ -52,7 +64,7 @@ export async function POST(request: NextRequest) {
       postalCode: data.postalCode,
       country: data.country,
     });
-    
+
     const kycApplication = await prisma.kYCApplication.create({
       data: {
         userId: data.userId,

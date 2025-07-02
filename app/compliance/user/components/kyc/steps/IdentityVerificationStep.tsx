@@ -201,9 +201,7 @@ export function IdentityVerificationStep({ onNext, onPrevious }: IdentityVerific
       </Card>
 
       <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onPrevious}>
-          Previous
-        </Button>
+      <p className="text-sm">Make sure to fill all the required fields correctly, if you click continue you can't go back</p>
         <Button 
           onClick={handleNext} 
           disabled={!canProceed || isProcessing}
