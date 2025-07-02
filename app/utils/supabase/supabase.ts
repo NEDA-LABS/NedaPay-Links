@@ -3,15 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 // Client-side Supabase client (for public operations)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+// Server-side Supabase client (for admin operations)
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
 // export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Server-side Supabase client (for admin operations)
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseServiceKey) {
   throw new Error('Missing Supabase service role key');
