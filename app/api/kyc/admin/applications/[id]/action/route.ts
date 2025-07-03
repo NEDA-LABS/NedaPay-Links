@@ -6,11 +6,6 @@
 // const prisma = new PrismaClient();
 
 // export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-//   const session = await getServerSession(authOptions);
-//   if (!session) {
-//     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-//   }
-
 //   try {
 //     const { action, notes } = await req.json();
 //     const applicationId = params.id;
@@ -29,7 +24,7 @@
 //     // Update application status
 //     const updateData = {
 //       status: action === 'approve' ? 'APPROVED' : 'REJECTED',
-//       reviewerId: session.user.id,
+//       reviewerId: 'admin',
 //       ...(action === 'approve' ? { approvedAt: new Date() } : { rejectedAt: new Date() })
 //     };
 

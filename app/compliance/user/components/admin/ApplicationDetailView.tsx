@@ -89,7 +89,7 @@ export function ApplicationDetailView({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="!fixed left-0 right-0 top-10 bottom-0 mx-auto bg-white max-w-4xl max-h-[90vh] overflow-y-auto ">
         <DialogHeader>
           <DialogTitle>
             <div className="flex items-center gap-2">

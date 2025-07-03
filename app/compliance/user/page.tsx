@@ -262,8 +262,7 @@ const Index = () => {
               onClick={() => setActiveFlow('home')}
               className="flex items-center gap-2"
             >
-              <Shield className="w-5 h-5" />
-              SecurePayments
+              NedaPay KYC/KYB
             </Button>
             <div className="flex items-center gap-4">
               <Badge className="text-sm">

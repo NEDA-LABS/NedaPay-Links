@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
     const applicationId = formData.get('applicationId') as string
-    console.log("applicationId", applicationId);
+    // console.log("applicationId", applicationId);
 
     // Find or create the KYC application
     const kycApplication = await prisma.kYCApplication.findUnique({
