@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
@@ -6,83 +5,225 @@ import { Badge } from '../../ui/badge';
 import { Alert, AlertDescription } from '../../ui/alert';
 import { DocumentUpload } from '../../kyc/DocumentUpload';
 import { DocumentType, VerificationStatus } from '../../../types/kyc';
-import { FileText, Building, Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
-
-interface BusinessDocumentsStepProps {
-  onNext: (data: any) => void;
-  onPrevious: () => void;
-}
+import { FileText, Building, Shield, AlertTriangle, CheckCircle2, Eye, Download, X } from 'lucide-react';
+import { usePrivy } from '@privy-io/react-auth';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { useEffect } from 'react';
 
 interface DocumentState {
   type: DocumentType;
   title: string;
   description: string;
   file?: File;
+  fileUrl?: string;
   status: VerificationStatus;
   required: boolean;
+  fileName?: string;
+  fileSize?: number;
+  uploadDate?: string;
+}
+
+interface BusinessDocumentsStepProps {
+  onNext: (data: any) => void;
+  onPrevious: () => void;
 }
 
 export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsStepProps) {
+  const { user } = usePrivy();
   const [documents, setDocuments] = useState<DocumentState[]>([
     {
       type: DocumentType.BUSINESS_REGISTRATION,
-      title: 'Certificate of Incorporation',
-      description: 'Official business registration certificate or articles of incorporation',
+      title: 'Business Registration Certificate',
+      description: 'Upload your official business registration certificate',
+      file: undefined,
+      fileUrl: undefined,
       status: VerificationStatus.PENDING,
-      required: true,
-    },
-    {
-      type: DocumentType.ARTICLES_OF_INCORPORATION,
-      title: 'Articles of Association/Bylaws',
-      description: 'Company bylaws or articles of association document',
-      status: VerificationStatus.PENDING,
-      required: true,
+      required: true
     },
     {
       type: DocumentType.TAX_CERTIFICATE,
-      title: 'Tax Registration Certificate',
-      description: 'Tax identification number certificate or EIN documentation',
+      title: 'Tax Certificate',
+      description: "Upload your company's tax certificate",
+      file: undefined,
+      fileUrl: undefined,
       status: VerificationStatus.PENDING,
-      required: true,
+      required: true
     },
-    {
-      type: DocumentType.PROOF_OF_ADDRESS,
-      title: 'Business Address Verification',
-      description: 'Utility bill, lease agreement, or official document showing business address',
-      status: VerificationStatus.PENDING,
-      required: true,
-    },
-    {
-      type: DocumentType.FINANCIAL_STATEMENT,
-      title: 'Financial Statements',
-      description: 'Recent audited financial statements or bank statements (if required)',
-      status: VerificationStatus.PENDING,
-      required: false,
-    },
+    // {
+    //   type: DocumentType.FINANCIAL_STATEMENT,
+    //   title: 'Financial Statement',
+    //   description: 'Upload your company's financial statement',
+    //   file: undefined,
+    //   fileUrl: undefined,
+    //   status: VerificationStatus.PENDING,
+    //   required: true
+    // }
   ]);
-
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleFileUpload = (docType: DocumentType, file: File) => {
-    setDocuments(prev => prev.map(doc => 
-      doc.type === docType 
-        ? { ...doc, file, status: VerificationStatus.IN_REVIEW }
-        : doc
-    ));
+  useEffect(() => {
+    if (user?.wallet?.address) {
+      fetchDocuments(user?.wallet?.address);
+    }
+  }, [user?.wallet?.address]);
+
+  const fetchDocuments = async (walletAddress: string) => {
+    try {
+      const response = await axios.get(`/api/kyb/documents?userId=${walletAddress}`);
+      // console.log('Fetch response:', response.data); // Debug log
+      
+      if (response.data.success && response.data.documents) {
+        // Map server documents to our document types
+        const serverDocsMap = response.data.documents.reduce((acc: any, serverDoc: any) => {
+          acc[serverDoc.documentType] = serverDoc;
+          return acc;
+        }, {} as Record<string, any>);
+
+        setDocuments(prev => prev.map((doc: DocumentState) => {
+          const serverDoc = serverDocsMap[doc.type];
+          // console.log('Server doc for type', doc.type, ':', serverDoc); // Debug log
+          
+          if (serverDoc) {
+            return { 
+              ...doc,
+              status: serverDoc.status as VerificationStatus,
+              fileUrl: serverDoc.storageUrl,
+              fileName: serverDoc.originalName,
+              fileSize: serverDoc.fileSize,
+              uploadDate: serverDoc.uploadedAt,
+              file: doc.file // Keep existing file if present
+            };
+          }
+          return doc;
+        }));
+      }
+    } catch (err) {
+      console.error('Error fetching documents:', err);
+      toast.error('Failed to fetch documents');
+    }
   };
 
-  const handleRemoveFile = (docType: DocumentType) => {
-    setDocuments(prev => prev.map(doc => 
-      doc.type === docType 
-        ? { ...doc, file: undefined, status: VerificationStatus.PENDING }
-        : doc
-    ));
+  
+  
+
+  const handleFileUpload = async (docType: DocumentType, file: File) => {
+    try {
+      setIsProcessing(true);
+      const formData = new FormData();
+      formData.append('files', file);
+      formData.append('documentType', docType.toString());
+      formData.append('currentAddress', user?.wallet?.address || '');
+
+      const response = await axios.post('/api/kyb/documents', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        // Update document state with new status and URL
+        setDocuments(prev => prev.map((doc: DocumentState) => 
+          doc.type === docType
+            ? { 
+                ...doc,
+                status: VerificationStatus.UPLOADED,
+                fileUrl: response.data.documents[0].storageUrl,
+                fileName: file.name,
+                fileSize: file.size,
+                uploadDate: new Date().toISOString(),
+                file: undefined
+              }
+            : doc
+        ));
+        toast.success('Document uploaded successfully');
+      } else {
+        throw new Error(response.data.message || 'Failed to upload document');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload document');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const canProceed = documents.filter(doc => doc.required).every(doc => doc.file);
+  const handleRemoveFile = async (docType: DocumentType) => {
+    try {
+      setIsProcessing(true);
+      const response = await axios.delete(`/api/kyb/documents?userId=${user?.wallet?.address}&documentType=${docType}`);
+      
+      if (response.data.success) {
+        setDocuments(prev => prev.map((doc: DocumentState) => 
+          doc.type === docType
+            ? { 
+                ...doc,
+                status: VerificationStatus.PENDING,
+                fileUrl: undefined,
+                fileName: undefined,
+                fileSize: undefined,
+                uploadDate: undefined,
+                file: undefined
+              }
+            : doc
+        ));
+        toast.success('Document removed successfully');
+      } else {
+        throw new Error(response.data.message || 'Failed to remove document');
+      }
+    } catch (error) {
+      console.error('Remove error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to remove document');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePreviewFile = (fileUrl: string, fileName: string) => {
+    if (fileUrl) {
+      // Open in new tab for preview
+      window.open(fileUrl, '_blank');
+    }
+  };
+
+  const handleDownloadFile = (fileUrl: string, fileName: string) => {
+    if (fileUrl) {
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName || 'document';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const canProceed = documents.filter(doc => doc.required).every(doc => 
+    doc.status === VerificationStatus.UPLOADED || doc.status === VerificationStatus.APPROVED
+  );
 
   const handleNext = async () => {
-    if (!canProceed) return;
+    if (!canProceed) {
+      toast.error('Please upload all required documents');
+      return;
+    }
 
     setIsProcessing(true);
     
@@ -92,14 +233,15 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
     // Update document statuses
     setDocuments(prev => prev.map(doc => ({
       ...doc,
-      status: doc.file ? VerificationStatus.APPROVED : doc.status
+      status: doc.fileUrl ? VerificationStatus.APPROVED : doc.status
     })));
 
     const documentData = documents.reduce((acc, doc) => {
-      if (doc.file) {
+      if (doc.fileUrl) {
         acc[doc.type] = {
           type: doc.type,
-          file: doc.file,
+          fileUrl: doc.fileUrl,
+          fileName: doc.fileName,
           status: VerificationStatus.APPROVED,
         };
       }
@@ -131,11 +273,86 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
         return <Badge className="bg-warning">Processing</Badge>;
       case VerificationStatus.REJECTED:
         return <Badge variant="destructive">Rejected</Badge>;
+      case VerificationStatus.UPLOADED:
+        return <Badge className="bg-blue-500">Uploaded</Badge>;
       default:
         return <Badge variant={required ? "default" : "outline"}>
           {required ? "Required" : "Optional"}
         </Badge>;
     }
+  };
+
+  const renderUploadedFile = (doc: DocumentState) => {
+    // Debug log to see what we have
+    // console.log('Rendering doc:', doc.type, {
+    //   fileUrl: doc.fileUrl,
+    //   fileName: doc.fileName,
+    //   status: doc.status
+    // });
+
+    if (!doc.fileUrl && !doc.fileName) return null;
+
+    return (
+      <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <FileText className="w-8 h-8 text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {doc.fileName || 'Uploaded Document'}
+              </p>
+              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                {doc.fileSize && (
+                  <span>{formatFileSize(doc.fileSize)}</span>
+                )}
+                {doc.uploadDate && (
+                  <>
+                    <span>•</span>
+                    <span>Uploaded {formatDate(doc.uploadDate)}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {doc.fileUrl && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePreviewFile(doc.fileUrl!, doc.fileName!)}
+                  className="flex items-center gap-1"
+                >
+                  <Eye className="w-4 h-4" />
+                  Preview
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadFile(doc.fileUrl!, doc.fileName!)}
+                  className="flex items-center gap-1"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </Button>
+              </>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleRemoveFile(doc.type)}
+              className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+              disabled={isProcessing}
+            >
+              <X className="w-4 h-4" />
+              Remove
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -163,14 +380,25 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
               </div>
             </CardHeader>
             <CardContent>
-              <DocumentUpload
-                documentType={doc.type}
-                onFileUpload={(file) => handleFileUpload(doc.type, file)}
-                onFileRemove={() => handleRemoveFile(doc.type)}
-                currentFile={doc.file}
-                maxSize={10} // 10MB
-                acceptedTypes={['image/jpeg', 'image/png', 'application/pdf']}
-              />
+              {/* Debug info - remove in production */}
+              {/* <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <strong>Debug:</strong> fileUrl: {doc.fileUrl || 'none'}, fileName: {doc.fileName || 'none'}, status: {doc.status}
+              </div> */}
+              
+              {/* Show uploaded file if exists */}
+              {doc.status === VerificationStatus.UPLOADED || doc.status === VerificationStatus.APPROVED ? (
+                renderUploadedFile(doc)
+              ) : (
+                <DocumentUpload
+                  documentType={doc.type}
+                  onFileUpload={(file) => handleFileUpload(doc.type, file)}
+                  onFileRemove={() => handleRemoveFile(doc.type)}
+                  currentFile={doc.file}
+                  fileUrl={doc.fileUrl}
+                  maxSize={10} // 10MB
+                  acceptedTypes={['image/jpeg', 'image/png', 'application/pdf']}
+                />
+              )}
             </CardContent>
           </Card>
         ))}
@@ -210,7 +438,7 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
               Processing Documents...
             </>
           ) : (
-            'Continue to Ownership Structure'
+            'Continue to Review'
           )}
         </Button>
       </div>

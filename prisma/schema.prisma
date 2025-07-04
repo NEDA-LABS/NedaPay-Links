@@ -173,6 +173,9 @@ enum DocumentType {
   BOARD_RESOLUTION
   SHAREHOLDER_REGISTER
   FINANCIAL_STATEMENTS
+  BUSINESS_REGISTRATION
+  TAX_CERTIFICATE
+  KYB_FINANCIAL_STATEMENT
 }
 
 enum DocumentStatus {
@@ -200,6 +203,8 @@ enum BusinessType {
   LLC
   PARTNERSHIP
   SOLE_PROPRIETORSHIP
+  NON_PROFIT
+  TRUST
   NGO
   GOVERNMENT
 }
@@ -268,6 +273,7 @@ model KYBApplication {
   businessName      String?
   registrationNumber String?
   businessType      BusinessType?
+  industry          String?
   incorporationDate DateTime?
   taxId             String?
   website           String?

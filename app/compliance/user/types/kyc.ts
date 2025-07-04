@@ -4,7 +4,8 @@ export enum VerificationStatus {
   IN_REVIEW = 'IN_REVIEW',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
-  EXPIRED = 'EXPIRED'
+  EXPIRED = 'EXPIRED',
+  UPLOADED = 'UPLOADED'
 }
 
 export enum DocumentType {
@@ -33,7 +34,9 @@ export enum BusinessType {
   PARTNERSHIP = 'PARTNERSHIP',
   SOLE_PROPRIETORSHIP = 'SOLE_PROPRIETORSHIP',
   NON_PROFIT = 'NON_PROFIT',
-  TRUST = 'TRUST'
+  TRUST = 'TRUST',
+  NGO = 'NGO',
+  GOVERNMENT = 'GOVERNMENT',
 }
 
 // KYC Individual Types
@@ -89,28 +92,25 @@ export interface KYCProfile {
 
 // KYB Business Types
 export interface BusinessInfo {
-  legalName: string;
-  tradingName?: string;
+  businessName: string;
   registrationNumber: string;
   incorporationDate: string;
   businessType: BusinessType;
   industry: string;
   description: string;
   website?: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-  };
-  registeredAddress: {
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-  };
+  contactEmail: string;
+  contactPhone: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  registeredStreet?: string;
+  registeredCity?: string;
+  registeredState?: string;
+  registeredPostalCode?: string;
+  registeredCountry?: string;
 }
 
 export interface UltimateBeneficialOwner {

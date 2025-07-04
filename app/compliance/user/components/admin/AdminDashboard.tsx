@@ -29,6 +29,7 @@ import {
   Search,
   Filter,
 } from "lucide-react";
+import "../../kyc.css"
 
 interface AdminDashboardProps {
   onVerificationAction?: (
@@ -154,7 +155,7 @@ export function AdminDashboard({ onVerificationAction }: AdminDashboardProps) {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 bg-white rounded-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Verifications</p>

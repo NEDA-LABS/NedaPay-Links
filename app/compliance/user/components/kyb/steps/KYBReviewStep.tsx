@@ -7,6 +7,7 @@ import { Checkbox } from '../../ui/checkbox';
 import { Alert, AlertDescription } from '../../ui/alert';
 import { Separator } from '../../ui/separator';
 import { Building, Users, FileText, UserCheck, CheckCircle2, Clock } from 'lucide-react';
+import {usePrivy} from '@privy-io/react-auth';
 
 interface KYBReviewStepProps {
   formData: any;
@@ -19,28 +20,59 @@ export function KYBReviewStep({ formData, onSubmit, onPrevious }: KYBReviewStepP
   const [hasAgreedToPrivacy, setHasAgreedToPrivacy] = useState(false);
   const [hasAgreedToCorporate, setHasAgreedToCorporate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const {user} = usePrivy();
+  const wallet = user?.wallet?.address;
 
   const canSubmit = hasAgreedToTerms && hasAgreedToPrivacy && hasAgreedToCorporate;
 
   const handleSubmit = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !wallet) return;
 
     setIsSubmitting(true);
     
-    // Simulate submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    onSubmit({
-      ...formData,
-      submittedAt: new Date().toISOString(),
-      status: 'SUBMITTED',
-      agreements: {
+    try {
+      const updateData = {
+        status: 'SUBMITTED',
+        submittedAt: new Date(),
         termsAccepted: hasAgreedToTerms,
         privacyAccepted: hasAgreedToPrivacy,
-        corporateAgreementAccepted: hasAgreedToCorporate,
-        acceptedAt: new Date().toISOString(),
+        corporateAccepted: hasAgreedToCorporate,
+        acceptedAt: new Date(),
+      };
+
+      // Update KYC application using wallet as identifier
+      const response = await fetch('/api/kyb/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wallet,
+          updateData
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update KYC application');
       }
-    });
+
+      // Update form state
+      onSubmit({
+        ...formData,
+        submittedAt: new Date().toISOString(),
+        status: 'SUBMITTED',
+        termsAccepted: hasAgreedToTerms,
+        privacyAccepted: hasAgreedToPrivacy,
+        acceptedAt: new Date().toISOString(),
+        corporateAccepted: hasAgreedToCorporate,
+      });
+    } catch (error) {
+      console.error('Error updating KYC:', error);
+      alert('Failed to update KYC application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+    
   };
 
   return (
@@ -58,12 +90,12 @@ export function KYBReviewStep({ formData, onSubmit, onPrevious }: KYBReviewStepP
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-medium">Legal Name:</span>
-              <p className="text-gray-600">{formData.legalName}</p>
+              <p className="text-gray-600">{formData.businessName}</p>
             </div>
-            <div>
+            {/* <div>
               <span className="font-medium">Trading Name:</span>
               <p className="text-gray-600">{formData.tradingName || 'N/A'}</p>
-            </div>
+            </div> */}
             <div>
               <span className="font-medium">Registration Number:</span>
               <p className="text-gray-600">{formData.registrationNumber}</p>
@@ -85,7 +117,7 @@ export function KYBReviewStep({ formData, onSubmit, onPrevious }: KYBReviewStepP
           <div>
             <span className="font-medium text-sm">Business Address:</span>
             <p className="text-gray-600 text-sm">
-              {formData.address?.street}, {formData.address?.city}, {formData.address?.state} {formData.address?.postalCode}, {formData.address?.country}
+              {formData.street}, {formData.city}, {formData.state} {formData.postalCode}, {formData.country}
             </p>
           </div>
           <div>
@@ -125,7 +157,7 @@ export function KYBReviewStep({ formData, onSubmit, onPrevious }: KYBReviewStepP
       </Card>
 
       {/* Ownership Structure Summary */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
@@ -159,10 +191,10 @@ export function KYBReviewStep({ formData, onSubmit, onPrevious }: KYBReviewStepP
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Authorized Representatives Summary */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserCheck className="w-5 h-5" />
@@ -197,7 +229,7 @@ export function KYBReviewStep({ formData, onSubmit, onPrevious }: KYBReviewStepP
             </AlertDescription>
           </Alert>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Terms and Conditions */}
       <Card className="border-2 border-primary/20">
@@ -265,7 +297,7 @@ export function KYBReviewStep({ formData, onSubmit, onPrevious }: KYBReviewStepP
           <Alert>
             <Clock className="h-4 w-4" />
             <AlertDescription>
-              <strong>Processing Time:</strong> Your KYB application will be reviewed within 3-7 business days. 
+              <strong>Processing Time:</strong> Your KYB application will be reviewed within 1-2 business days. 
               You will receive email notifications about the status of your verification. Individual KYC 
               verifications for authorized representatives must be completed for full account activation.
             </AlertDescription>

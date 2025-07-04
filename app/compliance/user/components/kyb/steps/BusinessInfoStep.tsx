@@ -10,33 +10,40 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Checkbox } from '../../ui/checkbox';
 import { BusinessInfo, BusinessType } from '../../../types/kyc';
-import { Building, MapPin, Globe, Calendar } from 'lucide-react';
+import { Building, MapPin, Globe, Calendar, Phone } from 'lucide-react';
+import { usePrivy } from '@privy-io/react-auth';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const businessInfoSchema = z.object({
-  legalName: z.string().min(2, 'Legal business name is required'),
-  tradingName: z.string().optional(),
-  registrationNumber: z.string().min(1, 'Business registration number is required'),
-  incorporationDate: z.string().min(1, 'Date of incorporation is required'),
+  businessName: z.string().min(1, 'Business name is required'),
+  registrationNumber: z.string().min(1, 'Registration number is required'),
+  incorporationDate: z.string().min(10, 'Incorporation date is required'),
   businessType: z.nativeEnum(BusinessType),
   industry: z.string().min(1, 'Industry is required'),
-  description: z.string().min(10, 'Business description must be at least 10 characters'),
+  description: z.string().min(10, 'Description is required'),
   website: z.string().url().optional().or(z.literal('')),
-  address: z.object({
-    street: z.string().min(5, 'Street address is required'),
-    city: z.string().min(2, 'City is required'),
-    state: z.string().min(2, 'State/Province is required'),
-    postalCode: z.string().min(4, 'Valid postal code is required'),
-    country: z.string().min(1, 'Country is required'),
-  }),
-  registeredAddress: z.object({
-    street: z.string().min(5, 'Street address is required'),
-    city: z.string().min(2, 'City is required'),
-    state: z.string().min(2, 'State/Province is required'),
-    postalCode: z.string().min(4, 'Valid postal code is required'),
-    country: z.string().min(1, 'Country is required'),
-  }),
+  contactEmail: z.string().email('Please enter a valid email address').min(1, 'Email is required'),
+  contactPhone: z.string().min(10, 'Phone number must be at least 10 digits').regex(/^\+?[0-9\s-]+$/, 'Please enter a valid phone number'),
+  street: z.string().min(5, 'Street address is required'),
+  city: z.string().min(2, 'City is required'),
+  state: z.string().min(2, 'State is required'),
+  postalCode: z.string().min(2, 'Postal code is required'),
+  country: z.string().min(2, 'Country is required'),
+  registeredStreet: z.string().min(5, 'Street address is required').optional(),
+  registeredCity: z.string().min(2, 'City is required').optional(),
+  registeredState: z.string().min(2, 'State is required').optional(),
+  registeredPostalCode: z.string().min(2, 'Postal code is required').optional(),
+  registeredCountry: z.string().min(2, 'Country is required').optional(),
   sameAsBusinessAddress: z.boolean().optional(),
-});
+}).transform((data) => ({
+  ...data,
+  registeredStreet: data.sameAsBusinessAddress ? data.street : data.registeredStreet,
+  registeredCity: data.sameAsBusinessAddress ? data.city : data.registeredCity,
+  registeredState: data.sameAsBusinessAddress ? data.state : data.registeredState,
+  registeredPostalCode: data.sameAsBusinessAddress ? data.postalCode : data.registeredPostalCode,
+  registeredCountry: data.sameAsBusinessAddress ? data.country : data.registeredCountry,
+}));
 
 interface BusinessInfoStepProps {
   onNext: (data: BusinessInfo) => void;
@@ -64,64 +71,120 @@ const COUNTRIES = [
 ];
 
 export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps) {
+  const { user } = usePrivy();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const form = useForm<BusinessInfo & { sameAsBusinessAddress?: boolean }>({
     resolver: zodResolver(businessInfoSchema),
     defaultValues: {
-      legalName: initialData?.legalName || '',
-      tradingName: initialData?.tradingName || '',
+      businessName: initialData?.businessName || '',
       registrationNumber: initialData?.registrationNumber || '',
       incorporationDate: initialData?.incorporationDate || '',
       businessType: initialData?.businessType || BusinessType.LLC,
       industry: initialData?.industry || '',
       description: initialData?.description || '',
       website: initialData?.website || '',
-      address: {
-        street: initialData?.address?.street || '',
-        city: initialData?.address?.city || '',
-        state: initialData?.address?.state || '',
-        postalCode: initialData?.address?.postalCode || '',
-        country: initialData?.address?.country || '',
-      },
-      registeredAddress: {
-        street: initialData?.registeredAddress?.street || '',
-        city: initialData?.registeredAddress?.city || '',
-        state: initialData?.registeredAddress?.state || '',
-        postalCode: initialData?.registeredAddress?.postalCode || '',
-        country: initialData?.registeredAddress?.country || '',
-      },
-      sameAsBusinessAddress: false,
+      contactEmail: initialData?.contactEmail || '',
+      contactPhone: initialData?.contactPhone || '',
+      street: initialData?.street || '',
+      city: initialData?.city || '',
+      state: initialData?.state || '',
+      postalCode: initialData?.postalCode || '',
+      country: initialData?.country || '',
+      // registeredStreet: initialData?.registeredStreet || undefined,
+      // registeredCity: initialData?.registeredCity || undefined,
+      // registeredState: initialData?.registeredState || undefined,
+      // registeredPostalCode: initialData?.registeredPostalCode || undefined,
+      // registeredCountry: initialData?.registeredCountry || undefined,
+      // sameAsBusinessAddress: false,
     },
   });
 
+  useEffect(() => {
+    if (user?.id) {
+      fetchBusinessInfo(user.id);
+    }
+  }, [user?.id]);
+
+  const fetchBusinessInfo = async (userId: string) => {
+    try {
+      const response = await axios.get(`/api/kyb/business-info?userId=${userId}`);
+      if (response.data.success && response.data.data) {
+        form.reset(response.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching business info:', err);
+      setError('Failed to fetch business information');
+    }
+  };
+
   const watchSameAddress = form.watch('sameAsBusinessAddress');
 
-  const onSubmit = (data: BusinessInfo & { sameAsBusinessAddress?: boolean }) => {
-    const businessData: BusinessInfo = {
-      legalName: data.legalName,
-      tradingName: data.tradingName,
-      registrationNumber: data.registrationNumber,
-      incorporationDate: data.incorporationDate,
-      businessType: data.businessType,
-      industry: data.industry,
-      description: data.description,
-      website: data.website,
-      address: data.address,
-      registeredAddress: data.sameAsBusinessAddress ? data.address : data.registeredAddress,
-    };
+  const handleSubmit = async (data: BusinessInfo & { sameAsBusinessAddress?: boolean }) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    onNext(businessData);
+      const businessData: BusinessInfo = {
+        businessName: data.businessName,
+        registrationNumber: data.registrationNumber,
+        incorporationDate: data.incorporationDate,
+        businessType: data.businessType,
+        industry: data.industry,
+        description: data.description,
+        website: data.website,
+        contactEmail: data.contactEmail,
+        contactPhone: data.contactPhone,
+        street: data.street,
+        city: data.city,
+        state: data.state,
+        postalCode: data.postalCode,
+        country: data.country,
+        // registeredStreet: watchSameAddress ? data.street : data.registeredStreet,
+        // registeredCity: watchSameAddress ? data.city : data.registeredCity,
+        // registeredState: watchSameAddress ? data.state : data.registeredState,
+        // registeredPostalCode: watchSameAddress ? data.postalCode : data.registeredPostalCode,
+        // registeredCountry: watchSameAddress ? data.country : data.registeredCountry,
+      };
+
+      await axios.post('/api/kyb/business-info', {
+        ...businessData,
+        email: user?.email?.address,
+        userId: user?.id,
+        wallet: user?.wallet?.address,
+        status: 'PENDING_DOCUMENTS',
+      });
+
+      onNext(businessData);
+    } catch (err) {
+      console.error('Error saving business info:', err);
+      setError('Failed to save business information');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const copyBusinessAddress = (checked: boolean) => {
     if (checked) {
-      const businessAddress = form.getValues('address');
-      form.setValue('registeredAddress', businessAddress);
+      const businessAddress = {
+        street: form.getValues('street'),
+        city: form.getValues('city'),
+        state: form.getValues('state'),
+        postalCode: form.getValues('postalCode'),
+        country: form.getValues('country')
+      };
+      form.setValue('registeredStreet', businessAddress.street);
+      form.setValue('registeredCity', businessAddress.city);
+      form.setValue('registeredState', businessAddress.state);
+      form.setValue('registeredPostalCode', businessAddress.postalCode);
+      form.setValue('registeredCountry', businessAddress.country);
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Basic Business Information */}
         <Card>
           <CardHeader>
@@ -134,26 +197,37 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="legalName"
+                name="businessName"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Legal Business Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter legal business name" {...field} />
+                      <Input placeholder="Enter legal business name" {...field}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
+               <FormField
                 control={form.control}
-                name="tradingName"
+                name="businessType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Trading Name (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter trading name" {...field} />
-                    </FormControl>
+                    <FormLabel>Business Type *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select business type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {BUSINESS_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -187,30 +261,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="businessType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Business Type *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select business type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {BUSINESS_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+             
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -272,6 +323,45 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
             />
           </CardContent>
         </Card>
+        {/* Contact Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Phone className="w-5 h-5" />
+                      Contact Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="contactEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email Address *</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="Enter email address" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="contactPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="+1 (555) 123-4567" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
 
         {/* Business Address */}
         <Card>
@@ -284,7 +374,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="address.street"
+              name="street"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Street Address *</FormLabel>
@@ -298,7 +388,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <FormField
                 control={form.control}
-                name="address.city"
+                name="city"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>City *</FormLabel>
@@ -311,7 +401,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
               />
               <FormField
                 control={form.control}
-                name="address.state"
+                name="state"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>State/Province *</FormLabel>
@@ -324,7 +414,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
               />
               <FormField
                 control={form.control}
-                name="address.postalCode"
+                name="postalCode"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Postal Code *</FormLabel>
@@ -337,7 +427,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
               />
               <FormField
                 control={form.control}
-                name="address.country"
+                name="country"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Country *</FormLabel>
@@ -364,7 +454,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
         </Card>
 
         {/* Registered Address */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
@@ -393,7 +483,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
               <>
                 <FormField
                   control={form.control}
-                  name="registeredAddress.street"
+                  name="registeredStreet"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Street Address *</FormLabel>
@@ -407,7 +497,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <FormField
                     control={form.control}
-                    name="registeredAddress.city"
+                    name="registeredCity"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>City *</FormLabel>
@@ -420,7 +510,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
                   />
                   <FormField
                     control={form.control}
-                    name="registeredAddress.state"
+                    name="registeredState"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>State/Province *</FormLabel>
@@ -433,7 +523,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
                   />
                   <FormField
                     control={form.control}
-                    name="registeredAddress.postalCode"
+                    name="registeredPostalCode"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Postal Code *</FormLabel>
@@ -446,24 +536,24 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
                   />
                   <FormField
                     control={form.control}
-                    name="registeredAddress.country"
+                    name="registeredCountry"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Country *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select country" />
                             </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {COUNTRIES.map((country) => (
-                              <SelectItem key={country} value={country}>
-                                {country}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                            <SelectContent>
+                              {COUNTRIES.map((country) => (
+                                <SelectItem key={country} value={country}>
+                                  {country}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -472,8 +562,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
               </>
             )}
           </CardContent>
-        </Card>
-
+        </Card> */}
         <div className="flex justify-end">
           <Button type="submit" className="px-8">
             Continue to Business Documents
@@ -483,3 +572,4 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
     </Form>
   );
 }
+

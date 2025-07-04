@@ -6,8 +6,8 @@ import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
 import { BusinessInfoStep } from './steps/BusinessInfoStep';
 import { BusinessDocumentsStep } from './steps/BusinessDocumentsStep';
-import { OwnershipStructureStep } from './steps/OwnershipStructureStep';
-import { AuthorizedRepresentativesStep } from './steps/AuthorizedRepresentativesStep';
+// import { OwnershipStructureStep } from './steps/OwnershipStructureStep';
+// import { AuthorizedRepresentativesStep } from './steps/AuthorizedRepresentativesStep';
 import { KYBReviewStep } from './steps/KYBReviewStep';
 import { VerificationStep } from '../../types/kyc';
 import { CheckCircle, Circle, Clock, Building } from 'lucide-react';
@@ -28,20 +28,20 @@ const STEPS: VerificationStep[] = [
     isCompleted: false,
     isActive: false,
   },
-  {
-    id: 'ownership-structure',
-    title: 'Ownership Structure',
-    description: 'Ultimate beneficial owners and shareholding structure',
-    isCompleted: false,
-    isActive: false,
-  },
-  {
-    id: 'authorized-representatives',
-    title: 'Authorized Representatives',
-    description: 'Individuals authorized to act on behalf of the business',
-    isCompleted: false,
-    isActive: false,
-  },
+  // {
+  //   id: 'ownership-structure',
+  //   title: 'Ownership Structure',
+  //   description: 'Ultimate beneficial owners and shareholding structure',
+  //   isCompleted: false,
+  //   isActive: false,
+  // },
+  // {
+  //   id: 'authorized-representatives',
+  //   title: 'Authorized Representatives',
+  //   description: 'Individuals authorized to act on behalf of the business',
+  //   isCompleted: false,
+  //   isActive: false,
+  // },
   {
     id: 'review',
     title: 'Review & Submit',
@@ -98,10 +98,10 @@ export function KYBWizard({ onComplete }: KYBWizardProps) {
         return <BusinessInfoStep onNext={handleStepComplete} initialData={formData} />;
       case 'business-documents':
         return <BusinessDocumentsStep onNext={handleStepComplete} onPrevious={handlePrevious} />;
-      case 'ownership-structure':
-        return <OwnershipStructureStep onNext={handleStepComplete} onPrevious={handlePrevious} />;
-      case 'authorized-representatives':
-        return <AuthorizedRepresentativesStep onNext={handleStepComplete} onPrevious={handlePrevious} />;
+      // case 'ownership-structure':
+      //   return <OwnershipStructureStep onNext={handleStepComplete} onPrevious={handlePrevious} />;
+      // case 'authorized-representatives':
+      //   return <AuthorizedRepresentativesStep onNext={handleStepComplete} onPrevious={handlePrevious} />;
       case 'review':
         return <KYBReviewStep formData={formData} onSubmit={handleStepComplete} onPrevious={handlePrevious} />;
       default:
@@ -144,11 +144,11 @@ export function KYBWizard({ onComplete }: KYBWizardProps) {
                     : "bg-gray-100 border-gray-300 text-gray-400"
                 )}>
                   {step.isCompleted ? (
-                    <CheckCircle className="w-6 h-6" />
+                    <CheckCircle className="w-6 h-6 text-yellow-500" />
                   ) : step.requiresReview ? (
-                    <Clock className="w-6 h-6" />
+                    <Clock className="w-6 h-6 text-yellow-500" />
                   ) : (
-                    <Circle className="w-6 h-6" />
+                    <Circle className="w-6 h-6 text-yellow-400" />
                   )}
                 </div>
                 <div className="text-center">

@@ -12,6 +12,7 @@ interface DocumentUploadProps {
   onFileUpload: (file: File) => void;
   onFileRemove: () => void;
   currentFile?: File;
+  fileUrl?: string; // Add file URL prop
   maxSize?: number; // in MB
   acceptedTypes?: string[];
 }
@@ -21,6 +22,7 @@ export function DocumentUpload({
   onFileUpload,
   onFileRemove,
   currentFile,
+  fileUrl,
   maxSize = 10,
   acceptedTypes = ['image/jpeg', 'image/png', 'application/pdf']
 }: DocumentUploadProps) {
@@ -88,7 +90,7 @@ export function DocumentUpload({
 
   const isSelfie = documentType === DocumentType.SELFIE;
 
-  if (currentFile) {
+  if (currentFile || fileUrl) {
     return (
       <Card className="bg-green-50 border-green-200">
         <CardContent className="p-4">
@@ -98,8 +100,25 @@ export function DocumentUpload({
                 <File className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="font-medium text-green-900">{currentFile.name}</p>
-                <p className="text-sm text-green-700">{formatFileSize(currentFile.size)}</p>
+                <h3 className="font-medium text-green-800">Uploaded Document</h3>
+                <div className="space-y-1">
+                  {currentFile && (
+                    <p className="text-sm text-green-700">{currentFile.name}</p>
+                  )}
+                  {fileUrl && (
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-green-700 hover:text-green-900 underline"
+                    >
+                      View Document
+                    </a>
+                  )}
+                  {currentFile && (
+                    <p className="text-xs text-green-600">{formatFileSize(currentFile.size)}</p>
+                  )}
+                </div>
               </div>
             </div>
             <Button
