@@ -74,6 +74,49 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const url = searchParams.get('storageUrl')
+
+    if (!url) {
+      return NextResponse.json(
+        { success: false, message: 'Document URL is required' },
+        { status: 400 }
+      )
+    }
+
+    // Find the document
+    const document = await prisma.document.findFirst({
+      where: { storageUrl: url }
+    })
+
+    if (!document) {
+      return NextResponse.json(
+        { success: false, message: 'Document not found' },
+        { status: 404 }
+      )
+    }
+
+    // Delete the file from Supabase storage
+    await deleteFromBucket(STORAGE_BUCKET, document.storageKey)
+
+    // Delete the document record from database
+    await prisma.document.delete({ where: { id: document.id } })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Document deleted successfully'
+    })
+  } catch (error) {
+    console.error('Error deleting document:', error)
+    return NextResponse.json(
+      { success: false, message: error instanceof Error ? error.message : 'Failed to delete document' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // console.log('Received request:', {
@@ -160,130 +203,71 @@ export async function POST(request: NextRequest) {
     const fileName = `${timestamp}.${fileExtension}`
     const filePath = `${applicationId}/${type}/${fileName}`
 
+    const existingDoc = await prisma.document.findFirst({
+      where: {
+        kybApplicationId: kybApplication.id,
+        documentType: documentType as $Enums.DocumentType
+      }
+    })
+
+    if (existingDoc) {
+      await deleteFromBucket(STORAGE_BUCKET, existingDoc.storageKey)
+      await prisma.document.delete({ where: { id: existingDoc.id } })
+    }
+
     try {
-      // Check if file already exists
-      const existingDoc = await prisma.document.findFirst({
-        where: {
-          kybApplicationId: kybApplication.id,
-          documentType: documentType as $Enums.DocumentType
+      const uploadResult = await uploadToBucket(STORAGE_BUCKET, filePath, file)
+      const publicUrl = getPublicUrl(STORAGE_BUCKET, filePath)
+
+      const document = await prisma.document.create({
+        data: {
+          filename: fileName,
+          originalName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          documentType: documentType as $Enums.DocumentType,
+          status: 'UPLOADED',
+          storageKey: filePath,
+          storageUrl: publicUrl,
+          kybApplicationId: kybApplication.id
+        }
+      }) as unknown as {
+        id: string;
+        storageUrl: string;
+        filename: string;
+        originalName: string;
+        fileSize: number;
+        mimeType: string;
+        documentType: string;
+        status: string;
+        uploadedAt: Date;
+        storageKey: string;
+        kybApplicationId: string;
+      }
+
+      await prisma.kYBApplication.update({
+        where: { id: kybApplication.id },
+        data: {
+          status: 'PENDING_REVIEW'
         }
       })
 
-      if (existingDoc) {
-        // Delete existing file from storage
-        await deleteFromBucket(STORAGE_BUCKET, existingDoc.storageKey)
-        // Delete existing document record
-        await prisma.document.delete({ where: { id: existingDoc.id } })
-      }
-
-      try {
-        // Upload file to Supabase Storage
-        // console.log('Uploading file to:', filePath);
-        const uploadResult = await uploadToBucket(STORAGE_BUCKET, filePath, file)
-        // console.log('Upload result:', uploadResult);
-        
-        // Get public URL for the uploaded file
-        const publicUrl = getPublicUrl(STORAGE_BUCKET, filePath)
-        // console.log('Generated public URL:', publicUrl);
-
-        // Create document record in database
-        // console.log('Creating document record with:', {
-        //   filename: fileName,
-        //   originalName: file.name,
-        //   documentType: documentType,
-        //   kybApplicationId: kybApplication.id
-        // });
-        const document = await prisma.document.create({
-          data: {
-            filename: fileName,
-            originalName: file.name,
-            fileSize: file.size,
-            mimeType: file.type,
-            documentType: documentType as $Enums.DocumentType,
-            status: 'UPLOADED',
-            storageKey: filePath,
-            storageUrl: publicUrl,
-            kybApplicationId: kybApplication.id
-          }
-        }) as unknown as {
-          id: string;
-          storageUrl: string;
-          filename: string;
-          originalName: string;
-          fileSize: number;
-          mimeType: string;
-          documentType: string;
-          status: string;
-          uploadedAt: Date;
-          storageKey: string;
-          kybApplicationId: string;
-        }
-
-        // console.log('Document created successfully:', {
-        //   id: document.id,
-        //   storageUrl: document.storageUrl,
-        //   filename: document.filename,
-        //   originalName: document.originalName,
-        //   fileSize: document.fileSize,
-        //   mimeType: document.mimeType,
-        //   documentType: document.documentType,
-        //   status: document.status,
-        //   uploadedAt: document.uploadedAt.toISOString(),
-        //   storageKey: document.storageKey,
-        //   kybApplicationId: document.kybApplicationId
-        // });
-
-        // Update KYB application status
-        await prisma.kYBApplication.update({
-          where: { id: kybApplication.id },
-          data: {
-            status: 'PENDING_REVIEW'
-          }
-        })
-
-        return NextResponse.json({
-          success: true,
-          message: 'Document uploaded successfully',
-          documents: [{
-            id: document.id,
-            filename: document.filename,
-            originalName: document.originalName,
-            size: document.fileSize,
-            type: document.mimeType,
-            uploadedAt: document.uploadedAt.toISOString(),
-            status: document.status,
-            storageUrl: document.storageUrl
-          }]
-        });
-      } catch (uploadError) {
-        console.error('Error during upload:', uploadError);
-        throw uploadError;
-      }
-
-      // Update KYC application status
-      // await prisma.kYBApplication.update({
-      //   where: { id: kybApplication.id },
-      //   data: {
-      //     status: 'PENDING_REVIEW'
-      //   }
-      // })
-
-      // return NextResponse.json({
-      //   success: true,
-      //   message: 'Document uploaded successfully',
-      //   documents: [{
-      //     id: document.id,
-      //     filename: document.filename,
-      //     originalName: document.originalName,
-      //     size: document.fileSize,
-      //     type: document.mimeType,
-      //     uploadedAt: document.uploadedAt.toISOString(),
-      //     status: document.status,
-      //     storageUrl: document.storageUrl
-      //   }]
-      // })
+      return NextResponse.json({
+        success: true,
+        message: 'Document uploaded successfully',
+        documents: [{
+          id: document.id,
+          filename: document.filename,
+          originalName: document.originalName,
+          size: document.fileSize,
+          type: document.mimeType,
+          uploadedAt: document.uploadedAt.toISOString(),
+          status: document.status,
+          storageUrl: document.storageUrl
+        }]
+      });
     } catch (uploadError) {
-      console.error('Error uploading document:', uploadError)
+      console.error('Error during upload:', uploadError);
       throw uploadError;
     }
   } catch (error) {

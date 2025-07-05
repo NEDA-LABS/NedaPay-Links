@@ -148,14 +148,14 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
     }
   };
 
-  const handleRemoveFile = async (docType: DocumentType) => {
+  const handleRemoveFile = async (url: string) => {
     try {
       setIsProcessing(true);
-      const response = await axios.delete(`/api/kyb/documents?userId=${user?.wallet?.address}&documentType=${docType}`);
+      const response = await axios.delete(`/api/kyb/documents?userId=${user?.wallet?.address}&storageUrl=${url}`);
       
       if (response.data.success) {
         setDocuments(prev => prev.map((doc: DocumentState) => 
-          doc.type === docType
+          doc.fileUrl === url
             ? { 
                 ...doc,
                 status: VerificationStatus.PENDING,
@@ -179,23 +179,31 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
     }
   };
 
-  const handlePreviewFile = (fileUrl: string, fileName: string) => {
-    if (fileUrl) {
-      // Open in new tab for preview
-      window.open(fileUrl, '_blank');
+  const handlePreviewFile = async (documentId: string, fileName: string) => {
+    try {
+      const response = await axios.get(`/api/kyb/documents/signed-url?userId=${user?.wallet?.address}&url=${documentId}`);
+      
+      if (response.data.success) {
+        window.open(response.data.signedUrl, '_blank');
+      } else {
+        toast.error('Failed to generate preview URL');
+      }
+    } catch (error) {
+      console.error('Preview error:', error);
+      toast.error('Failed to preview document');
     }
   };
 
-  const handleDownloadFile = (fileUrl: string, fileName: string) => {
-    if (fileUrl) {
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = fileName || 'document';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
+  // const handleDownloadFile = (fileUrl: string, fileName: string) => {
+  //   if (fileUrl) {
+  //     const link = document.createElement('a');
+  //     link.href = fileUrl;
+  //     link.download = fileName || 'document';
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //   }
+  // };
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -233,7 +241,7 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
     // Update document statuses
     setDocuments(prev => prev.map(doc => ({
       ...doc,
-      status: doc.fileUrl ? VerificationStatus.APPROVED : doc.status
+      status: doc.fileUrl ? VerificationStatus.APPROVED : doc.status,
     })));
 
     const documentData = documents.reduce((acc, doc) => {
@@ -328,7 +336,7 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
                   <Eye className="w-4 h-4" />
                   Preview
                 </Button>
-                <Button
+                {/* <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownloadFile(doc.fileUrl!, doc.fileName!)}
@@ -336,13 +344,13 @@ export function BusinessDocumentsStep({ onNext, onPrevious }: BusinessDocumentsS
                 >
                   <Download className="w-4 h-4" />
                   Download
-                </Button>
+                </Button> */}
               </>
             )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleRemoveFile(doc.type)}
+              onClick={() => handleRemoveFile(doc.fileUrl as string)}
               className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
               disabled={isProcessing}
             >

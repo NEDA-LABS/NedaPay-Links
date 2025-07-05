@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,69 +44,103 @@ const COUNTRIES = [
 
 export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps) {
   const { user } = usePrivy();
+  const [fetchedData, setFetchedData] = useState<PersonalInfo | null>(null);
+
+  useEffect(() => {
+    const fetchPersonalInfo = async () => {
+      try {
+        const response = await fetch(`/api/kyc/personal-info?userId=${user?.id}&wallet=${user?.wallet}`);
+        const data = await response.json();
+        console.log('Fetched data:', data);
+        
+        if (data.success && data.data) {
+          setFetchedData(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching personal info:', error);
+        toast.error('Failed to fetch personal information');
+      }
+    };
+
+    if (user?.id || user?.wallet) {
+      fetchPersonalInfo();
+    }
+  }, [user?.id, user?.wallet]);
+
   const form = useForm<PersonalInfo>({
     resolver: zodResolver(personalInfoSchema),
     defaultValues: {
-      firstName: initialData?.firstName || '',
-      middleName: initialData?.middleName || '',
-      lastName: initialData?.lastName || '',
-      dateOfBirth: initialData?.dateOfBirth || '',
-      nationality: initialData?.nationality || '',
-      countryOfResidence: initialData?.countryOfResidence || '',
-      phoneNumber: initialData?.phoneNumber || '',
-      email: initialData?.email || '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      dateOfBirth: '',
+      nationality: '',
+      countryOfResidence: '',
+      phoneNumber: '',
+      email: '',
       address: {
-        street: initialData?.address?.street || '',
-        city: initialData?.address?.city || '',
-        state: initialData?.address?.state || '',
-        postalCode: initialData?.address?.postalCode || '',
-        country: initialData?.address?.country || '',
-      },
-    },
+        street: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: COUNTRIES[0]
+      }
+    }
   });
-  const [submittedInfo, setSubmittedInfo] = useState<boolean>(false);
 
-  const onSubmit = async (data: PersonalInfo) => {
+  useEffect(() => {
+    if (fetchedData) {
+      form.reset({
+        firstName: fetchedData.firstName,
+        middleName: fetchedData.middleName,
+        lastName: fetchedData.lastName,
+        dateOfBirth: fetchedData.dateOfBirth,
+        nationality: fetchedData.nationality,
+        countryOfResidence: fetchedData.countryOfResidence,
+        phoneNumber: fetchedData.phoneNumber,
+        email: fetchedData.email,
+        address: {
+          street: fetchedData.address.street,
+          city: fetchedData.address.city,
+          state: fetchedData.address.state,
+          postalCode: fetchedData.address.postalCode,
+          country: fetchedData.address.country
+        }
+      });
+    }
+  }, [fetchedData, form]);
+
+  const handleSubmit = async (values: PersonalInfo) => {
     try {
-      // Transform the data to match the KYCApplication schema
-      const formData = {
-        ...data,
-        userId: user?.id, // Using wallet as userId since it's unique
-        wallet: user?.wallet?.address,
-        status: 'PENDING_DOCUMENTS',
-        street: data.address.street,
-        city: data.address.city,
-        state: data.address.state,
-        postalCode: data.address.postalCode,
-        country: data.address.country,
-      };
-
-      
-
-      // Keep the address object in the data passed to onNext
       const response = await fetch('/api/kyc/personal-info', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...values,
+          userId: user?.id,
+          wallet: user?.wallet?.address
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success('Personal information saved successfully');
+        onNext(values);
+      } else {
+        toast.error(data.message || 'Failed to save personal information');
       }
-      toast.success('Personal information submitted successfully');
-      setSubmittedInfo(true);
-      onNext(data);
     } catch (error) {
-      console.error('Error submitting KYC:', error);
-      toast.error('Failed to submit personal information');
+      toast.error('Failed to save personal information');
+      console.error('Error saving personal info:', error);
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Personal Details */}
         <Card>
           <CardHeader>
@@ -178,20 +212,9 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nationality *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select nationality" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {COUNTRIES.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="Enter nationality" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -202,20 +225,9 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Country of Residence *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select country" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {COUNTRIES.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="Enter country of residence" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -355,7 +367,6 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
         </Card>
 
         <div className="flex justify-between pt-6">
-          <p className="text-sm">Make sure to fill all the required fields correctly, if you click continue you can't go back</p>
           <Button type="submit" className="!px-8 border-2 !border-blue-500 hover:!bg-blue-500/80">
             Continue to Identity Verification
           </Button>
