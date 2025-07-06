@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const applicationId = await params.id;
+    const applicationId = (await params).id;
 
     // Check KYC applications
     const kycApp = await prisma.kYCApplication.findUnique({

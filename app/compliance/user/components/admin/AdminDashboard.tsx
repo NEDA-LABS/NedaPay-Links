@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Input } from "../ui/input";
+import { usePrivy } from "@privy-io/react-auth";
 import {
   Select,
   SelectContent,
@@ -40,6 +41,8 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ onVerificationAction }: AdminDashboardProps) {
+  const { user } = usePrivy();
+  const adminAddress = user?.wallet?.address;
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -88,10 +91,11 @@ export function AdminDashboard({ onVerificationAction }: AdminDashboardProps) {
     action: "approve" | "reject"
   ) => {
     try {
+      const reviewerAddress = user?.wallet?.address;
       const response = await fetch(`/api/admin/applications/${id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, reviewerAddress }),
       });
 
       if (response.ok) {
@@ -351,7 +355,7 @@ export function AdminDashboard({ onVerificationAction }: AdminDashboardProps) {
                           >
                             Review
                           </Button>
-                          <Button
+                          {/* <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
                             onClick={() =>
@@ -362,8 +366,8 @@ export function AdminDashboard({ onVerificationAction }: AdminDashboardProps) {
                             }
                           >
                             Approve
-                          </Button>
-                          <Button
+                          </Button> */}
+                          {/* <Button
                             size="sm"
                             variant="destructive"
                             onClick={() =>
@@ -374,7 +378,7 @@ export function AdminDashboard({ onVerificationAction }: AdminDashboardProps) {
                             }
                           >
                             Reject
-                          </Button>
+                          </Button> */}
                         </div>
                       </div>
                     </div>
@@ -405,10 +409,10 @@ export function AdminDashboard({ onVerificationAction }: AdminDashboardProps) {
     onClose={() => setIsDetailOpen(false)}
     onAction={async (action, notes) => {
       try {
-        const response = await fetch(`/api/admin/applications/${selectedApplicationId}/action`, {
+        const response = await fetch(`/api/kyc/admin/applications/${selectedApplicationId}/action`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, notes })
+          body: JSON.stringify({ action, notes, adminAddress })
         });
 
         if (response.ok) {

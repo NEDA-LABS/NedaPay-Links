@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "../components/Header";
+import Header from "@/components/Header";
 import { usePrivy } from "@privy-io/react-auth";
-import { stablecoins } from "../data/stablecoins";
-import Footer from "../components/Footer";
+import { stablecoins } from "@/data/stablecoins";
+import Footer from "@/components/Footer";
 import { useTheme } from "next-themes";
 import { FaWhatsapp, FaTelegramPlane, FaEnvelope } from "react-icons/fa";
 import { siX, siFarcaster } from 'simple-icons';
@@ -156,7 +156,7 @@ export default function PaymentLinkPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    // console.log("Generating payment link via API...");
+    console.log("Generating payment link via API...");
     setIsLoading(true);
 
     // Input validation
@@ -319,15 +319,15 @@ export default function PaymentLinkPage() {
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
             </svg>
-            Payment Link Generator
+            Merchant Template Generator
           </div>
           <h1 className="text-lg md:text-6xl font-extrabold text-gray-900 mb-1 tracking-tight">
             <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Create Instant Payment Links
+              Create Instant Merchant Template
             </span>
           </h1>
           <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed pb-2 px-2">
-            Effortlessly generate secure Web3 payment links.
+            Effortlessly generate multichain Web3 payment QR code with Template.
           </p>
         </div>
 
@@ -448,7 +448,7 @@ export default function PaymentLinkPage() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
-                    Generate Payment Link
+                    Generate Template & Payment Link 
                   </div>
                 )}
               </button>
@@ -464,16 +464,11 @@ export default function PaymentLinkPage() {
                   </svg>
                 </div>
                 <h3 className="text-sm font-semibold text-green-900">
-                  Payment Link Generated Successfully!
+                  Merchant Template Generated Successfully!
                 </h3>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">
-                <input
-                  type="text"
-                  readOnly
-                  value={generatedLink}
-                  className="flex-1 !text-base px-4 py-3 !bg-white !border-2 !border-green-200 !rounded-xl !text-sm !font-mono"
-                />
+                
                 <div className="flex items-center gap-3">
                 <button
                   onClick={copyToClipboard}

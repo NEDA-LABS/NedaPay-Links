@@ -2,26 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
+import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import { stablecoins } from '../data/stablecoins';
+import { useKycStatus} from '@/hooks/useKycStatus';
+import { useKybStatus } from '@/hooks/useKybStatus';
 
 export default function SettingsPage() {
-  const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, authenticated } = usePrivy();
+  const address = user?.wallet?.address;
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('general');
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [kybStatus, setKybStatus] = useState('unverified');
-  const [kycStatus, setKycStatus] = useState('unverified');
+
+  // KYC/KYB Status
+  const { status: kycStatus, loading: kycLoading } = useKycStatus(address as string);
+  const { status: kybStatus, loading: kybLoading } = useKybStatus(address as string);
 
   // Privy hooks
   const { getAccessToken } = usePrivy();
   const [account, setAccount] = useState('');
   const [isKycSubmitted, setIsKycSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   // Business Profile
   const [businessName, setBusinessName] = useState('');
   const [businessEmail, setBusinessEmail] = useState('');
+  const [mounted, setMounted] = useState(false);
   const [businessPhone, setBusinessPhone] = useState('');
   const [businessCategory, setBusinessCategory] = useState('retail');
   const [businessDescription, setBusinessDescription] = useState('');
@@ -56,8 +64,7 @@ export default function SettingsPage() {
   createdAt: string;
 }
 
-const {user, authenticated} = usePrivy();
-const address = user?.wallet?.address;
+
 
 const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -81,7 +88,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
       if (!authenticated || !address) return;
 
       try {
-        setLoading(true);
+        setIsLoading(true);
         const accessToken = await getAccessToken();
         const response = await fetch('/api/settings', {
           headers: {
@@ -120,7 +127,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
           setError(String(err));
         }
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -249,8 +256,10 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     }
   };
 
+  console.log("kyc/kyb status", kybStatus.status);
+
   if (!mounted) return null;
-  if (loading) return <div>Loading settings...</div>;
+  if (isLoading) return <div>Loading settings...</div>;
   if (error) return <div>Error: {error}</div>;
    
   return (
@@ -744,15 +753,25 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                               To comply with financial regulations and unlock all platform features, please complete our identity verification process.
                               This typically takes less than 5 minutes.
                             </p>
-                            {isKycSubmitted ? (
+                            {(kybStatus.status === 'SUBMITTED' || kycStatus.status === 'SUBMITTED') ? (
                               <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-full bg-green-100 text-green-600">
+                                <div className="p-2 rounded-full bg-blue-100 text-blue-600">
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                                   </svg>
                                 </div>
-                                <span className="text-green-600 font-medium">KYC Submitted, Pending Review</span>
+                                <span className="text-blue-600 font-medium">Verification In Progress</span>
                               </div>
+                            ) : (kybStatus.details?.createdAt || kycStatus.details?.createdAt) ? (
+                              <a
+                                href="/compliance/user"
+                                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-md transition-all duration-300"
+                              >
+                                Continue Verification
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </a>
                             ) : (
                               <a
                                 href="/compliance/user"
