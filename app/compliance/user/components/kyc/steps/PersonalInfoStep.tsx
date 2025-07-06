@@ -13,6 +13,7 @@ import { PersonalInfo } from '../../../types/kyc';
 import { User, Mail, Phone, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrivy } from '@privy-io/react-auth';
+import { Countries } from '@/data/countries';
 
 const personalInfoSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -37,10 +38,10 @@ interface PersonalInfoStepProps {
   initialData?: Partial<PersonalInfo>;
 }
 
-const COUNTRIES = [
-  'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 
-  'Japan', 'Australia', 'Singapore', 'Switzerland', 'Other'
-];
+// const COUNTRIES = [
+//   'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 
+//   'Japan', 'Australia', 'Singapore', 'Switzerland', 'Other'
+// ];
 
 export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps) {
   const { user } = usePrivy();
@@ -83,7 +84,7 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
         city: '',
         state: '',
         postalCode: '',
-        country: COUNTRIES[0]
+        country: Countries[0].name
       }
     }
   });
@@ -226,7 +227,21 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
                   <FormItem>
                     <FormLabel>Country of Residence *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter country of residence" {...field} />
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select country of residence" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Countries.map((country) => (
+                            <SelectItem key={country.code} value={country.name}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -351,9 +366,9 @@ export function PersonalInfoStep({ onNext, initialData }: PersonalInfoStepProps)
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {COUNTRIES.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
+                        {Countries.map((country) => (
+                          <SelectItem key={country.code} value={country.code}>
+                            {country.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

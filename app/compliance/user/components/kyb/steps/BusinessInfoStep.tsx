@@ -14,6 +14,7 @@ import { Building, MapPin, Globe, Calendar, Phone } from 'lucide-react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Countries } from '@/data/countries';
 
 const businessInfoSchema = z.object({
   businessName: z.string().min(1, 'Business name is required'),
@@ -65,10 +66,10 @@ const INDUSTRIES = [
   'Retail', 'Transportation', 'Energy', 'Agriculture', 'Other'
 ];
 
-const COUNTRIES = [
-  'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 
-  'Japan', 'Australia', 'Singapore', 'Switzerland', 'Other'
-];
+// const COUNTRIES = [
+//   'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 
+//   'Japan', 'Australia', 'Singapore', 'Switzerland', 'Other'
+// ];
 
 export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps) {
   const { user } = usePrivy();
@@ -217,7 +218,7 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select business type" />
+                          <SelectValue placeholder="Select business type" className='!bg-white'/>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -438,9 +439,9 @@ export function BusinessInfoStep({ onNext, initialData }: BusinessInfoStepProps)
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {COUNTRIES.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
+                        {Countries.map((country) => (
+                          <SelectItem key={country.code} value={country.code}>
+                            {country.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
