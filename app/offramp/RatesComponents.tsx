@@ -19,7 +19,7 @@ interface RateCache {
   };
 }
 
-const CACHE_DURATION = 25000; // 25 seconds
+const CACHE_DURATION = 21600000; // 6 hours
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 const DISPLAY_INTERVAL = 3000; // 3 seconds per currency set
@@ -73,7 +73,9 @@ const CurrencyRatesWidget = () => {
   }, []);
 
   const isRateStale = useCallback((timestamp: number) => {
-    return Date.now() - timestamp > CACHE_DURATION;
+    const now = Date.now();
+    const isStale = now - timestamp > CACHE_DURATION;
+    return isStale;
   }, []);
 
   const loadCurrencies = useCallback(async () => {

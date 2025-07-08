@@ -30,7 +30,7 @@ import HeroFlags from "./components/HeroFlags";
 import Supporters from "./components/SupportersSection";
 import YouTubeEmbedButton from "./components/YouTubeEmbedButton";
 import RatesComponents from "./offramp/RatesComponents";
-import CurrencyRatesWidget from "./offramp/RatesComponents";
+import CurrencyRatesWidget from "./offramp/RatesComponents"
 
 function HomeContent() {
   const [mounted, setMounted] = useState(false);

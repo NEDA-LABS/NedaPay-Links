@@ -762,7 +762,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                                 </div>
                                 <span className="text-blue-600 font-medium">Verification In Progress</span>
                               </div>
-                            ) : (kybStatus.details?.createdAt || kycStatus.details?.createdAt) ? (
+                            ) : ((kybStatus.details?.createdAt) || kycStatus.details?.createdAt) ? (
                               <a
                                 href="/compliance/user"
                                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-md transition-all duration-300"
