@@ -39,15 +39,30 @@ interface PaymentOrderRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('PayCrest orders POST request received');
+    console.log('Request headers:', request.headers);
+    
     const body = await request.json() as PaymentOrderRequest;
+    console.log('Request body:', body);
 
     // Validate payload
     if (!body.amount || !body.rate || !body.recipient) {
+      console.log('Missing required fields in request body');
       return NextResponse.json(
         { message: 'Missing required fields' },
         { status: 400 }
       );
     }
+
+    console.log('Attempting to initiate payment order with payload:', {
+      amount: body.amount,
+      rate: body.rate,
+      network: 'base',
+      token: 'USDC',
+      recipient: body.recipient,
+      returnAddress: body.returnAddress,
+      reference: body.reference,
+    });
 
     const order = await initiatePaymentOrder({
       amount: body.amount,
@@ -59,9 +74,17 @@ export async function POST(request: NextRequest) {
       reference: body.reference,
     });
 
+    console.log('Payment order initiated successfully:', order);
     return NextResponse.json(order);
   } catch (error) {
     console.error('Error initiating payment order:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
     return NextResponse.json(
       { message: 'Internal Server Error' },
       { status: 500 }

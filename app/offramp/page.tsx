@@ -338,6 +338,8 @@ const PaymentForm: React.FC = () => {
         reference: `order-${Date.now()}`,
       });
 
+      // console.log("paycrest order debugg", orderResponse);
+
       const {
         receiveAddress,
         amount: orderAmount,

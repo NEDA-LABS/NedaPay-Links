@@ -21,7 +21,7 @@ import {
   CreditCard,
   Banknote,
   TrendingUp,
-  PlayCircle
+  PlayCircle,
 } from "lucide-react";
 import FeaturesSection from "./components/FeaturesSection";
 import HowItWorksSection from "./components/HowItWorksSection";
@@ -29,8 +29,7 @@ import FaqSection from "./components/FaqSection";
 import HeroFlags from "./components/HeroFlags";
 import Supporters from "./components/SupportersSection";
 import YouTubeEmbedButton from "./components/YouTubeEmbedButton";
-import RatesComponents from "./offramp/RatesComponents";
-import CurrencyRatesWidget from "./offramp/RatesComponents"
+import CurrencyRatesWidget from "@/offramp/RatesComponents";
 
 function HomeContent() {
   const [mounted, setMounted] = useState(false);
@@ -68,25 +67,28 @@ function HomeContent() {
         style={{ zIndex: -100 }}
       >
         <div className="flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full w-fit  invisible sm:visible">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-sm font-medium">Join the Payment Revolution</span>
-            </div>
+          <TrendingUp className="w-4 h-4" />
+          <span className="text-sm font-medium">
+            Join the Payment Revolution
+          </span>
+        </div>
         {/* Hero Section */}
+        <div></div>
         <div className="grid lg:h-[80vh] grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 p-4 items-center rounded-2xl relative">
           <div className="absolute -top-20 left-10 w-16 h-16 sm:w-20 sm:h-20 bg-blue-300/30 rounded-full blur-xl"></div>
           <div className="absolute bottom-10 right-10 w-24 h-24 sm:w-32 sm:h-32 bg-purple-300/30 rounded-full blur-2xl"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 bg-indigo-300/20 rounded-full blur-3xl"></div>
-
+          
           <div className="flex flex-col gap-6">
-          <h1 className="!text-2xl  lg:!text-5xl xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-blue-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse-slow leading-tight">
-          Unlock Seamless Payments Globally
-      </h1>
+            <h1 className="!text-2xl  lg:!text-5xl xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-blue-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse-slow leading-tight">
+              Unlock Seamless Payments Globally
+            </h1>
             <p className="!text-l lg:!text-l  font-semibold text-slate-500 leading-relaxed drop-shadow-md">
               Accept Stablecoins, Swap instantly, Cash Out Easily
             </p>
-             {/* Clean CTA Section */}
-        
-         {!authenticated ? (
+            {/* Clean CTA Section */}
+
+            {!authenticated ? (
               <div className="flex flex-row items-start gap-4 w-full items-stretch">
                 <button
                   onClick={() => {
@@ -96,10 +98,13 @@ function HomeContent() {
                   }}
                   className="group relative !px-4 !py-2 sm:!px-8 sm:!py-4 !bg-gradient-to-r !from-blue-600 !to-indigo-600 hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold !rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-3"
                 >
-                  <span className="text-xs sm:text-sm lg:text-lg">Start with Email or Wallet</span>                </button>
-                
+                  <span className="text-xs sm:text-sm lg:text-lg">
+                    Start with Email or Wallet
+                  </span>{" "}
+                </button>
+
                 <YouTubeEmbedButton />
-                
+
                 <span hidden={true}>
                   <WalletSelector ref={walletSelectorRef} />
                 </span>
@@ -128,12 +133,10 @@ function HomeContent() {
           <div className="flex flex-col items-right gap-4">
             <HeroFeaturesHomePage />
             <HeroFlags />
-            <CurrencyRatesWidget/>
           </div>
         </div>
-        
-        
-           
+        <CurrencyRatesWidget />
+
         <FeaturesSection />
 
         {/* How It Works Section */}

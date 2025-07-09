@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Activity, AlertCircle, RefreshCw } from 'lucide-react';
 import { fetchSupportedCurrencies, fetchTokenRate } from '../utils/paycrest';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { horizontalLoop } from '../utils/horizontalLoop.js'; // Make sure this path is correct
 
 interface Currency {
   code: string;
@@ -20,10 +23,9 @@ interface RateCache {
 }
 
 const CACHE_DURATION = 21600000; // 6 hours
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 6;
 const RETRY_DELAY = 1000;
-const DISPLAY_INTERVAL = 3000; // 3 seconds per currency set
-const FADE_DURATION = 1000; // Fade animation duration in ms
+const ITEMS_PER_VIEW = 4; // Number of items visible at once
 
 const CurrencyRatesWidget = () => {
   const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -32,22 +34,27 @@ const CurrencyRatesWidget = () => {
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(true);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryTimeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
-  const displayIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const loopRef = useRef<any>(null); // Reference to GSAP loop
 
   const cleanup = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (displayIntervalRef.current) clearInterval(displayIntervalRef.current);
     if (abortControllerRef.current) abortControllerRef.current.abort();
     retryTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
     retryTimeoutsRef.current.clear();
     intervalRef.current = null;
-    displayIntervalRef.current = null;
     abortControllerRef.current = null;
+    
+    // Kill GSAP animation on cleanup
+    if (loopRef.current) {
+      loopRef.current.kill();
+      loopRef.current = null;
+    }
   }, []);
 
   const fetchRateWithRetry = useCallback(async (
@@ -145,6 +152,35 @@ const CurrencyRatesWidget = () => {
     }
   }, [isRateStale, fetchRateWithRetry, rateCache]);
 
+  // Initialize GSAP horizontal loop
+  useGSAP(() => {
+    if (!containerRef.current || currencies.length === 0) return;
+    
+    const currencyItems = containerRef.current.querySelectorAll('.currency-item');
+    if (currencyItems.length === 0) return;
+    
+    // Create the horizontal loop
+    loopRef.current = horizontalLoop(currencyItems, {
+      repeat: -1,
+      speed: 0.5, // Set a default speed
+      paused: isPaused,
+      paddingRight: parseFloat(
+        gsap.getProperty(currencyItems[0], 'marginRight') as string
+      )
+    });
+    
+    return () => {
+      // Cleanup GSAP animation
+      if (loopRef.current) {
+        loopRef.current.kill();
+        loopRef.current = null;
+      }
+    };
+  }, { 
+    scope: containerRef,
+    dependencies: [currencies, isPaused] 
+  });
+
   useEffect(() => {
     const initializeWidget = async () => {
       try {
@@ -161,15 +197,34 @@ const CurrencyRatesWidget = () => {
     initializeWidget();
   }, [loadCurrencies, loadRates]);
 
+  // Start animation after component mounts and currencies are loaded
   useEffect(() => {
     if (currencies.length > 0 && !loading) {
+      setIsPaused(false);
+      // Initialize the animation with speed
+      if (loopRef.current) {
+        loopRef.current.kill();
+      }
+      const currencyItems = containerRef.current?.querySelectorAll('.currency-item');
+      if (currencyItems && currencyItems.length > 0) {
+        loopRef.current = horizontalLoop(currencyItems, {
+          repeat: -1,
+          speed: 0.5, // Adjust speed as needed
+          paused: isPaused,
+          paddingRight: parseFloat(
+            gsap.getProperty(currencyItems[0], 'marginRight') as string
+          )
+        });
+      }
+    }
+  }, [currencies, loading, isPaused]);
+
+  useEffect(() => {
+    if (currencies.length > 0 && !loading) {
+      // Rate refresh interval
       intervalRef.current = setInterval(() => {
         if (!isRefreshing) loadRates(currencies);
       }, 30000);
-
-      displayIntervalRef.current = setInterval(() => {
-        setCurrentIndex(prev => (prev + 1) % Math.ceil(currencies.length / 4));
-      }, DISPLAY_INTERVAL);
     }
 
     return cleanup;
@@ -178,7 +233,6 @@ const CurrencyRatesWidget = () => {
   const handleManualRefresh = useCallback(() => {
     if (!isRefreshing && currencies.length > 0) {
       loadRates(currencies, true);
-      setCurrentIndex(0);
     }
   }, [currencies, loadRates, isRefreshing]);
 
@@ -191,17 +245,12 @@ const CurrencyRatesWidget = () => {
     });
   }, []);
 
-  const displayCurrencies = useMemo(() => {
-    const start = currentIndex * 4;
-    return currencies.slice(start, start + 4);
-  }, [currentIndex, currencies]);
-
   if (loading) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 shadow-2xl border border-gray-800">
+      <div className="w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-700">
         <div className="flex items-center justify-center gap-3">
-          <Activity className="w-5 h-5 text-green-400 animate-pulse" />
-          <span className="text-gray-300 text-xs font-medium">Loading exchange rates...</span>
+          <Activity className="w-6 h-6 text-emerald-400 animate-pulse" />
+          <span className="text-slate-300 text-sm font-medium">Loading exchange rates...</span>
         </div>
       </div>
     );
@@ -209,18 +258,18 @@ const CurrencyRatesWidget = () => {
 
   if (error) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 shadow-2xl border border-red-900/50">
+      <div className="w-full bg-gradient-to-r from-red-900/20 via-red-800/20 to-red-900/20 rounded-2xl p-6 shadow-2xl border border-red-700/50">
         <div className="flex items-center justify-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400" />
-          <span className="text-red-300 text-xs font-medium">{error}</span>
+          <AlertCircle className="w-6 h-6 text-red-400" />
+          <span className="text-red-300 text-sm font-medium">{error}</span>
           <button
             onClick={handleManualRefresh}
-            className="flex items-center gap-2 px-3 py-1 text-xs text-red-300 hover:text-red-100 
-                       bg-red-900/30 hover:bg-red-900/50 rounded-md transition-all duration-200
-                       border border-red-800/50 hover:border-red-700/50"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-red-300 hover:text-red-100 
+                       bg-red-900/30 hover:bg-red-900/50 rounded-lg transition-all duration-200
+                       border border-red-700/50 hover:border-red-600/50"
             disabled={isRefreshing}
           >
-            <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Retry
           </button>
         </div>
@@ -228,123 +277,126 @@ const CurrencyRatesWidget = () => {
     );
   }
 
-  const containerStyle = {
-    animation: `fadeInSlide ${DISPLAY_INTERVAL}ms ease-in-out infinite`,
-    minHeight: '4rem'
-  };
-
-  const rateItemStyle = {
-    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)',
-    border: '1px solid rgba(34, 197, 94, 0.2)',
-    transition: 'all 0.3s ease'
-  };
-
-  const statusDotStyle = {
-    animation: 'pulse 2s infinite'
-  };
-
   return (
-    <div className="bg-gray-900 rounded-lg shadow-2xl border-4 !border-purple-800 md:w-[60%] items-center mx-auto">
+    <div className="w-full overflow-hidden">
       <style dangerouslySetInnerHTML={{
         __html: `
-          @keyframes fadeInSlide {
-            0% { opacity: 0; transform: translateX(20px); }
-            15% { opacity: 1; transform: translateX(0); }
-            85% { opacity: 1; transform: translateX(0); }
-            100% { opacity: 0; transform: translateX(-20px); }
+          .rate-card {
+            backdrop-filter: blur(10px);
+            border-image: linear-gradient(135deg, 
+              rgba(16, 185, 129, 0.2) 0%,
+              rgba(16, 185, 129, 0.4) 50%,
+              rgba(16, 185, 129, 0.2) 100%
+            ) 1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
           }
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-          }
-          .rate-item:hover {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%) !important;
-            border-color: rgba(34, 197, 94, 0.3) !important;
-            transform: translateY(-1px) !important;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+          .rate-card:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
           }
           .refresh-button {
             transition: all 0.2s ease;
           }
           .refresh-button:hover {
             transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+          }
+          .header-glow {
+            background: linear-gradient(90deg, 
+              rgba(16, 185, 129, 0.1) 0%, 
+              rgba(5, 150, 105, 0.2) 50%, 
+              rgba(16, 185, 129, 0.1) 100%);
           }
         `
       }} />
 
-      {/* Header */}
-      <div className="bg-gray-800/50 px-6 py-3 border-b border-gray-700/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-green-400 rounded-full" style={statusDotStyle}></div>
-            <h3 className="text-white text-xs tracking-wide">
-              LIVE EXCHANGE RATES
-            </h3>
-            <span className="text-gray-400 text-xs font-mono">USDC/FIAT</span>
-          </div>
-          
-          {/* <button
-            onClick={handleManualRefresh}
-            className="refresh-button flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 
-                       hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded-md
-                       border border-gray-600/50 hover:border-gray-500/50"
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Updating...' : 'Refresh'}
-          </button> */}
-        </div>
-      </div>
+      {/* Sliding Rates Container */}
+      <div 
+        className="relative overflow-hidden"
+      >
+        <div 
+          ref={containerRef}
+          className="flex"
+        >
+          {currencies.map((currency) => {
+            const cached = rateCache[currency.code];
+            const isStale = cached?.isStale || false;
+            const rate = cached ? cached.rate : currency.marketRate;
 
-      {/* Rates Display */}
-      <div className="">
-        <div className="currency-container " style={containerStyle}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            {displayCurrencies.map((currency) => {
-              const cached = rateCache[currency.code];
-              const isStale = cached?.isStale || false;
-              const rate = cached ? cached.rate : currency.marketRate;
-
-              return (
-                <div key={currency.code} className="rounded-lg p-2" style={rateItemStyle}>
-                  <div className="flex flex-row items-center">
-                    <div className="flex items-center gap-2">
-                      {/* <span className="text-gray-400 text-xs font-mono">
-                        {currency.symbol}
-                      </span> */}
-                      <span className="text-white font-semibold text-[0.65rem]">
-                        {currency.code}
-                      </span>
+            return (
+                <div 
+                  key={currency.code}
+                  className="sm:min-w-[200px] sm:max-w-[260px] md:min-w-[220px] md:max-w-[280px] currency-item rate-card group relative overflow-hidden p-4 mx-3 !rounded-2xl flex-shrink-0 
+                             bg-gradient-to-br from-slate-900/95 to-slate-800/90 backdrop-blur-sm
+                             border border-slate-700/50 hover:border-emerald-500/30 
+                              hover:shadow-xl hover:shadow-emerald-500/10
+                             hover:scale-[1.02] cursor-pointer"
+                  style={{ 
+                    width: `calc(${100 / ITEMS_PER_VIEW}% - 1.5rem)`,
+                    minWidth: '180px',
+                    maxWidth: '240px'
+                  }}
+                >
+                  {/* Animated background gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5 
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  {/* Header section */}
+                  <div className="relative flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 
+                                        flex items-center justify-center border border-emerald-500/30
+                                        group-hover:border-emerald-400/50 transition-all duration-300">
+                          <span className="text-emerald-400 font-bold text-xs font-mono">
+                            {currency.symbol}
+                          </span>
+                        </div>
+                        
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-white font-bold text-sm tracking-wide">
+                          {currency.code}
+                        </div>
+                        <div className="text-slate-400 text-xs font-medium tracking-wider uppercase">
+                          {currency.name}
+                        </div>
+                      </div>
                     </div>
-                    {isStale && (
-                      <AlertCircle className="w-3 h-3 text-yellow-400" />
-                    )}
+                    
+                    
                   </div>
                   
-                  <div className="">
-                    {/* <div className="text-gray-400 text-xs mb-1">1 USDC =</div> */}
-                    <div className="text-green-400 font-mono font-bold text-xs">
-                      {formatRate(rate, currency)}
+                  {/* Rate section */}
+                  <div className="relative space-y-3">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-slate-400 text-xs font-medium">1 USDC</span>
+                      <span className="text-slate-500 text-sm">=</span>
                     </div>
+                    
+                    <div className="relative">
+                      <div className="text-sm font-bold font-mono text-transparent bg-clip-text 
+                                      bg-gradient-to-r from-emerald-400 to-emerald-300 
+                                      group-hover:from-emerald-300 group-hover:to-emerald-400 
+                                      transition-all duration-300">
+                        {formatRate(rate, currency)}
+                      </div>
+                      
+                      
+                    </div>
+                    
+                   
                   </div>
+                  
+                  {/* Hover effect overlay */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 to-blue-500/0 
+                                  group-hover:from-emerald-500/5 group-hover:to-blue-500/5 
+                                  transition-all duration-500 pointer-events-none" />
                 </div>
               );
-            })}
-          </div>
+          })}
         </div>
       </div>
-
-      {/* Footer */}
-      {lastUpdateTime > 0 && (
-        <div className="bg-gray-800/30 py-1 border-t border-gray-700/30">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-            <span className="text-gray-400 text-[0.6rem] font-mono">
-              Last updated: {new Date(lastUpdateTime).toLocaleTimeString()}
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

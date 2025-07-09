@@ -54,6 +54,12 @@ export default function SettingsPage() {
   const [securityAlerts, setSecurityAlerts] = useState(true);
   const [marketingUpdates, setMarketingUpdates] = useState(false);
 
+  const admin1 = process.env.ADMIN1;
+  const admin2 = process.env.ADMIN2;
+  const admin3 = process.env.ADMIN3;
+
+  const admins = [admin1, admin2, admin3];
+
   // API Settings
   interface ApiKey {
   id: string;

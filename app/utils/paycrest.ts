@@ -87,10 +87,105 @@ interface PaymentOrderResponse {
   };
 }
 
-export async function initiatePaymentOrder(payload: PaymentOrderPayload): Promise<PaymentOrderResponse> {
-  const response = await axios.post(`${PAYCREST_API_URL}/v1/sender/orders`, payload, { headers });
-  return response.data;
+interface NetworkErrorDetails {
+  code: string;
+  message: string;
+  details?: {
+    errno?: number;
+    syscall?: string;
+    address?: string;
+    port?: number;
+  };
 }
+
+export async function initiatePaymentOrder(payload: PaymentOrderPayload): Promise<PaymentOrderResponse> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000; // 2 seconds
+
+  async function makeRequest(retryCount = 0): Promise<PaymentOrderResponse> {
+    try {
+      console.log('Attempting to initiate PayCrest order with payload:', {
+        payload,
+        retry: retryCount + 1
+      });
+      
+      const response = await axios.post(`${PAYCREST_API_URL}/v1/sender/orders`, payload, { 
+        headers,
+        timeout: 10000, // 10 second timeout
+        validateStatus: (status) => true,
+        maxRedirects: 5
+      });
+
+      if (response.status >= 400) {
+        console.error('PayCrest API error response:', {
+          status: response.status,
+          data: response.data
+        });
+        throw new Error(`PayCrest API error: ${response.status} - ${JSON.stringify(response.data)}`);
+      }
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const networkError = extractNetworkError(error);
+        console.error('Network error details:', networkError);
+
+        if (retryCount < MAX_RETRIES && isRetryableError(error)) {
+          console.log(`Retrying request (${retryCount + 1}/${MAX_RETRIES})...`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          return makeRequest(retryCount + 1);
+        }
+
+        throw new Error(`Network error: ${networkError.message}. Details: ${JSON.stringify(networkError.details)}`);
+      }
+
+      console.error('Error in initiatePaymentOrder:', {
+        error,
+        errorType: error instanceof Error ? error.name : typeof error,
+        message: error instanceof Error ? error.message : String(error)
+      });
+      
+      throw error;
+    }
+  }
+
+  return makeRequest();
+}
+
+function extractNetworkError(error: any): NetworkErrorDetails {
+  if (!error.response) {
+    const details = {
+      code: error.code || 'UNKNOWN_ERROR',
+      message: error.message || 'Unknown error occurred',
+      details: {
+        errno: error.errno,
+        syscall: error.syscall,
+        address: error.address,
+        port: error.port
+      }
+    };
+    return details;
+  }
+  
+  return {
+    code: error.response.status.toString(),
+    message: error.response.statusText,
+    details: {
+      errno: error.errno,
+      syscall: error.syscall,
+      address: error.address,
+      port: error.port
+    }
+  };
+}
+
+function isRetryableError(error: any): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  
+  const retryableCodes = ['ETIMEDOUT', 'ENETUNREACH', 'ECONNRESET', 'ECONNREFUSED'];
+  return retryableCodes.includes(error.code as string);
+}
+
 
 export async function fetchTokenRate(token: 'USDC', amount: number, fiat: string, providerId?: string): Promise<string> {
   const query = providerId ? `?provider_id=${providerId}` : '';
