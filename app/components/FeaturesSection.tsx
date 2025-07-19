@@ -1,227 +1,196 @@
-import React from "react";
-import {
-  Coins,
-  Repeat,
-  BarChart2,
-  Settings,
-  ArrowRight,
-  Zap,
-  Shield,
-  Clock,
-} from "lucide-react";
-import { useRef } from "react";
-import WalletSelector from "./WalletSelector";
-import { usePrivy } from "@privy-io/react-auth";
-import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { Coins, Repeat, BarChart2, Settings } from "lucide-react";
 
-export default function EnhancedFeaturesSection() {
-  const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
-  const { authenticated } = usePrivy();
-  const router = useRouter();
-
-  const features = [
-    {
-      icon: Coins,
-      title: "Accept Local Stablecoins",
-      description:
-        "Accept TSHC, cNGN, IDRX, and USDC with seamless integration across all supported networks.",
-      tags: ["TSHC", "cNGN", "IDRX", "USDC"],
-      gradient: "from-blue-500 to-indigo-600",
-      bgGradient: "from-blue-500/20 to-indigo-600/20",
-      iconBg: "bg-blue-100 dark:bg-blue-900/50",
-      iconColor: "text-blue-600",
-      glowColor: "bg-blue-400/20",
-      button: "Start Accepting",
-      buttonGradient: "from-blue-600 to-indigo-600",
-    },
-    {
-      icon: Repeat,
-      title: "Instant Stablecoin Swaps",
-      description:
-        "Swap between any supported stablecoins in seconds with our built-in DEX integration.",
-      tags: ["Instant", "Low Fees"],
-      gradient: "from-indigo-500 to-purple-600",
-      bgGradient: "from-indigo-500/20 to-purple-600/20",
-      iconBg: "bg-indigo-100",
-      iconColor: "text-indigo-600",
-      glowColor: "bg-indigo-400/20",
-      button: "Start Swapping",
-      buttonGradient: "from-indigo-600 to-purple-600",
-    },
-    {
-      icon: BarChart2,
-      title: "Real-Time Analytics",
-      description:
-        "Track your payment performance with detailed insights, conversion rates, and revenue analytics.",
-      tags: ["Insights", "Reports"],
-      gradient: "from-green-500 to-teal-600",
-      bgGradient: "from-green-500/20 to-teal-600/20",
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
-      glowColor: "bg-green-400/20",
-      button: "Start Analyzing",
-      buttonGradient: "from-green-600 to-teal-600",
-    },
-    {
-      icon: Settings,
-      title: "Smart Settlement",
-      description:
-        "Automatically settle payments with customizable rules, schedules, and multi-currency support.",
-      tags: ["Automated", "Flexible"],
-      gradient: "from-purple-500 to-pink-600",
-      bgGradient: "from-purple-500/20 to-pink-600/20",
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
-      glowColor: "bg-purple-400/20",
-      button: "Start Settling",
-      buttonGradient: "from-purple-600 to-pink-600",
-    },
-  ];
-
-  const handleCTAClick = () => {
-    if (!authenticated && walletSelectorRef.current) {
-      walletSelectorRef.current.triggerLogin();
-    } else {
-      router.push("/dashboard");
-    }
+const SpotlightCard = ({ children, className = "", spotlightColor = "rgba(59, 130, 246, 0.05)" }) => {
+  const divRef = useRef(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [opacity, setOpacity] = useState(0);
+  
+  const handleMouseMove = (e) => {
+    if (!divRef.current || isFocused) return;
+    const rect = divRef.current.getBoundingClientRect();
+    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
-
+  
+  const handleFocus = () => {
+    setIsFocused(true);
+    setOpacity(1);
+  };
+  
+  const handleBlur = () => {
+    setIsFocused(false);
+    setOpacity(0);
+  };
+  
+  const handleMouseEnter = () => {
+    setOpacity(1);
+  };
+  
+  const handleMouseLeave = () => {
+    setOpacity(0);
+  };
+  
   return (
-    <div className="mb-24 scroll-mt-20 p-6 sm:p-8 bg-white/20 rounded-2xl border border-blue-100 shadow-lg relative overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute -left-16 top-1/4 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl"></div>
-      <div className="absolute -right-16 top-2/3 w-32 h-32 bg-indigo-400/10 rounded-full blur-2xl"></div>
-      <div className="absolute -left-24 bottom-1/4 w-48 h-48 bg-purple-400/5 rounded-full blur-3xl"></div>
-      <div className="absolute -right-24 top-1/4 w-48 h-48 bg-blue-400/5 rounded-full blur-3xl"></div>
+    <div
+      ref={divRef}
+      onMouseMove={handleMouseMove}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`relative rounded-2xl border border-gray-200 bg-white overflow-hidden p-8 shadow-sm hover:shadow-xl transition-all duration-300 ease-out hover:border-gray-300 ${className}`}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 ease-in-out"
+        style={{
+          opacity,
+          background: `radial-gradient(circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 60%)`,
+        }}
+      />
+      {children}
+    </div>
+  );
+};
 
-      <div className="relative">
+const features = [
+  {
+    icon: Coins,
+    title: "Accept Local Stablecoins",
+    description: "Accept TSHC, cNGN, IDRX, and USDC with seamless integration across all supported networks.",
+    tags: ["TSHC", "cNGN", "IDRX", "USDC"],
+    gradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-600",
+    button: "Start Accepting",
+    spotlightColor: "rgba(59, 130, 246, 0.08)",
+  },
+  {
+    icon: Repeat,
+    title: "Instant Stablecoin Swaps",
+    description: "Swap between any supported stablecoins in seconds with our built-in DEX integration.",
+    tags: ["Instant", "Low Fees"],
+    gradient: "bg-gradient-to-br from-indigo-500 to-purple-600",
+    iconBg: "bg-indigo-50",
+    iconColor: "text-indigo-600",
+    button: "Start Swapping",
+    spotlightColor: "rgba(99, 102, 241, 0.08)",
+  },
+  {
+    icon: BarChart2,
+    title: "Real-Time Analytics",
+    description: "Track your payment performance with detailed insights, conversion rates, and revenue analytics.",
+    tags: ["Insights", "Reports"],
+    gradient: "bg-gradient-to-br from-green-500 to-teal-600",
+    iconBg: "bg-green-50",
+    iconColor: "text-green-600",
+    button: "Start Analyzing",
+    spotlightColor: "rgba(34, 197, 94, 0.08)",
+  },
+  {
+    icon: Settings,
+    title: "Smart Settlement",
+    description: "Automatically settle payments with customizable rules, schedules, and multi-currency support.",
+    tags: ["Automated", "Flexible"],
+    gradient: "bg-gradient-to-br from-purple-500 to-pink-600",
+    iconBg: "bg-purple-50",
+    iconColor: "text-purple-600",
+    button: "Start Settling",
+    spotlightColor: "rgba(147, 51, 234, 0.08)",
+  },
+];
+
+export default function SpotlightFeatures() {
+  return (
+    <div className="min-h-screen bg-white py-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-100/80 to-indigo-100/80 text-blue-700 text-sm font-medium mb-4 border border-blue-200">
-            <Zap className="mr-2 h-4 w-4" />
-            <span>Powerful Features</span>
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center justify-center px-4 py-2 mb-6 text-sm font-medium text-blue-600 bg-blue-50 rounded-full border border-blue-200">
+            ✨ Platform Features
           </div>
-
-          <h2 className="text-2xl font-bold mb-4 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Everything You Need to Accept Stablecoin Payments
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
+            Powerful Features
           </h2>
-
-          <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto text-xs">
-            Streamline your stablecoin payments with intuitive, secure, and
-            lightning-fast features
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Everything you need to accept, swap, and manage stablecoins with enterprise-grade security and performance.
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {features.map((feature, index) => (
-            <div key={index} className="relative group">
-              <div className="bg-white rounded-2xl justify-center items-center p-6 shadow-xl border border-blue-100 flex flex-col h-full hover:shadow-2xl transition-all duration-300 hover:border-blue-300 hover:-translate-y-1">
-                {/* Glow effect */}
-                <div
-                  className={`absolute -inset-0.5 ${feature.glowColor} rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300 `}
-                ></div>
-
-                {/* Content */}
-                <div className="relative flex flex-col flex-grow">
-                  {/* Icon */}
-                  <div
-                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-all duration-300`}
-                  >
-                    <feature.icon
-                      className="h-8 w-8 text-white"
-                      strokeWidth={2}
-                    />
-                    <div
-                      className={`absolute inset-0 rounded-2xl ${feature.glowColor} blur-sm opacity-50 group-hover:opacity-70 transition-opacity`}
-                    ></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <SpotlightCard 
+                key={index} 
+                className="group cursor-pointer transform hover:scale-[1.02] transition-transform duration-300"
+                spotlightColor={feature.spotlightColor}
+              >
+                <div className="relative z-10 h-full flex flex-col">
+                  {/* Icon and Title */}
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className={`${feature.iconBg} ${feature.iconColor} p-3 rounded-xl border border-gray-100 shadow-sm`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors">
+                        {feature.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-sm font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                    {feature.title}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-gray-600 mb-4 text-xs leading-relaxed flex-grow">
-                    {feature.description}
-                  </p>
-
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-2 mb-6">
                     {feature.tags.map((tag, tagIndex) => (
                       <span
                         key={tagIndex}
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                        className="px-3 py-1 bg-gray-50 text-gray-700 text-xs sm:text-sm rounded-full border border-gray-200 font-medium"
                       >
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></div>
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  {/* CTA Button */}
-                  {/* <div className="mt-auto">
+                  {/* Action Button */}
+                  <div className="mt-auto">
                     <button
-                      onClick={handleCTAClick}
-                      className={`inline-flex items-center px-4 py-2 !rounded-full !bg-gradient-to-r ${feature.buttonGradient} !text-white !text-sm !font-medium !shadow-md !hover:shadow-lg transition-all duration-300 hover:scale-105 w-full justify-center`}
+                      className={`w-full ${feature.gradient} text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                     >
-                      <Shield className="mr-1 h-4 w-4" />
                       {feature.button}
-                      <ArrowRight className="ml-1 h-4 w-4" />
                     </button>
-                  </div> */}
+                  </div>
                 </div>
-
-                {/* Bottom gradient line */}
-                <div
-                  className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-b-2xl`}
-                ></div>
-              </div>
-            </div>
-          ))}
+                
+                {/* Subtle accent line */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-200 to-transparent opacity-50"></div>
+              </SpotlightCard>
+            );
+          })}
         </div>
 
-        {/* Bottom CTA section */}
-        {!authenticated ? (
-          <div className="mt-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <button
-                onClick={() => {
-                  if (walletSelectorRef.current) {
-                    walletSelectorRef.current.triggerLogin();
-                  }
-                }}
-                className="inline-flex items-center px-6 py-3 !rounded-full !bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white !font-semibold !shadow-lg !hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
-              >
-                <Shield className="mr-2 h-5 w-5" />
-                <span className="text-xs">Start accepting payments today</span>
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </button>
-              <span hidden={true}>
-                <WalletSelector ref={walletSelectorRef} />
-              </span>
-            </div>
-
-            <p className="pt-4 text-xs !font-extrabold text-emerald-600 flex items-center justify-center animate-bounce">
-              <Clock className="mr-2 h-6 w-6 text-emerald-500" />
-              Setup takes only 60 seconds! ⚡
+        {/* Bottom CTA */}
+        <div className="text-center mt-20">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              Ready to transform your payment infrastructure?
+            </h3>
+            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+              Join thousands of businesses already using our platform to streamline their stablecoin operations.
             </p>
-          </div>
-        ) : (
-          <div className="mt-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="inline-flex items-center px-6 py-3 !rounded-full !bg-gradient-to-r !from-blue-600 !to-indigo-600 !text-white !font-semibold !shadow-lg !hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
-              >
-                <Shield className="mr-2 h-5 w-5" />
-                <span>Start accepting payments today</span>
-                <ArrowRight className="ml-2 h-5 w-5" />
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-4 px-8 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                Get Started Today
+              </button>
+              <button className="border-2 border-gray-300 text-gray-700 font-semibold py-4 px-8 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                Schedule Demo
               </button>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

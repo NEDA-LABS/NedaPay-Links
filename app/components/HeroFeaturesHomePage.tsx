@@ -1,90 +1,279 @@
-import { Globe2, Zap, Shield, CircleDollarSign, ArrowRight, CreditCard, Banknote } from "lucide-react";
-import { useState } from "react";
-import HeroFlags from "./HeroFlags";
+import React, { useEffect, useState } from "react";
+import {
+  motion,
+  useMotionValue,
+  useAnimation,
+  useTransform,
+  PanInfo,
+  ResolvedValues,
+} from "framer-motion";
+import { Sparkles } from "lucide-react";
 
-export default function HeroFeatures() {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  
-  const features = [
-    {
-      icon: Globe2,
-      title: "Global Stablecoins",
-      description: "Access payments worldwide",
-      gradient: "from-blue-500 to-indigo-500",
-      iconBg: "bg-blue-500/10",
-      hoverIconBg: "group-hover:bg-blue-500/20",
-    },
-    {
-      icon: Zap,
-      title: "Instant Settlement",
-      description: "Fast, reliable transactions",
-      gradient: "from-blue-400 to-cyan-500",
-      iconBg: "bg-cyan-500/10",
-      hoverIconBg: "group-hover:bg-cyan-500/20",
-    },
-    {
-      icon: Shield,
-      title: "Secure Payments",
-      description: "Top-tier security",
-      gradient: "from-indigo-500 to-purple-500",
-      iconBg: "bg-purple-500/10",
-      hoverIconBg: "group-hover:bg-purple-500/20",
-    },
-    {
-      icon: CircleDollarSign,
-      title: "Zero Fees",
-      description: "Cost-free transactions",
-      gradient: "from-purple-500 to-blue-500",
-      iconBg: "bg-blue-500/10",
-      hoverIconBg: "group-hover:bg-blue-500/20",
-    },
-  ];
+const DEFAULT_FEATURES = [
+  {
+    image: "/global_stablecoins.png",
+    title: "Global Stablecoins",
+    description: "Access payments worldwide with instant cross-border settlements",
+    gradient: "from-blue-500 via-blue-600 to-indigo-600",
+    iconBg: "bg-gradient-to-br from-blue-500/20 to-indigo-500/20",
+    glowColor: "shadow-blue-500/30",
+    accentColor: "text-blue-400",
+  },
+  {
+    image: "/fast-settlements.png",
+    title: "Instant Settlement",
+    description: "Lightning-fast transactions with sub-second confirmation times",
+    gradient: "from-amber-500 via-orange-500 to-red-500",
+    iconBg: "bg-gradient-to-br from-amber-500/20 to-orange-500/20",
+    glowColor: "shadow-amber-500/30",
+    accentColor: "text-amber-400",
+  },
+  {
+    image: "/secure_payments.png",
+    title: "Secure Payments",
+    description: "Military-grade encryption with multi-layer security protocols",
+    gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+    iconBg: "bg-gradient-to-br from-emerald-500/20 to-teal-500/20",
+    glowColor: "shadow-emerald-500/30",
+    accentColor: "text-emerald-400",
+  },
+  {
+    image: "/zero_fees.png",
+    title: "Zero Fees",
+    description: "Completely fee-free transactions with transparent pricing",
+    gradient: "from-purple-500 via-violet-500 to-blue-500",
+    iconBg: "bg-gradient-to-br from-purple-500/20 to-violet-500/20",
+    glowColor: "shadow-purple-500/30",
+    accentColor: "text-purple-400",
+  },
+];
+
+interface Feature {
+  image: string;
+  title: string;
+  description: string;
+  gradient: string;
+  iconBg: string;
+  glowColor: string;
+  accentColor: string;
+}
+
+interface RollingFeaturesGalleryProps {
+  autoplay?: boolean;
+  pauseOnHover?: boolean;
+  features?: Feature[];
+}
+
+const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
+  autoplay = true,
+  pauseOnHover = true,
+  features = [],
+}) => {
+  const galleryFeatures = features.length > 0 ? features : DEFAULT_FEATURES;
+
+  const [isScreenSizeSm, setIsScreenSizeSm] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth <= 640 : false
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleResize = () => setIsScreenSizeSm(window.innerWidth <= 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const cylinderWidth: number = 1100;
+  const faceCount: number = galleryFeatures.length;
+  const faceWidth: number = (cylinderWidth / faceCount) * 1.2;
+  const radius: number = cylinderWidth / (2 * Math.PI);
+
+  const dragFactor: number = 0.05;
+  const rotation = useMotionValue(0);
+  const controls = useAnimation();
+
+  const transform = useTransform(
+    rotation,
+    (val: number) => `rotate3d(0,1,0,${val}deg)`
+  );
+
+  const startInfiniteSpin = (startAngle: number) => {
+    controls.start({
+      rotateY: [startAngle, startAngle - 360],
+      transition: {
+        duration: 15,
+        ease: "linear",
+        repeat: Infinity,
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (autoplay) {
+      const currentAngle = rotation.get();
+      startInfiniteSpin(currentAngle);
+    } else {
+      controls.stop();
+    }
+  }, [autoplay, controls, rotation]);
+
+  const handleUpdate = (latest: ResolvedValues) => {
+    if (typeof latest.rotateY === "number") {
+      rotation.set(latest.rotateY);
+    }
+  };
+
+  const handleDrag = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ): void => {
+    controls.stop();
+    rotation.set(rotation.get() + info.offset.x * dragFactor);
+  };
+
+  const handleDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ): void => {
+    const finalAngle = rotation.get() + info.velocity.x * dragFactor;
+    rotation.set(finalAngle);
+    if (autoplay) {
+      startInfiniteSpin(finalAngle);
+    }
+  };
+
+  const handleMouseEnter = (): void => {
+    if (autoplay && pauseOnHover) {
+      controls.stop();
+    }
+  };
+
+  const handleMouseLeave = (): void => {
+    if (autoplay && pauseOnHover) {
+      const currentAngle = rotation.get();
+      startInfiniteSpin(currentAngle);
+    }
+  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 justify-end mx-auto pl-4">
-      {/* Features arranged in clean rows */}
-      {features.map((feature, index) => {
-        const Icon = feature.icon;
-        const isHovered = hoveredIndex === index;
-        return (
-          <div
-            key={index}
-            className="group flex items-center space-x-4 cursor-pointer transition-all duration-300 hover:translate-x-2"
-            onMouseEnter={() => setHoveredIndex(index)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            {/* Icon */}
-            <div
-              className={`
-                flex items-center justify-center w-14 h-14 rounded-2xl
-                ${feature.iconBg} ${feature.hoverIconBg}
-                transition-all duration-300 group-hover:scale-110
-                ${isHovered ? 'shadow-lg' : ''}
-              `}
-            >
-              <Icon
-                className={`w-7 h-7 text-blue-600 transition-all duration-300`}
-                strokeWidth={2}
-              />
-            </div>
+    <div className="relative h-[600px] w-full overflow-hidden">
+      {/* Gradient overlays for fade effect */}
+      {/* <div
+        className="absolute top-0 left-0 h-full w-[80px] z-10 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to left, rgba(15,23,42,0) 0%, rgba(15,23,42,1) 100%)",
+        }}
+      />
+      <div
+        className="absolute top-0 right-0 h-full w-[80px] z-10 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(15,23,42,0) 0%, rgba(15,23,42,1) 100%)",
+        }}
+      /> */}
 
-            {/* Content */}
-            <div className="">
-              <h3 className="!text-l sm:!text-l font-bold text-slate-800 group-hover:text-slate-900 transition-colors duration-300 mb-1">
-                {feature.title}
-              </h3>
-              <p className="text-sm sm:text-xl text-slate-600 group-hover:text-slate-700 transition-colors duration-300 leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
+      <div className="flex h-full items-center justify-center [perspective:1200px] [transform-style:preserve-3d] pt-20">
+        <motion.div
+          drag="x"
+          dragElastic={0}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          animate={controls}
+          onUpdate={handleUpdate}
+          style={{
+            transform: transform,
+            rotateY: rotation,
+            width: cylinderWidth,
+            transformStyle: "preserve-3d",
+          }}
+          className="flex min-h-[300px] cursor-grab items-center justify-center [transform-style:preserve-3d] active:cursor-grabbing"
+        >
+          {galleryFeatures.map((feature, i) => {
+            return (
+              <div
+                key={i}
+                className="group absolute flex h-fit items-center justify-center p-4 [backface-visibility:hidden]"
+                style={{
+                  width: `${faceWidth}px`,
+                  transform: `rotateY(${(360 / faceCount) * i}deg) translateZ(${radius}px)`,
+                }}
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05, rotateY: 5 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className={`
+                    relative overflow-hidden rounded-3xl backdrop-blur-sm
+                    bg-gradient-to-br from-slate-800/80 to-slate-900/80
+                    p-8 w-[280px] h-[350px] sm:w-[240px] sm:h-[320px]
+                    hover:shadow-2xl transition-all duration-500
+                    hover:border-white/20 hover:bg-gradient-to-br hover:from-slate-700/80 hover:to-slate-800/80
+                  `}
+                >
+                  {/* Background gradient overlay */}
+                  <div 
+                    className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-700 rounded-3xl bg-gradient-to-br ${feature.gradient}`} 
+                  />
+                  
+                  {/* Animated background particles */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-700">
+                    <div className="absolute top-6 right-6 w-1 h-1 bg-white rounded-full animate-pulse" />
+                    <div className="absolute top-12 right-12 w-1 h-1 bg-white/70 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                    <div className="absolute bottom-6 left-6 w-1 h-1 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+                  </div>
 
-            {/* Subtle arrow indicator */}
-            <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-            </div>
-          </div>
-        );
-      })}
+                  {/* Image Container */}
+                  <div className="flex justify-center mb-6">
+                    <motion.div
+                      whileHover={{ rotate: 5, scale: 1.1 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      className={`
+                        relative flex items-center justify-center w-20 h-20 rounded-2xl
+                         group-hover:shadow-2xl transition-all duration-500
+                         group-hover:border-white/30
+                        overflow-hidden
+                      `}
+                    >
+                      {/* Image glow */}
+                      <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 ${feature.glowColor}`} />
+                      
+                      <img 
+                        src={feature.image}
+                        alt={feature.title}
+                        className="w-20 h-20 object-contain transition-all duration-300 relative z-10 group-hover:scale-110"
+                      />
+                      
+                      {/* Sparkle effect */}
+                      <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-all duration-700">
+                        <Sparkles className="w-4 h-4 text-white/60 animate-pulse" />
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="text-center space-y-4 relative z-10">
+                    <h3 className="text-xl font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-slate-300 group-hover:text-slate-200 transition-colors duration-300 leading-relaxed opacity-90">
+                      {feature.description}
+                    </p>
+                  </div>
+
+                  {/* Premium shimmer effect */}
+                  <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none">
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1500" />
+                  </div>
+                </motion.div>
+              </div>
+            );
+          })}
+        </motion.div>
+      </div>
     </div>
   );
-}
+};
+
+export default RollingFeaturesGallery;

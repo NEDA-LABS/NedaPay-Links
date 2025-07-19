@@ -9,7 +9,6 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-// Add this interface after your existing interfaces
 interface PaymentOrder {
   id: string;
   amount: string;

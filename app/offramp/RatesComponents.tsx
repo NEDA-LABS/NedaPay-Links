@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Activity, AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Activity, AlertCircle, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { fetchSupportedCurrencies, fetchTokenRate } from '../utils/paycrest';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { horizontalLoop } from '../utils/horizontalLoop.js'; // Make sure this path is correct
+import { horizontalLoop } from '../utils/horizontalLoop';
 
 interface Currency {
   code: string;
@@ -22,10 +22,26 @@ interface RateCache {
   };
 }
 
-const CACHE_DURATION = 21600000; // 6 hours
-const MAX_RETRIES = 6;
+const CACHE_DURATION = 10800000; // 3 hours
+const REFRESH_INTERVAL = 60000; // 60 seconds
+const REQUEST_DELAY = 300; // 300ms delay between requests
+const MAX_CONCURRENT_REQUESTS = 3;
+
+// Function to get country flag based on currency code
+const getCountryFlag = (currencyCode: string): string => {
+  switch (currencyCode) {
+    case 'KES': return 'http://purecatamphetamine.github.io/country-flag-icons/3x2/KE.svg';
+    case 'NGN': return 'http://purecatamphetamine.github.io/country-flag-icons/3x2/NG.svg';
+    case 'TZS': return 'http://purecatamphetamine.github.io/country-flag-icons/3x2/TZ.svg';
+    case 'UGX': return 'http://purecatamphetamine.github.io/country-flag-icons/3x2/UG.svg';
+    case 'XOF': return 'http://purecatamphetamine.github.io/country-flag-icons/3x2/CI.svg'; // Côte d'Ivoire (Ivory Coast)
+    case 'GHS': return 'http://purecatamphetamine.github.io/country-flag-icons/3x2/GH.svg';
+    default: return 'http://purecatamphetamine.github.io/country-flag-icons/3x2/US.svg';
+  }
+};
+const MAX_RETRIES = 2;
 const RETRY_DELAY = 1000;
-const ITEMS_PER_VIEW = 4; // Number of items visible at once
+const ITEMS_PER_VIEW = 4;
 
 const CurrencyRatesWidget = () => {
   const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -39,8 +55,9 @@ const CurrencyRatesWidget = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryTimeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
+  const requestQueueRef = useRef<Set<Promise<void>>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
-  const loopRef = useRef<any>(null); // Reference to GSAP loop
+  const loopRef = useRef<any>(null);
 
   const cleanup = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -50,7 +67,6 @@ const CurrencyRatesWidget = () => {
     intervalRef.current = null;
     abortControllerRef.current = null;
     
-    // Kill GSAP animation on cleanup
     if (loopRef.current) {
       loopRef.current.kill();
       loopRef.current = null;
@@ -65,8 +81,7 @@ const CurrencyRatesWidget = () => {
   ): Promise<string> => {
     try {
       if (abortControllerRef.current?.signal.aborted) throw new Error('Request aborted');
-      const rate = await fetchTokenRate("USDC", amount, toCurrency);
-      return rate;
+      return await fetchTokenRate(fromToken="USDC", amount, toCurrency);
     } catch (error) {
       if (retryCount < MAX_RETRIES && !abortControllerRef.current?.signal.aborted) {
         await new Promise(resolve => {
@@ -80,15 +95,15 @@ const CurrencyRatesWidget = () => {
   }, []);
 
   const isRateStale = useCallback((timestamp: number) => {
-    const now = Date.now();
-    const isStale = now - timestamp > CACHE_DURATION;
-    return isStale;
+    return Date.now() - timestamp > CACHE_DURATION;
   }, []);
 
   const loadCurrencies = useCallback(async () => {
     try {
       const supportedCurrencies = await fetchSupportedCurrencies();
-      const sortedCurrencies = [...supportedCurrencies].sort((a, b) => 
+      // Filter out XOF currencies and sort the rest
+      const filteredCurrencies = supportedCurrencies.filter(currency => !currency.code.startsWith('XOF'));
+      const sortedCurrencies = [...filteredCurrencies].sort((a, b) => 
         a.code.localeCompare(b.code)
       );
       setCurrencies(sortedCurrencies);
@@ -99,6 +114,28 @@ const CurrencyRatesWidget = () => {
     }
   }, []);
 
+  const processRateRequest = useCallback(async (
+    currency: Currency,
+    now: number,
+    newCacheEntries: RateCache
+  ) => {
+    try {
+      const rate = await fetchRateWithRetry('USDC', 1, currency.code);
+      newCacheEntries[currency.code] = {
+        rate,
+        timestamp: now,
+        isStale: false
+      };
+    } catch (error) {
+      console.warn(`Failed to fetch rate for ${currency.code}:`, error);
+      newCacheEntries[currency.code] = {
+        rate: currency.marketRate,
+        timestamp: now,
+        isStale: true
+      };
+    }
+  }, [fetchRateWithRetry]);
+
   const loadRates = useCallback(async (currenciesToLoad: Currency[], forceRefresh = false) => {
     if (!currenciesToLoad.length) return;
 
@@ -106,38 +143,49 @@ const CurrencyRatesWidget = () => {
       setIsRefreshing(true);
       abortControllerRef.current = new AbortController();
       const now = Date.now();
-      const ratesToFetch: Currency[] = [];
+      const newCacheEntries: RateCache = {};
+      const currenciesToUpdate: Currency[] = [];
 
+      // Determine which currencies need updates
       currenciesToLoad.forEach(currency => {
         const cached = rateCache[currency.code];
         if (forceRefresh || !cached || isRateStale(cached.timestamp)) {
-          ratesToFetch.push(currency);
+          currenciesToUpdate.push(currency);
         }
       });
 
-      if (ratesToFetch.length > 0) {
-        const ratePromises = ratesToFetch.map(async (currency) => {
-          try {
-            const rate = await fetchRateWithRetry('USDC', 1, currency.code);
-            return { code: currency.code, rate, error: null };
-          } catch (fetchError) {
-            console.warn(`Failed to fetch rate for ${currency.code}, using market rate:`, fetchError);
-            return { code: currency.code, rate: currency.marketRate, error: fetchError };
-          }
-        });
+      if (currenciesToUpdate.length > 0) {
+        // Process requests with concurrency control
+        const processQueue = async () => {
+          const activeRequests = new Set<Promise<void>>();
+          
+          for (const currency of currenciesToUpdate) {
+            if (abortControllerRef.current?.signal.aborted) break;
 
-        const results = await Promise.allSettled(ratePromises);
-        const newCacheEntries: RateCache = {};
-        results.forEach((result, index) => {
-          const currency = ratesToFetch[index];
-          if (result.status === 'fulfilled') {
-            const { code, rate } = result.value;
-            newCacheEntries[code] = { rate, timestamp: now, isStale: false };
-          } else {
-            newCacheEntries[currency.code] = { rate: currency.marketRate, timestamp: now, isStale: true };
-          }
-        });
+            // Wait if we've reached max concurrent requests
+            while (activeRequests.size >= MAX_CONCURRENT_REQUESTS) {
+              await Promise.race(activeRequests);
+            }
 
+            const requestPromise = processRateRequest(currency, now, newCacheEntries)
+              .finally(() => activeRequests.delete(requestPromise));
+
+            activeRequests.add(requestPromise);
+            requestQueueRef.current.add(requestPromise);
+            
+            // Add delay between requests if not the last one
+            if (currency !== currenciesToUpdate[currenciesToUpdate.length - 1]) {
+              await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
+            }
+          }
+
+          // Wait for all remaining requests to complete
+          await Promise.all(activeRequests);
+        };
+
+        await processQueue();
+        
+        // Update cache with all new entries
         setRateCache(prev => ({ ...prev, ...newCacheEntries }));
       }
 
@@ -145,24 +193,24 @@ const CurrencyRatesWidget = () => {
       setError(null);
     } catch (err) {
       console.error('Failed to load rates:', err);
-      setError('Failed to load rates');
+      setError('Failed to load rates. Please try again later.');
     } finally {
       setIsRefreshing(false);
       abortControllerRef.current = null;
+      requestQueueRef.current.clear();
     }
   }, [isRateStale, fetchRateWithRetry, rateCache]);
 
-  // Initialize GSAP horizontal loop
+  // GSAP animation setup
   useGSAP(() => {
     if (!containerRef.current || currencies.length === 0) return;
     
     const currencyItems = containerRef.current.querySelectorAll('.currency-item');
     if (currencyItems.length === 0) return;
     
-    // Create the horizontal loop
     loopRef.current = horizontalLoop(currencyItems, {
       repeat: -1,
-      speed: 0.5, // Set a default speed
+      speed: 0.5,
       paused: isPaused,
       paddingRight: parseFloat(
         gsap.getProperty(currencyItems[0], 'marginRight') as string
@@ -170,7 +218,6 @@ const CurrencyRatesWidget = () => {
     });
     
     return () => {
-      // Cleanup GSAP animation
       if (loopRef.current) {
         loopRef.current.kill();
         loopRef.current = null;
@@ -195,40 +242,26 @@ const CurrencyRatesWidget = () => {
     };
 
     initializeWidget();
-  }, [loadCurrencies, loadRates]);
+    return cleanup;
+  }, [loadCurrencies, loadRates, cleanup]);
 
-  // Start animation after component mounts and currencies are loaded
   useEffect(() => {
     if (currencies.length > 0 && !loading) {
       setIsPaused(false);
-      // Initialize the animation with speed
-      if (loopRef.current) {
-        loopRef.current.kill();
-      }
-      const currencyItems = containerRef.current?.querySelectorAll('.currency-item');
-      if (currencyItems && currencyItems.length > 0) {
-        loopRef.current = horizontalLoop(currencyItems, {
-          repeat: -1,
-          speed: 0.5, // Adjust speed as needed
-          paused: isPaused,
-          paddingRight: parseFloat(
-            gsap.getProperty(currencyItems[0], 'marginRight') as string
-          )
-        });
-      }
     }
-  }, [currencies, loading, isPaused]);
+  }, [currencies, loading]);
 
   useEffect(() => {
     if (currencies.length > 0 && !loading) {
-      // Rate refresh interval
       intervalRef.current = setInterval(() => {
         if (!isRefreshing) loadRates(currencies);
-      }, 30000);
+      }, REFRESH_INTERVAL);
     }
 
-    return cleanup;
-  }, [currencies, loadRates, cleanup, loading, isRefreshing]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [currencies, loadRates, loading, isRefreshing]);
 
   const handleManualRefresh = useCallback(() => {
     if (!isRefreshing && currencies.length > 0) {
@@ -245,9 +278,16 @@ const CurrencyRatesWidget = () => {
     });
   }, []);
 
+  // Simulate price change for demo (you can replace with actual logic)
+  const getPriceChange = useCallback((currency: Currency) => {
+    const changes = [-2.5, -1.2, 0, 1.8, 3.4, -0.8, 2.1];
+    const change = changes[currency.code.charCodeAt(0) % changes.length];
+    return change;
+  }, []);
+
   if (loading) {
     return (
-      <div className="w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-700">
+      <div className="w-full p-6 shadow-2xl">
         <div className="flex items-center justify-center gap-3">
           <Activity className="w-6 h-6 text-emerald-400 animate-pulse" />
           <span className="text-slate-300 text-sm font-medium">Loading exchange rates...</span>
@@ -258,21 +298,21 @@ const CurrencyRatesWidget = () => {
 
   if (error) {
     return (
-      <div className="w-full bg-gradient-to-r from-red-900/20 via-red-800/20 to-red-900/20 rounded-2xl p-6 shadow-2xl border border-red-700/50">
-        <div className="flex items-center justify-center gap-3">
+      <div className="w-full shadow-2xl">
+        {/* <div className="flex items-center justify-center gap-3">
           <AlertCircle className="w-6 h-6 text-red-400" />
           <span className="text-red-300 text-sm font-medium">{error}</span>
           <button
             onClick={handleManualRefresh}
             className="flex items-center gap-2 px-4 py-2 text-sm text-red-300 hover:text-red-100 
-                       bg-red-900/30 hover:bg-red-900/50 rounded-lg transition-all duration-200
+                       transition-all duration-200
                        border border-red-700/50 hover:border-red-600/50"
             disabled={isRefreshing}
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Retry
           </button>
-        </div>
+        </div> */}
       </div>
     );
   }
@@ -281,39 +321,162 @@ const CurrencyRatesWidget = () => {
     <div className="w-full overflow-hidden">
       <style dangerouslySetInnerHTML={{
         __html: `
-          .rate-card {
-            backdrop-filter: blur(10px);
-            border-image: linear-gradient(135deg, 
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+          
+          @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.1); }
+            50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.2); }
+          }
+
+          @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-2px) rotate(1deg); }
+            66% { transform: translateY(1px) rotate(-1deg); }
+          }
+
+          .currency-card {
+            position: relative;
+            background: linear-gradient(145deg, 
+              rgba(15, 23, 42, 0.95) 0%,
+              rgba(30, 41, 59, 0.9) 50%,
+              rgba(15, 23, 42, 0.95) 100%
+            );
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+          }
+
+          .currency-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+          }
+
+          .currency-card:hover::before {
+            opacity: 1;
+          }
+
+          .currency-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(16, 185, 129, 0.3);
+            box-shadow: 
+              0 20px 60px rgba(0, 0, 0, 0.4),
+              0 0 40px rgba(16, 185, 129, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: pulse-glow 2s ease-in-out infinite;
+          }
+
+          .currency-card.stale {
+            border-color: rgba(245, 158, 11, 0.2);
+            background: linear-gradient(145deg, 
+              rgba(45, 30, 15, 0.95) 0%,
+              rgba(59, 41, 30, 0.9) 50%,
+              rgba(45, 30, 15, 0.95) 100%
+            );
+          }
+
+          .currency-card.stale:hover {
+            border-color: rgba(245, 158, 11, 0.4);
+            box-shadow: 
+              0 20px 60px rgba(0, 0, 0, 0.4),
+              0 0 40px rgba(245, 158, 11, 0.1);
+          }
+
+          .shimmer-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+              90deg,
+              transparent,
+              rgba(255, 255, 255, 0.05),
+              transparent
+            );
+            animation: shimmer 2s infinite;
+            opacity: 0;
+          }
+
+          .currency-card:hover .shimmer-effect {
+            opacity: 1;
+          }
+
+          .currency-icon {
+            background: linear-gradient(135deg, 
               rgba(16, 185, 129, 0.2) 0%,
-              rgba(16, 185, 129, 0.4) 50%,
-              rgba(16, 185, 129, 0.2) 100%
+              rgba(16, 185, 129, 0.1) 100%
+            );
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            position: relative;
+            overflow: hidden;
+          }
+
+          .currency-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+            animation: float 4s ease-in-out infinite;
+          }
+
+          .stale .currency-icon {
+            background: linear-gradient(135deg, 
+              rgba(245, 158, 11, 0.2) 0%,
+              rgba(245, 158, 11, 0.1) 100%
+            );
+            border-color: rgba(245, 158, 11, 0.3);
+          }
+
+          .price-display {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            backdrop-filter: blur(10px);
+          }
+
+          .trend-indicator {
+            transition: all 0.3s ease;
+          }
+
+          .trend-up {
+            color: #10b981;
+            animation: float 2s ease-in-out infinite;
+          }
+
+          .trend-down {
+            color: #ef4444;
+            animation: float 2s ease-in-out infinite reverse;
+          }
+
+          .trend-neutral {
+            color: #64748b;
+          }
+
+          .glass-border {
+            border: 1px solid;
+            border-image: linear-gradient(135deg, 
+              rgba(255, 255, 255, 0.1),
+              rgba(255, 255, 255, 0.05),
+              rgba(255, 255, 255, 0.1)
             ) 1;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-          }
-          .rate-card:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-          }
-          .refresh-button {
-            transition: all 0.2s ease;
-          }
-          .refresh-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-          }
-          .header-glow {
-            background: linear-gradient(90deg, 
-              rgba(16, 185, 129, 0.1) 0%, 
-              rgba(5, 150, 105, 0.2) 50%, 
-              rgba(16, 185, 129, 0.1) 100%);
           }
         `
       }} />
 
-      {/* Sliding Rates Container */}
-      <div 
-        className="relative overflow-hidden"
-      >
+      <div className="relative overflow-hidden">
         <div 
           ref={containerRef}
           className="flex"
@@ -322,78 +485,151 @@ const CurrencyRatesWidget = () => {
             const cached = rateCache[currency.code];
             const isStale = cached?.isStale || false;
             const rate = cached ? cached.rate : currency.marketRate;
+            const priceChange = getPriceChange(currency);
 
             return (
-                <div 
-                  key={currency.code}
-                  className="sm:min-w-[200px] sm:max-w-[260px] md:min-w-[220px] md:max-w-[280px] currency-item rate-card group relative overflow-hidden p-4 mx-3 !rounded-2xl flex-shrink-0 
-                             bg-gradient-to-br from-slate-900/95 to-slate-800/90 backdrop-blur-sm
-                             border border-slate-700/50 hover:border-emerald-500/30 
-                              hover:shadow-xl hover:shadow-emerald-500/10
-                             hover:scale-[1.02] cursor-pointer"
-                  style={{ 
-                    width: `calc(${100 / ITEMS_PER_VIEW}% - 1.5rem)`,
-                    minWidth: '180px',
-                    maxWidth: '240px'
-                  }}
-                >
-                  {/* Animated background gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-blue-500/5 
-                                  opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
-                  {/* Header section */}
-                  <div className="relative flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 
-                                        flex items-center justify-center border border-emerald-500/30
-                                        group-hover:border-emerald-400/50 transition-all duration-300">
-                          <span className="text-emerald-400 font-bold text-xs font-mono">
-                            {currency.symbol}
-                          </span>
-                        </div>
-                        
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-white font-bold text-sm tracking-wide">
-                          {currency.code}
-                        </div>
-                        <div className="text-slate-400 text-xs font-medium tracking-wider uppercase">
-                          {currency.name}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    
+              <div 
+                key={currency.code}
+                className={`currency-item currency-card group relative overflow-hidden mx-20 rounded-2xl flex-shrink-0 
+                           ${isStale ? 'stale' : ''}`}
+                style={{ 
+                  width: `calc(${100 / ITEMS_PER_VIEW}% - 1.5rem)`,
+                  minWidth: '220px',
+                  maxWidth: '280px',
+                  padding: '24px'
+                }}
+              >
+                {/* Shimmer effect */}
+                <div className="shimmer-effect"></div>
+                
+                {/* Status indicator */}
+                {isStale && (
+                  <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                    <span className="text-amber-400 text-xs font-medium opacity-70">STALE</span>
+                  </div>
+                )}
+
+                {/* Live indicator for fresh data */}
+                {!isStale && (
+                  <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                    <span className="text-emerald-400 text-xs font-medium opacity-70">LIVE</span>
+                  </div>
+                )}
+                
+                {/* Header */}
+                <div className="relative flex items-center gap-4 mb-6">
+                  <div className="currency-icon w-14 h-14 rounded-2xl flex items-center justify-center relative">
+                    <img 
+                      src={getCountryFlag(currency.code)} 
+                      alt={`${currency.code} flag`} 
+                      className={`${isStale ? 'opacity-90' : 'opacity-100'} w-8 h-8 object-contain relative z-10`} 
+                    />
                   </div>
                   
-                  {/* Rate section */}
-                  <div className="relative space-y-3">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-slate-400 text-xs font-medium">1 USDC</span>
-                      <span className="text-slate-500 text-sm">=</span>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-white font-bold text-sm tracking-tight">
+                        {currency.code}
+                      </h3>
+                      {/* Trend indicator */}
+                      <div className={`trend-indicator ${
+                        priceChange > 0 ? 'trend-up' : priceChange < 0 ? 'trend-down' : 'trend-neutral'
+                      }`}>
+                        {priceChange > 0 ? (
+                          <TrendingUp className="w-4 h-4" />
+                        ) : priceChange < 0 ? (
+                          <TrendingDown className="w-4 h-4" />
+                        ) : (
+                          <Minus className="w-4 h-4" />
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-slate-400 text-sm font-medium leading-tight">
+                      {currency.name}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Exchange rate section */}
+                <div className="space-y-2">
+                  {/* From section */}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-medium">FROM</span>
+                    <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/30">
+                      <span className="text-slate-300 font-mono">1.00</span>
+                      <span className="text-emerald-400 font-bold">USDC</span>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <div className="w-8 h-0.5 bg-gradient-to-r from-transparent via-slate-500 to-transparent relative">
+                      <div className="absolute right-0 top-[-2px] w-0 h-0 border-l-[4px] border-l-slate-500 border-t-[2px] border-b-[2px] border-t-transparent border-b-transparent"></div>
+                    </div>
+                  </div>
+
+                  {/* To section - Main rate display */}
+                  <div className="price-display rounded-xl p-4 relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-slate-500 text-xs font-medium">TO</span>
+                      <span className="text-slate-400 text-xs font-mono">
+                        {new Date().toLocaleTimeString('en-US', { 
+                          hour12: false, 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </span>
                     </div>
                     
-                    <div className="relative">
-                      <div className="text-sm font-bold font-mono text-transparent bg-clip-text 
-                                      bg-gradient-to-r from-emerald-400 to-emerald-300 
-                                      group-hover:from-emerald-300 group-hover:to-emerald-400 
-                                      transition-all duration-300">
+                    <div className="flex items-baseline gap-2">
+                      <div className={`text-sm font-bold font-mono text-transparent bg-clip-text 
+                                      ${isStale 
+                                        ? 'bg-gradient-to-r from-amber-400 via-amber-300 to-amber-200' 
+                                        : 'bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-200'
+                                      }
+                                      group-hover:from-white group-hover:via-slate-200 group-hover:to-slate-300
+                                      transition-all duration-500`}>
                         {formatRate(rate, currency)}
                       </div>
-                      
-                      
+                      <span className="text-slate-400 font-medium text-sm">
+                        {currency.code}
+                      </span>
                     </div>
-                    
-                   
+
+                    {/* Price change indicator */}
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className={`flex items-center gap-1 text-xs font-medium
+                                      ${priceChange > 0 ? 'text-emerald-400' : priceChange < 0 ? 'text-red-400' : 'text-slate-500'}`}>
+                        {priceChange !== 0 && (
+                          <>
+                            <span>{priceChange > 0 ? '+' : ''}{priceChange.toFixed(2)}%</span>
+                            <span className="text-slate-600">24h</span>
+                          </>
+                        )}
+                        {priceChange === 0 && <span className="text-slate-500">No change</span>}
+                      </div>
+                      
+                      {/* Data freshness indicator */}
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                        isStale ? 'bg-amber-400/50' : 'bg-emerald-400/50'
+                      } animate-pulse`}></div>
+                    </div>
+
+                    {/* Subtle background pattern */}
+                    <div className="absolute inset-0 opacity-5">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-transparent to-blue-400/10"></div>
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-radial from-emerald-400/5 to-transparent rounded-full transform translate-x-8 -translate-y-8"></div>
+                    </div>
                   </div>
-                  
-                  {/* Hover effect overlay */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 to-blue-500/0 
-                                  group-hover:from-emerald-500/5 group-hover:to-blue-500/5 
-                                  transition-all duration-500 pointer-events-none" />
                 </div>
-              );
+
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-blue-500/5 
+                                opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              </div>
+            );
           })}
         </div>
       </div>
