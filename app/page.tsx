@@ -54,24 +54,27 @@ function HomeContent() {
 
   return (
     <div
-      className="min-h-screen"
-      style={{ "--tw-text-opacity": "1" } as React.CSSProperties}
+      className="min-h-screen w-full"
+      style={{ "--tw-text-opacity": "1", zIndex: -1000 } as React.CSSProperties}
     >
       <Header />
 
       <div
-        className="container mx-auto max-w-7xl px-4 pb-8 md:py-12"
+        className="w-full pb-8 md:py-12 mx-auto"
         style={{ zIndex: -100 }}
       >
         <Image
             src="/bg-waves.png"
             alt="Hero background"
             fill
-            className="object-cover object-center"
+            className="object-cover object-center opacity-50"
             priority
             quality={100}
           />
-          <div className="absolute top-0 left-0 w-full h-full bg-teal-950 lg:h-[80vh]" style={{ zIndex: -100 }}></div>
+          <div className="absolute top-0 left-0 w-full h-full lg:h-[100vh]" style={{ 
+            zIndex: -100,
+            backgroundImage: 'linear-gradient(to bottom, rgba(0, 74, 109, 1), rgba(0, 74, 109, 0.9), rgba(0, 74, 109, 0.8), rgba(0, 74, 109, 0.7), rgba(0, 74, 109, 0.6), rgba(0, 74, 109, 0.5), rgba(0, 74, 109, 0.4), rgba(0, 74, 109, 0.3), rgba(0, 74, 109, 0.2), rgba(0, 74, 109, 0.05), transparent)'
+          }}></div>
           
         {/* Hero Section */}
         <HeroSection />
@@ -85,27 +88,9 @@ function HomeContent() {
 
       {/* CTA Section */}
       {/* Enhanced CTA Section */}
-      <div className="w-[90%] mx-auto bg-gradient-to-r from-blue-600 to-purple-400 relative overflow-hidden rounded-b-3xl mb-12 shadow-2xl">
-        {/* Animated Background Elements */}
-        <div className="absolute -top-32 -right-32 w-80 h-80 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 dark:from-indigo-500/15 dark:to-purple-500/15 rounded-full blur-3xl animate-pulse"></div>
-        <div
-          className="absolute -bottom-32 -left-32 w-80 h-80 bg-gradient-to-tr from-blue-400/20 to-indigo-400/20 dark:from-blue-500/15 dark:to-indigo-500/15 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-400/10 to-blue-400/10 dark:from-purple-500/8 dark:to-blue-500/8 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "2s" }}
-        ></div>
-
+      <div className="w-[90%] mx-auto relative overflow-hidden rounded-b-3xl mb-12 shadow-2xl">
+        {/* Animated Background Elements */}              
         {/* Grid Pattern Overlay */}
-        <div
-          className="absolute inset-0 opacity-10 dark:opacity-5"
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: "32px 32px",
-          }}
-        ></div>
-
         <div className="relative z-10 px-8 py-20 text-center text-white">
           {/* Enhanced Heading */}
           <h2 className="text-2xl font-bold mb-8 leading-tight">
@@ -187,66 +172,9 @@ function HomeContent() {
               </div>
             )}
           </div>
-
-          {/* Enhanced Feature List */}
-          <div className="flex flex-wrap justify-center gap-8 max-w-4xl mx-auto">
-            <div className="flex items-center text-blue-50 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20 hover:bg-white/15 transition-all duration-300">
-              <div className="flex items-center justify-center w-8 h-8 mr-3 bg-green-400/20 rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-green-300"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <span className="font-medium text-sm">No setup fees</span>
-            </div>
-
-            <div className="flex items-center text-blue-50 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20 hover:bg-white/15 transition-all duration-300">
-              <div className="flex items-center justify-center w-8 h-8 mr-3 bg-blue-400/20 rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-blue-300"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <span className="font-medium text-sm">Instant settlements</span>
-            </div>
-
-            <div className="flex items-center text-blue-50 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20 hover:bg-white/15 transition-all duration-300">
-              <div className="flex items-center justify-center w-8 h-8 mr-3 bg-purple-400/20 rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-purple-300"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <span className="font-medium text-sm">Global stablecoins</span>
-            </div>
-          </div>
         </div>
       </div>
-      <Supporters />
+      {/* <Supporters /> */}
       <Footer />
     </div>
   );

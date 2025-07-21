@@ -1,53 +1,20 @@
-import { useRef, useState } from "react";
-import { Coins, Repeat, BarChart2, Settings } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Coins, Repeat, BarChart2, Settings, Zap, ChevronRight } from "lucide-react";
 
-const SpotlightCard = ({ children, className = "", spotlightColor = "rgba(59, 130, 246, 0.05)" }) => {
-  const divRef = useRef(null);
-  const [isFocused, setIsFocused] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [opacity, setOpacity] = useState(0);
-  
-  const handleMouseMove = (e) => {
-    if (!divRef.current || isFocused) return;
-    const rect = divRef.current.getBoundingClientRect();
-    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
-  
-  const handleFocus = () => {
-    setIsFocused(true);
-    setOpacity(1);
-  };
-  
-  const handleBlur = () => {
-    setIsFocused(false);
-    setOpacity(0);
-  };
-  
-  const handleMouseEnter = () => {
-    setOpacity(1);
-  };
-  
-  const handleMouseLeave = () => {
-    setOpacity(0);
-  };
-  
+const GlassCard = ({ children, className = "", isSelected = false, onClick }) => {
   return (
     <div
-      ref={divRef}
-      onMouseMove={handleMouseMove}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={`relative rounded-2xl border border-gray-200 bg-white overflow-hidden p-8 shadow-sm hover:shadow-xl transition-all duration-300 ease-out hover:border-gray-300 ${className}`}
+      onClick={onClick}
+      className={`relative rounded-lg bg-white border overflow-hidden transition-all duration-300 cursor-pointer ${
+        isSelected 
+          ? 'border-2 border-blue-500 shadow-lg' 
+          : 'border border-gray-200 hover:border-blue-400 hover:shadow-md'
+      } ${className}`}
     >
-      <div
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 ease-in-out"
-        style={{
-          opacity,
-          background: `radial-gradient(circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 60%)`,
-        }}
-      />
+      {isSelected && (
+        <div className="absolute top-4 right-4 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm z-10"></div>
+      )}
       {children}
     </div>
   );
@@ -56,142 +23,151 @@ const SpotlightCard = ({ children, className = "", spotlightColor = "rgba(59, 13
 const features = [
   {
     icon: Coins,
-    title: "Accept Local Stablecoins",
-    description: "Accept TSHC, cNGN, IDRX, and USDC with seamless integration across all supported networks.",
-    tags: ["TSHC", "cNGN", "IDRX", "USDC"],
-    gradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
-    iconBg: "bg-blue-50",
-    iconColor: "text-blue-600",
-    button: "Start Accepting",
-    spotlightColor: "rgba(59, 130, 246, 0.08)",
+    title: "Stablecoins",
+    description: "Accept multiple stablecoins with instant settlement",
+    tags: ["TSHC", "cNGN"],
+    accentColor: "#10367D",
+    button: "Accept",
+    route: "/stablecoins"
   },
   {
     icon: Repeat,
-    title: "Instant Stablecoin Swaps",
-    description: "Swap between any supported stablecoins in seconds with our built-in DEX integration.",
-    tags: ["Instant", "Low Fees"],
-    gradient: "bg-gradient-to-br from-indigo-500 to-purple-600",
-    iconBg: "bg-indigo-50",
-    iconColor: "text-indigo-600",
-    button: "Start Swapping",
-    spotlightColor: "rgba(99, 102, 241, 0.08)",
+    title: "Swap",
+    description: "Low-fee conversions between assets",
+    tags: ["0.1% fee", "Fast"],
+    accentColor: "#A5CE00",
+    button: "Swap",
+    route: "/swap"
   },
   {
     icon: BarChart2,
-    title: "Real-Time Analytics",
-    description: "Track your payment performance with detailed insights, conversion rates, and revenue analytics.",
-    tags: ["Insights", "Reports"],
-    gradient: "bg-gradient-to-br from-green-500 to-teal-600",
-    iconBg: "bg-green-50",
-    iconColor: "text-green-600",
-    button: "Start Analyzing",
-    spotlightColor: "rgba(34, 197, 94, 0.08)",
+    title: "Analytics",
+    description: "Real-time payment insights",
+    tags: ["Reports", "Charts"],
+    accentColor: "#10367D",
+    button: "View",
+    route: "/analytics"
   },
   {
     icon: Settings,
-    title: "Smart Settlement",
-    description: "Automatically settle payments with customizable rules, schedules, and multi-currency support.",
-    tags: ["Automated", "Flexible"],
-    gradient: "bg-gradient-to-br from-purple-500 to-pink-600",
-    iconBg: "bg-purple-50",
-    iconColor: "text-purple-600",
-    button: "Start Settling",
-    spotlightColor: "rgba(147, 51, 234, 0.08)",
+    title: "Settlement",
+    description: "Automated payment processing",
+    tags: ["Auto", "Secure"],
+    accentColor: "#A5CE00",
+    button: "Setup",
+    route: "/settlement"
   },
 ];
 
-export default function SpotlightFeatures() {
+export default function BrandedGlassUI() {
+  const [selectedCard, setSelectedCard] = useState(1);
+  const router = useRouter();
+
+  const handleCardClick = (index: any) => {
+    setSelectedCard(index);
+  };
+
+  const handleButtonClick = (route: any, e: any) => {
+    e.stopPropagation();
+    router.push(route);
+  };
+
   return (
-    <div className="min-h-screen bg-white py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-transparent p-6 flex items-center justify-center relative overflow-hidden mt-[-110px]">
+      {/* Diagonal lines background */}
+      <div className="absolute inset-0 opacity-10">
+        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="diagonalLines" patternUnits="userSpaceOnUse" width="100" height="100">
+              <path d="M0,0 L100,100 M0,25 L100,125 M0,50 L100,150 M0,75 L100,175 M-25,0 L75,100 M-50,0 L50,100 M-75,0 L25,100" 
+                    stroke="teal" 
+                    strokeWidth="5" 
+                    fill="none"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#diagonalLines)" />
+        </svg>
+      </div>
+
+      <div className="max-w-6xl w-full relative z-10">
         {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center px-4 py-2 mb-6 text-sm font-medium text-blue-600 bg-blue-50 rounded-full border border-blue-200">
-            ✨ Platform Features
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200 mb-4">
+            <span className="text-sm font-medium text-gray-700">PLATFORM FEATURES</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
-            Powerful Features
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
+            Modern Payment Solutions
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Everything you need to accept, swap, and manage stablecoins with enterprise-grade security and performance.
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm">
+            Enterprise-grade stablecoin infrastructure with minimal fees
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+        {/* Features Grid - 2 per row on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon;
+            const isSelected = selectedCard === index;
             return (
-              <SpotlightCard 
+              <GlassCard 
                 key={index} 
-                className="group cursor-pointer transform hover:scale-[1.02] transition-transform duration-300"
-                spotlightColor={feature.spotlightColor}
+                isSelected={isSelected}
+                className="hover:bg-gray-50/50 min-h-[280px]"
+                onClick={() => handleCardClick(index)}
               >
-                <div className="relative z-10 h-full flex flex-col">
-                  {/* Icon and Title */}
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className={`${feature.iconBg} ${feature.iconColor} p-3 rounded-xl border border-gray-100 shadow-sm`}>
-                      <Icon className="w-6 h-6" />
+                <div className="p-10 h-full flex flex-col justify-between space-y-8 relative z-10">
+                  <div>
+                    <div className="mb-4">
+                      <Icon className="w-8 h-8 text-blue-600 mb-3" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors">
-                        {feature.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                        {feature.description}
-                      </p>
+                    <h3 className="text-2xl font-semibold text-blue-600 mb-3">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 text-base leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-6 text-sm text-gray-500">
+                      {feature.tags.map((tag, tagIndex) => (
+                        <div key={tagIndex} className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <span>{tag}</span>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {feature.tags.map((tag, tagIndex) => (
-                      <span
-                        key={tagIndex}
-                        className="px-3 py-1 bg-gray-50 text-gray-700 text-xs sm:text-sm rounded-full border border-gray-200 font-medium"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Action Button */}
-                  <div className="mt-auto">
+                    
                     <button
-                      className={`w-full ${feature.gradient} text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                      onClick={(e) => handleButtonClick(feature.route, e)}
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200"
                     >
-                      {feature.button}
+                      <span>{feature.button}</span>
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                
-                {/* Subtle accent line */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-200 to-transparent opacity-50"></div>
-              </SpotlightCard>
+              </GlassCard>
             );
           })}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="text-center mt-20">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Ready to transform your payment infrastructure?
-            </h3>
-            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-              Join thousands of businesses already using our platform to streamline their stablecoin operations.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-4 px-8 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                Get Started Today
-              </button>
-              <button className="border-2 border-gray-300 text-gray-700 font-semibold py-4 px-8 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                Schedule Demo
-              </button>
-            </div>
-          </div>
+        {/* Footer CTA */}
+        <div className="mt-16 text-center">
+          <button
+            onClick={() => router.push('/get-started')}
+            className="px-8 py-4 text-base font-medium rounded-full flex items-center gap-3 mx-auto transition-all duration-300 hover:shadow-lg hover:scale-105"
+            style={{
+              backgroundColor: '#A5CE00',
+              color: '#10367D',
+            }}
+          >
+            Get Started
+            <Zap className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>
   );
 }
+

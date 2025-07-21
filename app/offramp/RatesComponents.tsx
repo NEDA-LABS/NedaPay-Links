@@ -210,7 +210,7 @@ const CurrencyRatesWidget = () => {
     
     loopRef.current = horizontalLoop(currencyItems, {
       repeat: -1,
-      speed: 0.5,
+      speed: 0.2,
       paused: isPaused,
       paddingRight: parseFloat(
         gsap.getProperty(currencyItems[0], 'marginRight') as string
@@ -553,35 +553,18 @@ const CurrencyRatesWidget = () => {
                 </div>
                 
                 {/* Exchange rate section */}
-                <div className="space-y-2">
+                <div className="flex flex-row space-y-2 justify-between">
                   {/* From section */}
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 font-medium">FROM</span>
                     <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/30">
-                      <span className="text-slate-300 font-mono">1.00</span>
                       <span className="text-emerald-400 font-bold">USDC</span>
                     </div>
                   </div>
 
-                  {/* Arrow */}
-                  <div className="flex justify-center">
-                    <div className="w-8 h-0.5 bg-gradient-to-r from-transparent via-slate-500 to-transparent relative">
-                      <div className="absolute right-0 top-[-2px] w-0 h-0 border-l-[4px] border-l-slate-500 border-t-[2px] border-b-[2px] border-t-transparent border-b-transparent"></div>
-                    </div>
-                  </div>
+                  
 
                   {/* To section - Main rate display */}
                   <div className="price-display rounded-xl p-4 relative overflow-hidden">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-slate-500 text-xs font-medium">TO</span>
-                      <span className="text-slate-400 text-xs font-mono">
-                        {new Date().toLocaleTimeString('en-US', { 
-                          hour12: false, 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </span>
-                    </div>
                     
                     <div className="flex items-baseline gap-2">
                       <div className={`text-sm font-bold font-mono text-transparent bg-clip-text 
@@ -596,25 +579,6 @@ const CurrencyRatesWidget = () => {
                       <span className="text-slate-400 font-medium text-sm">
                         {currency.code}
                       </span>
-                    </div>
-
-                    {/* Price change indicator */}
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className={`flex items-center gap-1 text-xs font-medium
-                                      ${priceChange > 0 ? 'text-emerald-400' : priceChange < 0 ? 'text-red-400' : 'text-slate-500'}`}>
-                        {priceChange !== 0 && (
-                          <>
-                            <span>{priceChange > 0 ? '+' : ''}{priceChange.toFixed(2)}%</span>
-                            <span className="text-slate-600">24h</span>
-                          </>
-                        )}
-                        {priceChange === 0 && <span className="text-slate-500">No change</span>}
-                      </div>
-                      
-                      {/* Data freshness indicator */}
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        isStale ? 'bg-amber-400/50' : 'bg-emerald-400/50'
-                      } animate-pulse`}></div>
                     </div>
 
                     {/* Subtle background pattern */}

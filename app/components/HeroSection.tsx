@@ -22,7 +22,7 @@ const HeroSection = () => {
 
   return (
     <div className="lg:h-[100vh] ">
-        <div className="grid grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 p-4 items-center rounded-2xl relative">
+        <div className="grid grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 px-4 items-center rounded-2xl relative">
             <div className="flex flex-col gap-6">
             <ShinyText text="Unlock Seamless Payments Globally" className="!text-2xl  lg:!text-5xl xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-slate-100 via-purple-300 to-indigo-300 bg-clip-text leading-tight"/>
           {/* <h1 className="!text-2xl  lg:!text-5xl xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-slate-100 via-purple-300 to-indigo-300 bg-clip-text text-transparent leading-tight">

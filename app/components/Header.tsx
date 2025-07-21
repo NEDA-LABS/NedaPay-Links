@@ -73,8 +73,7 @@ export default function Header() {
     <header
       className={`
         sticky top-0 z-50 
-        backdrop-blur-md bg-white/80
-        border-b border-slate-200/50
+        backdrop-blur-md
         transition-all duration-300
         ${scrolled 
           ? "shadow-lg bg-white/90" 
@@ -97,11 +96,11 @@ export default function Header() {
                   <Image src="/NEDApayLogo.png" alt="Logo" width={20} height={20} />
                 </div>
                 <div className="flex justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="text-sm relative z-10 text-slate-800 font-extrabold drop-shadow-lg p-1 hidden md:!flex">
+                  <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex">
                     NEDAPay
                   </span>
                 </div>
-                <span className="text-[0.6rem] z-10 text-slate-800 font-bold flex items-center justify-center">
+                <span className="text-[0.6rem] z-10 text-slate-100 font-bold flex items-center justify-center">
                     BETA
                   </span>
               </div>
@@ -116,7 +115,7 @@ export default function Header() {
               <nav className="flex items-center space-x-2">
                 <a
                   href="#how-it-works"
-                  className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 font-medium bg-slate-200 shadow-sm group hidden md:!flex"
+                  className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 font-medium bg-slate-200 shadow-sm group hidden md:!flex"
                 >
                   <span className="relative z-10 flex items-center">
                     <svg
@@ -139,7 +138,7 @@ export default function Header() {
                 <a
                   href="#faq"
                   onClick={handleFAQClick}
-                  className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 font-medium bg-slate-200 shadow-sm group hidden md:!flex"
+                  className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 font-medium bg-slate-200 shadow-sm group hidden md:!flex"
                 >
                   <span className="relative z-10 flex items-center">
                     <svg

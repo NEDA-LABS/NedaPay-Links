@@ -7,40 +7,40 @@ import {
   PanInfo,
   ResolvedValues,
 } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Globe2, Zap, Shield, CircleDollarSign, Sparkles } from "lucide-react";
 
 const DEFAULT_FEATURES = [
   {
-    image: "/global_stablecoins.png",
+    icon: Globe2,
     title: "Global Stablecoins",
-    description: "Access payments worldwide with instant cross-border settlements",
+    description: "Access payments worldwide",
     gradient: "from-blue-500 via-blue-600 to-indigo-600",
     iconBg: "bg-gradient-to-br from-blue-500/20 to-indigo-500/20",
     glowColor: "shadow-blue-500/30",
     accentColor: "text-blue-400",
   },
   {
-    image: "/fast-settlements.png",
+    icon: Zap,
     title: "Instant Settlement",
-    description: "Lightning-fast transactions with sub-second confirmation times",
+    description: "Fast, reliable transactions",
     gradient: "from-amber-500 via-orange-500 to-red-500",
     iconBg: "bg-gradient-to-br from-amber-500/20 to-orange-500/20",
     glowColor: "shadow-amber-500/30",
     accentColor: "text-amber-400",
   },
   {
-    image: "/secure_payments.png",
+    icon: Shield,
     title: "Secure Payments",
-    description: "Military-grade encryption with multi-layer security protocols",
+    description: "Top-tier security",
     gradient: "from-emerald-500 via-teal-500 to-cyan-500",
     iconBg: "bg-gradient-to-br from-emerald-500/20 to-teal-500/20",
     glowColor: "shadow-emerald-500/30",
     accentColor: "text-emerald-400",
   },
   {
-    image: "/zero_fees.png",
-    title: "Zero Fees",
-    description: "Completely fee-free transactions with transparent pricing",
+    icon: CircleDollarSign,
+    title: "Low Fees",
+    description: "Cost-effective transactions",
     gradient: "from-purple-500 via-violet-500 to-blue-500",
     iconBg: "bg-gradient-to-br from-purple-500/20 to-violet-500/20",
     glowColor: "shadow-purple-500/30",
@@ -48,8 +48,10 @@ const DEFAULT_FEATURES = [
   },
 ];
 
+type LucideIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
 interface Feature {
-  image: string;
+  icon: LucideIcon;
   title: string;
   description: string;
   gradient: string;
@@ -101,7 +103,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
     controls.start({
       rotateY: [startAngle, startAngle - 360],
       transition: {
-        duration: 15,
+        duration: 20,
         ease: "linear",
         repeat: Infinity,
       },
@@ -156,7 +158,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
   };
 
   return (
-    <div className="relative h-[600px] w-full overflow-hidden">
+    <div className="relative h-[600px] w-full overflow-hidden my-auto">
       {/* Gradient overlays for fade effect */}
       {/* <div
         className="absolute top-0 left-0 h-full w-[80px] z-10 pointer-events-none"
@@ -192,10 +194,11 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
           className="flex min-h-[300px] cursor-grab items-center justify-center [transform-style:preserve-3d] active:cursor-grabbing"
         >
           {galleryFeatures.map((feature, i) => {
+            const IconComponent = feature.icon;
             return (
               <div
                 key={i}
-                className="group absolute flex h-fit items-center justify-center p-4 [backface-visibility:hidden]"
+                className="group absolute flex items-center justify-center [backface-visibility:hidden]"
                 style={{
                   width: `${faceWidth}px`,
                   transform: `rotateY(${(360 / faceCount) * i}deg) translateZ(${radius}px)`,
@@ -206,8 +209,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   className={`
                     relative overflow-hidden rounded-3xl backdrop-blur-sm
-                    bg-gradient-to-br from-slate-800/80 to-slate-900/80
-                    p-8 w-[280px] h-[350px] sm:w-[240px] sm:h-[320px]
+                    w-[280px] sm:w-[240px]
                     hover:shadow-2xl transition-all duration-500
                     hover:border-white/20 hover:bg-gradient-to-br hover:from-slate-700/80 hover:to-slate-800/80
                   `}
@@ -230,7 +232,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                       whileHover={{ rotate: 5, scale: 1.1 }}
                       transition={{ duration: 0.5, ease: "easeInOut" }}
                       className={`
-                        relative flex items-center justify-center w-20 h-20 rounded-2xl
+                        relative flex items-center justify-center rounded-2xl
                          group-hover:shadow-2xl transition-all duration-500
                          group-hover:border-white/30
                         overflow-hidden
@@ -239,11 +241,9 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                       {/* Image glow */}
                       <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 ${feature.glowColor}`} />
                       
-                      <img 
-                        src={feature.image}
-                        alt={feature.title}
-                        className="w-20 h-20 object-contain transition-all duration-300 relative z-10 group-hover:scale-110"
-                      />
+                      {React.createElement(feature.icon as LucideIcon, {
+                        className: `w-25 h-25 ${feature.accentColor} transition-all duration-300 relative z-10 group-hover:scale-110`
+                      })}
                       
                       {/* Sparkle effect */}
                       <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-all duration-700">
@@ -253,7 +253,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                   </div>
 
                   {/* Content */}
-                  <div className="text-center space-y-4 relative z-10">
+                  <div className="text-center relative z-10">
                     <h3 className="text-xl font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
                       {feature.title}
                     </h3>
