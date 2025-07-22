@@ -490,7 +490,7 @@ const WalletSelector = forwardRef<
       ) : (
         <button
           onClick={handleEmailLogin}
-          className="flex items-center hover:!bg-blue-50 text-slate-800 rounded-lg transition-all duration-200 shadow-sm"
+          className="flex items-center bg-[#3E55E6] hover:bg-blue-200 text-white hover:text-black rounded-lg transition-all duration-200 shadow-sm border-2 border-white"
           disabled={isConnecting}
           style={{ borderRadius: "0.75rem" }}
         >

@@ -113,15 +113,15 @@ function HomeContent() {
                       walletSelectorRef.current.triggerLogin();
                     }
                   }}
-                  className="group relative flex items-center justify-center !bg-white hover:!bg-gray-50 !text-gray-900 font-bold text-sm py-4 px-8 rounded-3xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
+                  className="group relative flex items-center justify-center bg-[#3E55E6] hover:bg-blue-300 text-gray-900 font-bold text-lg py-4 px-8 rounded-3xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
                   {/* Button Background Effect */}
                   <div className="absolute inset-0 !bg-gradient-to-r !from-blue-600/5 !to-purple-600/5 opacity-0 group-hover:!opacity-100 transition-opacity duration-300"></div>
-                  <span className="relative flex items-center">
+                  <span className="relative flex items-center text-white text-sm">
                     <svg
                       className="w-5 h-5 mr-3 text-blue-600"
                       fill="none"
-                      stroke="currentColor"
+                      stroke="white"
                       viewBox="0 0 24 24"
                     >
                       <path
@@ -139,10 +139,10 @@ function HomeContent() {
                   <WalletSelector ref={walletSelectorRef} />
                 </span>
 
-                <p className="text-blue-100/80 text-sm max-w-md leading-relaxed">
+                {/* <p className="text-blue-100/80 text-sm max-w-md leading-relaxed">
                   Sign with Email or Connect your wallet to get started and
                   access your personalized Dashboard.
-                </p>
+                </p> */}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-6">
