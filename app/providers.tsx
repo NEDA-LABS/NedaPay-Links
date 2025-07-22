@@ -1,6 +1,6 @@
 "use client";
 
-import { base } from "wagmi/chains";
+import { base, polygon } from "wagmi/chains";
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 import { http, fallback } from "wagmi";
@@ -14,12 +14,12 @@ const queryClient = new QueryClient();
 
 // Configure wagmi with all supported wallet connectors
 const wagmiConfig = createPrivyConfig({
-  chains: [base],
+  chains: [base, polygon],
   // connectors: [
-  //   coinbaseWallet({
-  //     appName: "NEDA Pay Merchant",
-  //   }),
-  //   metaMask(),
+  // coinbaseWallet({
+  // appName: "NEDA Pay Merchant",
+  // }),
+  // metaMask(),
   // ],
   ssr: true,
   transports: {
@@ -30,6 +30,13 @@ const wagmiConfig = createPrivyConfig({
       http('https://base.llamarpc.com'),
       http('https://1rpc.io/base')
     ]),
+    [polygon.id]: fallback([
+      http(process.env.NEXT_PUBLIC_POLYGON_RPC || 'https://polygon-mainnet.g.alchemy.com/v2/demo'),
+      http('https://polygon-rpc.com'),
+      http('https://rpc-mainnet.matic.network'),
+      http('https://polygon.llamarpc.com'),
+      http('https://1rpc.io/matic')
+    ])
   },
 });
 

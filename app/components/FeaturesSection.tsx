@@ -132,16 +132,16 @@ export default function BrandedGlassUI() {
                       {feature.description}
                     </p>
                   </div>
-                  <Image src={feature.visual} alt={feature.title} width={500} height={100}/>
+                  <Image src={feature.visual} alt={feature.title} width={300} height={100}/>
                   <div className="space-y-4">
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
+                    {/* <div className="flex items-center gap-6 text-sm text-gray-500">
                       {feature.tags.map((tag, tagIndex) => (
                         <div key={tagIndex} className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                           <span>{tag}</span>
                         </div>
                       ))}
-                    </div>
+                    </div> */}
                     
                     <button
                       onClick={(e) => handleButtonClick(feature.route, e)}

@@ -1,19 +1,18 @@
-import { createWalletClient, custom, http } from 'viem';
-import { base } from 'viem/chains';
-import { createMeeClient, toMultichainNexusAccount } from '@biconomy/abstractjs';
-import { ethers } from 'ethers';
+import { createWalletClient, custom, http, erc20Abi, type Hex, type Chain } from 'viem';
+import { 
+  createMeeClient, 
+  toMultichainNexusAccount,
+  getMeeScanLink,
+  type MeeClient,
+  type MultichainSmartAccount 
+} from '@biconomy/abstractjs';
 
 // Types
-export type BiconomyClient = {
-  meeClient: any; 
-  authorization: any;
+export type BiconomyEmbeddedClient = {
+  meeClient: MeeClient;
+  smartAccount: MultichainSmartAccount;
+  walletClient: any;
 };
-
-export type SignAuthorizationFunction = (params: {
-  contractAddress: `0x${string}`;
-  chainId: number;
-  nonce: number;
-}) => Promise<any>;
 
 export type WalletType = {
   address: `0x${string}`;
@@ -22,123 +21,114 @@ export type WalletType = {
   walletClientType?: string;
 };
 
-// Constants
-const NEXUS_IMPLEMENTATION_ADDRESS = '0x000000004F43C49e93C970E84001853a70923B03';
+// Chain configuration map
+const CHAIN_CONFIG: Record<number, Chain> = {
+  8453: { id: 8453, name: 'Base', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: ['https://mainnet.base.org'] } }, blockExplorers: { default: { name: 'Basescan', url: 'https://basescan.org' } } },
+  42161: { id: 42161, name: 'Arbitrum One', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: ['https://arb1.arbitrum.io/rpc'] } }, blockExplorers: { default: { name: 'Arbiscan', url: 'https://arbiscan.io' } } },
+  137: { id: 137, name: 'Polygon', nativeCurrency: { name: 'Matic', symbol: 'MATIC', decimals: 18 }, rpcUrls: { default: { http: ['https://polygon-rpc.com'] } }, blockExplorers: { default: { name: 'Polygonscan', url: 'https://polygonscan.com' } } },
+  42220: { id: 42220, name: 'Celo', nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 }, rpcUrls: { default: { http: ['https://forno.celo.org'] } }, blockExplorers: { default: { name: 'Celoscan', url: 'https://celoscan.io' } } }
+};
 
-
-export const initializeBiconomy = async (
+export const initializeBiconomyEmbedded = async (
   wallet: WalletType,
-  signAuthorization: SignAuthorizationFunction
-): Promise<BiconomyClient> => {
+  signAuthorization: any,
+  chainId: number
+): Promise<BiconomyEmbeddedClient> => {
   if (!wallet?.address) {
     throw new Error('Wallet not connected or address not available');
   }
 
-  // Ensure we're on Base chain
-  await wallet.switchChain(base.id);
-  console.log('Switched to Base chain successfully', wallet.switchChain(base.id))
+  // Get chain configuration
+  const chain = CHAIN_CONFIG[chainId];
+  if (!chain) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
+
+  // Switch to selected chain
+  await wallet.switchChain(chainId);
   
   const provider = await wallet.getEthereumProvider();
   if (!provider) {
     throw new Error('Ethereum provider not available');
   }
 
-  console.log('Provider configured successfully', provider)
+  // Create wallet client
+  const walletClient = createWalletClient({
+    chain,
+    transport: custom(provider),
+    account: wallet.address as `0x${string}`
+  });
 
-  // Create Nexus account
-  const nexusAccount = await toMultichainNexusAccount({
-    chains: [base],
+  // Create Nexus smart account
+  const smartAccount = await toMultichainNexusAccount({
+    chains: [chain],
     transports: [http()],
-    signer: await wallet.getEthereumProvider(),
-    accountAddress: wallet.address,
+    signer: walletClient
   });
-
-  // console.log('Nexus account created successfully', nexusAccount)
-
-  // Sign authorization
-  const authorization = await signAuthorization({
-    contractAddress: NEXUS_IMPLEMENTATION_ADDRESS,
-    chainId: base.id,
-    nonce: 0,
-    
-  });
-
-  // console.log('Authorization signed successfully', authorization)
 
   // Create MEE client
   const meeClient = await createMeeClient({
-    account: nexusAccount,
+    account: smartAccount
   });
 
-  // console.log('Biconomy client initialized successfully', meeClient)
-  return { meeClient, authorization };
+  return { meeClient, smartAccount, walletClient };
 };
 
-
-export const executeGasAbstractedTransfer = async (
-  biconomyClient: BiconomyClient,
+export const executeGasAbstractedTransferEmbedded = async (
+  biconomyClient: BiconomyEmbeddedClient,
   toAddress: `0x${string}`,
   amountInWei: bigint,
   tokenAddress: `0x${string}`,
-  tokenAbi: string[]
+  chainId: number
 ): Promise<any> => {
-  console.log('Starting gas-abstracted transfer with parameters:', {
-    toAddress,
-    amountInWei: amountInWei.toString(),
-    tokenAddress
-  });
+  // Get chain configuration
+  const chain = CHAIN_CONFIG[chainId];
+  if (!chain) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
 
-  // Validate inputs
-  if (!biconomyClient.meeClient || !biconomyClient.authorization) {
+  if (!biconomyClient.meeClient || !biconomyClient.smartAccount) {
     throw new Error('Biconomy client not properly initialized');
   }
 
-  if (!ethers.utils.isAddress(toAddress)) {
-    throw new Error('Invalid recipient address');
-  }
-
-  // console.log('Creating token transfer data for:', {
-  //   toAddress,
-  //   amountInWei: amountInWei.toString(),
-  //   tokenAddress
-  // });
-  const tokenInterface = new ethers.utils.Interface(tokenAbi);
-  const transferData = tokenInterface.encodeFunctionData('transfer', [toAddress, amountInWei]);
-  // console.log('Transfer data created:', transferData);
-
-  // console.log('Executing transaction with authorization:', {
-  //   hasAuthorization: !!biconomyClient.authorization,
-  //   feeToken: tokenAddress
-  // });
-  const { hash } = await biconomyClient.meeClient.execute({
-    authorization: biconomyClient.authorization,
-    delegate: true,
-    feeToken: {
-      address: tokenAddress,
-      chainId: base.id,
-    },
-    instructions: [{
-      chainId: base.id,
-      calls: [{
+  try {
+    // Build transfer instruction
+    const transferInstruction = await biconomyClient.smartAccount.buildComposable({
+      type: 'default',
+      data: {
+        abi: erc20Abi,
+        chainId: chain.id,
         to: tokenAddress,
-        value: 0n,
-        data: transferData,
-      }],
-    }],
-  });
-  // console.log('Transaction hash:', hash);
+        functionName: 'transfer',
+        args: [toAddress, amountInWei],
+      }
+    });
 
-  // console.log('Waiting for transaction receipt for hash:', hash);
-  const receipt = await biconomyClient.meeClient.waitForSupertransactionReceipt({ hash });
-  // console.log('Transaction receipt received:', {
-  //   status: receipt.status,
-  //   transactionHash: receipt.transactionHash,
-  //   blockNumber: receipt.blockNumber
-  // });
+    // Get fusion quote
+    const fusionQuote = await biconomyClient.meeClient.getFusionQuote({
+      instructions: [transferInstruction],
+      trigger: {
+        chainId: chain.id,
+        tokenAddress,
+        amount: amountInWei
+      },
+      feeToken: {
+        address: tokenAddress,
+        chainId: chain.id
+      }
+    });
 
-  // console.log('Transaction completed successfully with receipt:', {
-  //   status: receipt.status,
-  //   transactionHash: receipt.transactionHash
-  // });
-  return receipt;
+    // Execute fusion quote
+    const { hash } = await biconomyClient.meeClient.executeFusionQuote({ 
+      fusionQuote 
+    });
+
+    // Wait for transaction completion
+    await biconomyClient.meeClient.waitForSupertransactionReceipt({ hash });
+
+    return hash;
+  } catch (error) {
+    console.error('Error executing gas-abstracted transfer:', error);
+    throw error;
+  }
 };

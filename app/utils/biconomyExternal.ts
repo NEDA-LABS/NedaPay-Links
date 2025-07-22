@@ -1,5 +1,4 @@
-import { createWalletClient, custom, http, erc20Abi, type Hex } from 'viem';
-import { base } from 'viem/chains';
+import { createWalletClient, custom, http, erc20Abi, type Hex, type Chain } from 'viem';
 import { 
   createMeeClient, 
   toMultichainNexusAccount,
@@ -9,7 +8,7 @@ import {
 } from '@biconomy/abstractjs';
 
 // Types
-export type BiconomyClient = {
+export type BiconomyExternalClient = {
   meeClient: MeeClient;
   smartAccount: MultichainSmartAccount;
   walletClient: any;
@@ -22,223 +21,190 @@ export type WalletType = {
   walletClientType?: string;
 };
 
-// Updated initialization for external wallets
-export const initializeBiconomy = async (
-  wallet: WalletType
-): Promise<BiconomyClient> => {
+// Chain configuration map
+const CHAIN_CONFIG: Record<number, Chain> = {
+  8453: { id: 8453, name: 'Base', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: ['https://mainnet.base.org'] } }, blockExplorers: { default: { name: 'Basescan', url: 'https://basescan.org' } } },
+  42161: { id: 42161, name: 'Arbitrum One', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: ['https://arb1.arbitrum.io/rpc'] } }, blockExplorers: { default: { name: 'Arbiscan', url: 'https://arbiscan.io' } } },
+  137: { id: 137, name: 'Polygon', nativeCurrency: { name: 'Matic', symbol: 'MATIC', decimals: 18 }, rpcUrls: { default: { http: ['https://polygon-rpc.com'] } }, blockExplorers: { default: { name: 'Polygonscan', url: 'https://polygonscan.com' } } },
+  42220: { id: 42220, name: 'Celo', nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 }, rpcUrls: { default: { http: ['https://forno.celo.org'] } }, blockExplorers: { default: { name: 'Celoscan', url: 'https://celoscan.io' } } }
+};
+
+export const initializeBiconomyExternal = async (
+  wallet: WalletType,
+  chainId: number
+): Promise<BiconomyExternalClient> => {
   if (!wallet?.address) {
     throw new Error('Wallet not connected or address not available');
   }
 
-  // Ensure we're on Base chain (updated from Base mainnet)
-  await wallet.switchChain(base.id);
-//   console.log('Switched to Base chain successfully');
+  // Get chain configuration
+  const chain = CHAIN_CONFIG[chainId];
+  if (!chain) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
+
+  // Switch to selected chain
+  await wallet.switchChain(chainId);
   
   const provider = await wallet.getEthereumProvider();
   if (!provider) {
     throw new Error('Ethereum provider not available');
   }
 
-  // Create wallet client for external wallet
+  // Create wallet client
   const walletClient = createWalletClient({
-    chain: base,
+    chain,
     transport: custom(provider),
-    account: wallet.address
+    account: wallet.address as `0x${string}`
   });
 
-  // Create Nexus smart account for external wallet
+  // Create Nexus smart account
   const smartAccount = await toMultichainNexusAccount({
-    chains: [base],
+    chains: [chain],
     transports: [http()],
     signer: walletClient
   });
-
-//   console.log('Nexus smart account created successfully');
 
   // Create MEE client
   const meeClient = await createMeeClient({
     account: smartAccount
   });
 
-//   console.log('Biconomy MEE client initialized successfully');
   return { meeClient, smartAccount, walletClient };
 };
 
-
-
-// Updated transfer function using Fusion Quote API
-export const executeGasAbstractedTransfer = async (
-  biconomyClient: BiconomyClient,
+export const executeGasAbstractedTransferExternal = async (
+  biconomyClient: BiconomyExternalClient,
   toAddress: `0x${string}`,
   amountInWei: bigint,
-  tokenAddress: `0x${string}`
+  tokenAddress: `0x${string}`,
+  chainId: number
 ): Promise<any> => {
-//   console.log('Starting gas-abstracted transfer with Fusion Quote:', {
-//     toAddress,
-//     amountInWei: amountInWei.toString(),
-//     tokenAddress
-//   });
+  // Get chain configuration
+  const chain = CHAIN_CONFIG[chainId];
+  if (!chain) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
 
-
-  // Validate inputs
   if (!biconomyClient.meeClient || !biconomyClient.smartAccount) {
     throw new Error('Biconomy client not properly initialized');
   }
 
   try {
-    // Build the transfer instruction using the smart account
+    // Build transfer instruction
     const transferInstruction = await biconomyClient.smartAccount.buildComposable({
       type: 'default',
       data: {
         abi: erc20Abi,
-        chainId: base.id,
+        chainId: chain.id,
         to: tokenAddress,
         functionName: 'transfer',
-        args: [toAddress as Hex, amountInWei],
+        args: [toAddress, amountInWei],
       }
     });
-
-//   console.log('Transfer instruction built successfully');
 
     // Get fusion quote
     const fusionQuote = await biconomyClient.meeClient.getFusionQuote({
       instructions: [transferInstruction],
       trigger: {
-        chainId: base.id,
-        tokenAddress: tokenAddress,
+        chainId: chain.id,
+        tokenAddress,
         amount: amountInWei
       },
       feeToken: {
         address: tokenAddress,
-        chainId: base.id
+        chainId: chain.id
       }
     });
 
-//   console.log('Fusion quote received');
-
-    // Execute the fusion quote
+    // Execute fusion quote
     const { hash } = await biconomyClient.meeClient.executeFusionQuote({ 
       fusionQuote 
     });
 
-//   console.log('Transaction hash:', hash);
-
-    // Get MEE scan link
-    const meeScanLink = getMeeScanLink(hash);
-//   console.log('MEE Scan link:', meeScanLink);
-
     // Wait for transaction completion
-    const receipt = await biconomyClient.meeClient.waitForSupertransactionReceipt({ 
-      hash
-    });
+    await biconomyClient.meeClient.waitForSupertransactionReceipt({ hash });
 
-    // console.log('Transaction completed successfully:', {
-    //   status: receipt.transactionStatus,
-    //   hash: receipt.hash
-    // });
-
-    return {
-      receipt,
-      hash,
-      meeScanLink
-    };
-
+    return hash;
   } catch (error) {
     console.error('Error executing gas-abstracted transfer:', error);
     throw error;
   }
 };
 
-// Batch transfer function for multiple recipients
 export const executeBatchGasAbstractedTransfer = async (
-  biconomyClient: BiconomyClient,
+  biconomyClient: BiconomyExternalClient,
   transfers: Array<{
     toAddress: `0x${string}`;
     amountInWei: bigint;
   }>,
-  tokenAddress: `0x${string}`
+  tokenAddress: `0x${string}`,
+  chainId: number
 ): Promise<any> => {
-//   console.log('Starting batch gas-abstracted transfer:', {
-//     transferCount: transfers.length,
-//     tokenAddress
-//   });
+  // Get chain configuration
+  const chain = CHAIN_CONFIG[chainId];
+  if (!chain) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
 
   if (!biconomyClient.meeClient || !biconomyClient.smartAccount) {
     throw new Error('Biconomy client not properly initialized');
   }
 
   try {
-    // Build transfer instructions for each recipient
+    // Build transfer instructions
     const transferInstructions = await Promise.all(
       transfers.map(({ toAddress, amountInWei }) =>
         biconomyClient.smartAccount.buildComposable({
           type: 'default',
           data: {
             abi: erc20Abi,
-            chainId: base.id,
+            chainId: chain.id,
             to: tokenAddress,
             functionName: 'transfer',
-            args: [toAddress as Hex, amountInWei],
+            args: [toAddress, amountInWei],
           }
         })
       )
     );
 
-//   console.log('Batch transfer instructions built successfully');
-
     // Calculate total amount
     const totalAmount = transfers.reduce((sum, transfer) => sum + transfer.amountInWei, 0n);
 
-    // Get fusion quote for batch
+    // Get fusion quote
     const fusionQuote = await biconomyClient.meeClient.getFusionQuote({
       instructions: transferInstructions,
       trigger: {
-        chainId: base.id,
-        tokenAddress: tokenAddress,
+        chainId: chain.id,
+        tokenAddress,
         amount: totalAmount
       },
       feeToken: {
         address: tokenAddress,
-        chainId: base.id
+        chainId: chain.id
       }
     });
 
-//   console.log('Batch fusion quote received');
-
-    // Execute the fusion quote
+    // Execute fusion quote
     const { hash } = await biconomyClient.meeClient.executeFusionQuote({ 
       fusionQuote 
     });
 
-//   console.log('Batch transaction hash:', hash);
-
-    // Get MEE scan link
-    const meeScanLink = getMeeScanLink(hash);
-//   console.log('MEE Scan link:', meeScanLink);
-
     // Wait for transaction completion
-    const receipt = await biconomyClient.meeClient.waitForSupertransactionReceipt({ 
-      hash 
-    });
+    await biconomyClient.meeClient.waitForSupertransactionReceipt({ hash });
 
-//   console.log('Batch transaction completed successfully:', {
-//     status: receipt.transactionStatus,
-//     hash: receipt.hash
-//   });
-
-    return {
-      receipt,
-      hash,
-      meeScanLink
-    };
-
+    return hash;
   } catch (error) {
-//   console.error('Error executing batch gas-abstracted transfer:', error);
+    console.error('Error executing batch transfer:', error);
     throw error;
   }
 };
 
-// Helper function to get MEE scan link
-export const getMeeScanLinkFromHash = (hash: string): string => {
-  return getMeeScanLink(hash as `0x${string}`);
+export const getMeeScanLinkFromHash = (hash: string, chainId: number): string => {
+  const chain = CHAIN_CONFIG[chainId];
+  if (!chain) {
+    throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
+  
+  return `${chain.blockExplorers?.default.url}/tx/${hash}`;
 };
