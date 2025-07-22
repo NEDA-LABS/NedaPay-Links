@@ -29,7 +29,7 @@ const HeroSection = () => {
             Unlock Seamless Payments Globally
           </h1> */}
 
-        <p className="!text-l lg:!text-xl  font-semibold text-slate-50 leading-relaxed drop-shadow-md">
+        <p className="!text-l lg:!text-xl  font-bold text-slate-100 leading-relaxed drop-shadow-md">
           Accept Stablecoins, Swap instantly, Cash Out Easily
         </p>
         {/* Clean CTA Section */}
@@ -63,12 +63,12 @@ const HeroSection = () => {
                 router.push("/dashboard");
               }}
               disabled={loading}
-              className="relative items-center !px-8 !py-4 !bg-gradient-to-r !from-blue-600 !to-indigo-600 hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold !rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative items-center !px-8 !py-4 !bg-[#3E55E6] hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold !rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
-                <span className="text-xl text-green-200 text-center">
+                <span className="text-xl text-white text-center">
                   Explore Dashboard
                 </span>
               )}

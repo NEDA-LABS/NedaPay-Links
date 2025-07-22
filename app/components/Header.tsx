@@ -73,10 +73,10 @@ export default function Header() {
     <header
       className={`
         sticky top-0 z-50 
-        backdrop-blur-md
+        
         transition-all duration-300
         ${scrolled 
-          ? "shadow-lg bg-white/90" 
+          ? "shadow-lg bg-[#004a6d]" 
           : "shadow-sm"
         }
       `}
@@ -84,7 +84,7 @@ export default function Header() {
       {/* Simple top border */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
 
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
           {/* Logo Section */}
@@ -92,11 +92,11 @@ export default function Header() {
             <Link href="/" className="group flex items-center space-x-3">
               {/* Simplified Logo */}
               <div className="relative flex">
-                <div className="flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <Image src="/NEDApayLogo.png" alt="Logo" width={20} height={20} />
+                <div className="flex items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                  <Image src="/logo.svg" alt="Logo" width={60} height={60} />
                 </div>
-                <div className="flex justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex">
+                <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 ml-[-20px]">
+                  <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center">
                     NEDAPay
                   </span>
                 </div>
@@ -166,10 +166,10 @@ export default function Header() {
                 {/* Stablecoin Balance Modal Toggle */}
                 <button
                   onClick={() => setIsBalanceModalOpen(true)}
-                  className="rounded-lg hover:!bg-slate-100 transition-colors"
+                  className="rounded-lg transition-colors"
                   title="View Stablecoin Balances"
                 >
-                  <Coins className="w-5 h-5 hover:text-blue-500" />
+                  <Coins className="w-5 h-5 hover:text-white" />
                 </button>
                 <NotificationTab />
                 
@@ -214,10 +214,10 @@ export default function Header() {
               
                 <button
                 onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
-                className="p-2 rounded-xl transition-all duration-300 !bg-gradient-to-r from-blue-400 to-indigo-400 hover:from-blue-500 hover:to-indigo-500"
+                className="p-2 rounded-xl transition-all duration-300 !bg-[#3E55E6] hover:from-blue-500 hover:to-indigo-500 border border-2 border-slate-200"
                 aria-label="Open menu"
               >
-                <Menu size={16} className="text-slate-800 hover:text-slate-700 transition-colors duration-300" />
+                <Menu size={16} className="text-white hover:text-slate-700 transition-colors duration-300" />
               </button>
               
             </div>

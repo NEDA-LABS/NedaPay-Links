@@ -51,7 +51,7 @@ export default function Footer() {
           >
             <FaMedium className="w-5 h-5" strokeWidth={2.5} />
           </a>
-          <a
+          {/* <a
             href="https://github.com/0xMgwan/NedaPay/tree/main/merchant-portal"
             target="_blank"
             rel="noopener noreferrer"
@@ -59,7 +59,7 @@ export default function Footer() {
             aria-label="GitHub"
           >
             <FaGithub className="w-5 h-5" strokeWidth={2.5} />
-          </a>
+          </a> */}
         </div>
       </div>
     </footer>

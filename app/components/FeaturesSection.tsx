@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Coins, Repeat, BarChart2, Settings, Zap, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 const GlassCard = ({ children, className = "", isSelected = false, onClick }) => {
   return (
@@ -28,16 +29,18 @@ const features = [
     tags: ["TSHC", "cNGN"],
     accentColor: "#10367D",
     button: "Accept",
-    route: "/stablecoins"
+    route: "/stablecoins",
+    visual:"/stablecoins.png"
   },
   {
     icon: Repeat,
-    title: "Swap",
+    title: "Swap, Onramp, Offramp",
     description: "Low-fee conversions between assets",
     tags: ["0.1% fee", "Fast"],
     accentColor: "#A5CE00",
     button: "Swap",
-    route: "/swap"
+    route: "/swap",
+    visual:"/swaps_ramps.png"
   },
   {
     icon: BarChart2,
@@ -46,7 +49,8 @@ const features = [
     tags: ["Reports", "Charts"],
     accentColor: "#10367D",
     button: "View",
-    route: "/analytics"
+    route: "/analytics",
+    visual:"/analytics.png"
   },
   {
     icon: Settings,
@@ -55,7 +59,8 @@ const features = [
     tags: ["Auto", "Secure"],
     accentColor: "#A5CE00",
     button: "Setup",
-    route: "/settlement"
+    route: "/settlement",
+    visual:""
   },
 ];
 
@@ -73,7 +78,7 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent p-6 flex items-center justify-center relative overflow-hidden mt-[-110px]">
+    <div className="min-h-screen bg-transparent p-6 flex items-center justify-center relative overflow-hidden mt-[-50px]">
       {/* Diagonal lines background */}
       <div className="absolute inset-0 opacity-10">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -92,14 +97,14 @@ export default function BrandedGlassUI() {
       <div className="max-w-6xl w-full relative z-10">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200 mb-4">
-            <span className="text-sm font-medium text-gray-700">PLATFORM FEATURES</span>
+          <div className="inline-flex items-center px-4 py-2 border border-blue-700 rounded-full text-blue-700 font-medium backdrop-blur-sm mb-4">
+            <span className="text-sm font-medium text-blue-700">POWERFUL FEATURES</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
-            Modern Payment Solutions
+          <h2 className="text-3xl md:text-4xl font-bold text-[#3E55E6] mb-3">
+          Everything You Need to Accept Stablecoin Payments
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto text-sm">
-            Enterprise-grade stablecoin infrastructure with minimal fees
+          Streamline your stablecoin payments with intuitive, secure, and lightning-fast features
           </p>
         </div>
 
@@ -112,7 +117,7 @@ export default function BrandedGlassUI() {
               <GlassCard 
                 key={index} 
                 isSelected={isSelected}
-                className="hover:bg-gray-50/50 min-h-[280px]"
+                className="hover:bg-gray-50/50 min-h-[280px]  border-2 !border-[#3E55E6] !rounded-2xl shadow-2xl"
                 onClick={() => handleCardClick(index)}
               >
                 <div className="p-10 h-full flex flex-col justify-between space-y-8 relative z-10">
@@ -127,7 +132,7 @@ export default function BrandedGlassUI() {
                       {feature.description}
                     </p>
                   </div>
-                  
+                  <Image src={feature.visual} alt={feature.title} width={500} height={100}/>
                   <div className="space-y-4">
                     <div className="flex items-center gap-6 text-sm text-gray-500">
                       {feature.tags.map((tag, tagIndex) => (

@@ -223,11 +223,11 @@ export default function NotificationTab() {
   return (
     <div className="relative">
       <button
-        className="relative p-2 !rounded-full text-slate-800 hover:!bg-blue-100 transition-colors duration-300"
+        className="relative p-2 !rounded-full text-white hover:!bg-blue-100 transition-colors duration-300"
         aria-label="Notifications"
         onClick={() => setOpen((o) => !o)}
       >
-        <FaBell size={18} className='text-slate-800 hover:text-blue-500 transition-colors duration-300'/>
+        <FaBell size={18} className='text-white hover:text-blue-500 transition-colors duration-300'/>
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[1.25rem]">
             {unreadCount > 99 ? '99+' : unreadCount}

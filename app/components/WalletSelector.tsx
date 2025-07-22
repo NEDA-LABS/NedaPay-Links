@@ -420,7 +420,7 @@ const WalletSelector = forwardRef<
     }
 
     return (
-      <FaWallet className="text-slate-800"/>
+      <FaWallet className="text-slate-50"/>
     );
   };
 
@@ -442,7 +442,7 @@ const WalletSelector = forwardRef<
             e.stopPropagation();
             setShowOptions(!showOptions);
           }}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm hover:from-blue-600 hover:to-purple-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-2"
+          className="flex items-center space-x-2 bg-[#3E55E6] text-white shadow-sm hover:from-blue-600 hover:to-purple-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-2 border border-2 border-slate-200"
           style={{ borderRadius: "0.75rem" }}
         >
           <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
@@ -477,7 +477,7 @@ const WalletSelector = forwardRef<
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
-            stroke="currentColor"
+            stroke="white"
             className="w-4 h-4 flex-shrink-0 text-slate-800"
           >
             <path
