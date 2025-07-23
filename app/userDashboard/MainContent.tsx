@@ -2,6 +2,7 @@ import { MetricCard } from "./MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Badge } from "@/components/Badge";
+import { PaymentMethods } from "./PaymentMethods";
 import {
   Activity,
   DollarSign,
@@ -399,51 +400,11 @@ export default function DashboardContent() {
         </Card>
 
         {/* Payment Methods */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-bold">
-                  Payment Methods
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Distribution overview
-                </p>
-              </div>
-              <PieChart className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium">USDC</span>
-                </div>
-                <span className="font-bold text-blue-600">100%</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
-                  <span className="text-sm text-muted-foreground">Other</span>
-                </div>
-                <span className="text-sm text-muted-foreground">0%</span>
-              </div>
-            </div>
-            <div className="pt-3 border-t">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">1</div>
-                <div className="text-xs text-muted-foreground">
-                  Total Methods
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <PaymentMethods transactions={transactions} />
       </div>
 
       {/* Recent Transactions */}
-      <Card className="border-0 shadow-lg">
+      {/* <Card className="border-0 shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold">
@@ -514,7 +475,7 @@ export default function DashboardContent() {
             )}
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Stablecoin Balances */}
       <Card className="border-0 shadow-lg">
