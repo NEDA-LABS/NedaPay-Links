@@ -7,20 +7,41 @@ import Footer from '@/components/Footer';
 import ChainSelector from './ChainSelector';
 import OffRampForm from './OffRampForm';
 import { WalletType } from '../utils/biconomyExternal';
-import { SUPPORTED_CHAINS, DEFAULT_CHAIN, ChainConfig } from './offrampHooks/constants';
-import { TOKEN_ADDRESSES, TOKEN_ABI, GAS_FEES } from './offrampHooks/tokenConfig';
+import { SUPPORTED_CHAINS, DEFAULT_CHAIN, ChainConfig, ChainId } from './offrampHooks/constants';
 
-type SupportedToken = keyof typeof TOKEN_ADDRESSES;
-type ChainId = keyof typeof TOKEN_ADDRESSES[SupportedToken];
+type SupportedToken = 'USDC' | 'USDT';
 
 const OffRampPage: React.FC = () => {
   const { authenticated, login, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const activeWallet = wallets[0] as WalletType | undefined;
   
-  const [selectedChain, setSelectedChain] = useState<ChainConfig & { id: ChainId } | null>(DEFAULT_CHAIN as ChainConfig & { id: ChainId });
-  const [selectedToken, setSelectedToken] = useState('USDC');
+  const [selectedChain, setSelectedChain] = useState<ChainConfig | null>(null);
+  const [selectedToken, setSelectedToken] = useState<SupportedToken>(() => {
+    const defaultToken = DEFAULT_CHAIN.tokens[0] as SupportedToken;
+    return defaultToken;
+  });
   const [isAccountVerified, setIsAccountVerified] = useState(false);
+
+  const handleChainSelect = (chain: ChainConfig, token: string) => {
+    // Ensure the token is valid for this chain
+    if (chain.tokens.includes(token)) {
+      setSelectedChain(chain);
+      setSelectedToken(token as SupportedToken);
+    } else {
+      // Fallback to first available token
+      const defaultToken = chain.tokens[0] as SupportedToken;
+      setSelectedChain(chain);
+      setSelectedToken(defaultToken);
+    }
+  };
+
+  const handleBack = () => {
+    setSelectedChain(null);
+    // Reset to default token when going back
+    const defaultToken = DEFAULT_CHAIN.tokens[0] as SupportedToken;
+    setSelectedToken(defaultToken);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
@@ -41,8 +62,6 @@ const OffRampPage: React.FC = () => {
           </div>
 
           {!authenticated ? (
-            <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 backdrop-blur-sm">
-              {!authenticated && (
             <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100">
@@ -75,8 +94,6 @@ const OffRampPage: React.FC = () => {
                   Login with Privy
                 </button>
               </div>
-            </div>
-          )}
             </div>
           ) : !activeWallet ? (
             <div className="mb-6 p-4 rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-red-50 backdrop-blur-sm">
@@ -113,17 +130,19 @@ const OffRampPage: React.FC = () => {
               </div>
             </div>
           ) : !selectedChain ? (
-            <ChainSelector 
-              chains={SUPPORTED_CHAINS} 
-              onSelectChain={setSelectedChain as (chain: ChainConfig) => void} 
+            <ChainSelector
+              chains={SUPPORTED_CHAINS}
+              onSelectChain={handleChainSelect}
               userAddress={activeWallet?.address || ''}
             />
           ) : (
-            <OffRampForm 
-              chain={selectedChain || DEFAULT_CHAIN}
-              token={selectedToken as SupportedToken}
-              onTokenChange={setSelectedToken}
-              onBack={() => setSelectedChain(null)}
+            <OffRampForm
+              chain={selectedChain}
+              token={selectedToken}
+              onTokenChange={(token) => {
+                setSelectedToken(token as SupportedToken);
+              }}
+              onBack={handleBack}
               isAccountVerified={isAccountVerified}
               setIsAccountVerified={setIsAccountVerified}
             />

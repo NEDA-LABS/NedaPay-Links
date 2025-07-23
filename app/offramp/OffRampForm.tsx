@@ -6,14 +6,13 @@ import FeeInfoPanel from './FeeInfoPanel';
 import VerificationStep from './VerificationStep';
 import SuccessMessage from './SuccessMessage';
 import useOffRamp from './offrampHooks/useOfframp';
-import { ChainConfig } from './offrampHooks/constants';
+import { ChainConfig, ChainId } from './offrampHooks/constants';
 import { TOKEN_ADDRESSES, TOKEN_ABI, GAS_FEES } from './offrampHooks/tokenConfig';
 
 type SupportedToken = keyof typeof TOKEN_ADDRESSES;
-type ChainId = keyof typeof TOKEN_ADDRESSES[SupportedToken];
 
 const OffRampForm: React.FC<{
-  chain: ChainConfig & { id: ChainId };
+  chain: ChainConfig;
   token: SupportedToken;
   onTokenChange: (token: SupportedToken) => void;
   onBack: () => void;
@@ -84,12 +83,12 @@ const OffRampForm: React.FC<{
           />
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              Convert {token} to Cash
+              Convert {token.toUpperCase()} to Cash
             </h2>
             <p className="text-gray-600 text-xs">
-              {chain.name} Network • {token} Balance: 
+              {chain.name} Network • {token.toUpperCase()} Balance: 
               <span className="font-medium ml-1">
-                {balanceLoading ? 'Loading...' : balance} {token}
+                {balanceLoading ? 'Loading...' : balance} {token.toUpperCase()}
               </span>
             </p>
           </div>

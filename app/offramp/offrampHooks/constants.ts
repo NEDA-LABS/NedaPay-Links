@@ -1,5 +1,7 @@
+export type ChainId = 8453 | 42161 | 137 | 42220 | 56;
+
 export interface ChainConfig {
-    id: number;
+    id: ChainId;
     name: string;
     nativeCurrency: {
       name: string;
@@ -56,7 +58,7 @@ export interface ChainConfig {
     id: 56,
     name: 'BNB Chain',
     nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-    rpcUrl: 'https://rpc.ankr.com/eth',
+    rpcUrl: 'https://rpc.ankr.com/bsc',
     explorerUrl: 'https://bscscan.com',
     icon: '/bnb.svg',
     tokens: ['USDC', 'USDT']

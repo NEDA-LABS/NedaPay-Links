@@ -63,8 +63,8 @@ export interface Recipient {
 interface PaymentOrderPayload {
   amount: number;
   rate: number;
-  network: 'base';
-  token: 'USDC';
+  network: string;
+  token: string;
   recipient: Recipient;
   returnAddress?: string;
   reference?: string;

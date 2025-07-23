@@ -5,9 +5,16 @@ const TokenBalanceCard: React.FC<{
   token: string;
   balance: string;
   loading: boolean;
-}> = ({ token, balance, loading }) => {
+  isSelected?: boolean;
+  onClick?: () => void;
+}> = ({ token, balance, loading, isSelected, onClick }) => {
   return (
-    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+    <div 
+      className={`flex justify-between items-center p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
+        isSelected ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-200'
+      }`} 
+      onClick={onClick}
+    >
       <div>
         <span className="text-slate-800 text-sm">{token}</span>
       </div>

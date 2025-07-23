@@ -223,7 +223,7 @@ export default function NotificationTab() {
   return (
     <div className="relative">
       <button
-        className="relative p-2 !rounded-full text-white hover:!bg-blue-100 transition-colors duration-300"
+        className="relative text-white bg-[#3E55E6] rounded-xl p-2 hover:!bg-blue-100 transition-colors duration-300"
         aria-label="Notifications"
         onClick={() => setOpen((o) => !o)}
       >

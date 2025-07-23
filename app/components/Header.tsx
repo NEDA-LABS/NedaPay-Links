@@ -73,7 +73,6 @@ export default function Header() {
     <header
       className={`
         sticky top-0 z-50 
-        
         transition-all duration-300
         ${scrolled 
           ? "shadow-lg bg-[#004a6d]" 
@@ -88,12 +87,12 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo Section */}
-          <div className="flex items-center">
+          <div className="flex items-center bg-[#3E55E6] pr-3 rounded-xl">
             <Link href="/" className="group flex items-center space-x-3">
               {/* Simplified Logo */}
               <div className="relative flex">
                 <div className="flex items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <Image src="/logo.svg" alt="Logo" width={60} height={60} />
+                  <Image src="/logo.svg" alt="Logo" width={60} height={60}/>
                 </div>
                 <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 ml-[-20px]">
                   <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center">
@@ -162,11 +161,11 @@ export default function Header() {
             )}
 
               {/* Action Buttons Container */}
-              <div className="flex items-center space-x-1 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl shadow-md">
+              <div className="flex items-center space-x-1 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2">
                 {/* Stablecoin Balance Modal Toggle */}
                 <button
                   onClick={() => setIsBalanceModalOpen(true)}
-                  className="rounded-lg transition-colors"
+                  className="transition-colors bg-[#3E55E6] rounded-xl p-2"
                   title="View Stablecoin Balances"
                 >
                   <Coins className="w-5 h-5 hover:text-white" />

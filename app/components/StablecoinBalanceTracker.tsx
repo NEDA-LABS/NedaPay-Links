@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from 'ethers';
-import { X, AlertCircle, Wallet, Loader2 } from 'lucide-react';
 import { stablecoins } from '../data/stablecoins';
+import { SUPPORTED_CHAINS } from '@/offramp/offrampHooks/constants';
+
+// Define type for supported chain IDs
+type ChainId = 8453 | 42161 | 137 | 42220 | 56;
+import { X, AlertCircle, Wallet, Loader2 } from 'lucide-react';
 
 interface StablecoinBalances {
   [token: string]: number;
@@ -11,6 +15,7 @@ interface StablecoinBalances {
 interface ExchangeRates {
   [currency: string]: number;
 }
+
 
 interface StablecoinBalanceTrackerProps {
   isOpen: boolean;
@@ -28,10 +33,20 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
   const [selectedToken, setSelectedToken] = useState('');
   const [totalBalance, setTotalBalance] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
-  const [walletProvider, setWalletProvider] = useState<any>(null);
+  const [providers, setProviders] = useState<{ [chainId: number]: ethers.providers.Provider }>({});
 
-  const address = user?.wallet?.address;
+  // Get wallet address - prioritize embedded wallet, fallback to connected wallet
+  const getWalletAddress = useCallback(() => {
+    if (user?.wallet?.address) {
+      return user.wallet.address;
+    }
+    
+    // Fallback to any connected wallet
+    const connectedWallet = wallets?.find(w => w.address);
+    return connectedWallet?.address || null;
+  }, [user, wallets]);
 
+  const address = getWalletAddress();
 
   // Available currencies for conversion
   const currencies = [
@@ -49,77 +64,108 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     { code: 'MXN', symbol: '$', name: 'Mexican Peso' }
   ];
 
-  // Check for Web3 provider availability
-  const checkWeb3Provider = useCallback(async () => {
+  // Initialize providers for supported chains
+  const initializeProviders = useCallback(async () => {
+    const newProviders: { [chainId: number]: ethers.providers.Provider } = {};
     const errorList: string[] = [];
 
-    // Check if running in browser
-    if (typeof window === 'undefined') {
-      errorList.push('Not running in browser environment');
-      setErrors(errorList);
-      return null;
-    }
-
     try {
-      let provider;
-
-      // Try Privy embedded wallet provider first
+      // Try to get embedded wallet provider first
+      let web3Provider = null;
+      
       if (authenticated && address && wallets) {
         const embeddedWallet = wallets.find(wallet => 
           wallet.walletClientType === 'privy' && wallet.address === address
         );
+        
         if (embeddedWallet) {
-          const privyProvider = await embeddedWallet.getEthereumProvider();
-          if (privyProvider) {
-            provider = new ethers.providers.Web3Provider(privyProvider);
-          } else {
-            errorList.push('Failed to get Privy embedded wallet provider');
+          try {
+            const privyEthereumProvider = await embeddedWallet.getEthereumProvider();
+            if (privyEthereumProvider) {
+              web3Provider = new ethers.providers.Web3Provider(privyEthereumProvider);
+            }
+          } catch (error) {
+            console.log('Failed to get Privy provider, falling back to external wallet');
           }
-        } else {
-          errorList.push('No Privy embedded wallet found');
         }
       }
 
-      // Fallback to external wallet (e.g., MetaMask, Coinbase) if no Privy provider
-      if (!provider && window.ethereum) {
-        // Check if we have a valid Ethereum provider
-        if (typeof window.ethereum.request === 'function') {
-          // Create provider
-          provider = new ethers.providers.Web3Provider(window.ethereum);
+      // Fallback to external wallet if embedded wallet not available
+      if (!web3Provider && typeof window !== 'undefined' && window.ethereum) {
+        try {
+          web3Provider = new ethers.providers.Web3Provider(window.ethereum);
           
-          // Request accounts if not already connected
-          const accounts = await provider.listAccounts();
+          // Request account access if needed
+          const accounts = await web3Provider.listAccounts();
           if (accounts.length === 0) {
+            await (window.ethereum as any).request({ method: 'eth_requestAccounts' });
+          }
+        } catch (error) {
+          errorList.push('Failed to connect to external wallet');
+        }
+      }
+
+      // Get unique chain IDs from stablecoins data
+      const uniqueChainIds = [...new Set(stablecoins.flatMap(coin => coin.chainIds))];
+
+      // Create providers for each chain used by stablecoins
+      for (const chainId of uniqueChainIds) {
+        try {
+          let provider;
+          
+          // Find chain configuration from SUPPORTED_CHAINS
+          const chainConfig = SUPPORTED_CHAINS.find(chain => chain.id === chainId);
+          
+          if (web3Provider && chainConfig) {
+            // Try to switch to the specific chain first
             try {
-              await window.ethereum.request({ method: 'eth_requestAccounts' });
-            } catch (error) {
-              errorList.push('Failed to connect to external wallet. Please try again.');
+              await web3Provider.send('wallet_switchEthereumChain', [
+                { chainId: `0x${chainId.toString(16)}` }
+              ]);
+              provider = web3Provider;
+            } catch (switchError) {
+              // If switching fails, use RPC endpoint
+              provider = new ethers.providers.JsonRpcProvider(chainConfig.rpcUrl);
+            }
+          } else if (chainConfig) {
+            // Use RPC endpoint as fallback
+            provider = new ethers.providers.JsonRpcProvider(chainConfig.rpcUrl);
+          } else {
+            // Fallback RPC URLs for common chains if not in SUPPORTED_CHAINS
+            const fallbackRpcs: { [key: number]: string } = {
+              1: 'https://ethereum.publicnode.com',
+              8453: 'https://mainnet.base.org',
+              42161: 'https://arb1.arbitrum.io/rpc',
+              137: 'https://polygon-rpc.com',
+              42220: 'https://forno.celo.org',
+              56: 'https://bsc-dataseed.binance.org'
+            };
+            
+            if (fallbackRpcs[chainId]) {
+              provider = new ethers.providers.JsonRpcProvider(fallbackRpcs[chainId]);
+            } else {
+              errorList.push(`No RPC configuration found for chain ${chainId}`);
+              continue;
             }
           }
-        } else {
-          errorList.push('Detected Ethereum provider but it lacks request method. Please try refreshing or using a different wallet.');
+
+          // Test the provider
+          await provider.getBlockNumber();
+          newProviders[chainId] = provider;
+          console.log(`Successfully initialized provider for chain ${chainId}`);
+          
+        } catch (error) {
+          console.error(`Failed to initialize provider for chain ${chainId}:`, error);
+          errorList.push(`Failed to connect to chain ${chainId}`);
         }
       }
 
-      // If no provider is found
-      if (!provider) {
-        errorList.push('No Web3 wallet detected. Please connect a wallet or use Privy embedded wallet.');
-        setErrors(errorList);
-        return null;
-      }
-
-      // Check network
-      const network = await provider.getNetwork();
-      console.log('Connected to network:', network.name, network.chainId);
-
-      setWalletProvider(provider);
+      setProviders(newProviders);
       setErrors(errorList);
-      return provider;
+      
     } catch (error) {
-      console.error('Error checking Web3 provider:', error);
-      errorList.push(`Web3 provider error: ${error instanceof Error ? error.message : String(error)}`);
-      setErrors(errorList);
-      return null;
+      console.error('Error initializing providers:', error);
+      setErrors(['Failed to initialize blockchain connections']);
     }
   }, [authenticated, address, wallets]);
 
@@ -129,7 +175,6 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
       const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
       const data = await response.json();
 
-      // Filter rates to only include currencies in our currencies array
       const filteredRates: ExchangeRates = {};
       currencies.forEach(currency => {
         if (data.rates[currency.code]) {
@@ -137,9 +182,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
         }
       });
 
-      // Ensure USD is always included with rate of 1
       filteredRates['USD'] = 1;
-
       setExchangeRates(filteredRates);
     } catch (error) {
       console.error('Failed to fetch exchange rates:', error);
@@ -147,60 +190,141 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     }
   };
 
-  // Fetch balance for a specific token
-  const fetchTokenBalance = async (tokenAddress: string, decimals = 18, provider: any) => {
-    if (!address || !provider) return '0';
-
+  // Fetch balance for a specific token on a specific chain
+  const fetchTokenBalance = async (
+    tokenAddress: string, 
+    decimals: number = 18, 
+    provider: ethers.providers.Provider,
+    walletAddress: string
+  ): Promise<string> => {
     try {
-      const contract = new ethers.Contract(
-        tokenAddress,
-        ["function balanceOf(address owner) view returns (uint256)"],
-        provider
-      );
+      if (tokenAddress === ethers.constants.AddressZero) {
+        // Native token (ETH, MATIC, etc.)
+        const balance = await provider.getBalance(walletAddress);
+        return ethers.utils.formatUnits(balance, decimals);
+      } else {
+        // ERC-20 token
+        const contract = new ethers.Contract(
+          tokenAddress,
+          [
+            "function balanceOf(address owner) view returns (uint256)",
+            "function decimals() view returns (uint8)"
+          ],
+          provider
+        );
 
-      const balance = await contract.balanceOf(address);
-      return ethers.utils.formatUnits(balance, decimals);
+        const balance = await contract.balanceOf(walletAddress);
+        
+        // Use contract decimals if not provided
+        let tokenDecimals = decimals;
+        if (decimals === 18) {
+          try {
+            tokenDecimals = await contract.decimals();
+          } catch (error) {
+            // Fallback to provided decimals if contract call fails
+            tokenDecimals = decimals;
+          }
+        }
+        
+        return ethers.utils.formatUnits(balance, tokenDecimals);
+      }
     } catch (error) {
       console.error(`Error fetching balance for ${tokenAddress}:`, error);
       return '0';
     }
   };
 
-  // Fetch all stablecoin balances
+  // Fetch all stablecoin balances across multiple chains
   const fetchAllBalances = useCallback(async () => {
-    if (!address || !authenticated) return;
+    if (!address || !authenticated) {
+      console.log('No address or not authenticated');
+      return;
+    }
 
     setLoading(true);
     setErrors([]);
 
-    // Check Web3 provider first
-    const provider = await checkWeb3Provider();
-    if (!provider) {
-      setLoading(false);
-      return;
+    // Initialize providers if not already done
+    if (Object.keys(providers).length === 0) {
+      await initializeProviders();
+      return; // This will trigger a re-run after providers are set
     }
 
     const newBalances: StablecoinBalances = {};
     const errorList: string[] = [];
 
-    for (const coin of stablecoins) {
-      try {
-        const balance = await fetchTokenBalance(coin.address, coin.decimals || 18, provider);
-        newBalances[coin.baseToken] = parseFloat(balance);
-      } catch (error) {
-        console.error(`Failed to fetch ${coin.baseToken} balance:`, error);
-        errorList.push(`Failed to fetch ${coin.baseToken} balance`);
-        newBalances[coin.baseToken] = 0;
-      }
-    }
+    // Create promises for all balance fetches across all chains
+    const balancePromises: Promise<{ token: string; chainId: number; balance: number }>[] = [];
 
-    setBalances(newBalances);
-    setErrors(errorList);
-    setLoading(false);
-  }, [address, authenticated, checkWeb3Provider]);
+    stablecoins.forEach((coin) => {
+      // For each coin, fetch balances on all supported chains
+      coin.chainIds.forEach((chainId) => {
+        const tokenAddress = (coin.addresses as Record<string, string | undefined>)[chainId.toString()];
+        if (!tokenAddress) return;
+
+        const promise = (async () => {
+          try {
+            const provider = providers[chainId];
+            
+            if (!provider) {
+              errorList.push(`No provider available for ${coin.baseToken} on chain ${chainId}`);
+              return { token: coin.baseToken, chainId, balance: 0 };
+            }
+
+            // Get decimals for this specific chain
+            let decimals = 18; // default
+            if (typeof coin.decimals === 'number') {
+              decimals = coin.decimals;
+            } else if (typeof coin.decimals === 'object' && (chainId as ChainId) in coin.decimals) {
+              decimals = coin.decimals[chainId as ChainId];
+            }
+
+            const balance = await fetchTokenBalance(
+              tokenAddress,
+              decimals,
+              provider,
+              address
+            );
+            
+            return { token: coin.baseToken, chainId, balance: parseFloat(balance) };
+          } catch (error) {
+            console.error(`Failed to fetch ${coin.baseToken} balance on chain ${chainId}:`, error);
+            errorList.push(`Failed to fetch ${coin.baseToken} balance on chain ${chainId}`);
+            return { token: coin.baseToken, chainId, balance: 0 };
+          }
+        })();
+
+        balancePromises.push(promise);
+      });
+    });
+
+    try {
+      // Execute all balance fetches in parallel
+      const results = await Promise.allSettled(balancePromises);
+      
+      // Aggregate balances by token (sum across all chains)
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          const { token, balance } = result.value;
+          newBalances[token] = (newBalances[token] || 0) + balance;
+        } else {
+          console.error('Balance fetch failed:', result.reason);
+        }
+      });
+
+      setBalances(newBalances);
+      setErrors(errorList);
+      
+    } catch (error) {
+      console.error('Error fetching balances:', error);
+      setErrors(['Failed to fetch token balances']);
+    } finally {
+      setLoading(false);
+    }
+  }, [address, authenticated, providers, initializeProviders]);
 
   // Calculate total balance in selected currency
-  const calculateTotalBalance = () => {
+  const calculateTotalBalance = useCallback(() => {
     let total = 0;
 
     stablecoins.forEach(coin => {
@@ -216,15 +340,15 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     });
 
     setTotalBalance(total);
-  };
+  }, [balances, exchangeRates, selectedCurrency]);
 
   // Convert amount from one currency to another
-  const convertCurrency = (amount: number, fromCurrency: string, toCurrency: string) => {
+  const convertCurrency = useCallback((amount: number, fromCurrency: string, toCurrency: string) => {
     if (!exchangeRates[fromCurrency] || !exchangeRates[toCurrency]) return amount;
 
     const usdAmount = amount / exchangeRates[fromCurrency];
     return usdAmount * exchangeRates[toCurrency];
-  };
+  }, [exchangeRates]);
 
   // Get currency symbol
   const getCurrencySymbol = (currencyCode: string) => {
@@ -241,30 +365,38 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
   // Initialize data
   useEffect(() => {
     fetchExchangeRates();
-    checkWeb3Provider();
-  }, [checkWeb3Provider]);
+  }, []);
 
+  // Initialize providers when authentication changes
   useEffect(() => {
     if (authenticated && address) {
+      initializeProviders();
+    }
+  }, [authenticated, address, initializeProviders]);
+
+  // Fetch balances when providers are ready
+  useEffect(() => {
+    if (authenticated && address && Object.keys(providers).length > 0) {
       fetchAllBalances();
     }
-  }, [authenticated, address, fetchAllBalances]);
+  }, [authenticated, address, providers, fetchAllBalances]);
 
+  // Recalculate total when balances or rates change  
   useEffect(() => {
     calculateTotalBalance();
-  }, [balances, exchangeRates, selectedCurrency]);
+  }, [calculateTotalBalance]);
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      if (authenticated && address && walletProvider) {
+      if (authenticated && address && Object.keys(providers).length > 0) {
         fetchAllBalances();
         fetchExchangeRates();
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [authenticated, address, walletProvider, fetchAllBalances]);
+  }, [authenticated, address, providers, fetchAllBalances]);
 
   if (!authenticated) {
     return (

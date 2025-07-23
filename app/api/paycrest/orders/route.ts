@@ -7,6 +7,8 @@ interface PaymentOrderRequest {
   recipient: Recipient;
   returnAddress?: string;
   reference?: string;
+  network: string;
+  token: string;
 }
 
 
@@ -57,8 +59,8 @@ export async function POST(request: NextRequest) {
     console.log('Attempting to initiate payment order with payload:', {
       amount: body.amount,
       rate: body.rate,
-      network: 'base',
-      token: 'USDC',
+      network: body.network,
+      token: body.token,
       recipient: body.recipient,
       returnAddress: body.returnAddress,
       reference: body.reference,
@@ -67,8 +69,8 @@ export async function POST(request: NextRequest) {
     const order = await initiatePaymentOrder({
       amount: body.amount,
       rate: body.rate,
-      network: 'base',
-      token: 'USDC',
+      network: body.network,
+      token: body.token,
       recipient: body.recipient,
       returnAddress: body.returnAddress,
       reference: body.reference,

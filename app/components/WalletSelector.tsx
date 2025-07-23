@@ -442,7 +442,7 @@ const WalletSelector = forwardRef<
             e.stopPropagation();
             setShowOptions(!showOptions);
           }}
-          className="flex items-center space-x-2 bg-[#3E55E6] text-white shadow-sm hover:from-blue-600 hover:to-purple-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-2 border border-2 border-slate-200"
+          className="flex items-center space-x-2 bg-[#3E55E6] text-white shadow-sm hover:from-blue-600 hover:to-purple-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-2"
           style={{ borderRadius: "0.75rem" }}
         >
           <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
@@ -490,7 +490,7 @@ const WalletSelector = forwardRef<
       ) : (
         <button
           onClick={handleEmailLogin}
-          className="flex items-center bg-[#3E55E6] hover:bg-blue-200 text-white hover:text-black rounded-lg transition-all duration-200 shadow-sm border-2 border-white"
+          className="flex items-center bg-[#3E55E6] hover:bg-blue-200 text-white hover:text-black rounded-lg transition-all duration-200 shadow-sm"
           disabled={isConnecting}
           style={{ borderRadius: "0.75rem" }}
         >

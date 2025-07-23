@@ -24,13 +24,16 @@ import {
   verifyAccount,
   fetchSupportedCurrencies,
 } from '@/utils/paycrest';
-import { ChainConfig } from './constants';
+import { ChainConfig, ChainId } from './constants';
 import { TOKEN_ADDRESSES, TOKEN_ABI, GAS_FEES } from './tokenConfig';
 
 type SupportedToken = keyof typeof TOKEN_ADDRESSES;
-type ChainId = keyof typeof TOKEN_ADDRESSES[SupportedToken];
 
-const useOffRamp = (chain: ChainConfig & { id: ChainId }, token: SupportedToken) => {
+const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
+  // Validate token parameter
+  if (!TOKEN_ADDRESSES[token]) {
+    throw new Error(`Invalid token: ${token}`);
+  }
   // Authentication and wallet state
   const { authenticated } = usePrivy();
   const { wallets } = useWallets();
@@ -149,7 +152,9 @@ const useOffRamp = (chain: ChainConfig & { id: ChainId }, token: SupportedToken)
           await activeWallet.getEthereumProvider()
         );
         
-        const tokenAddress = TOKEN_ADDRESSES[token][chain.id];
+        // Get supported chain IDs for this token
+        const supportedChainIds = Object.keys(TOKEN_ADDRESSES[token] || {}).map(Number) as (keyof typeof TOKEN_ADDRESSES[SupportedToken])[];
+        const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id] : undefined;
         if (!tokenAddress) {
           setError(`Token ${token} not supported on ${chain.name}`);
           return;
@@ -252,7 +257,7 @@ const useOffRamp = (chain: ChainConfig & { id: ChainId }, token: SupportedToken)
     );
     const signer = provider.getSigner();
 
-    const tokenAddress = TOKEN_ADDRESSES[token][chain.id];
+    const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id] : undefined;
     if (!tokenAddress) {
       throw new Error(`Token ${token} not supported on ${chain.name}`);
     }
@@ -298,7 +303,7 @@ const useOffRamp = (chain: ChainConfig & { id: ChainId }, token: SupportedToken)
       setSuccess(null);
 
       // Get token address
-      const tokenAddress = TOKEN_ADDRESSES[token][chain.id];
+      const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id] : undefined;
       if (!tokenAddress) {
         throw new Error(`Token ${token} not supported on ${chain.name}`);
       }
