@@ -31,6 +31,8 @@ import {
   Repeat,
 } from "lucide-react";
 import DailyRevenueChart from "./DailyRevenueChart";
+import Footer from "@/components/Footer";
+import ChainSwitcher from "@/components/ChainSwitcher";
 
 // Define ABIs and constants
 const ERC20_ABI = [
@@ -276,11 +278,11 @@ export default function DashboardContent() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" />
+          <Button variant="outline" size="sm" className="gap-2 text-slate-800">
+            <Download className="h-4 w-4 text-slate-800" />
             Export
           </Button>
-          <Button className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+          <Button className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
             <Sparkles className="h-4 w-4" />
             Quick Actions
           </Button>
@@ -288,7 +290,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Hero Welcome Section */}
-      <Card className="relative overflow-hidden border-0 bg-[#3E55E6] text-white shadow-2xl">
+      <Card className="relative border-0 bg-[#3E55E6] text-white shadow-2xl">
         <CardContent className="relative p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
@@ -330,6 +332,7 @@ export default function DashboardContent() {
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
+                        <ChainSwitcher />
                       </div>
                     </div>
                   </div>
@@ -346,6 +349,7 @@ export default function DashboardContent() {
                 </div>
               )}
             </div>
+            {/* {wallet kit} */}
             <div className="bg-white/5 rounded-2xl p-6 border border-white/20 text-center">
               <div className="space-y-4">
                 <div>
@@ -535,6 +539,7 @@ export default function DashboardContent() {
           maxAmount={stablecoinBalances.find((b) => b.symbol === swapFromSymbol)?.balance || "0"}
         />
       )}
+      <Footer/>
     </div>
   );
 }
