@@ -298,7 +298,7 @@ const CurrencyRatesWidget = () => {
 
   if (error) {
     return (
-      <div className="w-full shadow-2xl">
+      <div className="w-full">
         {/* <div className="flex items-center justify-center gap-3">
           <AlertCircle className="w-6 h-6 text-red-400" />
           <span className="text-red-300 text-sm font-medium">{error}</span>

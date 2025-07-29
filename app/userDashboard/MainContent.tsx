@@ -33,6 +33,7 @@ import {
 import DailyRevenueChart from "./DailyRevenueChart";
 import Footer from "@/components/Footer";
 import ChainSwitcher from "@/components/ChainSwitcher";
+import WalletKit from "./WalletKit";
 
 // Define ABIs and constants
 const ERC20_ABI = [
@@ -277,7 +278,7 @@ export default function DashboardContent() {
             Seamlessly manage stablecoin payments and monitor your business performance
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" className="gap-2 text-slate-800">
             <Download className="h-4 w-4 text-slate-800" />
             Export
@@ -286,7 +287,7 @@ export default function DashboardContent() {
             <Sparkles className="h-4 w-4" />
             Quick Actions
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Hero Welcome Section */}
@@ -350,12 +351,13 @@ export default function DashboardContent() {
               )}
             </div>
             {/* {wallet kit} */}
-            <div className="bg-white/5 rounded-2xl p-6 border border-white/20 text-center">
+            <WalletKit/>
+            {/* <div className="bg-white/5 rounded-2xl p-6 border border-white/20 text-center">
               <div className="space-y-4">
-                <div>
-                  <p className="text-white/70 text-sm mb-2">Total Balance</p>
-                  <p className="text-3xl font-bold text-white">$4.90</p>
-                  <p className="text-white/60 text-xs">USD Equivalent</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <StablecoinBalanceButton />
+                  </div>
                 </div>
                 <div className="pt-4 border-t border-white/20">
                   <div className="grid grid-cols-2 gap-2">
@@ -378,7 +380,7 @@ export default function DashboardContent() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>
@@ -387,10 +389,10 @@ export default function DashboardContent() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-foreground text-slate-800">Transaction Overview</h2>
-          <Button variant="outline" size="sm" className="gap-2">
+          {/* <Button variant="outline" size="sm" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             View Analytics
-          </Button>
+          </Button> */}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
@@ -398,21 +400,21 @@ export default function DashboardContent() {
             value={metrics.totalReceived.toLocaleString("en-US", { maximumFractionDigits: 2 })}
             subtitle="USDC"
             icon={<ArrowDownRight className="h-5 w-5" />}
-            className="border-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20"
+            className="border-0 text-slate-800 bg-gradient-to-br from-green-950/20 to-emerald-950/20"
           />
           <MetricCard
             title="Total Transactions"
             value={metrics.totalTransactions.toString()}
             subtitle="Transactions"
             icon={<Activity className="h-5 w-5" />}
-            className="border-0 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20"
+            className="border-0 text-slate-800 bg-gradient-to-br from-blue-950/20 to-cyan-950/20"
           />
           <MetricCard
             title="Average Transaction"
             value={metrics.averageTransaction.toLocaleString("en-US", { maximumFractionDigits: 2 })}
             subtitle="USDC"
             icon={<DollarSign className="h-5 w-5" />}
-            className="border-0 bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20"
+            className="border-0 text-slate-800 bg-gradient-to-br from-purple-950/20 to-violet-950/20"
           />
           <MetricCard
             title="Monthly Growth"
@@ -422,7 +424,7 @@ export default function DashboardContent() {
               value: `${metrics.monthlyGrowth >= 0 ? "+" : ""}${metrics.monthlyGrowth.toFixed(1)}%`,
               isPositive: metrics.monthlyGrowth >= 0,
             }}
-            className={`border-0 bg-gradient-to-br ${
+            className={`border-0 text-slate-800 bg-gradient-to-br ${
               metrics.monthlyGrowth >= 0
                 ? "from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20"
                 : "from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20"

@@ -1,6 +1,6 @@
 "use client";
 
-import { base, polygon } from "wagmi/chains";
+import { base, polygon, arbitrum, celo, scroll, bsc } from "wagmi/chains";
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 import { http, fallback } from "wagmi";
@@ -14,13 +14,7 @@ const queryClient = new QueryClient();
 
 // Configure wagmi with all supported wallet connectors
 const wagmiConfig = createPrivyConfig({
-  chains: [base, polygon],
-  // connectors: [
-  // coinbaseWallet({
-  // appName: "NEDA Pay Merchant",
-  // }),
-  // metaMask(),
-  // ],
+  chains: [base, polygon, bsc, arbitrum, celo, scroll],
   ssr: true,
   transports: {
     [base.id]: fallback([
@@ -36,9 +30,37 @@ const wagmiConfig = createPrivyConfig({
       http('https://rpc-mainnet.matic.network'),
       http('https://polygon.llamarpc.com'),
       http('https://1rpc.io/matic')
+    ]),
+    [bsc.id]: fallback([
+      http(process.env.NEXT_PUBLIC_BSC_RPC || 'https://bsc-dataseed1.bnbchain.org'),
+      http('https://bscrpc.com'),
+      http('https://bsc-mainnet.public.blastapi.io'),
+      http('https://1rpc.io/bnb'),
+      http('https://binance.llamarpc.com')
+    ]),
+    [arbitrum.id]: fallback([
+      http(process.env.NEXT_PUBLIC_ARBITRUM_RPC || 'https://arb1.arbitrum.io/rpc'),
+      http('https://arbitrum-mainnet.infura.io/v3/demo'),
+      http('https://arbitrum.public-rpc.com'),
+      http('https://1rpc.io/arb'),
+      http('https://arbitrum.llamarpc.com')
+    ]),
+    [celo.id]: fallback([
+      http(process.env.NEXT_PUBLIC_CELO_RPC || 'https://forno.celo.org'),
+      http('https://celo-mainnet.infura.io/v3/demo'),
+      http('https://rpc.ankr.com/celo'),
+      http('https://1rpc.io/celo'),
+      http('https://celo.llamarpc.com')
+    ]),
+    [scroll.id]: fallback([
+      http(process.env.NEXT_PUBLIC_SCROLL_RPC || 'https://rpc.scroll.io'),
+      http('https://scroll-mainnet.public.blastapi.io'),
+      http('https://1rpc.io/scroll'),
+      http('https://scroll.llamarpc.com')
     ])
-  },
+  }
 });
+
 
 export function Providers(props: { children: ReactNode }) {
   return (
@@ -54,7 +76,7 @@ export function Providers(props: { children: ReactNode }) {
               createOnLogin: "users-without-wallets",
             },
           },
-          defaultChain: base,
+          supportedChains: [base, bsc, arbitrum, polygon, celo]
         }}
       >
         <QueryClientProvider client={queryClient}>

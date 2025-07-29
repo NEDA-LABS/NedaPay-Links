@@ -25,7 +25,7 @@ const features = [
   {
     icon: Coins,
     title: "Stablecoins",
-    description: "Accept multiple stablecoins with instant settlement",
+    description: "Accept multiple stablecoins, generate invoices and payment links",
     tags: ["TSHC", "cNGN"],
     accentColor: "#10367D",
     button: "Accept",
@@ -60,7 +60,7 @@ const features = [
     accentColor: "#A5CE00",
     button: "Setup",
     route: "/settlement",
-    visual:""
+    visual:"/settlement.png"
   },
 ];
 

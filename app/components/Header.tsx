@@ -19,7 +19,6 @@ import {
   Link as LinkIcon,
   Receipt
 } from "lucide-react";
-import StablecoinBalanceTracker from "./StablecoinBalanceTracker";
 import Sidebar from "./Sidebar";
 import Image from "next/image";
 
@@ -74,8 +73,9 @@ export default function Header() {
       className={`
         sticky top-0 z-50 
         transition-all duration-300
+        !bg-[#004a6d]/40
         ${scrolled 
-          ? "shadow-lg bg-[#004a6d]" 
+          ? "shadow-lg bg-[#004a6d]/50" 
           : "shadow-sm"
         }
       `}
@@ -163,13 +163,13 @@ export default function Header() {
               {/* Action Buttons Container */}
               <div className="flex items-center space-x-1 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2">
                 {/* Stablecoin Balance Modal Toggle */}
-                <button
+                {/* <button
                   onClick={() => setIsBalanceModalOpen(true)}
                   className="transition-colors bg-[#3E55E6] rounded-xl p-2"
                   title="View Stablecoin Balances"
                 >
                   <Coins className="w-5 h-5 hover:text-white" />
-                </button>
+                </button> */}
                 <NotificationTab />
                 
                 
@@ -211,26 +211,21 @@ export default function Header() {
               <WalletSelector />
               {/* Side Menu Button */}
               
-                <button
+                {/* <button
                 onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
                 className="p-2 rounded-xl transition-all duration-300 !bg-[#3E55E6] hover:from-blue-500 hover:to-indigo-500 border border-2 border-slate-200"
                 aria-label="Open menu"
               >
                 <Menu size={16} className="text-white hover:text-slate-700 transition-colors duration-300" />
-              </button>
+              </button> */}
               
             </div>
           </div>
         </div>
       </div>
     
-    {/* Stablecoin Balance Tracker Modal */}
-    {isBalanceModalOpen && (
-    <StablecoinBalanceTracker isOpen={isBalanceModalOpen} onClose={() => setIsBalanceModalOpen(false)} />
-    )}
-    
     {/* Side Bar Modal */}
-    <Sidebar isOpen={isSideMenuOpen} onClose={() => setIsSideMenuOpen(false)} authenticated={authenticated} />
+    {/* <Sidebar isOpen={isSideMenuOpen} onClose={() => setIsSideMenuOpen(false)} authenticated={authenticated} /> */}
     </header>
 
     

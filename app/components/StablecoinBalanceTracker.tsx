@@ -3,10 +3,16 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from 'ethers';
 import { stablecoins } from '../data/stablecoins';
 import { SUPPORTED_CHAINS } from '@/offramp/offrampHooks/constants';
+import { X, AlertCircle, Wallet, Loader2, ChevronRight } from 'lucide-react';
 
 // Define type for supported chain IDs
 type ChainId = 8453 | 42161 | 137 | 42220 | 56;
-import { X, AlertCircle, Wallet, Loader2 } from 'lucide-react';
+
+interface Chain {
+  id: number;
+  name: string;
+  rpcUrl?: string;
+}
 
 interface StablecoinBalances {
   [token: string]: number;
@@ -16,24 +22,30 @@ interface ExchangeRates {
   [currency: string]: number;
 }
 
-
 interface StablecoinBalanceTrackerProps {
   isOpen: boolean;
   onClose: () => void;
+  setTotalBalance: React.Dispatch<React.SetStateAction<number>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerProps) => {
+const StablecoinBalanceTracker = ({ 
+  isOpen, 
+  onClose,
+  setTotalBalance,
+  setLoading: setParentLoading
+}: StablecoinBalanceTrackerProps) => {
   const { user, authenticated } = usePrivy();
   const { wallets } = useWallets();
+  const [currentChain, setCurrentChain] = useState<Chain | null>(null);
   const [balances, setBalances] = useState<StablecoinBalances>({});
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({});
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [loading, setLoading] = useState(false);
   const [swapModalOpen, setSwapModalOpen] = useState(false);
   const [selectedToken, setSelectedToken] = useState('');
-  const [totalBalance, setTotalBalance] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
-  const [providers, setProviders] = useState<{ [chainId: number]: ethers.providers.Provider }>({});
+  const [provider, setProvider] = useState<ethers.providers.Provider | null>(null);
 
   // Get wallet address - prioritize embedded wallet, fallback to connected wallet
   const getWalletAddress = useCallback(() => {
@@ -64,108 +76,80 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     { code: 'MXN', symbol: '$', name: 'Mexican Peso' }
   ];
 
-  // Initialize providers for supported chains
-  const initializeProviders = useCallback(async () => {
-    const newProviders: { [chainId: number]: ethers.providers.Provider } = {};
-    const errorList: string[] = [];
+  // Initialize provider for current chain
+  const initializeProvider = useCallback(async () => {
+    if (!authenticated || !address || wallets.length === 0) {
+      setCurrentChain(null);
+      setErrors(['Authentication or wallet not available']);
+      return;
+    }
 
+    const errorList: string[] = [];
+    let newProvider: ethers.providers.Provider | null = null;
+    const wallet = wallets[0];
+    
     try {
-      // Try to get embedded wallet provider first
-      let web3Provider = null;
+      // Extract chain ID from wallet (format: "eip155:42161")
+      const chainIdHex = wallet.chainId.split(':')[1];
+      const chainId = parseInt(chainIdHex, 10);
       
-      if (authenticated && address && wallets) {
-        const embeddedWallet = wallets.find(wallet => 
-          wallet.walletClientType === 'privy' && wallet.address === address
-        );
-        
-        if (embeddedWallet) {
-          try {
-            const privyEthereumProvider = await embeddedWallet.getEthereumProvider();
-            if (privyEthereumProvider) {
-              web3Provider = new ethers.providers.Web3Provider(privyEthereumProvider);
-            }
-          } catch (error) {
-            console.log('Failed to get Privy provider, falling back to external wallet');
+      // Find matching chain from supported chains
+      const matchedChain = SUPPORTED_CHAINS.find(c => c.id === chainId) || null;
+      setCurrentChain(matchedChain);
+      
+      if (!matchedChain) {
+        setErrors([`Chain ID ${chainId} not supported`]);
+        return;
+      }
+
+      const embeddedWallet = wallets.find(wallet => 
+        wallet.walletClientType === 'privy' && wallet.address === address
+      );
+
+      if (embeddedWallet) {
+        try {
+          const privyEthereumProvider = await embeddedWallet.getEthereumProvider();
+          if (privyEthereumProvider) {
+            newProvider = new ethers.providers.Web3Provider(privyEthereumProvider);
+            await newProvider.getBlockNumber();
           }
+        } catch (error) {
+          console.log('Failed to get Privy provider:', error);
+          errorList.push('Failed to initialize Privy provider');
         }
       }
 
-      // Fallback to external wallet if embedded wallet not available
-      if (!web3Provider && typeof window !== 'undefined' && window.ethereum) {
+      // Fallback to external wallet
+      if (!newProvider && typeof window !== 'undefined' && window.ethereum) {
         try {
-          web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-          
-          // Request account access if needed
-          const accounts = await web3Provider.listAccounts();
+          newProvider = new ethers.providers.Web3Provider(window.ethereum);
+          const accounts = await (newProvider as ethers.providers.Web3Provider).listAccounts();
           if (accounts.length === 0) {
             await (window.ethereum as any).request({ method: 'eth_requestAccounts' });
           }
+          await newProvider.getBlockNumber();
         } catch (error) {
+          console.error('Failed to initialize external provider:', error);
           errorList.push('Failed to connect to external wallet');
         }
       }
 
-      // Get unique chain IDs from stablecoins data
-      const uniqueChainIds = [...new Set(stablecoins.flatMap(coin => coin.chainIds))];
-
-      // Create providers for each chain used by stablecoins
-      for (const chainId of uniqueChainIds) {
+      if (!newProvider && matchedChain.rpcUrl) {
         try {
-          let provider;
-          
-          // Find chain configuration from SUPPORTED_CHAINS
-          const chainConfig = SUPPORTED_CHAINS.find(chain => chain.id === chainId);
-          
-          if (web3Provider && chainConfig) {
-            // Try to switch to the specific chain first
-            try {
-              await web3Provider.send('wallet_switchEthereumChain', [
-                { chainId: `0x${chainId.toString(16)}` }
-              ]);
-              provider = web3Provider;
-            } catch (switchError) {
-              // If switching fails, use RPC endpoint
-              provider = new ethers.providers.JsonRpcProvider(chainConfig.rpcUrl);
-            }
-          } else if (chainConfig) {
-            // Use RPC endpoint as fallback
-            provider = new ethers.providers.JsonRpcProvider(chainConfig.rpcUrl);
-          } else {
-            // Fallback RPC URLs for common chains if not in SUPPORTED_CHAINS
-            const fallbackRpcs: { [key: number]: string } = {
-              1: 'https://ethereum.publicnode.com',
-              8453: 'https://mainnet.base.org',
-              42161: 'https://arb1.arbitrum.io/rpc',
-              137: 'https://polygon-rpc.com',
-              42220: 'https://forno.celo.org',
-              56: 'https://bsc-dataseed.binance.org'
-            };
-            
-            if (fallbackRpcs[chainId]) {
-              provider = new ethers.providers.JsonRpcProvider(fallbackRpcs[chainId]);
-            } else {
-              errorList.push(`No RPC configuration found for chain ${chainId}`);
-              continue;
-            }
-          }
-
-          // Test the provider
-          await provider.getBlockNumber();
-          newProviders[chainId] = provider;
-          console.log(`Successfully initialized provider for chain ${chainId}`);
-          
+          newProvider = new ethers.providers.JsonRpcProvider(matchedChain.rpcUrl);
+          await newProvider.getBlockNumber();
         } catch (error) {
-          console.error(`Failed to initialize provider for chain ${chainId}:`, error);
-          errorList.push(`Failed to connect to chain ${chainId}`);
+          console.error('Failed to initialize RPC provider:', error);
+          errorList.push(`Failed to connect to chain ${matchedChain.id} via RPC`);
         }
       }
 
-      setProviders(newProviders);
+      setProvider(newProvider);
       setErrors(errorList);
       
     } catch (error) {
-      console.error('Error initializing providers:', error);
-      setErrors(['Failed to initialize blockchain connections']);
+      console.error('Error initializing provider:', error);
+      setErrors(['Failed to initialize blockchain connection']);
     }
   }, [authenticated, address, wallets]);
 
@@ -190,7 +174,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     }
   };
 
-  // Fetch balance for a specific token on a specific chain
+  // Fetch balance for a specific token on the current chain
   const fetchTokenBalance = async (
     tokenAddress: string, 
     decimals: number = 18, 
@@ -199,7 +183,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
   ): Promise<string> => {
     try {
       if (tokenAddress === ethers.constants.AddressZero) {
-        // Native token (ETH, MATIC, etc.)
+        // Native token
         const balance = await provider.getBalance(walletAddress);
         return ethers.utils.formatUnits(balance, decimals);
       } else {
@@ -215,13 +199,11 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
 
         const balance = await contract.balanceOf(walletAddress);
         
-        // Use contract decimals if not provided
         let tokenDecimals = decimals;
         if (decimals === 18) {
           try {
             tokenDecimals = await contract.decimals();
           } catch (error) {
-            // Fallback to provided decimals if contract call fails
             tokenDecimals = decimals;
           }
         }
@@ -234,81 +216,61 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     }
   };
 
-  // Fetch all stablecoin balances across multiple chains
+  // Fetch all stablecoin balances for current chain
   const fetchAllBalances = useCallback(async () => {
-    if (!address || !authenticated) {
-      console.log('No address or not authenticated');
+    if (!address || !authenticated || !provider || !currentChain) {
+      console.log('No address, not authenticated, or no provider/chain');
       return;
     }
 
     setLoading(true);
     setErrors([]);
 
-    // Initialize providers if not already done
-    if (Object.keys(providers).length === 0) {
-      await initializeProviders();
-      return; // This will trigger a re-run after providers are set
-    }
-
     const newBalances: StablecoinBalances = {};
     const errorList: string[] = [];
 
-    // Create promises for all balance fetches across all chains
-    const balancePromises: Promise<{ token: string; chainId: number; balance: number }>[] = [];
+    const balancePromises: Promise<{ token: string; balance: number }>[] = [];
 
     stablecoins.forEach((coin) => {
-      // For each coin, fetch balances on all supported chains
-      coin.chainIds.forEach((chainId) => {
-        const tokenAddress = (coin.addresses as Record<string, string | undefined>)[chainId.toString()];
-        if (!tokenAddress) return;
+      if (!coin.chainIds.includes(currentChain.id)) return;
+      
+      const tokenAddress = (coin.addresses as Record<string, string | undefined>)[currentChain.id.toString()];
+      if (!tokenAddress) return;
 
-        const promise = (async () => {
-          try {
-            const provider = providers[chainId];
-            
-            if (!provider) {
-              errorList.push(`No provider available for ${coin.baseToken} on chain ${chainId}`);
-              return { token: coin.baseToken, chainId, balance: 0 };
-            }
-
-            // Get decimals for this specific chain
-            let decimals = 18; // default
-            if (typeof coin.decimals === 'number') {
-              decimals = coin.decimals;
-            } else if (typeof coin.decimals === 'object' && (chainId as ChainId) in coin.decimals) {
-              decimals = coin.decimals[chainId as ChainId];
-            }
-
-            const balance = await fetchTokenBalance(
-              tokenAddress,
-              decimals,
-              provider,
-              address
-            );
-            
-            return { token: coin.baseToken, chainId, balance: parseFloat(balance) };
-          } catch (error) {
-            console.error(`Failed to fetch ${coin.baseToken} balance on chain ${chainId}:`, error);
-            errorList.push(`Failed to fetch ${coin.baseToken} balance on chain ${chainId}`);
-            return { token: coin.baseToken, chainId, balance: 0 };
+      const promise = (async () => {
+        try {
+          let decimals = 18;
+          if (typeof coin.decimals === 'number') {
+            decimals = coin.decimals;
+          } else if (typeof coin.decimals === 'object' && (currentChain.id as ChainId) in coin.decimals) {
+            decimals = coin.decimals[currentChain.id as ChainId];
           }
-        })();
 
-        balancePromises.push(promise);
-      });
+          const balance = await fetchTokenBalance(
+            tokenAddress,
+            decimals,
+            provider,
+            address
+          );
+          
+          return { token: coin.baseToken, balance: parseFloat(balance) };
+        } catch (error) {
+          console.error(`Failed to fetch ${coin.baseToken} balance on chain ${currentChain.id}:`, error);
+          errorList.push(`Failed to fetch ${coin.baseToken} balance`);
+          return { token: coin.baseToken, balance: 0 };
+        }
+      })();
+
+      balancePromises.push(promise);
     });
 
     try {
-      // Execute all balance fetches in parallel
       const results = await Promise.allSettled(balancePromises);
       
-      // Aggregate balances by token (sum across all chains)
       results.forEach((result) => {
         if (result.status === 'fulfilled') {
           const { token, balance } = result.value;
-          newBalances[token] = (newBalances[token] || 0) + balance;
-        } else {
-          console.error('Balance fetch failed:', result.reason);
+          newBalances[token] = balance;
         }
       });
 
@@ -321,7 +283,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     } finally {
       setLoading(false);
     }
-  }, [address, authenticated, providers, initializeProviders]);
+  }, [address, authenticated, provider, currentChain]);
 
   // Calculate total balance in selected currency
   const calculateTotalBalance = useCallback(() => {
@@ -340,6 +302,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     });
 
     setTotalBalance(total);
+    return total;
   }, [balances, exchangeRates, selectedCurrency]);
 
   // Convert amount from one currency to another
@@ -367,19 +330,31 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
     fetchExchangeRates();
   }, []);
 
-  // Initialize providers when authentication changes
+  // Listen for wallet chain changes
   useEffect(() => {
-    if (authenticated && address) {
-      initializeProviders();
+    if (wallets.length > 0) {
+      initializeProvider();
     }
-  }, [authenticated, address, initializeProviders]);
+  }, [wallets[0]?.chainId, initializeProvider]);
 
-  // Fetch balances when providers are ready
+  // Update chain info when wallets change
   useEffect(() => {
-    if (authenticated && address && Object.keys(providers).length > 0) {
+    if (wallets.length > 0 && wallets[0]?.chainId) {
+      const chainIdHex = wallets[0].chainId.split(':')[1];
+      const chainId = parseInt(chainIdHex, 10);
+      const matchedChain = SUPPORTED_CHAINS.find(c => c.id === chainId) || null;
+      setCurrentChain(matchedChain);
+    } else {
+      setCurrentChain(null);
+    }
+  }, [wallets]);
+
+  // Fetch balances when provider is ready
+  useEffect(() => {
+    if (authenticated && address && provider && currentChain) {
       fetchAllBalances();
     }
-  }, [authenticated, address, providers, fetchAllBalances]);
+  }, [authenticated, address, provider, currentChain, fetchAllBalances]);
 
   // Recalculate total when balances or rates change  
   useEffect(() => {
@@ -389,28 +364,35 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
   // Auto-refresh every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      if (authenticated && address && Object.keys(providers).length > 0) {
+      if (authenticated && address && provider && currentChain) {
         fetchAllBalances();
         fetchExchangeRates();
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [authenticated, address, providers, fetchAllBalances]);
+  }, [authenticated, address, provider, currentChain, fetchAllBalances]);
+
+  // Update parent loading state
+  useEffect(() => {
+    setParentLoading(loading);
+  }, [loading, setParentLoading]);
+
+  if (!isOpen) return null;
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-8 relative">
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="min-h-[80vh] w-full max-w-4xl bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-white rounded-2xl p-8 relative">
             <button 
               onClick={onClose}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
               aria-label="Close"
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6 text-slate-800" />
             </button>
-            <div className="text-center">
+            <div className="text-center py-12">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Wallet className="w-8 h-8 text-blue-600" />
               </div>
@@ -424,27 +406,24 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="h-[calc(100vh-4rem)] overflow-auto">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-auto">
+      <div className="min-h-[80vh] w-full max-w-6xl bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl shadow-xl">
+        <div className="h-full overflow-auto">
           {/* Header */}
-          <div className="bg-white rounded-2xl shadow-xl mb-6 p-6">
+          <div className="bg-white p-6 sticky top-0 z-10 shadow-sm">
             <div className="flex flex-col md:flex-row md:justify-between">
               <div className='flex justify-between w-full'>
                 <div>
                   <h1 className="text-lg font-bold text-gray-900 mb-2">Stablecoin Portfolio</h1>
                   <p className="text-gray-600">Track your stablecoin balances across different currencies</p>
                 </div>
-                <button onClick={onClose} className='ml-auto'>
-                  <X className='hover:text-red-500'/>
-                </button>
               </div>
               
               <div className="mt-4 md:mt-0 flex space-x-2">
                 <select
                   value={selectedCurrency}
                   onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800"
                 >
                   {currencies.map(currency => (
                     <option key={currency.code} value={currency.code}>
@@ -465,61 +444,15 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
                   </svg>
                   <span>Refresh</span>
                 </button>
+                <button onClick={onClose} className='ml-auto'>
+                  <X className='hover:text-red-500 text-slate-800'/>
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Error Messages */}
-          {/* {errors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-              <div className="flex items-start">
-                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-                <div>
-                  <h3 className="text-red-800 font-medium mb-2">Issues Detected:</h3>
-                  <ul className="text-red-700 space-y-1">
-                    {errors.map((error, index) => (
-                      <li key={index} className="text-sm">• {error}</li>
-                    ))}
-                  </ul>
-                  <div className="mt-3 text-sm text-red-600">
-                    <p><strong>Troubleshooting steps:</strong></p>
-                    <ol className="list-decimal list-inside mt-1 space-y-1">
-                      <li>Ensure you are logged in with Privy or have a Web3 wallet installed</li>
-                      <li>Connect your wallet to this website</li>
-                      <li>Check that you're on the correct network</li>
-                      <li>Try refreshing the page</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )} */}
-
-          {/* Debug Info */}
-          {/* <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
-            <h3 className="font-medium text-gray-800 mb-2">Debug Information:</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Browser:</span>
-                <span className="ml-2 font-mono">{typeof window !== 'undefined' ? 'Available' : 'Not Available'}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Web3 Provider:</span>
-                <span className="ml-2 font-mono">{walletProvider ? 'Available' : 'Not Available'}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Wallet Address:</span>
-                <span className="ml-2 font-mono">{address || 'Not Connected'}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Authenticated:</span>
-                <span className="ml-2 font-mono">{authenticated ? 'Yes' : 'No'}</span>
-              </div>
-            </div>
-          </div> */}
-
           {/* Total Balance Card */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl mb-6 p-6 text-white">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-medium opacity-90 mb-1">Total Portfolio Value</h2>
@@ -531,7 +464,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
                 ) : (
                   <div>
                     <div className="text-lg font-bold">
-                      {getCurrencySymbol(selectedCurrency)}{totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
+                      {getCurrencySymbol(selectedCurrency)}{calculateTotalBalance().toFixed(2)}
                     </div>
                     <p className="text-sm opacity-75 mt-1">
                       Across {Object.values(balances).filter(b => b > 0).length} stablecoins
@@ -548,8 +481,10 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
           </div>
 
           {/* Stablecoin Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {stablecoins.map((coin) => {
+              if (!currentChain || !coin.chainIds.includes(currentChain.id)) return null;
+              
               const balance = balances[coin.baseToken] || 0;
               const convertedBalance = convertCurrency(balance, coin.currency, selectedCurrency);
               const hasBalance = balance > 0;
@@ -655,7 +590,7 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
           </div>
 
           {/* Footer Stats */}
-          <div className="bg-white rounded-2xl shadow-xl mt-6 p-6">
+          <div className="bg-white rounded-2xl shadow-xl m-6 p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
@@ -722,4 +657,34 @@ const StablecoinBalanceTracker = ({ isOpen, onClose }: StablecoinBalanceTrackerP
   );
 };
 
-export default StablecoinBalanceTracker;
+export const StablecoinBalanceButton = () => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [loading, setLoading] = useState(true);
+  
+  return (
+    <>
+      {/* Floating Button */}
+      <button 
+        onClick={() => setModalOpen(true)}
+        className="z-40 hover:bg-blue-700 text-white font-medium px-4 rounded-full flex items-center space-x-2 transition-all"
+      >
+        {loading ? (
+          <Loader2 className="animate-spin h-5 w-5" />
+        ) : (
+          <span>${totalBalance.toFixed(2)}</span>
+        )}
+        <span>Balance</span>
+        <ChevronRight className="h-4 w-4" />
+      </button>
+
+      {/* Modal */}
+      <StablecoinBalanceTracker 
+        isOpen={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+        setTotalBalance={setTotalBalance}
+        setLoading={setLoading}
+      />
+    </>
+  );
+};

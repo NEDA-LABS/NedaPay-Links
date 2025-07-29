@@ -15,7 +15,9 @@ import {
   Activity,
   Sparkles,
   ChevronLeft,
-  Menu
+  Menu,
+  BarChart3,
+  FileIcon
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -34,29 +36,27 @@ import {
 
 const overviewItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Notification Center", url: "/all-notifications", icon: Bell },
 ];
 
 const productItems = [
   { title: "Payment Link", url: "/payment-link", icon: Send },
+  {title: "Generate Invoice", url: "/invoice", icon: FileIcon},
   { title: "Swap Coins", url: "/swap-coins", icon: Activity },
-  { title: "Transfer to Fiat", url: "/transfer-fiat", icon: CreditCard },
-  { title: "Customize Dashboard", url: "/customize", icon: Sparkles },
+  { title: "Transfer to Fiat", url: "/offramp", icon: CreditCard },
+  { title: "Customize Dashboard", url: "/settings", icon: Sparkles },
+  {title: "Analytics", url: "/analytics", icon: BarChart3}
 ];
 
 const paymentItems = [
-  { title: "Transactions", url: "/transactions", icon: FileText },
-  { title: "Dispute and Settlement", url: "/disputes", icon: Shield },
-  { title: "Settings", url: "/payment-settings", icon: Settings },
+  { title: "Transactions", url: "/all-transactions", icon: FileText },
+  // { title: "Dispute and Settlement", url: "/disputes", icon: Shield },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
-const businessItems = [
-  { title: "Manage Business", url: "/manage-business", icon: Building2 },
-  { title: "Notification", url: "/notifications", icon: Bell },
-  { title: "Roles Management", url: "/roles", icon: Shield },
-];
 
 const resourceItems = [
-  { title: "API - Integration", url: "/api", icon: Code },
+  // { title: "API - Integration", url: "/api", icon: Code },
   { title: "Support", url: "/support", icon: HelpCircle },
 ];
 
@@ -122,9 +122,9 @@ function AppSidebarContent() {
         <div className="p-2 flex-1 overflow-y-auto">
           {/* Overview */}
           <SidebarGroup>
-            {!isCollapsed && (
+            {/* {!isCollapsed && (
               <SidebarGroupLabel>OVERVIEW</SidebarGroupLabel>
-            )}
+            )} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {overviewItems.map((item) => (
@@ -146,9 +146,9 @@ function AppSidebarContent() {
 
           {/* Product */}
           <SidebarGroup>
-            {!isCollapsed && (
+            {/* {!isCollapsed && (
               <SidebarGroupLabel>PRODUCT</SidebarGroupLabel>
-            )}
+            )} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {productItems.map((item) => (
@@ -170,9 +170,9 @@ function AppSidebarContent() {
 
           {/* Payments */}
           <SidebarGroup>
-            {!isCollapsed && (
+            {/* {!isCollapsed && (
               <SidebarGroupLabel>PAYMENTS</SidebarGroupLabel>
-            )}
+            )} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {paymentItems.map((item) => (
@@ -192,35 +192,11 @@ function AppSidebarContent() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Business */}
-          <SidebarGroup>
-            {!isCollapsed && (
-              <SidebarGroupLabel>BUSINESS</SidebarGroupLabel>
-            )}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {businessItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link 
-                        href={item.url}
-                        className={`flex items-center ${isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-2.5'} rounded-md transition-colors ${getNavClass(item.url)}`}
-                      >
-                        <item.icon className="h-5 w-5 flex-shrink-0" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
           {/* Resources */}
           <SidebarGroup>
-            {!isCollapsed && (
+            {/* {!isCollapsed && (
               <SidebarGroupLabel>RESOURCES</SidebarGroupLabel>
-            )}
+            )} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {resourceItems.map((item) => (

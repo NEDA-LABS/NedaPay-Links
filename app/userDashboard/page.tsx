@@ -13,7 +13,7 @@ export default function Dashboard() {
       <div className="">
         <SidebarProvider>
           <div className="flex bg-beige h-screen">
-            <div className="fixed left-0 w-64 bg-dark-sidebar">
+            <div className="fixed left-0 w-64 bg-dark-sidebar overflow-y-auto h-screen">
               <AppSidebar />
             </div>
             <div className="pl-64 flex-1">
