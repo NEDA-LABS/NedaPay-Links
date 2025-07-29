@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Image from "next/image";
+import { AppSidebarToggle } from "@/userDashboard/AppSidebar";
 
 // Import your actual components
 import WalletSelector from "./WalletSelector";
@@ -218,6 +219,7 @@ export default function Header() {
               >
                 <Menu size={16} className="text-white hover:text-slate-700 transition-colors duration-300" />
               </button> */}
+              <AppSidebarToggle/>
               
             </div>
           </div>

@@ -19,7 +19,7 @@ export default function WalletKit() {
               className="bg-white/10 text-white border-white/30 hover:bg-white/20"
             >
               <Send className="h-3 w-3 mr-1" />
-              Send
+              <a href="/Wallet">Send</a>
             </Button>
             <Button
               size="sm"

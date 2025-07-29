@@ -2,21 +2,19 @@
 
 import { AppSidebar } from "./AppSidebar";
 import DashboardContent from "./MainContent";
-import { SidebarProvider } from "./sidebar";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { SidebarProvider } from "@/compliance/user/components/ui/sidebar";
+
 
 export default function Dashboard() {
   return (
     <div className="flex flex-col">
-      <Header />
       <div className="">
         <SidebarProvider>
           <div className="flex bg-beige h-screen">
             <div className="fixed left-0 w-64 bg-dark-sidebar overflow-y-auto h-screen">
               <AppSidebar />
             </div>
-            <div className="pl-64 flex-1">
+            <div className="md:pl-90 flex-1">
               <DashboardContent />
             </div>
           </div>

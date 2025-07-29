@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { usePrivy, useWallets, useFundWallet, useSendTransaction } from '@privy-io/react-auth';
-import { formatEther, parseEther, isAddress, formatUnits, parseUnits, encodeFunctionData } from 'viem';
-import { base } from 'viem/chains';
+import { formatEther, parseEther, isAddress, formatUnits, parseUnits, encodeFunctionData, Chain } from 'viem';
+import { base, bsc, scroll } from 'viem/chains';
 import toast from 'react-hot-toast';
 import {
   ModalOverlay,
@@ -22,7 +22,14 @@ import {
   SuccessIcon,
   CloseButton
 } from './WalletFundsModalStyles';
-import { stablecoins } from '../data/stablecoins'; // Adjust path as needed
+import { stablecoins } from '../data/stablecoins';
+
+// Define supported chains
+const SUPPORTED_CHAINS: Record<number, Chain> = {
+  [base.id]: base,
+  [bsc.id]: bsc,
+  [scroll.id]: scroll,
+};
 
 interface WalletFundsModalProps {
   isOpen: boolean;
@@ -79,6 +86,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
 }) => {
   const { user } = usePrivy();
   const { wallets } = useWallets();
+  const [fundAmount, setFundAmount] = useState('0.01');
   const { fundWallet } = useFundWallet({
     onUserExited: (data) => {
       console.log('Funding flow exited:', data);
@@ -118,6 +126,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
   const [isValidAddress, setIsValidAddress] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({ USD: 1 });
+  const [currentChain, setCurrentChain] = useState<Chain>(base);
 
   const embeddedWallet = wallets.find(wallet => 
     wallet.walletClientType === 'privy' && wallet.address === walletAddress
@@ -158,24 +167,38 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
 
   const fetchBalances = useCallback(async () => {
     if (!walletAddress || !embeddedWallet) return;
+    
     setIsLoading(true);
     try {
       const provider = await embeddedWallet.getEthereumProvider();
+      const chainId = await provider.request({ method: 'eth_chainId' });
+      const currentChain = SUPPORTED_CHAINS[parseInt(chainId, 16)] || base;
+      setCurrentChain(currentChain);
+
       const tokens: Token[] = [
-        { symbol: 'ETH', decimals: 18, type: 'native', currency: 'USD' },
-        ...stablecoins.filter(sc => sc.chainId === base.id).map(sc => ({
-          symbol: sc.baseToken,
-          address: sc.address,
-          decimals: sc.decimals as number,
-          type: 'erc20',
-          flag: sc.flag,
-          currency: sc.currency || 'USD'
-        }))
+        { 
+          symbol: currentChain.nativeCurrency.symbol, 
+          decimals: currentChain.nativeCurrency.decimals, 
+          type: 'native', 
+          currency: 'USD' 
+        },
+        ...stablecoins
+          .filter(sc => sc.chainIds.includes(currentChain.id))
+          .map(sc => ({
+            symbol: sc.baseToken,
+            address: sc.addresses[currentChain.id as keyof typeof sc.addresses],
+            decimals: typeof sc.decimals === 'number' 
+              ? sc.decimals 
+              : sc.decimals?.[currentChain.id as keyof typeof sc.decimals] || 18,
+            type: 'erc20',
+            flag: sc.flag,
+            currency: sc.currency || 'USD'
+          }))
       ];
 
       // Batch eth_call requests for ERC20 tokens
       const erc20Tokens = tokens.filter(t => t.type === 'erc20' && t.address);
-      const ethBalancePromise = provider.request({
+      const nativeBalancePromise = provider.request({
         method: 'eth_getBalance',
         params: [walletAddress, 'latest']
       });
@@ -195,23 +218,28 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
         });
       });
 
-      const [ethBalanceHex, ...erc20BalanceHexes] = await Promise.all([
-        ethBalancePromise,
+      const [nativeBalanceHex, ...erc20BalanceHexes] = await Promise.all([
+        nativeBalancePromise,
         ...erc20BalancePromises
       ]);
 
       const tokenBalances = tokens.map((token, index) => {
-        const balanceHex = token.type === 'native' ? ethBalanceHex : erc20BalanceHexes[index - 1];
-        const balance = BigInt(balanceHex);
+        const balanceHex = token.type === 'native' 
+          ? nativeBalanceHex 
+          : erc20BalanceHexes[index - 1];
+        const balance = BigInt(balanceHex || '0');
         const formattedBalance = formatUnits(balance, token.decimals);
         const balanceNumber = parseFloat(formattedBalance);
-        const usdValue = token.symbol === 'ETH' ? balanceNumber * 3500 : convertToUSD(balanceNumber, token.currency || 'USD');
+        const usdValue = token.currency 
+          ? convertToUSD(balanceNumber, token.currency) 
+          : balanceNumber;
+          
         return {
           symbol: token.symbol,
           balance: formattedBalance,
           decimals: token.decimals,
           contractAddress: token.type === 'erc20' ? token.address : undefined,
-          usdValue: usdValue,
+          usdValue,
           flag: token.flag,
           currency: token.currency
         };
@@ -221,8 +249,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       if (tokenBalances.length > 0 && !selectedToken) {
         setSelectedToken(tokenBalances[0]);
       }
-    } 
-      finally {
+    } finally {
       setIsLoading(false);
     }
   }, [walletAddress, embeddedWallet, exchangeRates, selectedToken]);
@@ -233,9 +260,17 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
         toast.error('Wallet address not found');
         return;
       }
+      
+      // Convert to number and validate
+      const amountNum = parseFloat(fundAmount);
+      if (isNaN(amountNum)) {
+        toast.error('Please enter a valid amount');
+        return;
+      }
+      
       await fundWallet(walletAddress, {
-        chain: base,
-        amount: '0.01'
+        chain: currentChain,
+        amount: fundAmount
       });
     } catch (error) {
       console.error('Error opening funding modal:', error);
@@ -266,7 +301,8 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       const provider = await embeddedWallet.getEthereumProvider();
       const gasPrice = await provider.request({ method: 'eth_gasPrice', params: [] });
       let gasLimit;
-      if (selectedToken.symbol === 'ETH') {
+      
+      if (selectedToken.symbol === currentChain.nativeCurrency.symbol) {
         gasLimit = await provider.request({
           method: 'eth_estimateGas',
           params: [{
@@ -297,42 +333,51 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       console.error('Gas estimation failed:', error);
       setGasEstimate('0.001');
     }
-  }, [embeddedWallet, recipientAddress, amount, selectedToken, isValidAddress, walletAddress]);
+  }, [embeddedWallet, recipientAddress, amount, selectedToken, isValidAddress, walletAddress, currentChain]);
 
   const executeTransfer = async () => {
     if (!embeddedWallet || !recipientAddress || !amount || !selectedToken) {
       toast.error('Missing required information');
       return;
     }
-    const ethBalance = balances.find(b => b.symbol === 'ETH')?.balance || '0';
+    
+    const nativeToken = currentChain.nativeCurrency.symbol;
+    const nativeTokenBalance = balances.find(b => b.symbol === nativeToken)?.balance || '0';
     const estimatedGas = parseFloat(gasEstimate || '0.001');
+    
     let isInsufficient = false;
     let insufficientMessage = '';
-    if (selectedToken.symbol === 'ETH') {
+    
+    if (selectedToken.symbol === nativeToken) {
       const totalCost = parseFloat(amount) + estimatedGas;
       if (parseFloat(selectedToken.balance) < totalCost) {
         isInsufficient = true;
-        insufficientMessage = 'Insufficient ETH for transfer and gas';
+        insufficientMessage = `Insufficient ${nativeToken} for transfer and gas`;
       }
     } else {
       if (parseFloat(selectedToken.balance) < parseFloat(amount)) {
         isInsufficient = true;
         insufficientMessage = `Insufficient ${selectedToken.symbol} balance`;
-      } else if (parseFloat(ethBalance) < estimatedGas) {
+      } else if (parseFloat(nativeTokenBalance) < estimatedGas) {
         isInsufficient = true;
-        insufficientMessage = 'Insufficient ETH for gas';
+        insufficientMessage = `Insufficient ${nativeToken} for gas`;
       }
     }
+    
     if (isInsufficient) {
       toast.error(insufficientMessage);
-      if (selectedToken.symbol === 'ETH' || (selectedToken.symbol !== 'ETH' && parseFloat(ethBalance) < estimatedGas)) {
+      if (selectedToken.symbol === nativeToken || 
+          (selectedToken.symbol !== nativeToken && parseFloat(nativeTokenBalance) < estimatedGas)) {
         const suggestedAmount = (estimatedGas + 0.001).toFixed(4);
         const fundAndRetry = window.confirm(
-          `You need more ETH to complete this transaction. Would you like to fund your wallet with ${suggestedAmount} ETH?`
+          `You need more ${nativeToken} to complete this transaction. Would you like to fund your wallet with ${suggestedAmount} ${nativeToken}?`
         );
         if (fundAndRetry) {
           try {
-            await fundWallet(walletAddress!, { chain: base, amount: suggestedAmount });
+            await fundWallet(walletAddress!, { 
+              chain: currentChain, 
+              amount: suggestedAmount 
+            });
           } catch (error) {
             console.error('Error opening funding modal:', error);
             toast.error('Failed to open funding flow');
@@ -341,13 +386,14 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       }
       return;
     }
+    
     setIsTransferring(true);
     try {
-      if (selectedToken.symbol === 'ETH') {
+      if (selectedToken.symbol === currentChain.nativeCurrency.symbol) {
         await sendTransaction({
           to: recipientAddress,
           value: parseEther(amount),
-          chainId: base.id,
+          chainId: currentChain.id,
         });
       } else {
         const amountWei = parseUnits(amount, selectedToken.decimals);
@@ -359,7 +405,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
         await sendTransaction({
           to: selectedToken.contractAddress!,
           data: transferData,
-          chainId: base.id,
+          chainId: currentChain.id,
         });
       }
     } catch (error: any) {
@@ -401,8 +447,8 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
 
   const totalBalance = balances.reduce((sum, token) => sum + (token.usdValue || 0), 0);
   const maxWithdrawable = selectedToken ? 
-    (selectedToken.symbol === 'ETH' ? 
-      (parseFloat(selectedToken.balance) - parseFloat(gasEstimate || '0.001')).toFixed(6) : 
+    (selectedToken.symbol === currentChain.nativeCurrency.symbol ? 
+      Math.max(0, parseFloat(selectedToken.balance) - parseFloat(gasEstimate || '0.001')).toFixed(6) : 
       selectedToken.balance) : 
     '0';
 
@@ -411,6 +457,8 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       'USDC': 'bg-blue-500',
       'cNGN': 'bg-purple-500',
       'ETH': 'bg-gray-700',
+      'BNB': 'bg-yellow-500',
+      'ETHW': 'bg-gray-500',
       'NGNC': 'bg-green-500',
       'ZARP': 'bg-yellow-500',
       'IDRX': 'bg-red-500',
@@ -419,7 +467,8 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       'BRL': 'bg-green-600',
       'TRYB': 'bg-orange-500',
       'NZDD': 'bg-black',
-      'MXNe': 'bg-pink-500'
+      'MXNe': 'bg-pink-500',
+      'USDT': 'bg-green-500'
     };
     return colors[symbol as keyof typeof colors] || 'bg-gray-400';
   };
@@ -429,7 +478,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
       <ModalContent>
         <ModalHeader>
           <ModalTitle>
-            <h1>Base Wallet</h1>
+            <h1>{currentChain.name} Wallet</h1>
             <div className="flex items-center mt-2 text-gray-500">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -464,9 +513,20 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                 >
                   Send
                 </Button>
-                <Button variant="primary" onClick={handleFundWallet}>
-                  Fund Wallet
-                </Button>
+                <div className="flex">
+                  <Input
+                    type="number"
+                    value={fundAmount}
+                    onChange={(e) => setFundAmount(e.target.value)}
+                    placeholder="0.01"
+                    step="0.001"
+                    min="0.001"
+                    className="mr-2"
+                  />
+                  <Button variant="primary" onClick={handleFundWallet}>
+                    Fund Wallet
+                  </Button>
+                </div>
                 <Button variant="secondary" onClick={() => setShowExportOptions(!showExportOptions)}>
                   Export Keys
                 </Button>
@@ -535,6 +595,9 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                         <div className="font-bold text-gray-900">
                           ${token.usdValue.toFixed(4)}
                         </div>
+                        <div className="text-sm text-gray-500">
+                          {token.currency || 'USD'}
+                        </div>
                       </div>
                     </TokenCard>
                   ))
@@ -545,7 +608,8 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                 )}
               </div>
 
-              {selectedToken && parseFloat(selectedToken.balance) < 0.01 && (
+              {selectedToken && selectedToken.symbol === currentChain.nativeCurrency.symbol && 
+               parseFloat(selectedToken.balance) < 0.01 && (
                 <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                   <div className="flex items-start">
                     <svg className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="red" viewBox="0 0 24 24">
@@ -554,7 +618,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                     <div>
                       <p className="text-sm font-medium text-amber-800">Low Balance</p>
                       <p className="text-sm text-amber-700 mt-1">
-                        Your wallet has a low ETH balance. Consider funding it to cover transaction fees.
+                        Your wallet has a low {currentChain.nativeCurrency.symbol} balance. Consider funding it to cover transaction fees.
                       </p>
                       <button onClick={handleFundWallet} className="mt-2 text-sm font-medium text-amber-800 hover:text-amber-900 underline">
                         Fund Wallet Now
@@ -626,21 +690,21 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
 
               {gasEstimate && amount && (
                 <div className="bg-[--bg-secondary] rounded-2xl p-4 space-y-2">
-                  {selectedToken.symbol === 'ETH' ? (
+                  {selectedToken.symbol === currentChain.nativeCurrency.symbol ? (
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Network Fee:</span>
-                        <span className="font-medium text-gray-900">{gasEstimate} ETH</span>
+                        <span className="font-medium text-gray-900">{gasEstimate} {currentChain.nativeCurrency.symbol}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">You'll Send:</span>
-                        <span className="font-medium text-gray-900">{amount} ETH</span>
+                        <span className="font-medium text-gray-900">{amount} {currentChain.nativeCurrency.symbol}</span>
                       </div>
                       <div className="border-t border-gray-200 pt-2 mt-2">
                         <div className="flex justify-between">
                           <span className="font-medium text-gray-900">Total Cost:</span>
                           <span className="font-bold text-gray-900">
-                            {(parseFloat(amount || '0') + parseFloat(gasEstimate)).toFixed(6)} ETH
+                            {(parseFloat(amount || '0') + parseFloat(gasEstimate)).toFixed(6)} {currentChain.nativeCurrency.symbol}
                           </span>
                         </div>
                       </div>
@@ -653,7 +717,7 @@ const WalletFundsModal: React.FC<WalletFundsModalProps> = ({
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Estimated Gas:</span>
-                        <span className="font-medium text-gray-900">{gasEstimate} ETH</span>
+                        <span className="font-medium text-gray-900">{gasEstimate} {currentChain.nativeCurrency.symbol}</span>
                       </div>
                     </>
                   )}

@@ -8,6 +8,7 @@ import { Button } from "@/components/Button";
 import { Badge } from "@/components/Badge";
 import SwapModal from "@/dashboard/SwapModal";
 import { PaymentMethods } from "./PaymentMethods";
+import Header from "@/components/Header";
 import {
   Activity,
   DollarSign,
@@ -29,11 +30,14 @@ import {
   Globe,
   Shield,
   Repeat,
+  Menu,
+  ChevronLeft,
 } from "lucide-react";
 import DailyRevenueChart from "./DailyRevenueChart";
 import Footer from "@/components/Footer";
 import ChainSwitcher from "@/components/ChainSwitcher";
 import WalletKit from "./WalletKit";
+import { SidebarProvider, useSidebar } from "@/compliance/user/components/ui/sidebar";
 
 // Define ABIs and constants
 const ERC20_ABI = [
@@ -83,6 +87,8 @@ export default function DashboardContent() {
   const [swapFromSymbol, setSwapFromSymbol] = useState<string>("");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isTransactionLoading, setIsTransactionLoading] = useState(true);
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === 'collapsed';
   const [metrics, setMetrics] = useState({
     totalReceived: 0,
     totalTransactions: 0,
@@ -267,10 +273,12 @@ export default function DashboardContent() {
   };
 
   return (
-    <div className="space-y-8 bg-slate-100 p-4">
-      {/* Header */}
+      <div className="space-y-8 bg-slate-100 p-4">
+       <Header />
       <div className="flex items-center justify-between">
         <div>
+        
+        <button></button>
           <h1 className="text-4xl font-bold bg-[#3E55E6] bg-clip-text text-transparent">
             Your Dashboard
           </h1>
@@ -543,5 +551,5 @@ export default function DashboardContent() {
       )}
       <Footer/>
     </div>
-  );
+  ); 
 }

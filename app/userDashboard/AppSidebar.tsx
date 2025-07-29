@@ -15,7 +15,7 @@ import {
   Activity,
   Sparkles,
   ChevronLeft,
-  Menu,
+  Menu, // This is the icon we'll use for the toggle
   BarChart3,
   FileIcon
 } from "lucide-react";
@@ -32,7 +32,7 @@ import {
   SidebarMenuButton,
   SidebarProvider,
   useSidebar
-} from "./sidebar";
+} from "@/compliance/user/components/ui/sidebar";
 
 const overviewItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -61,7 +61,7 @@ const resourceItems = [
 ];
 
 function AppSidebarContent() {
-  const { state, toggle } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const pathname = usePathname();
 
@@ -76,7 +76,7 @@ function AppSidebarContent() {
   };
 
   return (
-    <Sidebar className="bg-[#3E55E6] text-white shadow-lg">
+    <Sidebar className={isCollapsed ? "w-14 bg-[#3E55E6] text-white shadow-lg" : "w-64 bg-[#3E55E6] text-white shadow-lg"} collapsible="icon" >
       <SidebarContent className="sidebar-content sidebar-transition">
         {/* Mobile menu button */}
         <div className="md:hidden p-4 border-b border-white/20 flex items-center justify-between">
@@ -85,10 +85,10 @@ function AppSidebarContent() {
             <span className="font-semibold text-white">Business Name</span>
           </div>
           <button 
-            onClick={toggle}
+            onClick={toggleSidebar}
             className="text-white hover:bg-white/10 rounded-md p-1"
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="h-6 w-6 text-slate-800" />
           </button>
         </div>
         
@@ -96,11 +96,16 @@ function AppSidebarContent() {
         <div className="hidden md:block p-4 border-b border-white/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
-              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-8 h-8" />
+            <button 
+            onClick={toggleSidebar}
+            className="text-slate-800 hover:bg-white/10 rounded-md p-1"
+          >
+            <Menu className="h-6 w-6 text-slate-800" />
+          </button>
               {!isCollapsed && <span className="font-semibold text-white">Business Name</span>}
             </div>
             <button 
-              onClick={toggle}
+              onClick={toggleSidebar}
               className="text-white hover:bg-white/10 rounded-md p-1"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
@@ -122,9 +127,6 @@ function AppSidebarContent() {
         <div className="p-2 flex-1 overflow-y-auto">
           {/* Overview */}
           <SidebarGroup>
-            {/* {!isCollapsed && (
-              <SidebarGroupLabel>OVERVIEW</SidebarGroupLabel>
-            )} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {overviewItems.map((item) => (
@@ -146,9 +148,6 @@ function AppSidebarContent() {
 
           {/* Product */}
           <SidebarGroup>
-            {/* {!isCollapsed && (
-              <SidebarGroupLabel>PRODUCT</SidebarGroupLabel>
-            )} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {productItems.map((item) => (
@@ -170,9 +169,6 @@ function AppSidebarContent() {
 
           {/* Payments */}
           <SidebarGroup>
-            {/* {!isCollapsed && (
-              <SidebarGroupLabel>PAYMENTS</SidebarGroupLabel>
-            )} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {paymentItems.map((item) => (
@@ -194,9 +190,6 @@ function AppSidebarContent() {
 
           {/* Resources */}
           <SidebarGroup>
-            {/* {!isCollapsed && (
-              <SidebarGroupLabel>RESOURCES</SidebarGroupLabel>
-            )} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {resourceItems.map((item) => (
@@ -223,8 +216,21 @@ function AppSidebarContent() {
 
 export function AppSidebar() {
   return (
-    <SidebarProvider>
-      <AppSidebarContent />
-    </SidebarProvider>
+    <AppSidebarContent />
+  );
+}
+
+// New standalone toggle component
+export function AppSidebarToggle() {
+  const { toggleSidebar } = useSidebar();
+
+  return (
+    <button 
+      onClick={toggleSidebar}
+      className="text-slate-800 hover:bg-white/10 rounded-md p-1"
+      aria-label="Toggle sidebar"
+    >
+      <Menu className="h-6 w-6" />
+    </button>
   );
 }
