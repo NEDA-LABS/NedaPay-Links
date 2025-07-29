@@ -78,7 +78,7 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent p-6 flex items-center justify-center relative overflow-hidden mt-[-50px]">
+    <div className="min-h-screen bg-transparent p-6 flex items-center justify-center relative overflow-hidden lg:mt-[-50px]">
       {/* Diagonal lines background */}
       <div className="absolute inset-0 opacity-10">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">

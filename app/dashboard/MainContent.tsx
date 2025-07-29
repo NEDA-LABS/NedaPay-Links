@@ -6,7 +6,7 @@ import { MetricCard } from "./MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Badge } from "@/components/Badge";
-import SwapModal from "@/dashboard/SwapModal";
+import SwapModal from "@/components/SwapModal";
 import { PaymentMethods } from "./PaymentMethods";
 import Header from "@/components/Header";
 import {
@@ -273,7 +273,7 @@ export default function DashboardContent() {
   };
 
   return (
-      <div className="space-y-8 bg-slate-100 p-4">
+        <div className="space-y-8 bg-slate-100 p-4">
        <Header />
       <div className="flex items-center justify-between">
         <div>
@@ -551,5 +551,6 @@ export default function DashboardContent() {
       )}
       <Footer/>
     </div>
+      
   ); 
 }

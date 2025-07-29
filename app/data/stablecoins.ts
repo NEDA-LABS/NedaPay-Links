@@ -176,7 +176,6 @@ export const stablecoins = [
     baseToken: 'USDT',
     name: 'Tether USD',
     addresses: {
-      8453: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', // Base Mainnet
       42161: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', // Arbitrum
       137: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', // Polygon
       42220: '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e', // Celo
@@ -187,7 +186,6 @@ export const stablecoins = [
     website: 'https://tether.to/',
     chainIds: [8453, 42161, 137, 42220, 56], // Base, Arbitrum, Polygon, Celo, BNB Chain
     decimals: {
-      8453: 6, // Base
       42161: 6, // Arbitrum
       137: 6, // Polygon
       42220: 6, // Celo

@@ -158,7 +158,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
   };
 
   return (
-    <div className="relative h-[600px] w-full overflow-hidden my-auto">
+    <div className="relative lg:h-[600px] w-full overflow-hidden my-auto">
       {/* Gradient overlays for fade effect */}
       {/* <div
         className="absolute top-0 left-0 h-full w-[80px] z-10 pointer-events-none"
@@ -175,7 +175,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
         }}
       /> */}
 
-      <div className="flex h-full items-center justify-center [perspective:1200px] [transform-style:preserve-3d] pt-20">
+      <div className="flex h-full items-center justify-center [perspective:1200px] [transform-style:preserve-3d] lg:pt-20">
         <motion.div
           drag="x"
           dragElastic={0}
@@ -191,7 +191,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
             width: cylinderWidth,
             transformStyle: "preserve-3d",
           }}
-          className="flex min-h-[300px] cursor-grab items-center justify-center [transform-style:preserve-3d] active:cursor-grabbing"
+          className="flex min-h-[200px] lg:min-h-[300px] cursor-grab items-center justify-center [transform-style:preserve-3d] active:cursor-grabbing"
         >
           {galleryFeatures.map((feature, i) => {
             const IconComponent = feature.icon;
@@ -242,7 +242,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                       <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 ${feature.glowColor}`} />
                       
                       {React.createElement(feature.icon as LucideIcon, {
-                        className: `w-25 h-25 text-[#3E55E6] transition-all duration-300 relative z-10 group-hover:scale-110 `
+                        className: `w-20 h-20  lg:w-25 lg:h-25 text-[#3E55E6] transition-all duration-300 relative z-10 group-hover:scale-110 `
                       })}
                       
                       {/* Sparkle effect */}

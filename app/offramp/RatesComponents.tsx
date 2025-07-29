@@ -287,7 +287,7 @@ const CurrencyRatesWidget = () => {
 
   if (loading) {
     return (
-      <div className="w-full p-6 shadow-2xl">
+      <div className="w-full p-6">
         <div className="flex items-center justify-center gap-3">
           <Activity className="w-6 h-6 text-emerald-400 animate-pulse" />
           <span className="text-slate-300 text-sm font-medium">Loading exchange rates...</span>
@@ -496,7 +496,7 @@ const CurrencyRatesWidget = () => {
                   width: `calc(${100 / ITEMS_PER_VIEW}% - 1.5rem)`,
                   minWidth: '220px',
                   maxWidth: '280px',
-                  padding: '24px'
+                  padding: '10px'
                 }}
               >
                 {/* Shimmer effect */}
@@ -506,7 +506,7 @@ const CurrencyRatesWidget = () => {
                 {isStale && (
                   <div className="absolute top-4 right-4 flex items-center gap-2">
                     <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                    <span className="text-amber-400 text-xs font-medium opacity-70">STALE</span>
+                    <span className="text-amber-400 !text-xs font-medium opacity-70">STALE</span>
                   </div>
                 )}
 
@@ -514,23 +514,23 @@ const CurrencyRatesWidget = () => {
                 {!isStale && (
                   <div className="absolute top-4 right-4 flex items-center gap-2">
                     <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                    <span className="text-emerald-400 text-xs font-medium opacity-70">LIVE</span>
+                    <span className="text-emerald-400 !text-xs font-medium opacity-70">LIVE</span>
                   </div>
                 )}
                 
                 {/* Header */}
                 <div className="relative flex items-center gap-4 mb-6">
-                  <div className="currency-icon w-14 h-14 rounded-2xl flex items-center justify-center relative">
+                  <div className="currency-icon w-10 h-10 lg:w-14 lg:h-14 rounded-2xl flex items-center justify-center relative">
                     <img 
                       src={getCountryFlag(currency.code)} 
                       alt={`${currency.code} flag`} 
-                      className={`${isStale ? 'opacity-90' : 'opacity-100'} w-8 h-8 object-contain relative z-10`} 
+                      className={`${isStale ? 'opacity-90' : 'opacity-100'} w-5 h-5 lg:w-8 lg:h-8 object-contain relative z-10`} 
                     />
                   </div>
                   
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-white font-bold text-sm tracking-tight">
+                      <h3 className="text-white font-semibold !text-xs lg:text-sm tracking-tight">
                         {currency.code}
                       </h3>
                       {/* Trend indicator */}
@@ -546,7 +546,7 @@ const CurrencyRatesWidget = () => {
                         )}
                       </div>
                     </div>
-                    <p className="text-slate-400 text-sm font-medium leading-tight">
+                    <p className="text-slate-400 text-xs lg:text-sm font-medium leading-tight">
                       {currency.name}
                     </p>
                   </div>
@@ -567,7 +567,7 @@ const CurrencyRatesWidget = () => {
                   <div className="price-display rounded-xl p-4 relative overflow-hidden">
                     
                     <div className="flex items-baseline gap-2">
-                      <div className={`text-sm font-bold font-mono text-transparent bg-clip-text 
+                      <div className={`text-sm font-bold font-mono text-transparent bg-clip-text text-xs lg:text-base
                                       ${isStale 
                                         ? 'bg-gradient-to-r from-amber-400 via-amber-300 to-amber-200' 
                                         : 'bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-200'

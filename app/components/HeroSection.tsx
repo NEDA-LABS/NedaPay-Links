@@ -68,7 +68,7 @@ const HeroSection = () => {
               {loading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
-                <span className="text-xl text-white text-center">
+                <span className="lg:text-xl text-white text-center">
                   Explore Dashboard
                 </span>
               )}

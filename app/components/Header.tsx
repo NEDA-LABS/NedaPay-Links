@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Image from "next/image";
-import { AppSidebarToggle } from "@/userDashboard/AppSidebar";
+import { AppSidebarToggle } from "@/dashboard/AppSidebar";
+import { SidebarProvider } from "@/compliance/user/components/ui/sidebar";
 
 // Import your actual components
 import WalletSelector from "./WalletSelector";
@@ -70,7 +71,8 @@ export default function Header() {
   if (!mounted) return null;
 
   return (
-    <header
+    
+      <header
       className={`
         sticky top-0 z-50 
         transition-all duration-300
@@ -219,7 +221,8 @@ export default function Header() {
               >
                 <Menu size={16} className="text-white hover:text-slate-700 transition-colors duration-300" />
               </button> */}
-              <AppSidebarToggle/>
+              {pathname !== "/" && <AppSidebarToggle />}
+              
               
             </div>
           </div>
@@ -229,6 +232,8 @@ export default function Header() {
     {/* Side Bar Modal */}
     {/* <Sidebar isOpen={isSideMenuOpen} onClose={() => setIsSideMenuOpen(false)} authenticated={authenticated} /> */}
     </header>
+    
+    
 
     
 
