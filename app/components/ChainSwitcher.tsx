@@ -2,33 +2,29 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import { useWallets } from '@privy-io/react-auth';
-import { mainnet, polygon, arbitrum, optimism, base, bsc } from 'viem/chains';
+import { polygon, arbitrum, optimism, base, bsc } from 'viem/chains';
 
 // Define supported chains with their metadata
 const SUPPORTED_CHAINS = [
   {
-    ...mainnet,
-    icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
-  },
-  {
     ...polygon,
-    icon: 'https://cryptologos.cc/logos/polygon-matic-logo.png',
+    icon: '/polygon.svg',
   },
   {
     ...arbitrum,
-    icon: 'https://cryptologos.cc/logos/arbitrum-arb-logo.png',
+    icon: '/arbitrum.svg',
   },
   {
     ...optimism,
-    icon: 'https://cryptologos.cc/logos/optimism-ethereum-op-logo.png',
+    icon: '/optimism.svg',
   },
   {
     ...base,
-    icon: 'https://cryptologos.cc/logos/coinbase-coin-logo.png',
+    icon: '/base.svg',
   },
   {
     ...bsc,
-    icon: 'https://cryptologos.cc/logos/bnb-bnb-logo.png',
+    icon: '/bsc.svg',
   },
 ];
 

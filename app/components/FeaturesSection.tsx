@@ -158,7 +158,7 @@ export default function BrandedGlassUI() {
         </div>
 
         {/* Footer CTA */}
-        <div className="mt-16 text-center">
+        {/* <div className="mt-16 text-center">
           <button
             onClick={() => router.push('/get-started')}
             className="px-8 py-4 text-base font-medium rounded-full flex items-center gap-3 mx-auto transition-all duration-300 hover:shadow-lg hover:scale-105"
@@ -170,7 +170,7 @@ export default function BrandedGlassUI() {
             Get Started
             <Zap className="w-5 h-5" />
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

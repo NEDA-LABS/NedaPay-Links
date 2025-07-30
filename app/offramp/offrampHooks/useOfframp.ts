@@ -154,7 +154,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
         
         // Get supported chain IDs for this token
         const supportedChainIds = Object.keys(TOKEN_ADDRESSES[token] || {}).map(Number) as (keyof typeof TOKEN_ADDRESSES[SupportedToken])[];
-        const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id] : undefined;
+        const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id as keyof typeof TOKEN_ADDRESSES[SupportedToken]] : undefined;
         if (!tokenAddress) {
           setError(`Token ${token} not supported on ${chain.name}`);
           return;
@@ -184,7 +184,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   useEffect(() => {
     const fetchTokenToFiatRate = async () => {
       try {
-        const rate = await fetchTokenRate(token, 1, fiat);
+        const rate = await fetchTokenRate(token, 1, fiat, chain.name.toLowerCase());
         setUsdcToFiatRate(parseFloat(rate));
       } catch (err) {
         console.error("Failed to fetch token rate", err);
@@ -228,7 +228,8 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
       const fetchedRate = await fetchTokenRate(
         token,
         parseFloat(amount),
-        fiat
+        fiat,
+        chain.name.toLowerCase()
       );
       setRate(fetchedRate);
       setError("");
@@ -257,7 +258,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
     );
     const signer = provider.getSigner();
 
-    const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id] : undefined;
+    const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id as keyof typeof TOKEN_ADDRESSES[SupportedToken]] : undefined;
     if (!tokenAddress) {
       throw new Error(`Token ${token} not supported on ${chain.name}`);
     }
@@ -303,7 +304,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
       setSuccess(null);
 
       // Get token address
-      const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id] : undefined;
+      const tokenAddress = chain.id in TOKEN_ADDRESSES[token] ? TOKEN_ADDRESSES[token][chain.id as keyof typeof TOKEN_ADDRESSES[SupportedToken]] : undefined;
       if (!tokenAddress) {
         throw new Error(`Token ${token} not supported on ${chain.name}`);
       }

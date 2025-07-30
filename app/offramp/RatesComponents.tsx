@@ -81,7 +81,7 @@ const CurrencyRatesWidget = () => {
   ): Promise<string> => {
     try {
       if (abortControllerRef.current?.signal.aborted) throw new Error('Request aborted');
-      return await fetchTokenRate(fromToken="USDC", amount, toCurrency);
+      return await fetchTokenRate(fromToken="USDC", amount, toCurrency, 'base');
     } catch (error) {
       if (retryCount < MAX_RETRIES && !abortControllerRef.current?.signal.aborted) {
         await new Promise(resolve => {
@@ -210,7 +210,7 @@ const CurrencyRatesWidget = () => {
     
     loopRef.current = horizontalLoop(currencyItems, {
       repeat: -1,
-      speed: 0.2,
+      speed: 0.5,
       paused: isPaused,
       paddingRight: parseFloat(
         gsap.getProperty(currencyItems[0], 'marginRight') as string

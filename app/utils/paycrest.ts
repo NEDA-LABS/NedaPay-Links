@@ -186,9 +186,9 @@ function isRetryableError(error: any): boolean {
 }
 
 
-export async function fetchTokenRate(token: string, amount: number, fiat: string, providerId?: string): Promise<string> {
-  const query = providerId ? `?provider_id=${providerId}` : '';
-  const response = await axios.get(`${PAYCREST_API_URL}/v1/rates/${token}/${amount}/${fiat}`, { headers });
+export async function fetchTokenRate(token: string, amount: number, fiat: string, network?: string, providerId?: string): Promise<string> {
+  const query = network ? `network=${network}` : '';
+  const response = await axios.get(`${PAYCREST_API_URL}/v1/rates/${token}/${amount}/${fiat}?${query}`, { headers });
   return response.data.data;
 }
 

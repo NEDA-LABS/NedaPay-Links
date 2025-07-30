@@ -462,21 +462,13 @@ export default function DashboardContent() {
       </div>
 
       {/* Stablecoin Balances */}
-      <Card className="border-0 shadow-lg">
+      {/* <Card className="border-0 shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold text-slate-800">Stablecoin Balances</CardTitle>
             <p className="text-sm text-muted-foreground mt-1 text-slate-800">Manage your crypto assets</p>
           </div>
           <div className="flex gap-2">
-            {/* <Button variant="outline" size="sm" className="gap-2 text-slate-800">
-              <Download className="h-4 w-4" />
-              Export
-            </Button> */}
-            {/* <Button size="sm" className="gap-2 text-slate-800">
-              <Shield className="h-4 w-4" />
-              Secure Wallet
-            </Button> */}
           </div>
         </CardHeader>
         <CardContent>
@@ -490,7 +482,6 @@ export default function DashboardContent() {
                 <div className="col-span-5 text-slate-800">COIN</div>
                 <div className="col-span-3 text-slate-800">BALANCE</div>
                 <div className="col-span-2 text-slate-800">ACTION</div>
-                {/* <div className="col-span-2 text-right text-slate-800">MANAGE</div> */}
               </div>
               {stablecoinBalances.map((coin, index) => (
                 <div
@@ -524,20 +515,12 @@ export default function DashboardContent() {
                       Swap
                     </Button>
                   </div>
-                  {/* <div className="col-span-2 flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-800">
-                      <ExternalLink className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-800">
-                      <MoreHorizontal className="h-3 w-3" />
-                    </Button>
-                  </div> */}
                 </div>
               ))}
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Swap Modal */}
       {swapModalOpen && (
