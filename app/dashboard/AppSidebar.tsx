@@ -103,12 +103,12 @@ function AppSidebarContent() {
         <div className="hidden md:block p-4 border-b border-white/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
-              <button
+              {/* <button
                 onClick={toggleSidebar}
                 className="text-slate-800 hover:bg-white/10 rounded-md p-1"
               >
                 <Menu className="h-6 w-6 text-slate-800" />
-              </button>
+              </button> */}
               {!isCollapsed && (
                 <span className="font-semibold text-white">Business Name</span>
               )}

@@ -14,7 +14,7 @@ export default function Dashboard() {
             <div className="fixed left-0 w-64 bg-dark-sidebar overflow-y-auto h-screen">
               <AppSidebar />
             </div>
-            <div className="md:pl-90 flex-1">
+            <div className="md:pl-64 flex-1">
               <DashboardContent />
             </div>
           </div>

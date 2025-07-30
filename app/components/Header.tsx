@@ -23,6 +23,7 @@ import Sidebar from "./Sidebar";
 import Image from "next/image";
 import { AppSidebarToggle } from "@/dashboard/AppSidebar";
 import { SidebarProvider } from "@/compliance/user/components/ui/sidebar";
+import {LayoutDashboard} from "lucide-react";
 
 // Import your actual components
 import WalletSelector from "./WalletSelector";
@@ -163,6 +164,15 @@ export default function Header() {
               </nav>
             )}
 
+            {(pathname !== "/dashboard" && pathname !== "/") && (
+              <a href="/dashboard" className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 font-medium bg-slate-200 shadow-sm group hidden md:!flex">
+                <span className="relative z-10 flex items-center">
+                  <LayoutDashboard size={16}/>
+                  Dashboard
+                </span>
+              </a>
+            )}
+
               {/* Action Buttons Container */}
               <div className="flex items-center space-x-1 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2">
                 {/* Stablecoin Balance Modal Toggle */}
@@ -221,7 +231,7 @@ export default function Header() {
               >
                 <Menu size={16} className="text-white hover:text-slate-700 transition-colors duration-300" />
               </button> */}
-              {pathname !== "/" && <AppSidebarToggle />}
+              {pathname === "/dashboard" && <AppSidebarToggle />}
               
               
             </div>

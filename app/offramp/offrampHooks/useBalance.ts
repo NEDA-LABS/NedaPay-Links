@@ -1,61 +1,79 @@
-import { useEffect, useState } from 'react';
+'use client';
+
+import { useEffect, useState, useRef } from 'react';
 import { ethers } from 'ethers';
 import { ChainConfig } from './constants';
-import { TOKEN_ADDRESSES, TOKEN_ABI } from './tokenConfig';
+import { TOKEN_ADDRESSES, TOKEN_ABI, TOKEN_DECIMALS } from './tokenConfig';
 
 type TokenSymbol = keyof typeof TOKEN_ADDRESSES;
 type ChainId = keyof typeof TOKEN_ADDRESSES[TokenSymbol];
 
-// Add type guard to ensure token is a valid key
-const isValidToken = (token: string): token is TokenSymbol => {
-  return token in TOKEN_ADDRESSES;
-};
-
 type Balances = Record<number, Record<string, string>>;
+
+const CACHE_DURATION = 30_000; // ms
 
 export const useBalances = (chains: ChainConfig[], userAddress: string) => {
   const [balances, setBalances] = useState<Balances>({});
   const [loading, setLoading] = useState(true);
 
+  // simple in-memory cache
+  const cache = useRef<Record<string, { data: Balances; ts: number }>>({});
+
   useEffect(() => {
-    const fetchBalances = async () => {
-      const newBalances: Balances = {};
-      
-      for (const chain of chains) {
-        newBalances[chain.id] = {};
-        
-        for (const token of chain.tokens) {
-          try {
-            if (!isValidToken(token)) {
-              newBalances[chain.id][token] = '0';
-              continue;
-            }
-            
-            const provider = new ethers.providers.JsonRpcProvider(chain.rpcUrl);
-            const address = TOKEN_ADDRESSES[token as TokenSymbol][chain.id as ChainId];
-            
-            if (!address) {
-              newBalances[chain.id][token] = '0';
-              continue;
-            }
-            
-            const contract = new ethers.Contract(address, TOKEN_ABI, provider);
-            const decimals = await contract.decimals();
-            const balance = await contract.balanceOf(userAddress);
-            
-            newBalances[chain.id][token] = ethers.utils.formatUnits(balance, decimals);
-          } catch (err) {
-            console.error(`Failed to fetch ${token} balance on ${chain.name}:`, err);
-            newBalances[chain.id][token] = '0';
-          }
-        }
+    if (!userAddress) {
+      setBalances({});
+      setLoading(false);
+      return;
+    }
+
+    const run = async () => {
+      const cacheKey = `${userAddress}-${chains.map(c => c.id).join('-')}`;
+      const cached = cache.current[cacheKey];
+      if (cached && Date.now() - cached.ts < CACHE_DURATION) {
+        setBalances(cached.data);
+        setLoading(false);
+        return;
       }
-      
-      setBalances(newBalances);
+
+      setLoading(true);
+
+      // 1️⃣  build all promises up-front
+      const promises = chains.flatMap(chain =>
+        chain.tokens.map(async token => {
+          const addr = (TOKEN_ADDRESSES as any)[token]?.[chain.id];
+          if (!addr) return { chainId: chain.id, token, balance: '0' };
+
+          try {
+            const provider = new ethers.providers.JsonRpcProvider(chain.rpcUrl);
+            const contract = new ethers.Contract(addr, TOKEN_ABI, provider);
+            const [decimals, raw] = await Promise.all([
+              TOKEN_DECIMALS[token as keyof typeof TOKEN_DECIMALS] ||
+                contract.decimals(),
+              contract.balanceOf(userAddress),
+            ]);
+            return { chainId: chain.id, token, balance: ethers.utils.formatUnits(raw, decimals) };
+          } catch {
+            return { chainId: chain.id, token, balance: '0' };
+          }
+        })
+      );
+
+      // parallel
+      const results = await Promise.all(promises);
+
+      // group
+      const grouped: Balances = {};
+      results.forEach(({ chainId, token, balance }) => {
+        grouped[chainId] ??= {};
+        grouped[chainId][token] = balance;
+      });
+
+      setBalances(grouped);
+      cache.current[cacheKey] = { data: grouped, ts: Date.now() };
       setLoading(false);
     };
 
-    fetchBalances();
+    run();
   }, [chains, userAddress]);
 
   return { balances, loading };

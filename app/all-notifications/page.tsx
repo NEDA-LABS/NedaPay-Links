@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { X, Clock, CheckCircle, XCircle, AlertCircle, DollarSign, Building2, CreditCard } from 'lucide-react';
 import axios from 'axios';
+import Header from '@/components/Header';
+import { SidebarProvider } from '@/compliance/user/components/ui/sidebar';
+import Footer from '@/components/Footer';
 
 // Fallback UUID generator
 function uuidFallback() {
@@ -235,23 +238,34 @@ const MasterNotificationCenter: React.FC = () => {
   const unreadCount = localNotifications.filter((n) => !n.read).length + dbNotifications.filter((n) => n.status === 'unseen').length;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-md p-6">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Master Notification Center</h1>
-            <p className="text-sm text-gray-600 mt-1">Stay updated with your notifications and transactions</p>
+      <div className="min-h-screen bg-gray-100">
+      <Header />
+     
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center mb-4">
+            <button
+              onClick={() => window.history.back()}
+              className="!group !flex !items-center !gap-2 !px-4 !py-2 !bg-white !border !border-gray-200 !rounded-full !text-sm !font-semibold !text-gray-700 !hover:bg-blue-50 !hover:shadow-md !transition-all !duration-300"
+            >
+              <span className="transform group-hover:-translate-x-1 transition-transform duration-200">←</span> Back
+            </button>
           </div>
-          {unreadCount > 0 && (
-            <div className="relative">
-              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white bg-red-600 rounded-full">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
+          <div className="flex items-center justify-between">
+            <div className=' mx-auto'>
+              <h1 className="text-3xl font-bold text-gray-900">Master Notification Center</h1>
+              <p className="text-sm text-gray-600 mt-1">Stay updated with your notifications and transactions</p>
             </div>
-          )}
+            {unreadCount > 0 && (
+              <div className="relative">
+                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white bg-red-600 rounded-full">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </header>
-      <main className="max-w-5xl mx-auto p-6">
+    
+      <main className="max-w-5xl mx-auto p-6 mb-20">
         <div className="flex space-x-4 mb-6">
           {(['all', 'notifications', 'transactions'] as const).map((f) => (
             <button
@@ -392,7 +406,11 @@ const MasterNotificationCenter: React.FC = () => {
           </div>
         )}
       </main>
+      <div className='fixed bottom-0 w-full'>
+        <Footer />
+      </div>
     </div>
+    
   );
 };
 

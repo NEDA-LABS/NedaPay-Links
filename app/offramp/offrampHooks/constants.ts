@@ -1,4 +1,6 @@
-export type ChainId = 8453 | 42161 | 137 | 42220 | 56;
+import {scroll, base, arbitrum, polygon, celo, bsc} from 'viem/chains';
+
+export type ChainId = 8453 | 42161 | 137 | 42220 | 56 | 534352;
 
 export interface ChainConfig {
   id: ChainId;
@@ -46,7 +48,7 @@ export const ARBITRUM_CHAIN: ChainConfig = {
 export const POLYGON_CHAIN: ChainConfig = {
   id: 137,
   name: 'Polygon',
-  nativeCurrency: { name: 'Matic', symbol: 'MATIC', decimals: 18 },
+  nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
   rpcUrl: 'https://polygon-rpc.com',
   explorerUrl: 'https://polygonscan.com',
   icon: '/polygon.svg',
@@ -82,5 +84,18 @@ export const BNB_CHAIN: ChainConfig = {
   blockExplorerUrls: ['https://bscscan.com']
 };
 
-export const SUPPORTED_CHAINS = [BASE_CHAIN, BNB_CHAIN, CELO_CHAIN];
+export const SCROLL_CHAIN: ChainConfig = {
+  id: 534352,
+  name: 'Scroll',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrl: scroll.rpcUrls.default.http[0],
+  explorerUrl: 'https://scrollscan.com',
+  icon: '/scroll.svg',
+  tokens: ['USDC', 'USDT'],
+  chainIdHex: '0x1537',
+  rpcUrls: [scroll.rpcUrls.default.http[0],],
+  blockExplorerUrls: ['https://scrollscan.com']
+};
+
+export const SUPPORTED_CHAINS = [BASE_CHAIN, BNB_CHAIN, ARBITRUM_CHAIN, POLYGON_CHAIN];
 export const DEFAULT_CHAIN = BASE_CHAIN;
