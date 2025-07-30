@@ -10,7 +10,7 @@ export default function WalletKit() {
   const { wallets } = useWallets();
 
   // Check if the wallet is Privy embedded
-  const isPrivyEmbedded = wallets[0].walletClientType === "embedded";
+  const isPrivyEmbedded = wallets?.[0]?.walletClientType === "embedded";
 
   return (
     <div className="bg-white/5 rounded-2xl p-6 border border-white/20 text-center mt-[70px]">
