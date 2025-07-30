@@ -762,7 +762,7 @@ export const StablecoinBalanceButton = () => {
         ) : (
           <span>${totalBalance.toFixed(2)}</span>
         )}
-        <span>Balance</span>
+        <span>Stablecoins Portfolio</span>
         <ChevronRight className="h-4 w-4" />
       </button>
 
