@@ -80,8 +80,6 @@ function HomeContent() {
         <HeroSection />
         
         <FeaturesSection />
-        {/* How It Works Section */}
-        <HowItWorksSection />
         {/* FAQ Items with toggle functionality */}
         <FaqSection />
       </div>
