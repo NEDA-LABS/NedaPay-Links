@@ -77,6 +77,7 @@ export default function Header() {
       className={`
         sticky top-0 z-50 
         transition-all duration-300
+        !bg-[#004a6d]/40
         ${scrolled 
           ? "shadow-lg bg-[#004a6d]/50" 
           : "shadow-sm"
@@ -90,14 +91,14 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo Section */}
-          <div className="flex items-center pr-3">
+          <div className="flex items-center bg-[#3E55E6] pr-3 rounded-xl">
             <Link href="/" className="group flex items-center space-x-3">
               {/* Simplified Logo */}
               <div className="relative flex">
-                <div className="flex bg-[#3E55E6] rounded-xl items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                <div className="flex items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                   <Image src="/logo.svg" alt="Logo" width={60} height={60}/>
                 </div>
-                <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 ml-[-20px]">
                   <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center">
                     NEDAPay
                   </span>
@@ -121,6 +122,20 @@ export default function Header() {
                   className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 font-medium bg-slate-200 shadow-sm group hidden md:!flex"
                 >
                   <span className="relative z-10 flex items-center">
+                    <svg
+                      className="w-3.5 h-3.5 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      ></path>
+                    </svg>
                     FAQ
                   </span>
                 </a>

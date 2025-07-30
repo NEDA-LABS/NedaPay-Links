@@ -71,7 +71,7 @@ function HomeContent() {
             priority
             quality={100}
           /> */}
-          <div className="absolute top-0 left-0 w-full h-full lg:h-[100vh] bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 " style={{ 
+          <div className="absolute top-0 left-0 w-full h-full lg:h-[90vh] bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 " style={{ 
             zIndex: -100,
             // backgroundImage: 'linear-gradient(to bottom, rgba(0, 74, 109, 1), rgba(0, 74, 109, 0.9), rgba(0, 74, 109, 0.8), rgba(0, 74, 109, 0.7), rgba(0, 74, 109, 0.6), rgba(0, 74, 109, 0.5), rgba(0, 74, 109, 0.4), rgba(0, 74, 109, 0.3), rgba(0, 74, 109, 0.2), rgba(0, 74, 109, 0.05), transparent)'
           }}></div>
@@ -86,10 +86,10 @@ function HomeContent() {
 
       {/* CTA Section */}
       {/* Enhanced CTA Section */}
-      <div className="w-[90%] mx-auto relative overflow-hidden mb-12">
+      <div className="w-[90%] mx-auto relative overflow-hidden">
         {/* Animated Background Elements */}              
         {/* Grid Pattern Overlay */}
-        <div className="relative z-10 px-8 py-20 text-center text-white">
+        <div className="relative z-10 px-8 text-center text-white">
           {/* Enhanced Heading */}
           <h2 className="text-2xl font-bold mb-8 leading-tight">
             <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent drop-shadow-sm">

@@ -21,7 +21,7 @@ const HeroSection = () => {
   const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
 
   return (
-    <div className="lg:h-[100vh] ">
+    <div className="lg:h-[85vh] ">
       <CurrencyTicker />
       <div className="grid grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 px-4 items-center rounded-2xl relative">
         <div className="flex flex-col gap-6">

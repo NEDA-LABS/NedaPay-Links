@@ -46,19 +46,18 @@ export default function ProfessionalFaqSection() {
   ];
 
   return (
-    <section id="faq" className="py-20 px-6 bg-gradient-to-b from-slate-50 to-white">
+    <section id="faq" className="py-20 px-6 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 mt-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full text-blue-700 font-medium text-sm mb-6">
+          {/* <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full text-blue-700 font-medium text-sm mb-6">
             <HelpCircle className="w-4 h-4" />
             Support
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6 leading-tight">
-            Frequently Asked
-            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent"> Questions</span>
+          </div> */}
+          <h2 className="text-2xl font-bold text-slate-50 mb-6 leading-tight">
+            Frequently Asked Questions
           </h2>
-          <p className="text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm text-slate-50 max-w-2xl mx-auto leading-relaxed">
             Find answers to common questions about NEDA Pay and how it works for your business
           </p>
         </div>
@@ -120,7 +119,7 @@ export default function ProfessionalFaqSection() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="bg-[#3E55E6] rounded-b-2xl p-8 md:p-10 text-center relative overflow-hidden">
+        <div className="bg-slate-50 rounded-b-2xl p-8 md:p-10 text-center relative overflow-hidden border !border-4 !border-slate-800">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute inset-0" style={{
@@ -130,21 +129,21 @@ export default function ProfessionalFaqSection() {
           </div>
           
           <div className="relative z-10">
-            <h3 className="text-xl font-bold text-white mb-3">
+            <h3 className="text-xl font-bold text-slate-700 mb-3">
               Still have questions?
             </h3>
-            <p className="text-slate-300 mb-8 text-sm">
+            <p className="text-slate-700 mb-8 text-sm">
               Our support team is here to help you get started with NEDA Pay
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
-              <button className="w-full text-sm sm:w-auto group relative px-8 py-4 bg-white text-slate-900 font-semibold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
+              <button className="w-full text-sm sm:w-auto group relative px-8 py-4 bg-blue-700 text-slate-50 font-semibold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
                 <MessageCircle className="w-5 h-5" />
                 <a
             href="https://discord.com/invite/2H3dQzruRV"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors duration-300"
+            className="flex items-center gap-2 text-slate-50 hover:text-blue-600 transition-colors duration-300"
             aria-label="Discord Community"
           >
                 Contact Support
