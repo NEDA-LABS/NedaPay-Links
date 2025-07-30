@@ -63,17 +63,17 @@ function HomeContent() {
         className="w-full pb-8 md:py-12 mx-auto"
         style={{ zIndex: -100 }}
       >
-        <Image
+        {/* <Image
             src="/bg-waves.png"
             alt="Hero background"
             fill
-            className="object-cover object-center opacity-50"
+            className="object-cover object-center opacity-30"
             priority
             quality={100}
-          />
-          <div className="absolute top-0 left-0 w-full h-full lg:h-[100vh]" style={{ 
+          /> */}
+          <div className="absolute top-0 left-0 w-full h-full lg:h-[100vh] bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 " style={{ 
             zIndex: -100,
-            backgroundImage: 'linear-gradient(to bottom, rgba(0, 74, 109, 1), rgba(0, 74, 109, 0.9), rgba(0, 74, 109, 0.8), rgba(0, 74, 109, 0.7), rgba(0, 74, 109, 0.6), rgba(0, 74, 109, 0.5), rgba(0, 74, 109, 0.4), rgba(0, 74, 109, 0.3), rgba(0, 74, 109, 0.2), rgba(0, 74, 109, 0.05), transparent)'
+            // backgroundImage: 'linear-gradient(to bottom, rgba(0, 74, 109, 1), rgba(0, 74, 109, 0.9), rgba(0, 74, 109, 0.8), rgba(0, 74, 109, 0.7), rgba(0, 74, 109, 0.6), rgba(0, 74, 109, 0.5), rgba(0, 74, 109, 0.4), rgba(0, 74, 109, 0.3), rgba(0, 74, 109, 0.2), rgba(0, 74, 109, 0.05), transparent)'
           }}></div>
           
         {/* Hero Section */}

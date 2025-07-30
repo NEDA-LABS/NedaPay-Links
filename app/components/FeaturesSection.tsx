@@ -78,14 +78,14 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent p-6 flex items-center justify-center relative overflow-hidden lg:mt-[-50px]">
+    <div className="min-h-screen bg-blue-900/10 p-6 flex items-center justify-center relative overflow-hidden lg:mt-[-115px]">
       {/* Diagonal lines background */}
       <div className="absolute inset-0 opacity-10">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="diagonalLines" patternUnits="userSpaceOnUse" width="100" height="100">
               <path d="M0,0 L100,100 M0,25 L100,125 M0,50 L100,150 M0,75 L100,175 M-25,0 L75,100 M-50,0 L50,100 M-75,0 L25,100" 
-                    stroke="teal" 
+                    stroke="purple" 
                     strokeWidth="5" 
                     fill="none"/>
             </pattern>
@@ -97,13 +97,10 @@ export default function BrandedGlassUI() {
       <div className="max-w-6xl w-full relative z-10">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center px-4 py-2 border border-blue-700 rounded-full text-blue-700 font-medium backdrop-blur-sm mb-4">
-            <span className="text-sm font-medium text-blue-700">POWERFUL FEATURES</span>
+          <div className="inline-flex items-center px-4 py-2 border border-blue-700 rounded-full text-blue-700 font-medium bg-slate-100 mb-4">
+            <span className="text-3xl font-semibold text-purple-600">Everything You Need to Accept Stablecoin Payments</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-[#3E55E6] mb-3">
-          Everything You Need to Accept Stablecoin Payments
-          </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm">
+          <p className="text-purple-900 !font-bold max-w-2xl mx-auto text-sm">
           Streamline your stablecoin payments with intuitive, secure, and lightning-fast features
           </p>
         </div>
@@ -117,22 +114,22 @@ export default function BrandedGlassUI() {
               <GlassCard 
                 key={index} 
                 isSelected={isSelected}
-                className="hover:bg-gray-50/50 min-h-[280px]  border-2 !border-[#3E55E6] !rounded-2xl shadow-2xl"
+                className=" hover:bg-gray-50/50 min-h-[280px]  border-3 !border-indigo-900 !rounded-2xl shadow-2xl"
                 onClick={() => handleCardClick(index)}
               >
                 <div className="p-10 h-full flex flex-col justify-between space-y-8 relative z-10">
                   <div>
                     <div className="mb-4">
-                      <Icon className="w-8 h-8 text-blue-600 mb-3" />
+                      <Icon className="w-8 h-8 text-purple-600 mb-3" />
                     </div>
-                    <h3 className="text-2xl font-semibold text-blue-600 mb-3">
+                    <h3 className="text-2xl font-semibold text-purple-600 mb-3">
                       {feature.title}
                     </h3>
                     <p className="text-gray-600 text-base leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
-                  <Image src={feature.visual} alt={feature.title} width={300} height={100}/>
+                  <Image src={feature.visual} alt={feature.title} width={300} height={100} className=""/>
                   <div className="space-y-4">
                     {/* <div className="flex items-center gap-6 text-sm text-gray-500">
                       {feature.tags.map((tag, tagIndex) => (
