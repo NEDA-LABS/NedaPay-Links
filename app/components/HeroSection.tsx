@@ -23,7 +23,7 @@ const HeroSection = () => {
   return (
     <div className="lg:h-[85vh] ">
       <CurrencyTicker />
-      <div className="grid grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 px-4 items-center rounded-2xl relative">
+      <div className="grid grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 px-4 py-8 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
         <div className="flex flex-col gap-6">
           <ShinyText
             text="Unlock Seamless Payments Globally"
@@ -46,7 +46,7 @@ const HeroSection = () => {
                     walletSelectorRef.current.triggerLogin();
                   }
                 }}
-                className="group relative !px-4 !py-2 sm:!px-8 sm:!py-4 !bg-gradient-to-r !from-blue-600 !to-indigo-600 hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold !rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-3"
+                className="group relative !px-4 !py-2 sm:!px-8 sm:!py-4 !bg-gradient-to-r !from-blue-600 !to-indigo-600 hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold rounded-xl md:!rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-3"
               >
                 <span className="text-xs sm:text-sm lg:text-lg">
                   Start with Email or Wallet
@@ -67,7 +67,7 @@ const HeroSection = () => {
                   router.push("/dashboard");
                 }}
                 disabled={loading}
-                className="relative items-center !px-8 !py-4 !bg-[#3E55E6] hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold !rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative items-center !px-8 !py-4 !bg-[#3E55E6] hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold rounded-xl md:!rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <Loader2 className="h-6 w-6 animate-spin" />
@@ -81,7 +81,7 @@ const HeroSection = () => {
             </div>
           )}
         </div>
-        <div className="flex flex-col items-right gap-4">
+        <div className="flex flex-col items-right gap-4 py-12 lg:py-0">
           <HeroFeaturesHomePage />
           {/* <HeroFlags /> */}
         </div>

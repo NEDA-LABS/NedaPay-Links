@@ -91,7 +91,7 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="flex items-center justify-center relative overflow-hidden mt-[-40px]">
+    <div className="flex items-center justify-center relative overflow-hidden">
       {/* Diagonal lines background */}
       {/* <div className="absolute inset-0 opacity-10">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -117,12 +117,12 @@ export default function BrandedGlassUI() {
       <div className="max-w-6xl w-full relative z-10">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center px-4 py-2 border border-blue-700 rounded-full text-blue-700 font-medium bg-slate-100 mb-4">
-            <span className="text-xl font-semibold text-purple-600">
+          <div className="inline-flex items-center px-2 md:px-4 py-2 border border-blue-700 rounded-full text-blue-700 font-medium bg-slate-100 mb-4">
+            <span className="text-sm lg:text-xl font-semibold text-purple-600">
               Everything You Need to Accept Stablecoin Payments
             </span>
           </div>
-          <p className="text-purple-900 max-w-2xl mx-auto text-sm">
+          <p className="text-purple-900 max-w-2xl mx-auto !text-sm">
             Streamline your stablecoin payments with intuitive, secure, and
             lightning-fast features
           </p>

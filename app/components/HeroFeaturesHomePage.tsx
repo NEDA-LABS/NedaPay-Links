@@ -209,7 +209,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   className={`
                     relative overflow-hidden rounded-3xl backdrop-blur-sm
-                    w-[280px] sm:w-[240px]
+                    w-[200px] lg:w-[280px]
                     hover:shadow-2xl transition-all duration-500
                     border-white/20 bg-gradient-to-br from-slate-700/80 to-slate-800/80
                     hover:border-white/20 hover:bg-gradient-to-br hover:from-slate-700/80 hover:to-slate-800/80
@@ -243,7 +243,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                       <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 ${feature.glowColor}`} />
                       
                       {React.createElement(feature.icon as LucideIcon, {
-                        className: `w-20 h-20  lg:w-25 lg:h-25 text-white transition-all duration-300 relative z-10 group-hover:scale-110 `
+                        className: `w-12 h-12  lg:w-25 lg:h-25 text-white transition-all duration-300 relative z-10 group-hover:scale-110 `
                       })}
                       
                       {/* Sparkle effect */}
@@ -255,10 +255,10 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
 
                   {/* Content */}
                   <div className="text-center relative z-10">
-                    <h3 className="text-xl font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
+                    <h3 className="sm:text-sm lg:text-xl font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-white group-hover:text-slate-200 transition-colors duration-300 leading-relaxed opacity-90">
+                    <p className="text-xs lg:text-sm text-white group-hover:text-slate-200 transition-colors duration-300 leading-relaxed opacity-90">
                       {feature.description}
                     </p>
                   </div>

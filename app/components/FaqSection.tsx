@@ -54,10 +54,10 @@ export default function ProfessionalFaqSection() {
             <HelpCircle className="w-4 h-4" />
             Support
           </div> */}
-          <h2 className="text-2xl font-bold text-slate-50 mb-6 leading-tight">
+          <h2 className="!text-lg md:!text-2xl font-bold text-slate-50 mb-6 leading-tight">
             Frequently Asked Questions
           </h2>
-          <p className="text-sm text-slate-50 max-w-2xl mx-auto leading-relaxed">
+          <p className="!text-sm text-slate-50 max-w-2xl mx-auto leading-relaxed">
             Find answers to common questions about NEDA Pay and how it works for your business
           </p>
         </div>
@@ -80,9 +80,9 @@ export default function ProfessionalFaqSection() {
                 >
                   <div className="flex items-center flex-1 min-w-0">
                     <div className={`w-12 h-12 bg-gradient-to-br ${faq.iconColor} rounded-xl flex items-center justify-center mr-4 shadow-sm group-hover:shadow-md transition-all duration-300 flex-shrink-0`}>
-                      <Icon className="w-6 h-6 text-white" strokeWidth={2} />
+                      <Icon className="w-4 h-4 md:w-6 md:h-6 text-white" strokeWidth={2} />
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 group-hover:text-slate-800 transition-colors duration-300 pr-4">
+                    <h3 className="!text-sm md:!text-lg font-semibold text-slate-900 group-hover:text-slate-800 transition-colors duration-300 pr-4">
                       {faq.question}
                     </h3>
                   </div>
@@ -107,7 +107,7 @@ export default function ProfessionalFaqSection() {
                 >
                   <div className="px-6 pb-6 bg-slate-50/30 border-t border-slate-100">
                     <div className="pt-4">
-                      <p className="text-slate-700 leading-relaxed text-sm">
+                      <p className="text-slate-700 leading-relaxed !text-sm">
                         {faq.answer}
                       </p>
                     </div>

@@ -17,10 +17,10 @@ const YouTubeEmbedButton = () => {
       {/* Watch Demo Button */}
       <button 
         onClick={openModal}
-        className="group flex items-center gap-3 !px-4 !py-2 sm:!px-8 sm:!py-4 bg-slate-200 text-gray-700 hover:text-gray-900 font-medium !rounded-2xl !border-2 !border-[#3E55E6] hover:!border-gray-300 hover:!bg-white/50 transition-all duration-300"
+        className="group flex items-center gap-3 !px-4 !py-2 sm:!px-8 sm:!py-4 bg-transparent text-gray-700 hover:text-gray-900 font-medium rounded-xl md:!rounded-2xl !border-2 !border-white hover:!border-gray-300 hover:!bg-white/50 transition-all duration-300"
       >
-        <PlayCircle className="w-5 h-5 text-[#3E55E6]" />
-        <span className="text-xs sm:text-sm text-[#3E55E6]">Watch Demo</span>
+        <PlayCircle className="w-5 h-5 text-white" />
+        <span className="text-xs sm:text-sm text-white">Watch Demo</span>
       </button>
 
       {/* Modal Overlay */}

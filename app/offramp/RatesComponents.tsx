@@ -61,12 +61,11 @@ const CurrencyTicker = () => {
 
   return (
     <div
-      className="currency-ticker border rounded-xl bg-slate-900/30 p-1 md:p-2 w-[80vw] mx-auto"
+      className="currency-ticker lg:rounded-xl lg:bg-slate-900/30 p-1 md:p-2 lg:w-[80vw] mx-auto"
       style={{
         overflow: 'hidden',
         position: 'relative',
         zIndex: 1,
-        border: '1px solid rgba(255,255,255,0.1)'
       }}
     >
       <div
