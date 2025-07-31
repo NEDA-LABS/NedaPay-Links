@@ -73,7 +73,7 @@ export const CELO_CHAIN: ChainConfig = {
 
 export const BNB_CHAIN: ChainConfig = {
   id: 56,
-  name: 'BNB Chain',
+  name: 'BNB Smart Chain',
   nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
   rpcUrl: 'https://bsc-dataseed1.bnbchain.org',
   explorerUrl: 'https://bscscan.com',

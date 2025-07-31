@@ -7,7 +7,7 @@ export const TOKEN_ADDRESSES = {
       56: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d' // BNB
     },
     USDT: {
-      8453: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // Base
+      8453: '', // Base
       42161: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', // Arbitrum
       137: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', // Polygon 
       42220: '0x88eeC49252c8cbc039DCdB394c0c2BA2f1637EA0', // Celo

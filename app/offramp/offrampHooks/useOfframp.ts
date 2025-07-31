@@ -73,6 +73,11 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   const [gasAbstractionInitializing, setGasAbstractionInitializing] =
     useState(false);
 
+    // Format chain name for API
+    const formatChainName = (name: string) => {
+      return name.toLowerCase().replace(/\s+/g, '-').trim();
+    };
+
   // Derived values
   const gasAbstractionActive =
     !gasAbstractionFailed &&
@@ -85,6 +90,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
     : GAS_FEES.NORMAL[chainName];
   
   const feeCurrency = gasAbstractionActive ? token : chain.nativeCurrency.symbol;
+  const supportedAbstractionChains = ["BASE"];
 
   // Calculate receive amount
   const receiveAmount = amount && rate
@@ -94,7 +100,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   // Initialize Biconomy
   useEffect(() => {
     const initBiconomy = async () => {
-      if (!activeWallet?.address || isCoinbaseWallet) return;
+      if (!activeWallet?.address || isCoinbaseWallet || !supportedAbstractionChains.includes(chainName)) return;
 
       setGasAbstractionInitializing(true);
       setGasAbstractionFailed(false);
@@ -184,7 +190,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   useEffect(() => {
     const fetchTokenToFiatRate = async () => {
       try {
-        const rate = await fetchTokenRate(token, 1, fiat, chain.name.toLowerCase());
+        const rate = await fetchTokenRate(token, 1, fiat, formatChainName(chain.name));
         setUsdcToFiatRate(parseFloat(rate));
       } catch (err) {
         console.error("Failed to fetch token rate", err);
@@ -229,7 +235,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
         token,
         parseFloat(amount),
         fiat,
-        chain.name.toLowerCase()
+        formatChainName(chain.name)
       );
       setRate(fetchedRate);
       setError("");
@@ -341,7 +347,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
       const orderResponse = await axios.post("/api/paycrest/orders", {
         amount: parseFloat(amount),
         rate: parseFloat(rate),
-        network: chain.name.toLowerCase(),
+        network: formatChainName(chain.name),
         token: token,
         recipient: { institution, accountIdentifier, accountName, memo },
         returnAddress: activeWallet.address,
