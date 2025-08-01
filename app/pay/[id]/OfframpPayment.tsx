@@ -157,7 +157,7 @@ export default function OffRampPayment({
       const tokenAmount = await calculateTokenAmount();
       if (!tokenAmount) return;
 
-      const order = await initiatePaymentOrder({
+      const order = await axios.post("/api/paycrest/orders", {
         amount: tokenAmount,
         rate,
         token: selectedToken,
@@ -380,13 +380,21 @@ export default function OffRampPayment({
   if (showPaymentModal) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+         {!rate || !verificationStatus ? (
+        <div className="bg-white rounded-xl p-6 w-full max-w-md text-center">
+          <div className="flex justify-center">
+            <svg className="animate-spin w-8 h-8 text-blue-500"/>
+          </div>
+          <p className="mt-4">Preparing payment details...</p>
+        </div>
+      ) : (
         <div className="bg-white rounded-xl p-6 w-full max-w-md">
           <h3 className="text-xl font-bold mb-4">Payment Details</h3>
 
           <div className="space-y-4">
             <div>
               <p className="text-gray-600">Exchange Rate</p>
-              <p className="font-semibold">
+              <p className="font-semibold text-slate-700">
                 1 {selectedToken} = {rate.toFixed(2)} {currency}
               </p>
             </div>
@@ -404,7 +412,7 @@ export default function OffRampPayment({
 
             <div>
               <p className="text-gray-600">You Pay</p>
-              <p className="text-2xl font-bold">
+              <p className="text-2xl font-bold text-slate-700">
                 {cryptoAmount} {selectedToken}
               </p>
               <p className="text-gray-600">
@@ -416,7 +424,7 @@ export default function OffRampPayment({
           <div className="mt-6 flex justify-between">
             <button
               onClick={() => setShowPaymentModal(false)}
-              className="px-4 py-2 border border-gray-300 rounded-lg"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-slate-700"
             >
               Back
             </button>
@@ -429,7 +437,9 @@ export default function OffRampPayment({
             </button>
           </div>
         </div>
+      )}
       </div>
+          
     );
   }
 
@@ -476,7 +486,7 @@ export default function OffRampPayment({
           <select
             value={selectedChain}
             onChange={handleChainChange}
-            className="w-full p-2 border border-gray-300 rounded-lg"
+            className="w-full p-2 border border-gray-300 rounded-lg text-slate-700"
           >
             <option value="">Choose network</option>
             {SUPPORTED_CHAINS.map((chain) => (
@@ -494,7 +504,7 @@ export default function OffRampPayment({
           <select
             value={selectedToken}
             onChange={handleTokenChange}
-            className="w-full p-2 border border-gray-300 rounded-lg"
+            className="w-full p-2 border border-gray-300 rounded-lg text-slate-700"
             disabled={!selectedChain}
           >
             <option value="">Choose token</option>
@@ -514,16 +524,38 @@ export default function OffRampPayment({
       </div>
 
       <button
-        onClick={() => setShowPaymentModal(true)}
-        className={`mt-6 w-full px-4 py-2 rounded-lg font-medium ${
-          selectedToken && selectedChain
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-        }`}
-        disabled={!selectedToken || !selectedChain}
-      >
-        Proceed to Payment
-      </button>
+  onClick={async () => {
+    if (!selectedToken || !selectedChain) return;
+    
+    setLoading(true);
+    try {
+      // Fetch rate and verification in parallel
+      const [currentRate, verification] = await Promise.all([
+        fetchRate(),
+        verifyRecipient()
+      ]);
+      
+      if (currentRate && verification) {
+        setRate(parseFloat(currentRate));
+        setVerificationStatus(verification);
+        setShowPaymentModal(true);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch payment details");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }}
+  className={`mt-6 w-full px-4 py-2 rounded-lg font-medium ${
+    selectedToken && selectedChain
+      ? "bg-blue-600 text-white hover:bg-blue-700"
+      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+  }`}
+  disabled={!selectedToken || !selectedChain || loading}
+>
+  {loading ? "Loading..." : "Proceed to Payment"}
+</button>
     </div>
   );
 }
