@@ -11,10 +11,14 @@ import {
   CheckCircle,
   QrCode,
   Wallet,
+  Download,
 } from "lucide-react";
+import QRCode from "qrcode";
+import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
 
 const PaymentQRCode = dynamicImport(() => import("./QRCode"), { ssr: false });
 const PayWithWallet = dynamicImport(() => import("./PayWithWallet"), { ssr: false });
+const OffRampPayment = dynamicImport(() => import("./OfframpPayment"), { ssr: false });
 
 export default function PayPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
@@ -22,15 +26,26 @@ export default function PayPage({ params }: { params: { id: string } }) {
   const [isValidLink, setIsValidLink] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const amount = searchParams.get("amount");
+  const [customAmount, setCustomAmount] = useState("");
+  const [showAmountInput, setShowAmountInput] = useState(false);
+  const amountParam = searchParams.get("amount");
+  const amount = amountParam === "0" ? null : amountParam;
   const currency = searchParams.get("currency");
   const description = searchParams.get("description");
   const to = searchParams.get("to");
   const signature = searchParams.get("sig");
+  const offRampType = searchParams.get("offRampType");
+  const offRampValue = searchParams.get("offRampValue");
+  const offRampProvider = searchParams.get("offRampProvider");
+  const accountName = searchParams.get("accountName")
+  const chainId = searchParams.get("chainId");
   const { address: connectedAddress } = useAccount();
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [linkType, setLinkType] = useState<'NORMAL' | 'OFF_RAMP'>('NORMAL');
 
   const merchantAddress = to && utils.isAddress(to) ? to : connectedAddress || "";
   const shortAddress = merchantAddress ? `${merchantAddress.slice(0, 6)}...${merchantAddress.slice(-4)}` : "";
+  const chain = SUPPORTED_CHAINS.find(c => c.id === Number(chainId));
 
   useEffect(() => {
     const validateLink = async () => {
@@ -43,6 +58,15 @@ export default function PayPage({ params }: { params: { id: string } }) {
           setErrorMessage(data.error || "Invalid or expired payment link");
         } else {
           setIsValidLink(true);
+          setLinkType(data.linkType || 'NORMAL');
+          
+          // Generate QR code for the full URL
+          const fullUrl = window.location.href;
+          const url = await QRCode.toDataURL(fullUrl, {
+            width: 400,
+            margin: 2
+          });
+          setQrDataUrl(url);
         }
       } catch (error) {
         setIsValidLink(false);
@@ -61,6 +85,23 @@ export default function PayPage({ params }: { params: { id: string } }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const downloadQRCode = () => {
+    if (!qrDataUrl) return;
+    
+    const link = document.createElement('a');
+    link.href = qrDataUrl;
+    link.download = `payment-${params.id}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleAmountSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customAmount || isNaN(Number(customAmount))) return;
+    setShowAmountInput(false);
   };
 
   if (isLoading) {
@@ -102,14 +143,22 @@ export default function PayPage({ params }: { params: { id: string } }) {
     <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
         <div className="text-center space-y-3">
-          <h1 className="text-2xl font-bold text-gray-900">Payment Request</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {linkType === 'OFF_RAMP' ? 'Off-Ramp Payment' : 'Payment Request'}
+          </h1>
         </div>
 
         <div className="text-center bg-gray-50 p-4 rounded-xl">
           <p className="text-sm text-gray-600 mb-1">Amount</p>
           <p className="text-3xl font-bold text-gray-900">
-            {amount} <span className="text-xl font-normal">{currency}</span>
+            {amount ? `${amount} ` : 'Any Amount '}
+            <span className="text-xl font-normal">{currency}</span>
           </p>
+          {chain && (
+            <p className="text-sm text-gray-500 mt-1">
+              Network: {chain.name}
+            </p>
+          )}
         </div>
 
         {description && (
@@ -117,6 +166,18 @@ export default function PayPage({ params }: { params: { id: string } }) {
             <p className="text-sm text-gray-600 mb-1">Description</p>
             <p className="text-lg font-medium text-gray-900">
               {decodeURIComponent(description)}
+            </p>
+          </div>
+        )}
+
+        {linkType === 'OFF_RAMP' && offRampValue && offRampProvider && (
+          <div className="text-center bg-blue-50 p-4 rounded-xl">
+            <p className="text-sm text-gray-600 mb-1">Recipient</p>
+            <p className="text-lg font-medium text-gray-900">
+              {offRampValue} ({offRampProvider})
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {offRampType === 'PHONE' ? 'Mobile Money' : 'Bank Account'}
             </p>
           </div>
         )}
@@ -152,15 +213,101 @@ export default function PayPage({ params }: { params: { id: string } }) {
             <h2 className="text-sm font-semibold text-gray-700">Scan to Pay</h2>
           </div>
           <div className="flex justify-center">
-            <PaymentQRCode to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} />
+            {qrDataUrl ? (
+              <div className="flex flex-col items-center">
+                <img src={qrDataUrl} alt="Payment QR Code" className="w-40 h-40" />
+                <button
+                  onClick={downloadQRCode}
+                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-300 flex items-center gap-2"
+                >
+                  <Download size={14} /> Download QR
+                </button>
+              </div>
+            ) : (
+              <PaymentQRCode to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} />
+            )}
           </div>
         </div>
 
-        <PayWithWallet to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} linkId={params.id} />
+        {showAmountInput ? (
+          <form onSubmit={handleAmountSubmit} className="bg-gray-50 p-4 rounded-xl space-y-3">
+            <div>
+              <label htmlFor="customAmount" className="block text-sm font-medium text-gray-700 mb-1">
+                Enter Amount ({currency})
+              </label>
+              <input
+                type="number"
+                id="customAmount"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                placeholder={`Enter amount in ${currency}`}
+                step="any"
+                min="0"
+                required
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+              >
+                Confirm Amount
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAmountInput(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : linkType === 'NORMAL' ? (
+          <>
+            {!amount && (
+              <button
+                onClick={() => setShowAmountInput(true)}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-300"
+              >
+                Enter Payment Amount
+              </button>
+            )}
+            {(!amount && customAmount) || amount ? (
+              <PayWithWallet 
+                to={merchantAddress} 
+                amount={amount === "0" ? customAmount : amount || ""} 
+                currency={currency || ""} 
+                description={description || ""} 
+                linkId={params.id} 
+                chainId={chainId ? parseInt(chainId) : undefined}
+              />
+            ) : null}
+          </>
+        ) : (
+          <OffRampPayment
+            to={merchantAddress}
+            amount={amount || customAmount || ""}
+            currency={currency || ""}
+            description={description || ""}
+            offRampType={offRampType as 'PHONE' | 'BANK_ACCOUNT'}
+            offRampValue={offRampValue || ''}
+            offRampProvider={offRampProvider || ''}
+            linkId={params.id}
+            accountName={accountName || ''}
+            chainId={chainId ? parseInt(chainId) : undefined}
+          />
+        )}
 
         <div className="text-center text-sm text-gray-600 bg-amber-50 p-4 rounded-xl">
           <p className="mb-1">
-            Send exactly <span className="font-semibold text-blue-600">{amount} {currency}</span> to complete payment.
+            {amount ? (
+              <>Send exactly <span className="font-semibold text-blue-600">{amount} {currency}</span> to complete payment.</>
+            ) : customAmount ? (
+              <>Send <span className="font-semibold text-blue-600">{customAmount} {currency}</span> to complete payment.</>
+            ) : (
+              <>Enter an amount to complete payment.</>
+            )}
           </p>
           <p>Transaction confirmation will appear automatically.</p>
         </div>

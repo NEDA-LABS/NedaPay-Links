@@ -30,16 +30,13 @@ const rateLimit = async (ip: string) => {
 };
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  // Await params before accessing its properties
-  const resolvedParams = await params;
-  
   const ip = req.headers.get('x-forwarded-for') || 'unknown';
   
   if (!(await rateLimit(ip))) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
   }
 
-  console.log("Resolved params:", resolvedParams); //debug
+  const resolvedParams = await params;
   const link = await prisma.paymentLink.findUnique({
     where: { linkId: resolvedParams.id },
   });
@@ -48,11 +45,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Payment link not found' }, { status: 404 });
   }
 
+  // Common validation for both link types
   if (link.status !== 'Active') {
     return NextResponse.json({ error: 'Payment link is not active' }, { status: 400 });
   }
 
-  if (new Date() > link.expiresAt) {
+  if (link.expiresAt && new Date() > link.expiresAt) {
     await prisma.paymentLink.update({
       where: { linkId: resolvedParams.id },
       data: { status: 'Expired' },
@@ -60,5 +58,44 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Payment link has expired' }, { status: 400 });
   }
 
-  return NextResponse.json({ valid: true });
+  // Additional validation for offramp links
+  if (link.linkType === 'OFF_RAMP') {
+    // Validate offramp type
+    if (!link.offRampType || !['PHONE', 'BANK_ACCOUNT'].includes(link.offRampType)) {
+      return NextResponse.json({ error: 'Invalid off-ramp configuration' }, { status: 400 });
+    }
+
+    // Validate offramp value
+    if (!link.offRampValue) {
+      return NextResponse.json({ 
+        error: link.offRampType === 'PHONE' 
+          ? 'Phone number is missing' 
+          : 'Bank account is missing' 
+      }, { status: 400 });
+    }
+
+    // Validate offramp provider
+    if (!link.offRampProvider) {
+      return NextResponse.json({ 
+        error: link.offRampType === 'PHONE' 
+          ? 'Mobile network is missing' 
+          : 'Bank is missing' 
+      }, { status: 400 });
+    }
+
+    // Validate account name for bank transfers
+    if (!link.accountName) {
+      return NextResponse.json({ error: 'Account name is missing' }, { status: 400 });
+    }
+  }
+
+  // Return success response with link type information
+  return NextResponse.json({ 
+    valid: true,
+    linkType: link.linkType,
+    ...(link.linkType === 'OFF_RAMP' && {
+      offRampType: link.offRampType,
+      offRampProvider: link.offRampProvider
+    })
+  });
 }

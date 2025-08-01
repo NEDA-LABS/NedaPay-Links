@@ -6,7 +6,8 @@ import dynamic from "next/dynamic";
 import { stablecoins } from "../../data/stablecoins";
 import { utils } from "ethers";
 import { Toaster, toast } from 'react-hot-toast';
-import { pad } from "viem";
+import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
+import { usePrivy } from "@privy-io/react-auth";
 
 const WalletConnectButton = dynamic(() => import("./WalletConnectButton"), {
   ssr: false,
@@ -24,13 +25,15 @@ export default function PayWithWallet({
   amount,
   currency,
   description,
-  linkId
+  linkId,
+  chainId
 }: {
   to: string;
   amount: string;
   currency: string;
   description?: string;
   linkId: string;
+  chainId?: number;
 }) {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +41,9 @@ export default function PayWithWallet({
   const [txStatus, setTxStatus] = useState<
     "idle" | "preparing" | "submitting" | "pending" | "confirming" | "confirmed" | "failed"
   >("idle");
+  const [currentChainId, setCurrentChainId] = useState<number | null>(null);
+  const { ready, authenticated, user } = usePrivy();
+
 
   // Function to save a new transaction (Pending)
   const saveTransactionToDB = async (
@@ -47,7 +53,8 @@ export default function PayWithWallet({
     currency: string,
     description: string | undefined,
     status: "Pending" | "Completed",
-    txHash: string
+    txHash: string,
+    chainId: number
   ) => {
     try {
       const response = await fetch("/api/transactions", {
@@ -63,6 +70,7 @@ export default function PayWithWallet({
           description: description || undefined,
           status,
           txHash,
+          chainId
         }),
       });
 
@@ -78,70 +86,68 @@ export default function PayWithWallet({
     }
   };
 
-// Function to update invoice status to paid
-const updateInvoiceToPaid = async (linkId: string) => {
-  try {
-    const response = await fetch(`/api/send-invoice/invoices/`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        linkId,
-        paidAt: new Date().toISOString(),
-      }),
-    });
+  // Function to update invoice status to paid
+  const updateInvoiceToPaid = async (linkId: string) => {
+    try {
+      const response = await fetch(`/api/send-invoice/invoices/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          linkId,
+          paidAt: new Date().toISOString(),
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Failed to update invoice:", errorData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to update invoice:", errorData);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("Error updating invoice:", error);
       return false;
     }
-    return true;
-  } catch (error) {
-    console.error("Error updating invoice:", error);
-    return false;
-  }
-};
+  };
 
-// function to create notification
-const createNotification = async (
-  transactionId: string,
-  merchantId: string,
-  amount: string,
-  currency: string,
-  description: string | undefined
-) => {
-  try {
-    const message = description
-      ? `Payment received: ${amount} ${currency} for ${description}`
-      : `Payment received: ${amount} ${currency}`;
+  // function to create notification
+  const createNotification = async (
+    transactionId: string,
+    merchantId: string,
+    amount: string,
+    currency: string,
+    description: string | undefined
+  ) => {
+    try {
+      const message = description
+        ? `Payment received: ${amount} ${currency} for ${description}`
+        : `Payment received: ${amount} ${currency}`;
 
-    const response = await fetch("/api/notifications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message,
-        recipient: merchantId,
-        type: "payment_received",
-        status: "unseen",
-        relatedTransactionId: transactionId,
-      }),
-    });
+      const response = await fetch("/api/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          recipient: merchantId,
+          type: "payment_received",
+          status: "unseen",
+          relatedTransactionId: transactionId,
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      // console.error("Failed to create notification:", errorData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        return false;
+      }
+      return true;
+    } catch (error) {
       return false;
     }
-    return true;
-  } catch (error) {
-    // console.error("Error creating notification:", error);
-    return false;
-  }
-};
+  };
 
   // Function to update transaction status to Completed
   const updateTransactionStatus = async (
@@ -151,6 +157,7 @@ const createNotification = async (
     amount: string,
     currency: string,
     description: string | undefined,
+    chainId: number
   ) => {
     try {
       const response = await fetch(`/api/transactions?txHash=${txHash}`, {
@@ -165,6 +172,7 @@ const createNotification = async (
           currency,
           description: description || undefined,
           status: "Completed",
+          chainId
         }),
       });
   
@@ -206,7 +214,8 @@ const createNotification = async (
     walletAddress: string,
     amount: string,
     currency: string,
-    description: string | undefined
+    description: string | undefined,
+    chainId: number
   ) => {
     try {
       setTxStatus("confirming");
@@ -220,7 +229,8 @@ const createNotification = async (
           walletAddress,
           amount,
           currency,
-          description
+          description,
+          chainId
         );
         if (!updated) {
           setError(
@@ -254,6 +264,80 @@ const createNotification = async (
     return true;
   };
 
+  // Check current chain
+  useEffect(() => {
+    const checkChain = async () => {
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const network = await provider.getNetwork();
+        setCurrentChainId(network.chainId);
+      }
+    };
+
+    if (window.ethereum) {
+      checkChain();
+      (window.ethereum as any).on('chainChanged', (chainId: string) => {
+        setCurrentChainId(parseInt(chainId, 16));
+      });
+    }
+
+    return () => {
+      if (window.ethereum) {
+        (window.ethereum as any).removeListener('chainChanged', () => {});
+      }
+    };
+  }, []);
+
+  const switchChain = async (targetChainId: number) => {
+    try {
+      if (!window.ethereum) {
+        throw new Error("No wallet detected");
+      }
+
+      const targetChain = SUPPORTED_CHAINS.find(c => c.id === targetChainId);
+      if (!targetChain) {
+        throw new Error("Unsupported chain");
+      }
+
+      await (window.ethereum as any).request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: `0x${targetChainId.toString(16)}` }],
+      });
+
+      setCurrentChainId(targetChainId);
+      return true;
+    } catch (switchError: any) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902) {
+        try {
+          const targetChain = SUPPORTED_CHAINS.find(c => c.id === targetChainId);
+          if (!targetChain) {
+            throw new Error("Unsupported chain");
+          }
+
+          await (window.ethereum as any).request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: `0x${targetChainId.toString(16)}`,
+              chainName: targetChain.name,
+              nativeCurrency: targetChain.nativeCurrency,
+              rpcUrls: targetChain.rpcUrls,
+              blockExplorerUrls: targetChain.blockExplorerUrls
+            }],
+          });
+          return true;
+        } catch (addError) {
+          console.error('Error adding chain:', addError);
+          setError(`Failed to add ${targetChain?.name} network`);
+          return false;
+        }
+      }
+      console.error('Error switching chain:', switchError);
+      setError(`Failed to switch to ${SUPPORTED_CHAINS.find(c => c.id === targetChainId)?.name || 'target'} network`);
+      return false;
+    }
+  };
+
   const handlePay = async () => {
     setError(null);
     setLoading(true);
@@ -274,7 +358,7 @@ const createNotification = async (
         setTxStatus("failed");
         return;
       }
-      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      if (!amount || isNaN(Number(amount)) || Number(amount) < 0) {
         setError("Invalid amount.");
         setLoading(false);
         setTxStatus("failed");
@@ -287,7 +371,22 @@ const createNotification = async (
         return;
       }
 
-      await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+      // Switch chain if needed
+      if (chainId && currentChainId !== chainId) {
+        try {
+          await switchChain(chainId);
+          const newProvider = new ethers.providers.Web3Provider(window.ethereum);
+          const newChainId = await newProvider.getNetwork().then(n => n.chainId);
+          setCurrentChainId(newChainId);
+        } catch (error) {
+          setError(error instanceof Error ? error.message : "Failed to switch chains");
+          setLoading(false);
+          setTxStatus("failed");
+          return;
+        }
+      }
+
+      await (window.ethereum as any).request({ method: "eth_requestAccounts" });
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const walletAddress = await signer.getAddress();
@@ -304,26 +403,34 @@ const createNotification = async (
 
       if (
         token &&
-        token.address &&
-        token.address !== "0x0000000000000000000000000000000000000000"
+        token.addresses &&
+        token.addresses[(chainId || 8453) as keyof typeof token.addresses] && // Default to Base if chainId not specified
+        token.addresses[(chainId || 8453) as keyof typeof token.addresses] !== "0x0000000000000000000000000000000000000000"
       ) {
         // ERC-20 transfer
         const erc20ABI = [
           "function transfer(address to, uint256 amount) public returns (bool)",
           "function decimals() public view returns (uint8)",
         ];
-        const contract = new ethers.Contract(token.address, erc20ABI, signer);
-        let decimals = 18;
+        const tokenAddress = token.addresses[(chainId || 8453) as keyof typeof token.addresses];
+        const contract = new ethers.Contract(tokenAddress as string, erc20ABI, signer);
+        let decimals = token.decimals || 18;
+        
         try {
-          decimals = await contract.decimals();
+          // Try to get decimals dynamically if not specified
+          if (typeof decimals === 'object') {
+            decimals = await contract.decimals();
+          } else if (!decimals) {
+            decimals = await contract.decimals();
+          }
         } catch (error) {
-          console.warn("Failed to get token decimals, using default 18:", error);
-          decimals = 18;
+          console.warn("Failed to get token decimals, using default:", error);
+          decimals = 18;    
         }
 
         let value;
         try {
-          value = utils.parseUnits(amount, decimals);
+          value = utils.parseUnits(amount, decimals as number);
         } catch {
           setError("Invalid amount format.");
           setLoading(false);
@@ -390,7 +497,8 @@ const createNotification = async (
         currency,
         description,
         "Pending",
-        txResponse.hash
+        txResponse.hash,
+        chainId || 8453 // Default to Base if chainId not specified
       );
       if (!saved) {
         setError(
@@ -420,7 +528,8 @@ const createNotification = async (
         walletAddress,
         amount,
         currency,
-        description
+        description,
+        chainId || 8453 // Default to Base if chainId not specified
       );
 
       if (!confirmed) {
@@ -434,7 +543,8 @@ const createNotification = async (
               walletAddress,
               amount,
               currency,
-              description
+              description,
+              chainId || 8453
             ),
           30000
         ); // Retry after 30 seconds
@@ -485,11 +595,24 @@ const createNotification = async (
 
   const { message, color } = statusInfo();
 
+  // Check if we need to show chain switch warning
+  
+  const showChainWarning = chainId && currentChainId !== chainId;
+  const targetChain = SUPPORTED_CHAINS.find(c => c.id === chainId);
+
   return (
     <div className="mt-4 text-center">
+      {showChainWarning && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800">
+            Please switch to <strong>{targetChain?.name}</strong> network to complete this payment
+          </p>
+        </div>
+      )}
+
       <button
         onClick={handlePay}
-        disabled={loading}
+        disabled={loading || (!!chainId && currentChainId !== chainId)}
         className="px-4 py-2 !bg-blue-500 hover:!bg-blue-600 text-white rounded-lg font-semibold transition disabled:opacity-60"
       >
         {loading ? (
@@ -531,12 +654,12 @@ const createNotification = async (
         <div className="mt-2 text-green-600 dark:text-green-400">
           <span className="block mb-1">Transaction sent!</span>
           <a
-            href={`https://basescan.org/tx/${txHash}`}
+            href={`${targetChain?.explorerUrl || 'https://basescan.org'}/tx/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center space-x-1 underline"
           >
-            <span>View on BaseScan</span>
+            <span>View on {targetChain?.name || 'Base'}Scan</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
@@ -578,7 +701,13 @@ const createNotification = async (
             >
               Open in Coinbase Wallet
             </a>
-            <WalletConnectButton to={to} amount={amount} currency={currency} description={description || ''} />
+            <WalletConnectButton 
+              to={to} 
+              amount={amount} 
+              currency={currency} 
+              description={description || ''} 
+              chainId={chainId}
+            />
           </div>
         </div>
       )}

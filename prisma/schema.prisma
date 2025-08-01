@@ -83,17 +83,33 @@ model PaymentLink {
   id           String        @id @default(uuid())
   merchantId   String
   url          String        @unique
-  amount       Float
+  amount       Float?
   currency     String
   description  String?
   status       String
   createdAt    DateTime      @default(now())
   redeemedAt   DateTime?
   invoiceId    String?       @unique
-  expiresAt    DateTime      @default(now())
+  expiresAt    DateTime?     // Made optional
   signature    String        @default("")
   linkId       String?       @unique
   invoice      Invoice?      @relation("PaymentLinkInvoice")
+  linkType     LinkType      @default(NORMAL) // Added link type
+  offRampType  OffRampType?  // Added off-ramp type
+  offRampValue String?       // Phone/bank account
+  accountName String?       // Phone/bank account
+  offRampProvider String?    // MNO/Bank name
+  chainId      Int?          // Added chain ID
+}
+
+enum LinkType {
+  NORMAL
+  OFF_RAMP
+}
+
+enum OffRampType {
+  PHONE
+  BANK_ACCOUNT
 }
 
 model Notification {
