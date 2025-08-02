@@ -91,7 +91,16 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="flex items-center justify-center relative overflow-hidden">
+    <div className="flex items-center justify-center relative overflow-hidden ">
+
+      <Image
+        src="/endless-constellation.png"
+        alt="Hero background"
+        fill
+        className="object-cover opacity-70"
+        priority
+        quality={100}
+      />
       {/* Diagonal lines background */}
       {/* <div className="absolute inset-0 opacity-10">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -129,7 +138,7 @@ export default function BrandedGlassUI() {
         </div>
 
         {/* Features Grid - 2 per row on large screens */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-purple-100 rounded-xl p-4 lg:w-[60%] mx-auto">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             const isSelected = selectedCard === index;
