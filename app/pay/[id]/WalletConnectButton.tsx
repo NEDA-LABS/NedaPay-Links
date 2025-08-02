@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePrivy } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { toast } from 'react-hot-toast';
 import { stablecoins } from "../../data/stablecoins";
@@ -25,7 +24,6 @@ export default function WalletConnectButton({
   const [provider, setProvider] = useState<any>(null);
   const [userAmount, setUserAmount] = useState(amount);
   const [isOpenAmount, setIsOpenAmount] = useState(false);
-  const { ready, authenticated, user } = usePrivy();
 
   useEffect(() => {
     setIsOpenAmount(parseFloat(amount) === 0);
