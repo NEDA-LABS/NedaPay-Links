@@ -21,7 +21,7 @@ const HeroSection = () => {
   const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
 
   return (
-    <div className="lg:h-[85vh] w-[100vw]">
+    <div className="h-[85vh] lg:h-[85vh] w-[100vw]">
       <CurrencyTicker />
       <Image src="/vanishing-stripes.png" alt="Hero Background" fill className="object-cover border-b-2 border-slate-800" />
       <div className="grid grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 px-4 py-8 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
@@ -62,23 +62,25 @@ const HeroSection = () => {
             </div>
           ) : (
             <div className="flex flex-row items-start gap-6">
-              <button
-                onClick={() => {
-                  setLoading(true);
-                  router.push("/dashboard");
-                }}
-                disabled={loading}
-                className="relative items-center !px-8 !py-4 !bg-[#3E55E6] hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold rounded-xl md:!rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                ) : (
-                  <span className="lg:text-xl text-white text-center">
-                    Explore Dashboard
-                  </span>
-                )}
-              </button>
-              <YouTubeEmbedButton />
+              <div className="flex flex-row gap-2">
+                <button
+                  onClick={() => {
+                    setLoading(true);
+                    router.push("/dashboard");
+                  }}
+                  disabled={loading}
+                  className="relative items-center !px-4 !py-2 !bg-[#3E55E6] hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold rounded-xl md:!rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed h-[45px]"
+                >
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    <span className="lg:text-xl text-white text-center">
+                      Explore Dashboard
+                    </span>
+                  )}
+                </button>
+                <YouTubeEmbedButton className="h-[45px]" />
+              </div>
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Coins,
   Repeat,
@@ -8,7 +9,6 @@ import {
   Zap,
   ChevronRight,
 } from "lucide-react";
-import Image from "next/image";
 
 const GlassCard = ({
   children,
@@ -91,13 +91,13 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="flex items-center justify-center relative overflow-hidden ">
+    <div className="flex items-center justify-center relative overflow-hidden bg-slate-900 ">
 
       <Image
         src="/endless-constellation.png"
         alt="Hero background"
         fill
-        className="object-cover opacity-70"
+        className="object-cover opacity-30"
         priority
         quality={100}
       />
@@ -123,44 +123,40 @@ export default function BrandedGlassUI() {
         </svg>
       </div> */}
 
-      <div className="max-w-6xl w-full relative z-10">
+      <div className="md:w-[70%] relative z-10">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center px-2 md:px-4 py-2 border border-blue-700 rounded-full text-blue-700 font-medium bg-slate-100 mb-4">
-            <span className="text-sm lg:text-xl font-semibold text-purple-600">
+        
+          <div className="flex flex-col items-center px-2 md:px-4 py-2 text-blue-700 font-medium mb-4">
+            <span className="text-lg lg:text-xl font-bold text-white text-center ">
               Everything You Need to Accept Stablecoin Payments
             </span>
           </div>
-          <p className="text-purple-900 max-w-2xl mx-auto !text-sm">
-            Streamline your stablecoin payments with intuitive, secure, and
-            lightning-fast features
-          </p>
-        </div>
-
-        {/* Features Grid - 2 per row on large screens */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-purple-100 rounded-xl p-4 lg:w-[60%] mx-auto">
+          
+        
+        <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12">
+           {/* Features Grid - 2 per row on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 rounded-2xl p-4 lg:w-[60%] mx-auto items-center justify-center my-auto">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             const isSelected = selectedCard === index;
             return (
               <GlassCard
                 key={index}
-                isSelected={isSelected}
-                className=" hover:bg-gray-50/50  border-3 !border-indigo-900 !rounded-2xl shadow-2xl w-70 mx-auto"
+                className="hover:bg-gray-50/50  !bg-indigo-900/50 !rounded-2xl shadow-2xl mx-auto border-2 border-[#32004a] shadow-[0_0_20px_5px_rgba(50,0,74,0.5)]"
                 onClick={() => handleCardClick(index)}
               >
-                <div className="p-4 h-full flex flex-col justify-between space-y-4 relative z-10">
+                <div className="p-4 md:h-[200px] w-[300px] flex flex-col justify-between space-y-4 relative z-10">
                   <div>
                     <div className="flex flex-row space-x-2">
                       <div className="mb-4">
-                        <Icon className="w-8 h-8 text-purple-600 mb-3" />
+                        <Icon className="w-8 h-8 text-white mb-3" />
                       </div>
-                      <h3 className="text-2xl font-semibold text-purple-600 mb-3">
+                      <h3 className="text-2xl font-semibold text-white mb-3">
                         {feature.title}
                       </h3>
                     </div>
 
-                    <p className="text-gray-600 text-base leading-relaxed">
+                    <p className="text-white text-base leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -183,7 +179,7 @@ export default function BrandedGlassUI() {
 
                     <button
                       onClick={(e) => handleButtonClick(feature.route, e)}
-                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-200"
+                      className="flex items-center gap-2 text-white hover:text-blue-800 font-medium text-sm md:text-lg transition-colors duration-200"
                     >
                       <span>{feature.button}</span>
                       <ChevronRight className="w-4 h-4" />
@@ -194,6 +190,20 @@ export default function BrandedGlassUI() {
             );
           })}
         </div>
+        <div className="flex items-center justify-center hidden md:block">
+          <Image
+            src="/coins.png"
+            alt="Coins illustration"
+            objectFit="cover"
+            width={500}
+            height={200}
+
+            className="h-full object-cover overflow-hidden rounded-full border-2 border-[#32004a] shadow-[0_0_20px_5px_rgba(50,0,74,0.5)]"
+            priority
+          />
+        </div>
+        </div>
+       
 
         {/* Footer CTA */}
         {/* <div className="mt-16 text-center">

@@ -61,13 +61,13 @@ export default function ProfessionalFaqSection() {
   return (
     <section
       id="faq"
-      className="relative py-20 px-6 mt-8"
+      className="relative py-12 px-6"
     >
      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" className="absolute top-0 left-0 z-[-1]">
           <defs>
             <linearGradient id="a" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stop-color="#6b0eb2" />
-              <stop offset="0.6" stop-color="#6b0eb2" stop-opacity="0.5" />
+              <stop offset="0" stop-color="#32004a" />
+              <stop offset="0.6" stop-color="#32004a" stop-opacity="0.7" />
               <stop offset="1" stop-color="#FFFFFF" />
             </linearGradient>
           </defs>
@@ -153,7 +153,7 @@ export default function ProfessionalFaqSection() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="bg-purple-900/60 rounded-xl p-8 md:p-10 text-center relative overflow-hidden">
+        <div className="bg-slate-50 rounded-xl p-8 md:p-10 text-center relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <div
@@ -166,10 +166,10 @@ export default function ProfessionalFaqSection() {
           </div>
 
           <div className="relative z-10">
-            <h3 className="text-xl font-bold text-slate-200 mb-3">
+            <h3 className="text-xl font-bold text-purple-900 mb-3">
               Still have questions?
             </h3>
-            <p className="text-white mb-8 text-sm">
+            <p className="text-slate-700 mb-8 text-sm">
               Our support team is here to help you get started with NEDA Pay
             </p>
 
