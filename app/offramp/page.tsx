@@ -56,7 +56,7 @@ const OffRampPage: React.FC = () => {
             </div>
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
               <span className="block bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Convert Crypto to Cash
+                Convert stablecoins to Cash
               </span>
             </h1>
           </div>

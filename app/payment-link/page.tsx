@@ -393,7 +393,7 @@ export default function PaymentLinkPage() {
   };
 
   const shareOnFarcaster = () => {
-    alert("Farcaster sharing is platform specific. Please share manually.");
+    alert("");
   };
 
   const shareOnTelegram = () => {
@@ -434,19 +434,14 @@ export default function PaymentLinkPage() {
       <div className="container mx-auto max-w-6xl px-4 py-8">
         <div className="text-center mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-200/30 to-purple-200/30 blur-3xl rounded-4xl"></div>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium animate-pulse">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-            </svg>
-            Payment Link Generator
-          </div>
+          
           <h1 className="text-lg md:text-6xl font-extrabold text-gray-900 mb-1 tracking-tight">
             <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Create Instant Payment Links
             </span>
           </h1>
           <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed pb-2 px-2">
-            Effortlessly generate secure Web3 payment links.
+            Effortlessly generate payment links.
           </p>
         </div>
 
@@ -493,7 +488,7 @@ export default function PaymentLinkPage() {
                     : "Wallet Required"}
                 </h3>
                 <p
-                  className={`text-base ${
+                  className={`text-xs ${
                     getMerchantAddress() ? "text-green-700" : "text-amber-700"
                   } font-mono break-all mt-1`}
                 >
@@ -505,7 +500,7 @@ export default function PaymentLinkPage() {
           </div>
         )}
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-2xl border border-white/20 mb-12">
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-4 md:p-10 shadow-2xl border border-white/20 mb-12">
           <div className="space-y-4">
             {/* Link Type Selector */}
             <div className="group">
@@ -516,7 +511,7 @@ export default function PaymentLinkPage() {
                 <button
                   type="button"
                   onClick={() => setLinkType("NORMAL")}
-                  className={`px-4 py-3 rounded-2xl border-2 transition-all duration-300 ${
+                  className={`px-4 !py-2 rounded-2xl border-2 transition-all duration-300 ${
                     linkType === "NORMAL"
                       ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                       : "border-gray-200 text-gray-700 hover:border-gray-300"
@@ -527,7 +522,7 @@ export default function PaymentLinkPage() {
                 <button
                   type="button"
                   onClick={() => setLinkType("OFF_RAMP")}
-                  className={`px-4 py-3 rounded-2xl border-2 transition-all duration-300 ${
+                  className={`px-4 !py-2 rounded-2xl border-2 transition-all duration-300 ${
                     linkType === "OFF_RAMP"
                       ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                       : "border-gray-200 text-gray-700 hover:border-gray-300"
@@ -553,7 +548,7 @@ export default function PaymentLinkPage() {
                     name="chain"
                     value={chainId}
                     onChange={(e) => setChainId(Number(e.target.value))}
-                    className="w-full px-6 py-4 text-base !text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                    className="w-full px-6 py-2 text-base !text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                   >
                     {SUPPORTED_CHAINS.map((chain) => (
                       <option key={chain.id} value={chain.id}>
@@ -596,7 +591,7 @@ export default function PaymentLinkPage() {
                       name="currency"
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full px-6 py-4 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                      className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                     >
                       {supportedCurrencies.map((currency: any) => (
                         <option key={currency.code} value={currency.code}>
@@ -636,7 +631,7 @@ export default function PaymentLinkPage() {
                     <button
                       type="button"
                       onClick={() => setOffRampType("PHONE")}
-                      className={`px-4 py-3 rounded-2xl border-2 transition-all duration-300 ${
+                      className={`px-4 py-2 rounded-2xl border-2 transition-all duration-300 ${
                         offRampType === "PHONE"
                           ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                           : "border-gray-200 text-gray-700 hover:border-gray-300"
@@ -647,7 +642,7 @@ export default function PaymentLinkPage() {
                     <button
                       type="button"
                       onClick={() => setOffRampType("BANK_ACCOUNT")}
-                      className={`px-4 py-3 rounded-2xl border-2 transition-all duration-300 ${
+                      className={`px-4 py-2 rounded-2xl border-2 transition-all duration-300 ${
                         offRampType === "BANK_ACCOUNT"
                           ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                           : "border-gray-200 text-gray-700 hover:border-gray-300"
@@ -669,7 +664,7 @@ export default function PaymentLinkPage() {
                     type="text"
                     value={offRampValue}
                     onChange={(e) => setOffRampValue(e.target.value)}
-                    className="w-full px-6 py-4 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                     placeholder={
                       offRampType === "PHONE"
                         ? "e.g. +2348123456789"
@@ -689,7 +684,7 @@ export default function PaymentLinkPage() {
                     type="text"
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
-                    className="w-full px-6 py-4 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                     placeholder="e.g. John Doe"
                   />
                 </div>
@@ -707,7 +702,7 @@ export default function PaymentLinkPage() {
                       name="offRampProvider"
                       value={offRampProvider}
                       onChange={(e) => setOffRampProvider(e.target.value)}
-                      className="w-full px-6 py-4 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                      className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                     >
                       <option value="">
                         Select{" "}
@@ -754,7 +749,7 @@ export default function PaymentLinkPage() {
                     name="currency"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full px-6 py-4 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
                   >
                     {stablecoins.map((coin: any) => (
                       <option key={coin.baseToken} value={coin.baseToken}>
@@ -797,7 +792,7 @@ export default function PaymentLinkPage() {
                   id="amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full px-6 py-4 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                  className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                   placeholder="0.00"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-6">
@@ -831,7 +826,7 @@ export default function PaymentLinkPage() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-6 py-4 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
+                className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
                 placeholder="Payment for services, products, or invoices..."
               />
             </div>
@@ -860,7 +855,7 @@ export default function PaymentLinkPage() {
                     type="datetime-local"
                     value={expiresAt}
                     onChange={(e) => setExpiresAt(e.target.value)}
-                    className="w-full px-6 py-4 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
                   />
                 </div>
               )}
@@ -870,7 +865,7 @@ export default function PaymentLinkPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 px-8 !bg-gradient-to-r from-blue-600 to-blue-500 hover:!from-indigo-700 hover:!to-purple-700 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full py-2 px-8 !bg-gradient-to-r from-blue-600 to-blue-500 hover:!from-indigo-700 hover:!to-purple-700 text-white font-semibold text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-3">

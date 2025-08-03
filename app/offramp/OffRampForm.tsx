@@ -64,7 +64,7 @@ const OffRampForm: React.FC<{
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20 mb-8">
       {/* Back button and header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row items-center gap-4 mb-8">
         <button
           onClick={onBack}
           className="group flex items-center gap-2 px-4 py-2 !bg-white/80 !backdrop-blur-sm !border !border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
@@ -95,7 +95,7 @@ const OffRampForm: React.FC<{
         </div>
       </div>
 
-      <FeeInfoPanel
+      {/* <FeeInfoPanel
         chain={chain}
         token={token}
         gasAbstractionActive={gasAbstractionActive ?? false}
@@ -108,7 +108,7 @@ const OffRampForm: React.FC<{
         balanceLoading={balanceLoading}
         fiat={fiat}
         usdcToFiatRate={usdcToFiatRate ?? undefined}
-      />
+      /> */}
       
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Step 1: Amount and Currency */}
@@ -118,7 +118,6 @@ const OffRampForm: React.FC<{
               Step 1
             </span>
             <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
               Enter Amount and Currency
             </h3>
           </div>
@@ -137,7 +136,7 @@ const OffRampForm: React.FC<{
                   id="amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full px-4 py-4 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                  className="w-full px-4 py-2 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
                   placeholder={`Minimum 1 ${token}`}
                   min="0.01"
                   step="0.01"
@@ -165,7 +164,7 @@ const OffRampForm: React.FC<{
                   setInstitution("");
                   setIsAccountVerified(false);
                 }}
-                className="w-full px-4 py-4 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                className="w-full px-4 py-2 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
               >
                 <option value="">Select Currency</option>
                 {currencies.map((currency) => (
@@ -239,7 +238,6 @@ const OffRampForm: React.FC<{
               Step 3
             </span>
             <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
               Transaction Description
             </h3>
           </div>
@@ -254,7 +252,7 @@ const OffRampForm: React.FC<{
               id="memo"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              className="w-full px-4 py-4 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm resize-none"
+              className="w-full px-4 py-2 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm resize-none"
               rows={3}
               placeholder="Add a memo for this transaction..."
               required
@@ -283,25 +281,13 @@ const OffRampForm: React.FC<{
           <button
             type="submit"
             disabled={isLoading || !rate || !isAccountVerified}
-            className="w-full py-4 px-6 !bg-gradient-to-r !from-purple-600 !to-blue-600 hover:!from-purple-700 hover:!to-blue-700 !text-white !font-medium text-base !rounded-xl !shadow-lg hover:!shadow-xl !transition-all !duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
+            className="w-full py-2 px-6 !bg-gradient-to-r !from-purple-600 !to-blue-600 hover:!from-purple-700 hover:!to-blue-700 !text-white !font-medium text-base !rounded-xl !shadow-lg hover:!shadow-xl !transition-all !duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
           >
             <div className="flex items-center justify-center gap-2">
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                  />
-                </svg>
+               ""
               )}
               {isLoading
                 ? "Processing Payment..."

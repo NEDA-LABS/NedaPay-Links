@@ -37,7 +37,6 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
           Step 2
         </span>
         <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
           Recipient Details
         </h3>
       </div>
@@ -56,7 +55,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
             setInstitution(e.target.value);
           }}
           onFocus={fetchInstitutions}
-          className="w-full px-4 py-4 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+          className="w-full px-4 py-2 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
           required
         >
           <option value="">Select Institution</option>
@@ -73,7 +72,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
           htmlFor="accountNumber"
           className="block text-sm font-semibold mb-3 text-gray-700"
         >
-          Account or Mobile Number
+          Bank Account or Mobile Number
         </label>
         <input
           type="text"
@@ -82,12 +81,12 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
           onChange={(e) => {
             setAccountIdentifier(e.target.value);
           }}
-          className="w-full px-4 py-4 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
-          placeholder="Enter account or mobile number"
+          className="w-full px-4 py-2 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+          placeholder=""
           required
         />
         <p className="text-xs text-gray-500 mt-1">
-          For mobile numbers include country code (e.g., +2341234567890)
+          For mobile numbers use country code (e.g., +2551234567890)
         </p>
       </div>
       
@@ -105,13 +104,13 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
           onChange={(e) => {
             setAccountName(e.target.value);
           }}
-          className="w-full px-4 py-4 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
-          placeholder="Enter the exact account holder's name"
+          className="w-full px-4 py-2 text-base text-slate-800 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+          placeholder="Account holder's name"
           required
         />
-        <p className="text-xs text-gray-500 mt-1">
-          Ensure the name matches exactly
-        </p>
+        {/* <p className="text-xs text-gray-500 mt-1">
+          Ensure the name matches
+        </p> */}
       </div>
       
       <div>
@@ -124,7 +123,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
             !accountIdentifier ||
             !accountName
           }
-          className="w-full px-4 py-4 !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !text-white !rounded-xl !font-medium !shadow-lg hover:!shadow-xl !transition-all !duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base transform hover:-translate-y-0.5"
+          className="w-full px-4 py-2 !bg-gradient-to-r !from-indigo-600 !to-purple-600 hover:!from-indigo-700 hover:!to-purple-700 !text-white !rounded-xl !font-medium !shadow-lg hover:!shadow-xl !transition-all !duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base transform hover:-translate-y-0.5"
         >
           {isLoading ? (
             <div className="flex items-center justify-center">

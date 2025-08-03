@@ -98,10 +98,10 @@ body {
 }
 
 /* Fix for heading font sizes being reset */
-h1, h2, h3, h4, h5, h6, p {
+/* h1, h2, h3, h4, h5, h6, p {
   font-size: revert;
   font-weight: revert;
-}
+} */
 
 
 
