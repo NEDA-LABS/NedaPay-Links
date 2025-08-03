@@ -85,6 +85,7 @@ export async function PUT(request: NextRequest) {
   try {
     // Extract user ID from authentication
     const userId = await getUserIdFromRequest(request);
+    console.log('User ID:', userId); //debugg
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -130,9 +131,18 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Payment expiry must be between 1 and 1440 minutes' }, { status: 400 });
     }
 
+    // First find the user to get their id
+    const user = await prisma.user.findUnique({
+      where: { privyUserId: userId }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Update or create settings
     const settings = await prisma.merchantSettings.upsert({
-      where: { userId },
+      where: { userId: user.id },
       update: {
         businessName,
         businessEmail,

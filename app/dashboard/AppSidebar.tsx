@@ -33,6 +33,8 @@ import {
   SidebarProvider,
   useSidebar,
 } from "@/compliance/user/components/ui/sidebar";
+import { usePrivy } from "@privy-io/react-auth";
+import { useState, useEffect } from "react";
 
 const overviewItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -42,9 +44,9 @@ const overviewItems = [
 const productItems = [
   { title: "Payment Link", url: "/payment-link", icon: Send },
   { title: "Generate Invoice", url: "/invoice", icon: FileIcon },
-  { title: "Swap Coins", url: "/swap-coins", icon: Activity },
+  // { title: "Swap Coins", url: "/swap-coins", icon: Activity },
   { title: "Transfer to Fiat", url: "/offramp", icon: CreditCard },
-  { title: "Customize Dashboard", url: "/settings", icon: Sparkles },
+  // { title: "Customize Dashboard", url: "/settings", icon: Sparkles },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 
@@ -63,6 +65,8 @@ function AppSidebarContent() {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
+  const {getAccessToken} = usePrivy();
+  const [businessName, setBusinessName] = useState('@user');
 
   const getNavClass = (url: string) => {
     const isActive =
@@ -74,6 +78,23 @@ function AppSidebarContent() {
       ? "bg-white/20 text-white hover:bg-white/25"
       : "text-white/80 hover:bg-white/10 hover:text-white";
   };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    const accessToken = await getAccessToken();
+    const response = await fetch('/api/settings', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+    const data = await response.json();
+    const settings = data.settings;
+    setBusinessName(settings.businessName || 'No User Name');
+  };
+
 
   return (
     <Sidebar
@@ -89,7 +110,7 @@ function AppSidebarContent() {
         <div className="md:hidden p-4 border-b border-white/20 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="bg-gray-200 border-2 border-dashed rounded-xl w-8 h-8" />
-            <span className="font-semibold text-white">Business Name</span>
+            <span className="font-semibold text-white">{businessName}</span>
           </div>
           <button
             onClick={toggleSidebar}
@@ -110,7 +131,7 @@ function AppSidebarContent() {
                 <Menu className="h-6 w-6 text-slate-800" />
               </button> */}
               {!isCollapsed && (
-                <span className="font-semibold text-white">Business Name</span>
+                <span className="font-semibold text-white">{businessName}</span>
               )}
             </div>
             <button
@@ -124,7 +145,7 @@ function AppSidebarContent() {
             </button>
           </div>
 
-          {!isCollapsed && (
+          {/* {!isCollapsed && (
             <div className="relative mt-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
               <input
@@ -132,7 +153,7 @@ function AppSidebarContent() {
                 className="w-full pl-10 pr-3 py-2 rounded-md bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
               />
             </div>
-          )}
+          )} */}
         </div>
 
         <div className="p-2 flex-1 overflow-y-auto">

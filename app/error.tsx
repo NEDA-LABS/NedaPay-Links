@@ -16,13 +16,13 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-white dark:bg-gray-900">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-white">
       <div className="text-center max-w-md mx-auto px-4">
         <h1 className="text-6xl font-bold text-red-500 mb-6">Error</h1>
-        <h2 className="text-2xl font-semibold text-slate-800 dark:text-white mb-4">
+        <h2 className="text-2xl font-semibold text-slate-800 mb-4">
           Something went wrong
         </h2>
-        <p className="text-slate-600 dark:text-slate-300 mb-8">
+        <p className="text-slate-600  mb-8">
           We apologize for the inconvenience. Please try again later.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -299,7 +299,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
               </div>
               <div className="p-4">
                 <nav className="space-y-1">
-                  {['profile', 'payment', 'security', 'notifications', 'api', 'kyc'].map((tab) => (
+                  {['profile', 'notifications', 'kyc'].map((tab) => (
                     <button
                       key={tab}
                       className={`!w-full !text-left !px-4 !py-3 !rounded-lg !text-sm !font-medium !transition-all !duration-200 ${
@@ -309,7 +309,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                       }`}
                       onClick={() => setActiveTab(tab)}
                     >
-                      {tab === 'profile' && 'Business Profile'}
+                      {tab === 'profile' && 'Profile'}
                       {tab === 'payment' && 'Payment Settings'}
                       {tab === 'security' && 'Security'}
                       {tab === 'notifications' && 'Notifications'}
@@ -329,13 +329,13 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
               {activeTab === 'profile' && (
                 <>
                   <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-800">Business Profile</h2>
-                    <p className="text-gray-600 text-sm mt-1">Manage your business information</p>
+                    <h2 className="text-xl font-semibold text-gray-800">Profile</h2>
+                    <p className="text-gray-600 text-sm mt-1">Manage your business/individual information</p>
                   </div>
                   <div className="p-6">
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Business Name</label>
+                        <label className="block text-gray-700 font-medium mb-2">User Name</label>
                         <input
                           type="text"
                           className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
@@ -344,7 +344,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Business Email</label>
+                        <label className="block text-gray-700 font-medium mb-2">Email</label>
                         <input
                           type="email"
                           className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
@@ -353,7 +353,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Business Phone</label>
+                        <label className="block text-gray-700 font-medium mb-2">Phone</label>
                         <input
                           type="text"
                           className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"

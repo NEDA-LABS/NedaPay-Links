@@ -273,16 +273,16 @@ export default function DashboardContent() {
   };
 
   return (
-        <div className="space-y-8 bg-slate-100">
+        <div className="space-y-8 bg-slate-100 px-2 lg:px-[]">
        <Header />
       <div className="flex items-center justify-between">
         <div>
         
         <button></button>
-          <h1 className="text-4xl font-bold bg-[#3E55E6] bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-4xl font-bold bg-[#3E55E6] bg-clip-text text-transparent">
             Your Dashboard
           </h1>
-          <p className="text-lg text-slate-800 text-muted-foreground mt-2">
+          <p className="text-sm md:text-lg text-slate-800 text-muted-foreground mt-2">
             Seamlessly manage stablecoin payments and monitor your business performance
           </p>
         </div>
@@ -310,8 +310,8 @@ export default function DashboardContent() {
                       <Zap className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-                      <p className="text-white/80">Ready to manage your payments</p>
+                      <h2 className="!text-lg md:!text-2xl font-bold text-white">Welcome Back</h2>
+                      <p className="text-sm text-white/80">Ready to manage your payments</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -367,13 +367,13 @@ export default function DashboardContent() {
       {/* Key Metrics */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-foreground text-slate-800">Transaction Overview</h2>
+          <h2 className="!text-lg md:!text-2xl font-bold text-foreground text-slate-800">Transaction Overview</h2>
           {/* <Button variant="outline" size="sm" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             View Analytics
           </Button> */}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
             title="Total Received"
             value={metrics.totalReceived.toLocaleString("en-US", { maximumFractionDigits: 2 })}
