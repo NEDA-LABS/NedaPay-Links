@@ -79,8 +79,8 @@ function AppSidebarContent() {
     <Sidebar
       className={
         isCollapsed
-          ? "w-14 bg-[#3E55E6] text-white shadow-lg"
-          : "w-64 bg-[#3E55E6] text-white shadow-lg"
+          ? "w-14 !bg-[#3E55E6] text-white shadow-lg"
+          : "w-64 !bg-[#3E55E6] text-white shadow-lg"
       }
       collapsible="icon"
     >
