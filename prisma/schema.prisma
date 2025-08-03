@@ -84,7 +84,7 @@ model PaymentLink {
   merchantId   String
   url          String        @unique
   amount       Float?
-  currency     String
+  currency     String?
   description  String?
   status       String
   createdAt    DateTime      @default(now())

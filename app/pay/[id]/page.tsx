@@ -15,10 +15,22 @@ import {
 } from "lucide-react";
 import QRCode from "qrcode";
 import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
+import { stablecoins } from "@/data/stablecoins";
+import { mainnet, base, polygon, arbitrum, celo, scroll } from "viem/chains";
 
 const PaymentQRCode = dynamicImport(() => import("./QRCode"), { ssr: false });
 const PayWithWallet = dynamicImport(() => import("./PayWithWallet"), { ssr: false });
 const OffRampPayment = dynamicImport(() => import("./OfframpPayment"), { ssr: false });
+
+// Supported chains for normal payments
+const NORMAL_PAYMENT_CHAINS = [
+  mainnet, 
+  base, 
+  polygon, 
+  arbitrum, 
+  celo, 
+  scroll
+];
 
 export default function PayPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
@@ -42,10 +54,21 @@ export default function PayPage({ params }: { params: { id: string } }) {
   const { address: connectedAddress } = useAccount();
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [linkType, setLinkType] = useState<'NORMAL' | 'OFF_RAMP'>('NORMAL');
+  const [selectedToken, setSelectedToken] = useState("");
+  const [selectedChain, setSelectedChain] = useState<number | null>(null);
+  const [availableTokens, setAvailableTokens] = useState<any[]>([]);
 
   const merchantAddress = to && utils.isAddress(to) ? to : connectedAddress || "";
   const shortAddress = merchantAddress ? `${merchantAddress.slice(0, 6)}...${merchantAddress.slice(-4)}` : "";
-  const chain = SUPPORTED_CHAINS.find(c => c.id === Number(chainId));
+  
+  // Resolve chain info
+  const resolvedChain = linkType === 'OFF_RAMP'
+    ? SUPPORTED_CHAINS.find(c => c.id === Number(chainId))
+    : selectedChain
+      ? NORMAL_PAYMENT_CHAINS.find(c => c.id === selectedChain)
+      : chainId
+        ? NORMAL_PAYMENT_CHAINS.find(c => c.id === Number(chainId))
+        : null;
 
   useEffect(() => {
     const validateLink = async () => {
@@ -67,6 +90,22 @@ export default function PayPage({ params }: { params: { id: string } }) {
             margin: 2
           });
           setQrDataUrl(url);
+          
+          // Set initial token and chain for normal payments
+          if (data.linkType === 'NORMAL') {
+            // Set initial chain if not specified
+            if (!chainId) {
+              setSelectedChain(base.id); // Default to Base
+            }
+            
+            // Set initial token if not specified
+            if (!currency) {
+              const usdcToken = stablecoins.find(t => t.baseToken === 'USDC');
+              if (usdcToken) {
+                setSelectedToken('USDC');
+              }
+            }
+          }
         }
       } catch (error) {
         setIsValidLink(false);
@@ -78,6 +117,21 @@ export default function PayPage({ params }: { params: { id: string } }) {
 
     validateLink();
   }, [searchParams]);
+
+  // Update available tokens when chain changes
+  useEffect(() => {
+    if (linkType === 'NORMAL' && selectedChain) {
+      const tokensForChain = stablecoins.filter(token => 
+        token.chainIds && token.chainIds.includes(selectedChain)
+      );
+      setAvailableTokens(tokensForChain);
+      
+      // Auto-select first token if none selected
+      if (tokensForChain.length > 0 && !selectedToken) {
+        setSelectedToken(tokensForChain[0].baseToken);
+      }
+    }
+  }, [selectedChain, linkType]);
 
   const handleCopy = () => {
     if (merchantAddress) {
@@ -104,6 +158,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
     setShowAmountInput(false);
   };
 
+  console.log("custom amount", customAmount); //debugging
+  console.log("amount", amount);
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
@@ -152,11 +208,13 @@ export default function PayPage({ params }: { params: { id: string } }) {
           <p className="text-sm text-gray-600 mb-1">Amount</p>
           <p className="text-3xl font-bold text-gray-900">
             {amount ? `${amount} ` : 'Any Amount '}
-            <span className="text-xl font-normal">{currency}</span>
+            <span className="text-xl font-normal">
+              {currency || (selectedToken && linkType === 'NORMAL' ? selectedToken : '')}
+            </span>
           </p>
-          {chain && (
+          {resolvedChain && (
             <p className="text-sm text-gray-500 mt-1">
-              Network: {chain.name}
+              Network: {resolvedChain.name}
             </p>
           )}
         </div>
@@ -229,19 +287,66 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
+        {/* Chain and Token Selection for Normal Links */}
+        {linkType === 'NORMAL' && (!chainId || !currency) && (
+          <div className="space-y-4 bg-gray-50 p-4 rounded-xl">
+            {!chainId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Blockchain Network
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedChain || ""}
+                    onChange={(e) => setSelectedChain(Number(e.target.value))}
+                    className="w-full text-slate-800 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {NORMAL_PAYMENT_CHAINS.map(chain => (
+                      <option key={chain.id} value={chain.id}>
+                        {chain.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {!currency && selectedChain && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Token
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedToken}
+                    onChange={(e) => setSelectedToken(e.target.value)}
+                    className="w-full text-slate-800 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {availableTokens.map(token => (
+                      <option key={token.baseToken} value={token.baseToken}>
+                        {token.baseToken} - {token.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {showAmountInput ? (
           <form onSubmit={handleAmountSubmit} className="bg-gray-50 p-4 rounded-xl space-y-3">
             <div>
               <label htmlFor="customAmount" className="block text-sm font-medium text-gray-700 mb-1">
-                Enter Amount ({currency})
+                Enter Amount ({currency || selectedToken})
               </label>
               <input
                 type="number"
                 id="customAmount"
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                placeholder={`Enter amount in ${currency}`}
+                className="w-full text-slate-800 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                placeholder={`Enter amount in ${currency || selectedToken}`}
                 step="any"
                 min="0"
                 required
@@ -276,11 +381,11 @@ export default function PayPage({ params }: { params: { id: string } }) {
             {(!amount && customAmount) || amount ? (
               <PayWithWallet 
                 to={merchantAddress} 
-                amount={amount === "0" ? customAmount : amount || ""} 
-                currency={currency || ""} 
+                amount={amount === "0" || amount === null ? customAmount : amount || ""} 
+                currency={currency || selectedToken || ""} 
                 description={description || ""} 
                 linkId={params.id} 
-                chainId={chainId ? parseInt(chainId) : undefined}
+                chainId={chainId ? parseInt(chainId) : selectedChain || undefined}
               />
             ) : null}
           </>
@@ -302,9 +407,9 @@ export default function PayPage({ params }: { params: { id: string } }) {
         <div className="text-center text-sm text-gray-600 bg-amber-50 p-4 rounded-xl">
           <p className="mb-1">
             {amount ? (
-              <>Send exactly <span className="font-semibold text-blue-600">{amount} {currency}</span> to complete payment.</>
+              <>Send exactly <span className="font-semibold text-blue-600">{amount} {currency || selectedToken}</span> to complete payment.</>
             ) : customAmount ? (
-              <>Send <span className="font-semibold text-blue-600">{customAmount} {currency}</span> to complete payment.</>
+              <>Send <span className="font-semibold text-blue-600">{customAmount} {currency || selectedToken}</span> to complete payment.</>
             ) : (
               <>Enter an amount to complete payment.</>
             )}

@@ -102,6 +102,8 @@ export default function PaymentLinkPage() {
   const [expiresAt, setExpiresAt] = useState("");
   const [chainId, setChainId] = useState(8453); // Default to Base
   const [qrDataUrl, setQrDataUrl] = useState("");
+  const [specifyChain, setSpecifyChain] = useState(true); // New state for chain specification
+  const [specifyCurrency, setSpecifyCurrency] = useState(true); // New state for currency specification
 
   // Input sanitization
   const sanitizeInput = (input: string): string => {
@@ -115,6 +117,12 @@ export default function PaymentLinkPage() {
       const parsedAmount = parseFloat(amount);
       if (isNaN(parsedAmount)) return false;
       if (parsedAmount < 0) return false;
+      
+      // If amount is specified, currency must be specified
+      if (!specifyCurrency) {
+        alert("Please specify a currency when setting an amount");
+        return false;
+      }
     }
 
     // For off-ramp links, amount is required
@@ -285,7 +293,6 @@ export default function PaymentLinkPage() {
 
     // Input validation
     if (!validateInput()) {
-      alert("Invalid input. Please check your entries.");
       setIsLoading(false);
       return;
     }
@@ -317,16 +324,21 @@ export default function PaymentLinkPage() {
       const payload: any = {
         merchantId: merchantAddress,
         amount: parseFloat(sanitizedAmount),
-        currency,
         description: sanitizedDescription || undefined,
         status: "Active",
         expiresAt: expiresAtValue,
         linkId,
         linkType,
-        chainId,
       };
 
-      if (linkType === "OFF_RAMP") {
+      // Add conditional fields for normal links
+      if (linkType === "NORMAL") {
+        if (specifyChain) payload.chainId = chainId;
+        if (specifyCurrency) payload.currency = currency;
+      } 
+      // Add required fields for off-ramp
+      else if (linkType === "OFF_RAMP") {
+        payload.currency = currency;
         payload.offRampType = offRampType;
         payload.offRampValue = offRampValue;
         payload.offRampProvider = offRampProvider;
@@ -533,47 +545,6 @@ export default function PaymentLinkPage() {
               </div>
             </div>
 
-            {/* Chain Selection */}
-            {linkType === "NORMAL" && (
-              <div className="group">
-                <label
-                  htmlFor="chain"
-                  className="block text-sm font-semibold text-gray-700 mb-3"
-                >
-                  Blockchain Network
-                </label>
-                <div className="relative">
-                  <select
-                    id="chain"
-                    name="chain"
-                    value={chainId}
-                    onChange={(e) => setChainId(Number(e.target.value))}
-                    className="w-full px-6 py-2 text-base !text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
-                  >
-                    {SUPPORTED_CHAINS.map((chain) => (
-                      <option key={chain.id} value={chain.id}>
-                        {chain.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
-                    <svg
-                      className="w-5 h-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            )}
             {/* Off-Ramp Fields */}
             {linkType === "OFF_RAMP" && (
               <>
@@ -734,47 +705,130 @@ export default function PaymentLinkPage() {
               </>
             )}
 
-            {/* Currency for Normal Payments - Below Off-Ramp section */}
-            {linkType !== "OFF_RAMP" && (
-              <div className="group">
-                <label
-                  htmlFor="currency"
-                  className="block text-sm font-semibold text-gray-700 mb-3"
-                >
-                  Currency
-                </label>
-                <div className="relative">
-                  <select
-                    id="currency"
-                    name="currency"
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
-                  >
-                    {stablecoins.map((coin: any) => (
-                      <option key={coin.baseToken} value={coin.baseToken}>
-                        {coin.baseToken} -{" "}
-                        {coin.name || coin.currency || coin.region}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
-                    <svg
-                      className="w-5 h-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+            {/* Normal Link Type Fields */}
+            {linkType === "NORMAL" && (
+              <>
+                {/* Blockchain Network Option */}
+                <div className="group">
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="checkbox"
+                      id="specifyChain"
+                      checked={specifyChain}
+                      onChange={(e) => setSpecifyChain(e.target.checked)}
+                      className="mr-2 h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500"
+                    />
+                    <label
+                      htmlFor="specifyChain"
+                      className="block text-sm font-semibold text-gray-700"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                      Specify Blockchain Network?
+                    </label>
                   </div>
+
+                  {specifyChain && (
+                    <div className="group">
+                      <label
+                        htmlFor="chain"
+                        className="block text-sm font-semibold text-gray-700 mb-3"
+                      >
+                        Blockchain Network
+                      </label>
+                      <div className="relative">
+                        <select
+                          id="chain"
+                          name="chain"
+                          value={chainId}
+                          onChange={(e) => setChainId(Number(e.target.value))}
+                          className="w-full px-6 py-2 text-base !text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                        >
+                          {SUPPORTED_CHAINS.map((chain) => (
+                            <option key={chain.id} value={chain.id}>
+                              {chain.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
+                          <svg
+                            className="w-5 h-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+
+                {/* Currency Option */}
+                <div className="group">
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="checkbox"
+                      id="specifyCurrency"
+                      checked={specifyCurrency}
+                      onChange={(e) => setSpecifyCurrency(e.target.checked)}
+                      className="mr-2 h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500"
+                    />
+                    <label
+                      htmlFor="specifyCurrency"
+                      className="block text-sm font-semibold text-gray-700"
+                    >
+                      Specify Stablecoin?
+                    </label>
+                  </div>
+
+                  {specifyCurrency && (
+                    <div className="group">
+                      <label
+                        htmlFor="currency"
+                        className="block text-sm font-semibold text-gray-700 mb-3"
+                      >
+                        Currency
+                      </label>
+                      <div className="relative">
+                        <select
+                          id="currency"
+                          name="currency"
+                          value={currency}
+                          onChange={(e) => setCurrency(e.target.value)}
+                          className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                        >
+                          {stablecoins.map((coin: any) => (
+                            <option key={coin.baseToken} value={coin.baseToken}>
+                              {coin.baseToken} -{" "}
+                              {coin.name || coin.currency || coin.region}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
+                          <svg
+                            className="w-5 h-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
 
             <div className="group">
@@ -818,7 +872,7 @@ export default function PaymentLinkPage() {
                 htmlFor="description"
                 className="block text-sm font-semibold text-gray-700 mb-3"
               >
-                Description (Optional)
+                Description
               </label>
               <textarea
                 id="description"

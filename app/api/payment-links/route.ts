@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
   } = data;
 
   // Base validation for all links
-  if (!merchantId || !currency || !status || !expiresAt || !linkId) {
+  if (!merchantId || !status || !expiresAt || !linkId) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
@@ -106,8 +106,16 @@ export async function POST(req: NextRequest) {
     parsedAmount = parsedAmount || 0;
   }
 
-  // Validate currency
-  if (!/^[A-Z]{3,10}$/i.test(currency)) {
+  // Validate currency - only required for off-ramp links or if amount is specified for normal links
+  if (linkType === 'OFF_RAMP') {
+    if (!currency) {
+      return NextResponse.json({ error: 'Currency is required for off-ramp links' }, { status: 400 });
+    }
+  } else if (amount && !currency) {
+    return NextResponse.json({ error: 'Currency is required when amount is specified' }, { status: 400 });
+  }
+
+  if (currency && !/^[A-Z]{3,10}$/i.test(currency)) {
     return NextResponse.json({ error: 'Invalid currency format' }, { status: 400 });
   }
 
@@ -176,8 +184,8 @@ export async function POST(req: NextRequest) {
   // Prepare query parameters
   const queryParams = new URLSearchParams({
     amount: parsedAmount.toString(),
-    currency,
     to: merchantId,
+    ...(currency && { currency }),
     ...(description && { description: encodeURIComponent(description) }),
     ...(linkType === 'OFF_RAMP' && offRampType && { offRampType }),
     ...(linkType === 'OFF_RAMP' && offRampValue && { offRampValue }),
@@ -198,7 +206,7 @@ export async function POST(req: NextRequest) {
         merchantId,
         url,
         amount: parsedAmount,
-        currency,
+        ...(currency && { currency }),
         description,
         status,
         expiresAt: expiresAtDate,
