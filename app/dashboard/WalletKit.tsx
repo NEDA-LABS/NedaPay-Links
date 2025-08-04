@@ -27,7 +27,7 @@ export default function WalletKit() {
     wallets?.[0]?.walletClientType.toLowerCase() === "privy";
 
   return (
-    <div className="bg-white/5 rounded-2xl p-6 border border-white/20 text-center mt-[70px]">
+    <div className="bg-white/5 rounded-2xl p-6 border border-white/20 text-center my-auto">
       <div className="flex flex-row space-y-4">
         
         {isPrivyEmbedded && (

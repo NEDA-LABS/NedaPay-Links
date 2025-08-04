@@ -755,7 +755,7 @@ export const StablecoinBalanceButton = () => {
       {/* Floating Button */}
       <button
         onClick={() => setModalOpen(true)}
-        className="z-40 hover:bg-blue-700 text-white font-medium px-4 rounded-full flex items-center space-x-2 transition-all"
+        className="z-40 bg-white/5 rounded-2xl border border-white/20 text-center text-white font-medium p-4 hover:bg-white/10 flex items-center space-x-2 transition-all"
       >
         {loading ? (
           <Loader2 className="animate-spin h-5 w-5" />

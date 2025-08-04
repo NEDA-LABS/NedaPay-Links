@@ -15,7 +15,7 @@ import {
 } from "react-icons/fa";
 import { siX, siFarcaster } from "simple-icons";
 import QRCode from "qrcode";
-import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
+import { SUPPORTED_CHAINS } from "./chains";
 import {
   fetchSupportedCurrencies,
   fetchSupportedInstitutions,

@@ -22,7 +22,7 @@ interface DailyRevenueChartProps {
 
 const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ 
   transactions,
-  days = 7 
+  days = 7
 }) => {
     // console.log("transactions in chart", transactions)
   // Filter only completed transactions (case-insensitive)

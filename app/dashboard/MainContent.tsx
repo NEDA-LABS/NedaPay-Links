@@ -95,6 +95,7 @@ export default function DashboardContent() {
     averageTransaction: 0,
     monthlyGrowth: 0,
   });
+  const [selectedStablecoin, setSelectedStablecoin] = useState<string>("");
 
   // Set up provider and multicall contract
   const provider = useMemo(() => new ethers.providers.JsonRpcProvider(BASE_RPC_URL), []);
@@ -110,10 +111,7 @@ export default function DashboardContent() {
     const fetchBalances = async () => {
       setIsBalanceLoading(true);
       try {
-        // Filter stablecoins for Base chain
         const baseStablecoins = stablecoins.filter((coin) => coin.chainIds.includes(8453));
-
-        // Prepare calls for balanceOf and decimals
         const calls = baseStablecoins.flatMap((coin) => [
           {
             target: coin.addresses[8453],
@@ -127,10 +125,7 @@ export default function DashboardContent() {
           },
         ]);
 
-        // Execute multicall
         const results = await multicallContract.aggregate3(calls);
-
-        // Process results
         const realBalances: Record<string, string> = {};
         baseStablecoins.forEach((coin, index) => {
           const balanceResult = results[index * 2];
@@ -148,7 +143,6 @@ export default function DashboardContent() {
           }
         });
 
-        // Create processed balances array
         const processedBalances = baseStablecoins.map((coin) => ({
           symbol: coin.baseToken,
           name: coin.name,
@@ -168,7 +162,7 @@ export default function DashboardContent() {
     fetchBalances();
   }, [walletAddress, multicallContract]);
 
-  // Fetch transactions
+  // Fetch transactions and set initial selected stablecoin
   useEffect(() => {
     if (!walletAddress) return;
 
@@ -179,7 +173,6 @@ export default function DashboardContent() {
         if (!response.ok) throw new Error("Failed to fetch transactions");
         const data = await response.json();
 
-        // Format transactions
         const formattedTransactions: Transaction[] = data.map((tx: any) => ({
           id: tx.txHash,
           shortId: tx.txHash.slice(0, 6) + "..." + tx.txHash.slice(-4),
@@ -195,44 +188,10 @@ export default function DashboardContent() {
 
         setTransactions(formattedTransactions);
 
-        // Calculate metrics
-        const successfulTxs = formattedTransactions.filter((tx) => tx.status === "Completed");
-        const totalReceived = successfulTxs.reduce((sum, tx) => sum + tx.amount, 0);
-        const totalTransactions = successfulTxs.length;
-        const averageTransaction = totalTransactions > 0 ? totalReceived / totalTransactions : 0;
-
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-        const currentMonthTxs = successfulTxs.filter((tx) => {
-          const txDate = tx.rawDate;
-          return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
-        });
-
-        const lastMonthTxs = successfulTxs.filter((tx) => {
-          const txDate = tx.rawDate;
-          return txDate.getMonth() === lastMonth && txDate.getFullYear() === lastMonthYear;
-        });
-
-        const currentMonthTotal = currentMonthTxs.reduce((sum, tx) => sum + tx.amount, 0);
-        const lastMonthTotal = lastMonthTxs.reduce((sum, tx) => sum + tx.amount, 0);
-
-        let monthlyGrowth = 0;
-        if (lastMonthTotal > 0) {
-          monthlyGrowth = ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
-        } else if (currentMonthTotal > 0) {
-          monthlyGrowth = 100;
+        const uniqueStablecoins = Array.from(new Set(formattedTransactions.map(tx => tx.currency)));
+        if (uniqueStablecoins.length > 0 && !selectedStablecoin) {
+          setSelectedStablecoin(uniqueStablecoins[0]);
         }
-
-        setMetrics({
-          totalReceived,
-          totalTransactions,
-          averageTransaction,
-          monthlyGrowth,
-        });
       } catch (error) {
         console.error("Error fetching transactions:", error);
         setTransactions([]);
@@ -244,41 +203,77 @@ export default function DashboardContent() {
     fetchTransactions();
   }, [walletAddress]);
 
+  // Calculate metrics based on selected stablecoin
+  useEffect(() => {
+    if (!selectedStablecoin || transactions.length === 0) return;
+
+    const filteredTxs = transactions.filter(
+      tx => tx.currency === selectedStablecoin && tx.status === "Completed"
+    );
+    const totalReceived = filteredTxs.reduce((sum, tx) => sum + tx.amount, 0);
+    const totalTransactions = filteredTxs.length;
+    const averageTransaction = totalTransactions > 0 ? totalReceived / totalTransactions : 0;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+    const currentMonthTxs = filteredTxs.filter(tx => {
+      const txDate = tx.rawDate;
+      return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+    });
+
+    const lastMonthTxs = filteredTxs.filter(tx => {
+      const txDate = tx.rawDate;
+      return txDate.getMonth() === lastMonth && txDate.getFullYear() === lastMonthYear;
+    });
+
+    const currentMonthTotal = currentMonthTxs.reduce((sum, tx) => sum + tx.amount, 0);
+    const lastMonthTotal = lastMonthTxs.reduce((sum, tx) => sum + tx.amount, 0);
+
+    let monthlyGrowth = 0;
+    if (lastMonthTotal > 0) {
+      monthlyGrowth = ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
+    } else if (currentMonthTotal > 0) {
+      monthlyGrowth = 100;
+    }
+
+    setMetrics({
+      totalReceived,
+      totalTransactions,
+      averageTransaction,
+      monthlyGrowth,
+    });
+  }, [transactions, selectedStablecoin]);
+
   // Handle swap click
   const handleSwapClick = (fromSymbol: string) => {
     setSwapFromSymbol(fromSymbol);
     setSwapModalOpen(true);
   };
 
-  // Handle swap (placeholder)
   const handleSwap = (from: string, to: string, amount: string) => {
     setSwapModalOpen(false);
     console.log(`Swapping ${amount} ${from} to ${to}`);
   };
 
-  // Gradient class for stablecoin icons
   const getGradientClass = (index: number) => {
     switch (index) {
-      case 0:
-        return "bg-gradient-to-br from-green-500 to-emerald-600";
-      case 1:
-        return "bg-gradient-to-br from-blue-500 to-cyan-600";
-      case 2:
-        return "bg-gradient-to-br from-yellow-500 to-orange-600";
-      case 3:
-        return "bg-gradient-to-br from-purple-500 to-pink-600";
-      default:
-        return "bg-gradient-to-br from-indigo-500 to-violet-600";
+      case 0: return "bg-gradient-to-br from-green-500 to-emerald-600";
+      case 1: return "bg-gradient-to-br from-blue-500 to-cyan-600";
+      case 2: return "bg-gradient-to-br from-yellow-500 to-orange-600";
+      case 3: return "bg-gradient-to-br from-purple-500 to-pink-600";
+      default: return "bg-gradient-to-br from-indigo-500 to-violet-600";
     }
   };
 
   return (
-        <div className="space-y-8 bg-slate-100 px-2 lg:px-[]">
-       <Header />
+    <div className="space-y-8 bg-slate-100 px-2 lg:px-[]">
+      <Header />
       <div className="flex items-center justify-between">
         <div>
-        
-        <button></button>
           <h1 className="text-2xl md:text-4xl font-bold bg-[#3E55E6] bg-clip-text text-transparent">
             Your Dashboard
           </h1>
@@ -286,22 +281,11 @@ export default function DashboardContent() {
             Seamlessly manage stablecoin payments and monitor your business performance
           </p>
         </div>
-        {/* <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2 text-slate-800">
-            <Download className="h-4 w-4 text-slate-800" />
-            Export
-          </Button>
-          <Button className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
-            <Sparkles className="h-4 w-4" />
-            Quick Actions
-          </Button>
-        </div> */}
       </div>
 
-      {/* Hero Welcome Section */}
       <Card className="relative border-0 bg-[#3E55E6] text-white shadow-2xl">
         <CardContent className="relative p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="lg:col-span-2 space-y-4">
               {authenticated ? (
                 <>
@@ -315,21 +299,8 @@ export default function DashboardContent() {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-sm text-white/90">Status</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-medium">Connected</p>
-                        <Badge className="text-xs px-2 py-0.5 bg-white/10 border border-white/20">
-                          {walletType?.toUpperCase() || "UNKNOWN"}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                      <div className="text-sm text-white/70 mb-2">Wallet</div>
-                      <div className="flex items-center gap-2">
+                    <div className="bg-white/10 rounded-xl p-4 border border-white/20 items-center justify-centerm my-auto">
+                      <div className="flex items-center gap-2 items-center my-auto">
                         <p className="text-white font-mono text-sm">
                           {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
                         </p>
@@ -344,6 +315,7 @@ export default function DashboardContent() {
                         <ChainSwitcher />
                       </div>
                     </div>
+                    <WalletKit/>
                   </div>
                 </>
               ) : (
@@ -358,8 +330,6 @@ export default function DashboardContent() {
                 </div>
               )}
             </div>
-            {/* {wallet kit} */}
-            <WalletKit/>
           </div>
         </CardContent>
       </Card>
@@ -368,16 +338,26 @@ export default function DashboardContent() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="!text-lg md:!text-2xl font-bold text-foreground text-slate-800">Transaction Overview</h2>
-          {/* <Button variant="outline" size="sm" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            View Analytics
-          </Button> */}
+        </div>
+        <div className="mb-4">
+          <label htmlFor="stablecoin-select" className="mr-2 text-slate-800">Select Stablecoin:</label>
+          <select
+            id="stablecoin-select"
+            value={selectedStablecoin}
+            onChange={(e) => setSelectedStablecoin(e.target.value)}
+            className="border rounded px-2 py-1 text-slate-800"
+            disabled={isTransactionLoading || transactions.length === 0}
+          >
+            {Array.from(new Set(transactions.map(tx => tx.currency))).map(symbol => (
+              <option key={symbol} value={symbol}>{symbol}</option>
+            ))}
+          </select>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
             title="Total Received"
             value={metrics.totalReceived.toLocaleString("en-US", { maximumFractionDigits: 2 })}
-            subtitle="USDC"
+            subtitle={selectedStablecoin}
             icon={<ArrowDownRight className="h-5 w-5" />}
             className="border-0 text-slate-800 bg-gradient-to-br from-green-950/20 to-emerald-950/20"
           />
@@ -391,7 +371,7 @@ export default function DashboardContent() {
           <MetricCard
             title="Average Transaction"
             value={metrics.averageTransaction.toLocaleString("en-US", { maximumFractionDigits: 2 })}
-            subtitle="USDC"
+            subtitle={selectedStablecoin}
             icon={<DollarSign className="h-5 w-5" />}
             className="border-0 text-slate-800 bg-gradient-to-br from-purple-950/20 to-violet-950/20"
           />
@@ -412,7 +392,6 @@ export default function DashboardContent() {
         </div>
       </div>
 
-      {/* Analytics & Insights */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <Card className="xl:col-span-2 border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -432,68 +411,6 @@ export default function DashboardContent() {
         <PaymentMethods transactions={transactions} />
       </div>
 
-      {/* Stablecoin Balances */}
-      {/* <Card className="border-0 shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-xl font-bold text-slate-800">Stablecoin Balances</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1 text-slate-800">Manage your crypto assets</p>
-          </div>
-          <div className="flex gap-2">
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isBalanceLoading ? (
-            <p className="text-center py-12 text-slate-800">Loading balances...</p>
-          ) : stablecoinBalances.length === 0 ? (
-            <p className="text-center py-12 text-slate-800">No stablecoins found</p>
-          ) : (
-            <div className="space-y-2">
-              <div className="grid grid-cols-12 gap-4 text-xs font-semibold text-muted-foreground pb-3 border-b border-border/50">
-                <div className="col-span-5 text-slate-800">COIN</div>
-                <div className="col-span-3 text-slate-800">BALANCE</div>
-                <div className="col-span-2 text-slate-800">ACTION</div>
-              </div>
-              {stablecoinBalances.map((coin, index) => (
-                <div
-                  key={coin.symbol}
-                  className="grid grid-cols-12 gap-4 items-center py-4 hover:bg-muted/30 rounded-xl transition-all duration-200 px-2"
-                >
-                  <div className="col-span-5 flex items-center gap-4">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${getGradientClass(index)}`}
-                    >
-                      {coin.symbol.slice(0, 2)}
-                    </div>
-                    <div>
-                      <div className="font-bold text-foreground text-slate-800">{coin.symbol}</div>
-                      <div className="text-sm text-muted-foreground text-slate-800">{coin.name}</div>
-                    </div>
-                  </div>
-                  <div className="col-span-3">
-                    <div className="font-bold text-lg text-slate-800">{coin.balance}</div>
-                    <div className="text-xs text-muted-foreground text-slate-800">Available</div>
-                  </div>
-                  <div className="col-span-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 w-full text-slate-800"
-                      onClick={() => handleSwapClick(coin.symbol)}
-                      disabled={parseFloat(coin.balance.replace(/,/g, "")) <= 0}
-                    >
-                      <Repeat className="h-3 w-3" />
-                      Swap
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card> */}
-
-      {/* Swap Modal */}
       {swapModalOpen && (
         <SwapModal
           open={swapModalOpen}
@@ -505,6 +422,5 @@ export default function DashboardContent() {
       )}
       <Footer/>
     </div>
-      
-  ); 
+  );
 }
