@@ -337,7 +337,7 @@ export default function DashboardContent() {
       {/* Key Metrics */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="!text-lg md:!text-2xl font-bold text-foreground text-slate-800">Transaction Overview</h2>
+          <h2 className="!text-lg md:!text-2xl font-bold text-foreground text-slate-800">Transactions Overview</h2>
         </div>
         <div className="mb-4">
           <label htmlFor="stablecoin-select" className="mr-2 text-slate-800">Select Stablecoin:</label>
@@ -411,7 +411,7 @@ export default function DashboardContent() {
         <PaymentMethods transactions={transactions} />
       </div>
 
-      {swapModalOpen && (
+      {/* {swapModalOpen && (
         <SwapModal
           open={swapModalOpen}
           fromSymbol={swapFromSymbol}
@@ -419,7 +419,7 @@ export default function DashboardContent() {
           onSwap={handleSwap}
           maxAmount={stablecoinBalances.find((b) => b.symbol === swapFromSymbol)?.balance || "0"}
         />
-      )}
+      )} */}
       <Footer/>
     </div>
   );

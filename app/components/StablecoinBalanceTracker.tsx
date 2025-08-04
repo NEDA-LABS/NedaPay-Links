@@ -749,6 +749,21 @@ export const StablecoinBalanceButton = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [totalBalance, setTotalBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  const {wallets} = useWallets();
+
+  const chainMap: Record<string, string> = {
+    "eip155:1": 'Ethereum',            // Mainnet
+    "eip155:56": 'BNB Smart Chain',
+    "eip155:137": 'Polygon',
+    "eip155:42161": 'Arbitrum One',
+    "eip155:10": 'OP Mainnet',
+    "eip155:8453": 'Base',
+    "eip155:534352": 'Scroll',         // Scroll mainnet
+  };
+  
+  function getChainName(chainId: string): string {
+    return chainMap[chainId] || 'Unknown Chain';
+  }
 
   return (
     <>
@@ -762,7 +777,7 @@ export const StablecoinBalanceButton = () => {
         ) : (
           <span>${totalBalance.toFixed(2)}</span>
         )}
-        <span>Stablecoins Portfolio</span>
+        <span>Stablecoins Portfolio ({getChainName(wallets?.[0]?.chainId)})</span>
         <ChevronRight className="h-4 w-4" />
       </button>
 

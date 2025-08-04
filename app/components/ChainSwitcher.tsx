@@ -27,10 +27,6 @@ const SUPPORTED_CHAINS = [
     icon: '/bsc.svg',
   },
   {
-    ...mainnet,
-    icon: '/mainnet.svg',
-  },
-  {
     ...scroll,
     icon: '/scroll.svg',
   },
