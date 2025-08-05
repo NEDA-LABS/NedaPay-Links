@@ -7,6 +7,7 @@ import { FaEdit } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
 import { usePrivy } from "@privy-io/react-auth";
 import Header from '../components/Header';
+import { withDashboardLayout } from '../utils/withDashboardLayout';
 
 interface Invoice {
   id: string;
@@ -21,7 +22,7 @@ interface Invoice {
 
 const statusTabs = ["All", "Draft", "Overdue", "Outstanding", "Paid", "Partial"];
 
-export default function InvoicePage() {
+function InvoicePage() {
   const { authenticated, user } = usePrivy();
   const walletAddress = user?.wallet?.address;
   const isConnected = authenticated && !!walletAddress;
@@ -141,7 +142,7 @@ export default function InvoicePage() {
       <Header />
       
       {/* Back Button */}
-      <div className="container mx-auto max-w-6xl px-4 pt-6">
+      {/* <div className="container mx-auto max-w-6xl px-4 pt-6">
         <button
           onClick={() => window.history.back()}
           className="group flex items-center gap-2 px-4 py-2 !bg-white/80 !backdrop-blur-sm !border !border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
@@ -149,7 +150,7 @@ export default function InvoicePage() {
           <span className="group-hover:-translate-x-1 transition-transform duration-300">←</span> 
           Back
         </button>
-      </div>
+      </div> */}
 
       <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Hero Section */}
@@ -488,3 +489,5 @@ export default function InvoicePage() {
     </div>
   );
 }
+
+export default withDashboardLayout(InvoicePage);

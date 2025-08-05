@@ -8,6 +8,7 @@ import ChainSelector from './ChainSelector';
 import OffRampForm from './OffRampForm';
 import { WalletType } from '../utils/biconomyExternal';
 import { SUPPORTED_CHAINS, DEFAULT_CHAIN, ChainConfig, ChainId } from './offrampHooks/constants';
+import { withDashboardLayout } from '@/utils/withDashboardLayout';
 
 type SupportedToken = 'USDC' | 'USDT';
 
@@ -45,7 +46,7 @@ const OffRampPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
-      <div className="fixed inset-0 overflow-y-auto">
+      <div className="overflow-y-auto">
         <Header />
         
         <div className="container mx-auto max-w-4xl px-6 pt-6">
@@ -155,4 +156,4 @@ const OffRampPage: React.FC = () => {
   );
 };
 
-export default OffRampPage;
+export default withDashboardLayout(OffRampPage);

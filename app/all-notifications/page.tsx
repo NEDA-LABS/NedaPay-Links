@@ -6,6 +6,7 @@ import axios from 'axios';
 import Header from '@/components/Header';
 import { SidebarProvider } from '@/compliance/user/components/ui/sidebar';
 import Footer from '@/components/Footer';
+import { withDashboardLayout } from '@/utils/withDashboardLayout';
 
 // Fallback UUID generator
 function uuidFallback() {
@@ -238,18 +239,18 @@ const MasterNotificationCenter: React.FC = () => {
   const unreadCount = localNotifications.filter((n) => !n.read).length + dbNotifications.filter((n) => n.status === 'unseen').length;
 
   return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 w-[100%]">
       <Header />
      
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center mb-4">
+        <div className="mx-auto">
+          {/* <div className="flex items-center mb-4">
             <button
               onClick={() => window.history.back()}
               className="!group !flex !items-center !gap-2 !px-4 !py-2 !bg-white !border !border-gray-200 !rounded-full !text-sm !font-semibold !text-gray-700 !hover:bg-blue-50 !hover:shadow-md !transition-all !duration-300"
             >
               <span className="transform group-hover:-translate-x-1 transition-transform duration-200">←</span> Back
             </button>
-          </div>
+          </div> */}
           <div className="flex items-center justify-between">
             <div className=' mx-auto'>
               <h1 className="text-3xl font-bold text-gray-900">Master Notification Center</h1>
@@ -265,7 +266,7 @@ const MasterNotificationCenter: React.FC = () => {
           </div>
         </div>
     
-      <main className="max-w-5xl mx-auto p-6 mb-20">
+      <main className="mx-auto p-6 mb-20">
         <div className="flex space-x-4 mb-6">
           {(['all', 'notifications', 'transactions'] as const).map((f) => (
             <button
@@ -414,4 +415,4 @@ const MasterNotificationCenter: React.FC = () => {
   );
 };
 
-export default MasterNotificationCenter;
+export default withDashboardLayout(MasterNotificationCenter);

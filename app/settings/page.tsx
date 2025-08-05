@@ -7,12 +7,14 @@ import Header from '../components/Header';
 import { stablecoins } from '../data/stablecoins';
 import { useKycStatus} from '@/hooks/useKycStatus';
 import { useKybStatus } from '@/hooks/useKybStatus';
+import { withDashboardLayout } from '../utils/withDashboardLayout';
+import { Loader } from 'lucide-react';
 
-export default function SettingsPage() {
+function SettingsPage() {
   const { user, authenticated } = usePrivy();
   const address = user?.wallet?.address;
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -265,20 +267,20 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   console.log("kyc/kyb status", kybStatus.status);
 
   if (!mounted) return null;
-  if (isLoading) return <div>Loading settings...</div>;
+  if (isLoading) return <div><Loader className="animate-spin text-blue-500 mx-auto" size={24} /></div>;
   if (error) return <div>Error: {error}</div>;
    
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 transition-colors duration-300">
       <Header />
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+      {/* <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <button
           onClick={() => window.history.back()}
           className="!group !flex !items-center !gap-2 !px-4 !py-2 !bg-white !border !border-gray-200 !rounded-full !text-sm !font-semibold !text-gray-700 !hover:bg-blue-50 !hover:shadow-md !transition-all !duration-300"
         >
           <span className="transform group-hover:-translate-x-1 transition-transform duration-200">←</span> Back
         </button>
-      </div>
+      </div> */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-10">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Settings</h1>
@@ -862,3 +864,5 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     </div>
   );
   }
+
+export default withDashboardLayout(SettingsPage);

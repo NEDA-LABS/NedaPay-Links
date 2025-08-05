@@ -24,6 +24,7 @@ import {
 import { stablecoins } from "../data/stablecoins";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { withDashboardLayout } from "../utils/withDashboardLayout";
 
 // Types
 interface Transaction {
@@ -83,7 +84,7 @@ const currencySymbols: { [key: string]: string } = stablecoins.reduce(
   {} as { [key: string]: string }
 );
 
-export default function TransactionsPage() {
+function TransactionsPage() {
   const { authenticated, user } = usePrivy();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -356,7 +357,7 @@ export default function TransactionsPage() {
               <button
                 onClick={fetchTransactions}
                 disabled={refreshing}
-                className="flex items-center gap-2 px-4 py-2 !bg-white !border !border-gray-200 !rounded-lg hover:!bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center text-slate-700 gap-2 px-4 py-2 !bg-white !border !border-gray-200 !rounded-lg hover:!bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw
                   className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
@@ -466,14 +467,14 @@ export default function TransactionsPage() {
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, search: e.target.value }))
                   }
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 text-slate-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               {/* Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 !border !border-gray-200 !rounded-lg hover:!bg-gray-50 transition-colors"
+                className="flex items-center text-slate-700 gap-2 px-4 py-2 !border !border-gray-200 !rounded-lg hover:!bg-gray-50 transition-colors"
               >
                 <Filter className="w-4 h-4" />
                 Filters
@@ -500,7 +501,7 @@ export default function TransactionsPage() {
                           status: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-slate-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">All Statuses</option>
                       <option value="Pending">Pending</option>
@@ -523,7 +524,7 @@ export default function TransactionsPage() {
                           currency: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-slate-700 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">All Currencies</option>
                       {availableCurrencies.map((currency) => (
@@ -547,7 +548,7 @@ export default function TransactionsPage() {
                           dateRange: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-slate-700 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">All Time</option>
                       <option value="today">Today</option>
@@ -576,7 +577,7 @@ export default function TransactionsPage() {
                             },
                           }))
                         }
-                        className="w-full px-3 py-2 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-slate-700 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       <input
                         type="number"
@@ -591,7 +592,7 @@ export default function TransactionsPage() {
                             },
                           }))
                         }
-                        className="w-full px-3 py-2 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-slate-700 !border !border-gray-200 !rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -962,3 +963,6 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+export default withDashboardLayout(TransactionsPage);
+

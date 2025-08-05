@@ -20,6 +20,7 @@ import {
   fetchSupportedCurrencies,
   fetchSupportedInstitutions,
 } from "@/utils/paycrest";
+import { withDashboardLayout } from "@/utils/withDashboardLayout";
 
 const XIcon = ({ size = 24, color = siX.hex }) => (
   <svg
@@ -63,7 +64,7 @@ interface PaymentLink {
   chainId?: number;
 }
 
-export default function PaymentLinkPage() {
+function PaymentLinkPage() {
   const { authenticated, user } = usePrivy();
   const walletAddress = user?.wallet?.address;
   const isConnected = authenticated && !!walletAddress;
@@ -431,7 +432,7 @@ export default function PaymentLinkPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
       <Header />
 
-      <div className="container mx-auto max-w-6xl px-4 pt-6">
+      {/* <div className="container mx-auto max-w-6xl px-4 pt-6">
         <button
           onClick={() => window.history.back()}
           className="group flex items-center gap-2 px-4 py-2 !bg-white/80 !backdrop-blur-sm !border !border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
@@ -441,7 +442,7 @@ export default function PaymentLinkPage() {
           </span>
           Back
         </button>
-      </div>
+      </div> */}
 
       <div className="container mx-auto max-w-6xl px-4 py-8">
         <div className="text-center mb-4 relative">
@@ -1103,3 +1104,5 @@ export default function PaymentLinkPage() {
     </div>
   );
 }
+
+export default withDashboardLayout(PaymentLinkPage);

@@ -381,14 +381,14 @@ export default function AnalyticsContent() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <Header />
-      <div className="my-6 px-4">
+      {/* <div className="my-6 px-4">
         <button
           onClick={() => window.history.back()}
           className="!bg-indigo-600 !rounded-lg px-4 py-2 text-white font-medium hover:!bg-indigo-700 transition-colors"
         >
           <span aria-hidden="true">←</span> Back
         </button>
-      </div>
+      </div> */}
       <div className="flex-grow">
         {!authenticated || !address ? (
           <div className="container mx-auto max-w-7xl px-4 py-12">
