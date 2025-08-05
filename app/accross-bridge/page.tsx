@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { useAccount, useWalletClient } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
-import { parseEther, formatUnits } from 'viem';
-import { acrossClient } from '@/utils/acrossProtocol';
-import { mainnet, optimism, arbitrum } from 'viem/chains';
+import { useState, useMemo } from "react";
+import { useAccount, useWalletClient } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
+import { parseEther, formatUnits } from "viem";
+import { acrossClient } from "@/utils/acrossProtocol";
+import { optimism, arbitrum, base, bsc, polygon, scroll, celo } from "viem/chains";
+import { type GetQuoteParams } from "@across-protocol/app-sdk";
 
-const chains = { 1: mainnet, 10: optimism, 42161: arbitrum };
+const chains = { 1: polygon, 10: optimism, 42161: arbitrum, 42220: scroll, 42261: celo, 42250: base, 56: bsc };
 
 export default function BridgePage() {
   const { login, authenticated, ready } = usePrivy();
@@ -17,13 +18,15 @@ export default function BridgePage() {
   // --- form state ---
   const [fromChainId, setFromChainId] = useState(42161);
   const [toChainId, setToChainId] = useState(10);
-  const [token, setToken] = useState('0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'); // WETH arb
-  const [amount, setAmount] = useState('1');
+  const [token, setToken] = useState(
+    "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+  ); // WETH arb
+  const [amount, setAmount] = useState("1");
   const [loading, setLoading] = useState(false);
   const [quote, setQuote] = useState<Awaited<
     ReturnType<typeof acrossClient.getQuote>
   > | null>(null);
-  const [status, setStatus] = useState<string>('');
+  const [status, setStatus] = useState<string>("");
 
   // --- UI helpers ---
   const canBridge = useMemo(
@@ -37,18 +40,20 @@ export default function BridgePage() {
     setLoading(true);
     try {
       const q = await acrossClient.getQuote({
-        originChainId: fromChainId,
-        destinationChainId: toChainId,
-        inputToken: token,
-        outputToken:
-          toChainId === 10
-            ? '0x4200000000000000000000000000000000000006'
-            : token,
+        route: {
+          originChainId: fromChainId,
+          destinationChainId: toChainId,
+          inputToken: token as `0x${string}`,
+          outputToken:
+            toChainId === 10
+              ? ("0x4200000000000000000000000000000000000006" as `0x${string}`)
+              : (token as `0x${string}`),
+        },
         inputAmount: parseEther(amount),
       });
       setQuote(q);
     } catch (e: any) {
-      setStatus('Error fetching quote: ' + e.message);
+      setStatus("Error fetching quote: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -57,21 +62,21 @@ export default function BridgePage() {
   // --- execute bridge ---
   const execute = async () => {
     if (!quote || !walletClient) return;
-    setStatus('Bridging...');
+    setStatus("Bridging...");
     try {
       await acrossClient.executeQuote({
         walletClient,
         deposit: quote.deposit,
         onProgress: (p) => {
           setStatus(`${p.step}: ${p.status}`);
-          if (p.step === 'fill' && p.status === 'txSuccess') {
-            setStatus('Bridge complete ✅');
+          if (p.step === "fill" && p.status === "txSuccess") {
+            setStatus("Bridge complete ✅");
             setQuote(null);
           }
         },
       });
     } catch (e: any) {
-      setStatus('Bridge failed: ' + e.message);
+      setStatus("Bridge failed: " + e.message);
     }
   };
 
@@ -140,21 +145,18 @@ export default function BridgePage() {
         disabled={loading}
         className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
       >
-        {loading ? 'Loading...' : 'Get Quote'}
+        {loading ? "Loading..." : "Get Quote"}
       </button>
 
       {quote && (
         <div className="border rounded p-4">
           <p>
-            You will receive{' '}
-            <strong>
-              {formatUnits(quote.deposit.outputAmount, 18)} WETH
-            </strong>{' '}
-            on {chains[toChainId]?.name}
+            You will receive{" "}
+            <strong>{formatUnits(quote.deposit.outputAmount, 18)} WETH</strong>{" "}
+            on {chains[toChainId as keyof typeof chains]?.name}
           </p>
           <p>
-            Fee:{' '}
-            {formatUnits(quote.fees.totalRelayFee.total, 18)} ETH (
+            Fee: {formatUnits(quote.fees.totalRelayFee.total, 18)} ETH (
             {quote.estimatedFillTimeSec}s)
           </p>
           <button
