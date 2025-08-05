@@ -502,12 +502,12 @@ const WalletSelector = forwardRef<
 
       {showOptions && isConnected && (
         <div
-          className="wallet-dropdown absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border-2 border-blue-100 dark:border-blue-900"
+          className="absolute right-0 mt-2 w-64 rounded-xl shadow-xl !bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border-2 border-blue-100 dark:border-blue-900"
           onClick={(e) => e.stopPropagation()}
           style={{ maxHeight: "80vh", overflowY: "auto" }}
         >
           <div
-            className="p-3 border-b border-gray-200 dark:border-gray-700"
+            className="p-3 border-b border-gray-200"
             style={{
               border: "1px solid lightgray",
               borderRadius: "0.75rem",
@@ -569,10 +569,10 @@ const WalletSelector = forwardRef<
           <div className="p-2 space-y-1">
             <button
               onClick={handleLogout}
-              className="options block w-full text-center px-4 py-2 rounded-lg"
+              className="w-full text-center text-slate-50 hover:text-slate-800 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-200 transition-colors"
             >
               <div className="flex items-center justify-center space-x-2">
-                <FaSignOutAlt size={20} />
+                <FaSignOutAlt size={20} className=""/>
                 <span>Logout</span>
               </div>
             </button>

@@ -752,13 +752,13 @@ export const StablecoinBalanceButton = () => {
   const {wallets} = useWallets();
 
   const chainMap: Record<string, string> = {
-    "eip155:1": 'Ethereum',            // Mainnet
+    "eip155:1": 'Ethereum',          
     "eip155:56": 'BNB Smart Chain',
     "eip155:137": 'Polygon',
     "eip155:42161": 'Arbitrum One',
     "eip155:10": 'OP Mainnet',
     "eip155:8453": 'Base',
-    "eip155:534352": 'Scroll',         // Scroll mainnet
+    "eip155:534352": 'Scroll',         
   };
   
   function getChainName(chainId: string): string {
