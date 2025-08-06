@@ -85,13 +85,15 @@ const HeroSection = () => {
           )}
         </div>
         <div className="flex flex-col items-center gap-4 py-12 lg:py-0">
-          <div className="w-[100%] items-center justify-center">
+          <div className="relative w-full md:w-[80%] items-center justify-center">
+            <div className="absolute top-3 left-3 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 opacity-80 rounded-3xl"/>
+            {/* <div className="absolute top-[-20px] left-[-20px] rounded-full w-[100px] h-[100px] bg-gradient-to-br from-purple-600 to-pink-500 z-10 "/> */}
             <Image 
               src="/landing.png" 
               alt="folks" 
-              width={600} 
-              height={600} 
-              className="w-full h-full opacity-90"
+              width={612} 
+              height={408} 
+              className="w-full h-full rounded-3xl opacity-95"
             />
           </div>
         </div>
