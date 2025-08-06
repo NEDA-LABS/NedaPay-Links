@@ -19,9 +19,17 @@ const HeroSection = () => {
   const { authenticated, user, login, logout } = usePrivy();
   const [loading, setLoading] = useState(false);
   const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
+  const [isShortScreen, setIsShortScreen] = useState(false);
+
+useEffect(() => {
+  const checkHeight = () => setIsShortScreen(window.innerHeight <= 667);
+  checkHeight();
+  window.addEventListener('resize', checkHeight);
+  return () => window.removeEventListener('resize', checkHeight);
+}, []);
 
   return (
-    <div className="h-[85vh] lg:h-[85vh] w-[100vw] relative mt-[-100px] pt-[100px] mb-[120px] md:pt-[50px]">
+    <div className="h-[85vh] w-[100vw] mt-[-100px] pt-[100px] sm:mb-[120px] md:pt-[50px]">
       <CurrencyTicker />
       <Image
         src="/vanishing-stripes.png"
@@ -89,7 +97,7 @@ const HeroSection = () => {
             </div>
           )}
         </div>
-        <div className="flex flex-col items-center gap-4 py-4 lg:py-0">
+        <div className="flex flex-col items-center gap-4 pt-20 lg:py-0 my-auto">
           <div className="relative w-full md:w-[80%] items-center justify-center">
             <div className="absolute top-3 left-3 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 opacity-80 rounded-3xl" />
             {/* <div className="absolute top-[-20px] left-[-20px] rounded-full w-[100px] h-[100px] bg-gradient-to-br from-purple-600 to-pink-500 z-10 "/> */}
@@ -104,7 +112,7 @@ const HeroSection = () => {
         </div>
       </div>
       {/* miniapp cta */}
-      <div className="w-full">
+      <div className="w-full absolute bottom-20" style={{ display: isShortScreen ? 'none' : 'flex' }}>
         <div className="shadow-2xl">
           <div className="pl-4 flex flex-col items-start justify-between flex-wrap relative z-10">
             <div className="flex items-center gap-5 justify-center pl-2">

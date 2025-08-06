@@ -93,7 +93,7 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="flex items-center justify-center relative overflow-hidden bg-slate-950 lg:mt-20">
+    <div className="flex items-center justify-center relative overflow-hidden bg-slate-950 mt-[200px] lg:mt-20">
       <Image
         src="/coins.png"
         alt="Coins illustration"
