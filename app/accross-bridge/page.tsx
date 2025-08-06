@@ -19,51 +19,38 @@ import {
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import Header from "@/components/Header";
 import { withDashboardLayout } from "@/utils/withDashboardLayout";
+import Image from "next/image";
 
 // Enhanced chain configuration
 const chainConfig = {
-  1: {
-    name: "Ethereum",
-    icon: "🟢",
-    color: "bg-blue-500",
-    currency: "ETH",
-    explorer: "https://etherscan.io"
-  },
   10: {
     name: "Optimism",
-    icon: "🔴", 
-    color: "bg-red-500",
-    currency: "ETH",
-    explorer: "https://optimistic.etherscan.io"
+    icon: `<img src="/optimism.svg" />`, 
   },
   42161: {
     name: "Arbitrum",
-    icon: "🔵",
-    color: "bg-blue-600", 
-    currency: "ETH",
-    explorer: "https://arbiscan.io"
+    icon: `<img src="/arbitrum.svg" />`, 
   },
   8453: {
     name: "Base",
-    icon: "🔵",
-    color: "bg-blue-400",
-    currency: "ETH",
-    explorer: "https://basescan.org"  
+    icon: `<img src="/base.svg" />`,
   },
   137: {
     name: "Polygon",
-    icon: "🟣",
-    color: "bg-purple-500",
-    currency: "MATIC",
-    explorer: "https://polygonscan.com"
+    icon: `<img src="/polygon.svg" />`,
   },
   56: {
-    name: "BSC",
-    icon: "🟡",
-    color: "bg-yellow-500",
-    currency: "BNB",
-    explorer: "https://bscscan.com"
-  }
+    name: "BNB Smart Chain",
+    icon: `<img src="/bnb.svg" />`,
+  },
+  534352: {
+    name: "Scroll",
+    icon: `<img src="/scroll.svg" />`,
+  },
+  42220: {
+    name: "Celo",
+    icon: `<img src="/celo.svg" />`,
+  },
 };
 
 // Token configuration
@@ -80,7 +67,7 @@ const TOKENS = {
       137: "0x0000000000000000000000000000000000000000",
       56: "0x0000000000000000000000000000000000000000",
     },
-    logo: "/eth-logo.svg"
+    logo: `<img src="/eth-logo.svg" />`
   },
   USDC: {
     name: "USD Coin",
@@ -89,12 +76,14 @@ const TOKENS = {
     addresses: {
       1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       10: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
-      42161: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+      42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
       8453: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       137: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-      56: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"
+      56: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      42220: '0xcebA9300f2b948710d2653dD7B07f33A8B32118C',
+      534353:'0x06eFdB07B0B705C4D238Cc3C1F0E93F4D41Ea408', 
     },
-    logo: "/usdc-logo.svg"
+    logo: `<img src="/usdc-logo.svg" />`
   },
   USDT: {
     name: "Tether USD",
@@ -105,9 +94,11 @@ const TOKENS = {
       10: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
       42161: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
       137: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-      56: "0x55d398326f99059fF775485246999027B3197955"
+      56: "0x55d398326f99059fF775485246999027B3197955",
+      534353:'0xf55BeC1224Ef5348C2DC8B3da020a431E21Eb5fD',
+      42220: '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e',
     },
-    logo: "/usdt-logo.svg"
+    logo: `<img src="/usdt-logo.svg" />`
   }
 };
 
@@ -384,7 +375,6 @@ function BridgePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Header />
-      <p className="text-slate-700">{wallet?.address}</p>
       <main className="max-w-2xl mx-auto p-4 pt-8">
         <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
           <div className="p-8 space-y-6">
@@ -403,7 +393,7 @@ function BridgePage() {
                     >
                       {Object.entries(chainConfig).map(([id, chain]) => (
                         <option key={id} value={id}>
-                          {chain.icon} {chain.name}
+                           {chain.name}
                         </option>
                       ))}
                     </select>
@@ -434,7 +424,7 @@ function BridgePage() {
                     >
                       {Object.entries(chainConfig).map(([id, chain]) => (
                         <option key={id} value={id}>
-                          {chain.icon} {chain.name}
+                          {chain.name}
                         </option>
                       ))}
                     </select>
