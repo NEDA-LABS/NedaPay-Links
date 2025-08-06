@@ -93,7 +93,7 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="flex items-center justify-center relative overflow-hidden bg-slate-950">
+    <div className="flex items-center justify-center relative overflow-hidden bg-slate-950 lg:mt-20">
       <Image
         src="/coins.png"
         alt="Coins illustration"
@@ -124,7 +124,7 @@ export default function BrandedGlassUI() {
         </svg>
       </div> */}
 
-      <div className="md:w-[90%] relative z-10">
+      <div className="md:w-[90%] z-10">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center sm:flex lg:hidden">
           <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center  mx-auto">

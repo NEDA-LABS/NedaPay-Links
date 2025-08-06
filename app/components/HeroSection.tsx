@@ -6,7 +6,7 @@ import YouTubeEmbedButton from "./YouTubeEmbedButton";
 import HeroFlags from "./HeroFlags";
 import WalletSelector from "./WalletSelector";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 import ShinyText from "./ShinyText";
 import CurrencyTicker from "@/offramp/RatesComponents";
 
@@ -21,9 +21,14 @@ const HeroSection = () => {
   const walletSelectorRef = useRef<{ triggerLogin: () => void } | null>(null);
 
   return (
-    <div className="h-[85vh] lg:h-[85vh] w-[100vw]">
+    <div className="h-[85vh] lg:h-[85vh] w-[100vw] relative mt-[-100px] pt-[100px] mb-[120px] md:pt-[50px]">
       <CurrencyTicker />
-      <Image src="/vanishing-stripes.png" alt="Hero Background" fill className="object-cover border-b-2 border-slate-800" />
+      <Image
+        src="/vanishing-stripes.png"
+        alt="Hero Background"
+        fill
+        className="object-cover border-b-2 border-slate-800 opacity-30"
+      />
       <div className="grid grid-cols-1 lg:grid-cols-2 justify-between lg:gap-8 px-4 py-8 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
         <div className="flex flex-col gap-6">
           <ShinyText
@@ -84,17 +89,44 @@ const HeroSection = () => {
             </div>
           )}
         </div>
-        <div className="flex flex-col items-center gap-4 py-12 lg:py-0">
+        <div className="flex flex-col items-center gap-4 py-4 lg:py-0">
           <div className="relative w-full md:w-[80%] items-center justify-center">
-            <div className="absolute top-3 left-3 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 opacity-80 rounded-3xl"/>
+            <div className="absolute top-3 left-3 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 opacity-80 rounded-3xl" />
             {/* <div className="absolute top-[-20px] left-[-20px] rounded-full w-[100px] h-[100px] bg-gradient-to-br from-purple-600 to-pink-500 z-10 "/> */}
-            <Image 
-              src="/landing.png" 
-              alt="folks" 
-              width={612} 
-              height={408} 
+            <Image
+              src="/landing.png"
+              alt="folks"
+              width={612}
+              height={408}
               className="w-full h-full rounded-3xl opacity-95"
             />
+          </div>
+        </div>
+      </div>
+      {/* miniapp cta */}
+      <div className="w-full">
+        <div className="shadow-2xl">
+          <div className="pl-4 flex flex-col items-start justify-between flex-wrap relative z-10">
+            <div className="flex items-center gap-5 justify-center pl-2">
+              <div>
+                <h3 className="text-white/80 text-lg font-medium mb-2">
+                  Also available as a{" "}
+                  <span className="text-lg font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+                    Mini App
+                  </span>{" "}
+                  in Farcaster
+                </h3>
+              </div>
+            </div>
+            <a
+              href="#"
+              className="flex items-center gap-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-500 hover:to-red-500 text-white px-7 md:py-2 rounded-full font-semibold shadow-lg shadow-purple-500/40 hover:shadow-pink-500/40 transition-all duration-300 hover:-translate-y-1 border border-white/20"
+            >
+              <span>Launch Mini App</span>
+              <div className="bg-white/20 rounded-full p-2 transition-transform duration-300 hover:translate-x-1">
+                <ArrowUpRight />
+              </div>
+            </a>
           </div>
         </div>
       </div>
