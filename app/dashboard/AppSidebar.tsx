@@ -18,6 +18,7 @@ import {
   Menu, // This is the icon we'll use for the toggle
   BarChart3,
   FileIcon,
+  ArrowRightLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -47,6 +48,7 @@ const productItems = [
   // { title: "Swap Coins", url: "/swap-coins", icon: Activity },
   { title: "Transfer to Fiat", url: "/offramp", icon: CreditCard },
   // { title: "Customize Dashboard", url: "/settings", icon: Sparkles },
+  { title: "Cross-Chain Swap", url: "/accross-bridge", icon: ArrowRightLeft },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 
