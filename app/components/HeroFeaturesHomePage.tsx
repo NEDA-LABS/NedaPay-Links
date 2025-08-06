@@ -74,12 +74,12 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
   const galleryFeatures = features.length > 0 ? features : DEFAULT_FEATURES;
 
   const [isScreenSizeSm, setIsScreenSizeSm] = useState<boolean>(
-    typeof window !== 'undefined' ? window.innerWidth <= 640 : false
+    typeof window !== "undefined" ? window.innerWidth <= 640 : false
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
+    if (typeof window === "undefined") return;
+
     const handleResize = () => setIsScreenSizeSm(window.innerWidth <= 640);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -88,7 +88,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
   const cylinderWidth: number = 900;
   const faceCount: number = galleryFeatures.length;
   const faceWidth: number = (cylinderWidth / faceCount) * 1.2;
-  const radius: number = cylinderWidth / (2 * Math.PI);
+  const radius: number = cylinderWidth / (1.5 * Math.PI);
 
   const dragFactor: number = 0.05;
   const rotation = useMotionValue(0);
@@ -158,7 +158,15 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
   };
 
   return (
-    <div className="relative lg:h-[600px] w-full overflow-hidden my-auto">
+    <div className="relative overflow-hidden">
+      <div className="flex justify-center hidden lg:flex">
+        {" "}
+        <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center">
+          Everything You Need to Accept <br className="sm:flex md:hidden" />{" "}
+          Stablecoin Payments
+        </h3>
+      </div>
+
       {/* Gradient overlays for fade effect */}
       {/* <div
         className="absolute top-0 left-0 h-full w-[80px] z-10 pointer-events-none"
@@ -175,7 +183,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
         }}
       /> */}
 
-      <div className="flex h-full items-center justify-center [perspective:1200px] [transform-style:preserve-3d] lg:pt-20">
+      <div className="flex h-full items-center justify-center [perspective:1200px] [transform-style:preserve-3d]">
         <motion.div
           drag="x"
           dragElastic={0}
@@ -209,22 +217,28 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   className={`
                     relative overflow-hidden rounded-3xl backdrop-blur-sm
-                    w-[200px] lg:w-[280px]
+                    w-[200px] lg:w-[280px] md:py-8
                     hover:shadow-2xl transition-all duration-500
-                    border-white/20 bg-gradient-to-br from-slate-700/80 to-slate-800/80
+                    
                     hover:border-white/20 hover:bg-gradient-to-br hover:from-slate-700/80 hover:to-slate-800/80
                   `}
                 >
                   {/* Background gradient overlay */}
-                  <div 
-                    className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-700 rounded-3xl bg-gradient-to-br ${feature.gradient}`} 
+                  <div
+                    className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-700 rounded-3xl bg-gradient-to-br ${feature.gradient}`}
                   />
-                  
+
                   {/* Animated background particles */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-700">
                     <div className="absolute top-6 right-6 w-1 h-1 bg-white rounded-full animate-pulse" />
-                    <div className="absolute top-12 right-12 w-1 h-1 bg-white/70 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
-                    <div className="absolute bottom-6 left-6 w-1 h-1 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+                    <div
+                      className="absolute top-12 right-12 w-1 h-1 bg-white/70 rounded-full animate-pulse"
+                      style={{ animationDelay: "0.5s" }}
+                    />
+                    <div
+                      className="absolute bottom-6 left-6 w-1 h-1 bg-white/50 rounded-full animate-pulse"
+                      style={{ animationDelay: "1s" }}
+                    />
                   </div>
 
                   {/* Image Container */}
@@ -240,12 +254,14 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                       `}
                     >
                       {/* Image glow */}
-                      <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 ${feature.glowColor}`} />
-                      
+                      <div
+                        className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 ${feature.glowColor}`}
+                      />
+
                       {React.createElement(feature.icon as LucideIcon, {
-                        className: `w-12 h-12  lg:w-25 lg:h-25 text-white transition-all duration-300 relative z-10 group-hover:scale-110 `
+                        className: `w-12 h-12  lg:w-40 lg:h-40 text-white transition-all duration-300 relative z-10 group-hover:scale-110 `,
                       })}
-                      
+
                       {/* Sparkle effect */}
                       <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-all duration-700">
                         <Sparkles className="w-4 h-4 text-white/60 animate-pulse" />

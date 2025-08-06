@@ -54,7 +54,7 @@ function HomeContent() {
 
   return (
     <div
-      className="min-h-screen w-full"
+      className="min-h-screen w-full bg-slate-950"
       style={{ "--tw-text-opacity": "1", zIndex: -1000 } as React.CSSProperties}
     >
       {/* <Image
@@ -99,7 +99,7 @@ function HomeContent() {
         <div className="relative z-10 px-8 text-center text-white">
           {/* Enhanced Heading */}
           <h2 className="text-2xl font-bold mb-8 leading-tight">
-            <span className="bg-purple-900 bg-clip-text text-transparent drop-shadow-sm">
+            <span className="bg-purple-900 bg-clip-text text-slate-50 drop-shadow-sm">
               Ready to accept stablecoin payments?
             </span>
           </h2>

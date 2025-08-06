@@ -61,14 +61,14 @@ export default function ProfessionalFaqSection() {
   return (
     <section
       id="faq"
-      className="relative py-12 px-6"
+      className="relative py-12 px-6 z-10"
     >
      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" className="absolute top-0 left-0 z-[-1]">
           <defs>
             <linearGradient id="a" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stop-color="#32004a" />
-              <stop offset="0.6" stop-color="#32004a" stop-opacity="0.7" />
-              <stop offset="1" stop-color="#FFFFFF" />
+              <stop offset="0" stop-color="#0000000" />
+              <stop offset="0.6" stop-color="#32004a" stop-opacity="1" />
+              <stop offset="1" stop-color="#000000" />
             </linearGradient>
           </defs>
           <pattern id="b" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -102,23 +102,23 @@ export default function ProfessionalFaqSection() {
             return (
               <div
                 key={index}
-                className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-slate-300/60"
+                className="group bg-slate-950 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-slate-300/60"
               >
                 {/* Question Button */}
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full p-2 flex items-center justify-between bg-white hover:bg-slate-50/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-left"
+                  className="w-full p-2 flex items-center justify-between bg-slate-800 hover:bg-slate-50/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-left"
                 >
                   <div className="flex items-center flex-1 min-w-0">
                     <div
                       className={`w-12 h-12 flex items-center justify-center mr-4 group-hover:shadow-md transition-all duration-300 flex-shrink-0`}
                     >
                       <Icon
-                        className="w-4 h-4 md:w-6 md:h-6 text-purple-900"
+                        className="w-4 h-4 md:w-6 md:h-6 text-slate-50"
                         strokeWidth={2.5}
                       />
                     </div>
-                    <h3 className="!text-sm md:!text-lg font-semibold text-purple-900 group-hover:text-slate-800 transition-colors duration-300 pr-4">
+                    <h3 className="!text-sm md:!text-lg font-semibold text-slate-50 group-hover:text-slate-800 transition-colors duration-300 pr-4">
                       {faq.question}
                     </h3>
                   </div>
@@ -141,7 +141,7 @@ export default function ProfessionalFaqSection() {
                 >
                   <div className="px-6 pb-6 bg-slate-50/30 border-t border-slate-100">
                     <div className="pt-4">
-                      <p className="text-slate-700 leading-relaxed !text-sm">
+                      <p className="text-slate-50 leading-relaxed !text-base">
                         {faq.answer}
                       </p>
                     </div>
@@ -153,7 +153,7 @@ export default function ProfessionalFaqSection() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="bg-slate-50 rounded-xl p-8 md:p-10 text-center relative overflow-hidden">
+        <div className="bg-slate-800/50 rounded-xl p-8 md:p-10 text-center relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <div
@@ -166,10 +166,10 @@ export default function ProfessionalFaqSection() {
           </div>
 
           <div className="relative z-10">
-            <h3 className="text-xl font-bold text-purple-900 mb-3">
+            <h3 className="text-xl font-bold text-slate-50 mb-3">
               Still have questions?
             </h3>
-            <p className="text-slate-700 mb-8 text-sm">
+            <p className="text-slate-50 mb-8 text-sm">
               Our support team is here to help you get started with NEDA Pay
             </p>
 

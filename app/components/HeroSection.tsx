@@ -24,7 +24,7 @@ const HeroSection = () => {
     <div className="h-[85vh] lg:h-[85vh] w-[100vw]">
       <CurrencyTicker />
       <Image src="/vanishing-stripes.png" alt="Hero Background" fill className="object-cover border-b-2 border-slate-800" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 justify-between gap-6 lg:gap-8 px-4 py-8 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
+      <div className="grid grid-cols-1 lg:grid-cols-2 justify-between lg:gap-8 px-4 py-8 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
         <div className="flex flex-col gap-6">
           <ShinyText
             text="Unlock Seamless Payments Globally"
@@ -84,9 +84,16 @@ const HeroSection = () => {
             </div>
           )}
         </div>
-        <div className="flex flex-col items-right gap-4 py-12 lg:py-0">
-          <HeroFeaturesHomePage />
-          {/* <HeroFlags /> */}
+        <div className="flex flex-col items-center gap-4 py-12 lg:py-0">
+          <div className="w-[100%] items-center justify-center">
+            <Image 
+              src="/landing.png" 
+              alt="folks" 
+              width={600} 
+              height={600} 
+              className="w-full h-full opacity-90"
+            />
+          </div>
         </div>
       </div>
     </div>
