@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import RollingFeaturesGallery from "@/components/HeroFeaturesHomePage";
 import HeroFlags from "./HeroFlags";
+import ChainsWidget from "./ChainsWidget";
 
 const GlassCard = ({
   children,
@@ -192,7 +193,7 @@ export default function BrandedGlassUI() {
           </div>
           <div className="flex flex-col items-end justify-center lg:mr-[-200px]">
             <RollingFeaturesGallery />
-            <HeroFlags />
+            <ChainsWidget />
           </div>
         </div>
 

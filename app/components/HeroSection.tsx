@@ -107,10 +107,11 @@ const avatars = [
               </div>
             </div>
           )}
+          <HeroFlags/>
         </div>
         <div className="flex w-[80%] items-center gap-4 pt-20 lg:py-0 my-auto">
           <div className="relative w-full xl:w-[80%] items-center justify-center">
-            <div className="absolute top-3 left-3 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 opacity-80 rounded-3xl" />
+            <div className="absolute -bottom-1 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 opacity-80 rounded-3xl" />
             {/* <div className="absolute top-[-20px] left-[-20px] rounded-full w-[100px] h-[100px] bg-gradient-to-br from-purple-600 to-pink-500 z-10 "/> */}
             <Image
               src="/landing.png"
@@ -122,29 +123,7 @@ const avatars = [
           </div>
         </div>
       </div>
-       {/* Profile avatars section */}
-       <div className="flex flex-row items-center mb-6">
-          <div className="flex -space-x-2 md:-space-x-10 mx-auto lg:mx-0">
-            {avatars.map((avatar, index) => (
-              <div
-                key={avatar.id}
-                className={`w-8 h-8 md:w-20 md:h-20 rounded-full aspect-square flex items-center justify-center text-white font-semibold text-sm relative z-${10 - index}`}
-                style={{ zIndex: 10 - index }}
-              >
-                <Image src={avatar.image} alt={avatar.id.toString()} width={50} height={50} className="rounded-full bg-white"/>
-              </div>
-            ))}
-            <div className="flex ml-6 items-center justify-center">
-            <div className="text-white text-sm md:text-2xl font-bold items-center justify-center pl-2">5+ Chains</div>
-            {/* <div className="text-sm">Chains</div> */}
-          </div>
-          </div>
-          
-          {/* <div className="ml-6">
-            <div className="text-white text-sm md:text-2xl font-bold">5+</div>
-            <div className="text-sm">Chains</div>
-          </div> */}
-        </div>
+       {/* <HeroFlags/> */}
       {/* miniapp cta */}
       <div className="w-full items-center justify-between absolute bottom-3" style={{ display: isShortScreen ? 'none' : 'flex' }}>
         <div className="shadow-2xl">
