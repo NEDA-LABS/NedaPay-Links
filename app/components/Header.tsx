@@ -91,22 +91,29 @@ export default function Header() {
           
           {/* Logo Section */}
           <div className="flex items-center pr-3">
-            <Link href="/" className="group flex items-center space-x-3">
-              {/* Simplified Logo */}
-              <div className="relative flex">
-                <div className="flex bg-[#3E55E6] rounded-xl items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <Image src="/logo.svg" alt="Logo" width={60} height={60}/>
-                </div>
-                <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                  <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center">
-                    NEDAPay
-                  </span>
-                </div>
-                <span className="text-[0.6rem] z-10 text-slate-100 font-bold flex items-center justify-center">
-                    BETA
-                  </span>
-              </div>
-            </Link>
+            {pathname === "/" && 
+               <Link href="/" className="group flex items-center space-x-3">
+               {/* Simplified Logo */}
+               <div className="relative flex">
+                 <div className="flex bg-[#3E55E6] rounded-xl items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                   <Image src="/logo.svg" alt="Logo" width={60} height={60}/>
+                 </div>
+                 <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                   <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center">
+                     NEDAPay
+                   </span>
+                 </div>
+                 <span className="text-[0.6rem] z-10 text-slate-100 font-bold flex items-center justify-center">
+                     BETA
+                   </span>
+               </div>
+             </Link>
+            }
+           {pathname !== "/"  && 
+           <div className="flex  md:hidden">
+            <AppSidebarToggle/>
+           </div>
+           }
           </div>
 
           {/* Navigation and Actions */}
@@ -194,7 +201,7 @@ export default function Header() {
               >
                 <Menu size={16} className="text-white hover:text-slate-700 transition-colors duration-300" />
               </button> */}
-              {pathname !== "/" && <AppSidebarToggle />}
+              
               
               
             </div>

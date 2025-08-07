@@ -339,7 +339,7 @@ export default function DashboardContent() {
       {/* Key Metrics */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="!text-lg md:!text-2xl font-bold text-foreground text-slate-800">Transactions Overview</h2>
+          <h2 className="!text-lg md:!text-2xl font-bold text-foreground text-slate-800">Transactions From Payment-Links, Overview</h2>
         </div>
         <div className="mb-4">
           <label htmlFor="stablecoin-select" className="mr-2 text-slate-800">Select Stablecoin:</label>
@@ -353,7 +353,8 @@ export default function DashboardContent() {
             {Array.from(new Set(transactions.map(tx => tx.currency))).map(symbol => (
               <option key={symbol} value={symbol}>{symbol}</option>
             ))}
-          </select>
+          </select> 
+          <a href="/analytics" className="ml-2 text-blue-600 text-decoration-underline">More Details</a>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
@@ -422,7 +423,7 @@ export default function DashboardContent() {
           maxAmount={stablecoinBalances.find((b) => b.symbol === swapFromSymbol)?.balance || "0"}
         />
       )} */}
-      <Footer/>
+      {/* <Footer/> */}
     </div>
   );
 }
