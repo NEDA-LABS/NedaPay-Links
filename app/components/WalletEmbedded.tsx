@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
 import { useFundWallet, useSendTransaction, useWallets, usePrivy } from '@privy-io/react-auth';
 import { formatUnits, parseEther, parseUnits, isAddress, encodeFunctionData } from 'viem';
-import { base, bsc, scroll } from 'viem/chains';
+import { base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet } from 'viem/chains';
 import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalLink, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {stablecoins} from '@/data/stablecoins'
 
-const SUPPORTED = [base, bsc, scroll];
+const SUPPORTED = [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
 
 const ERC20_ABI = [
   {
@@ -345,13 +345,13 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             </div>
             
             {/* Chain Switcher */}
-            <div className="flex gap-2 mt-4">
+            <div className="flex flex-wrap gap-2 mt-4">
               {SUPPORTED.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => switchChain(c)}
                   disabled={isLoading}
-                  className={`px-4 py-2 text-sm rounded-lg transition font-medium ${
+                  className={`px-1 py-1 text-sm rounded-lg transition font-medium ${
                     active.id === c.id
                       ? 'bg-white text-blue-600 shadow-lg'
                       : 'bg-white/20 text-white hover:bg-white/30'

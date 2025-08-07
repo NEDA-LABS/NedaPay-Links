@@ -244,8 +244,8 @@ export default function OffRampPayment({
     if (!rate || !fiatAmount) return "0";
     
     try {
-      let tokenAmount = parseFloat(fiatAmount) / rate;
-      tokenAmount = tokenAmount + (tokenAmount * 0.05);
+      const parsedAmount = parseFloat(fiatAmount);
+      const tokenAmount = (parsedAmount + (parsedAmount * 0.05)) / rate;
       const formattedAmount = tokenAmount.toFixed(6);
       setCryptoAmount(formattedAmount);
       return formattedAmount;
