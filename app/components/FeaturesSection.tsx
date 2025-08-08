@@ -80,7 +80,7 @@ const features = [
   },
 ];
 
-export default function BrandedGlassUI() {
+export default function Features() {
   const [selectedCard, setSelectedCard] = useState(1);
   const router = useRouter();
 
@@ -94,7 +94,7 @@ export default function BrandedGlassUI() {
   };
 
   return (
-    <div className="flex items-center justify-center relative overflow-hidden bg-slate-950 mt-[200px] lg:mt-20">
+    <div className="flex items-center justify-center relative overflow-hidden bg-slate-950 mt-[200px] lg:mt-20 mx-0">
       <Image
         src="/coins.png"
         alt="Coins illustration"
@@ -104,8 +104,7 @@ export default function BrandedGlassUI() {
         priority
       />
 
-      <div className="flex z-10">
-        {/* Header */}
+      <div className="flex flex-col z-10 mx-auto justify-center items-center">
         <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center sm:flex lg:hidden">
           <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center  mx-auto bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
             Everything You Need to Accept <br className="sm:flex md:hidden" />{" "}
@@ -113,9 +112,42 @@ export default function BrandedGlassUI() {
           </h3>
         </div>
 
-        <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center">
+        <div className="flex flex-col lg:flex-row gap-4 pb-12 justify-center mx-auto">
           {/* Features Grid - 2 per row on large screens */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-20 rounded-2xl p-4 justify-start my-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-20 rounded-2xl p-4 justify-center md:justify-start items-center my-auto">
+            <Image
+              src="/usdc.png"
+              alt="Coins illustration"
+              height={100}
+              width={100}
+              className="absolute top-[30%] left-[5%] overflow-hidden opacity-90"
+              priority
+            />
+            <Image
+              src="/usdt.png"
+              alt="Coins illustration"
+              height={100}
+              width={100}
+              className="absolute top-[50%] left-[50%] overflow-hidden opacity-90"
+              priority
+            />
+            <Image
+              src="/cngn.png"
+              alt="Coins illustration"
+              height={100}
+              width={100}
+              className="absolute top-[65%] md:top-[80%] left-[30%] overflow-hidden opacity-90"
+              priority
+            />
+            <Image
+              src="/idrx.png"
+              alt="Coins illustration"
+              height={100}
+              width={100}
+              className="absolute top-[7%] md:top-[10%] left-[30%] overflow-hidden opacity-90"
+              priority
+            />
+
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -140,14 +172,13 @@ export default function BrandedGlassUI() {
                 </div>
               );
             })}
-            
           </div>
 
           <div className="flex flex-col items-end justify-center lg:mr-[-200px]">
             <RollingFeaturesGallery />
             <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all mx-auto mt-8">
-        Explore More
-      </button>
+              Explore
+            </button>
           </div>
         </div>
       </div>

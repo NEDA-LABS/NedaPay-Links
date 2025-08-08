@@ -21,7 +21,7 @@ import {
   TrendingUp,
   PlayCircle,
 } from "lucide-react";
-import FeaturesSection from "./components/FeaturesSection";
+import Features from "./components/FeaturesSection";
 import HowItWorksSection from "./components/HowItWorksSection";
 import FaqSection from "./components/FaqSection";
 import Supporters from "./components/SupportersSection";
@@ -86,7 +86,7 @@ function HomeContent() {
         {/* Hero Section */}
         <HeroSection />
 
-        <FeaturesSection />
+        <Features />
         {/* FAQ Items with toggle functionality */}
         <FaqSection />
       </div>
