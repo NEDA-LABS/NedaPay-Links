@@ -103,29 +103,8 @@ export default function BrandedGlassUI() {
         className="absolute top-0 left-0 object-cover overflow-hidden opacity-20"
         priority
       />
-      {/* Diagonal lines background */}
-      {/* <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern
-              id="diagonalLines"
-              patternUnits="userSpaceOnUse"
-              width="100"
-              height="100"
-            >
-              <path
-                d="M0,0 L100,100 M0,25 L100,125 M0,50 L100,150 M0,75 L100,175 M-25,0 L75,100 M-50,0 L50,100 M-75,0 L25,100"
-                stroke="purple"
-                strokeWidth="5"
-                fill="none"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#diagonalLines)" />
-        </svg>
-      </div> */}
 
-      <div className="md:w-[90%] z-10">
+      <div className=" z-10">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center sm:flex lg:hidden">
           <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center  mx-auto">
@@ -139,78 +118,37 @@ export default function BrandedGlassUI() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-20 rounded-2xl p-4 justify-start my-auto">
             {features.map((feature, index) => {
               const Icon = feature.icon;
-              const isSelected = selectedCard === index;
               return (
-                <GlassCard
+                <div
                   key={index}
-                  className="hover:bg-gray-50/50  !bg-indigo-950/70 !rounded-2xl mx-auto"
-                  onClick={() => handleCardClick(index)}
+                  className="relative flex flex-col p-6 rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 hover:border-purple-500/40 transition-all duration-300 w-[230px] xl:w-[280px] mx-auto"
                 >
-                  <div className="p-4 md:h-[200px] w-[230px] xl:w-[280px] flex flex-col justify-between space-y-4 relative z-10">
-                    <div>
-                      <div className="flex flex-row space-x-2">
-                        <div className="mb-4">
-                          <Icon className="w-8 h-8 text-white mb-3" />
-                        </div>
-                        <h3 className="text-base md:text-2xl font-semibold text-white mb-3">
-                          {feature.title}
-                        </h3>
-                      </div>
-
-                      <p className="text-white text-base leading-relaxed">
-                        {feature.description}
-                      </p>
-                    </div>
-                    {/* <Image
-                    src={feature.visual}
-                    alt={feature.title}
-                    width={300}
-                    height={100}
-                    className=""
-                  /> */}
-                    <div className="space-y-4">
-                      {/* <div className="flex items-center gap-6 text-sm text-gray-500">
-                      {feature.tags.map((tag, tagIndex) => (
-                        <div key={tagIndex} className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                          <span>{tag}</span>
-                        </div>
-                      ))}
-                    </div> */}
-
-                      <button
-                        onClick={(e) => handleButtonClick(feature.route, e)}
-                        className="flex items-center gap-2 text-white hover:text-blue-800 font-medium text-sm md:text-lg transition-colors duration-200"
-                      >
-                        <span>{feature.button}</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
+                  {/* Icon in circle */}
+                  <div className="absolute -top-4 left-4 w-8 h-8 rounded-full bg-gradient-to-br from-purple-700 to-orange-500 flex items-center justify-center text-white shadow-lg">
+                    <Icon className="w-4 h-4" />
                   </div>
-                </GlassCard>
+
+                  {/* Title */}
+                  <h3 className="text-white font-semibold text-lg mb-2 mt-4">
+                    {feature.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-slate-300 text-sm">
+                    {feature.description}
+                  </p>
+                </div>
               );
             })}
+             <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all">
+        Explore More
+      </button>
           </div>
+
           <div className="flex flex-col items-end justify-center lg:mr-[-200px]">
             <RollingFeaturesGallery />
-            <ChainsWidget />
           </div>
         </div>
-
-        {/* Footer CTA */}
-        {/* <div className="mt-16 text-center">
-          <button
-            onClick={() => router.push('/get-started')}
-            className="px-8 py-4 text-base font-medium rounded-full flex items-center gap-3 mx-auto transition-all duration-300 hover:shadow-lg hover:scale-105"
-            style={{
-              backgroundColor: '#A5CE00',
-              color: '#10367D',
-            }}
-          >
-            Get Started
-            <Zap className="w-5 h-5" />
-          </button>
-        </div> */}
       </div>
     </div>
   );

@@ -69,21 +69,20 @@ export default function BuiltOnBaseSection() {
 
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent mb-4">
-            Built on Base
-          </h2>
-          <p className="text-white/70 max-w-xl mx-auto text-lg">
-            Powering seamless payments across the most trusted chains.
-          </p>
-        </div>
-
+        
         {/* Integration Card */}
         <div className="relative group">
+          
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-400/20 via-indigo-400/20 to-purple-400/20 rounded-3xl blur-lg opacity-25 group-hover:opacity-40 transition-all duration-500"></div>
 
           <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-12 shadow-xl group-hover:shadow-2xl transition-all duration-500">
             <div className="flex flex-col items-center text-center">
+            <div className="text-center mb-16">
+          <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent mb-4">
+            Built on Base
+          </h2>
+        </div>
+
               {/* Base Logo */}
               <div className="relative mb-8">
                 <div className="absolute -inset-4 bg-gradient-to-r from-blue-400/15 to-indigo-400/15 rounded-full blur-xl opacity-60 group-hover:opacity-80 transition-all duration-500"></div>
@@ -118,13 +117,13 @@ export default function BuiltOnBaseSection() {
         </div>
 
         {/* Accent footer */}
-        <div className="text-center mt-12">
+        {/* <div className="text-center mt-12">
           <div className="inline-flex items-center text-sm text-white/60">
             <div className="w-8 h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent mr-3"></div>
             <span>Multi-chain Blockchain Infrastructure</span>
             <div className="w-8 h-px bg-gradient-to-l from-transparent via-blue-300 to-transparent ml-3"></div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
