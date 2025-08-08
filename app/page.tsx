@@ -174,7 +174,7 @@ function HomeContent() {
           </div>
         </div>
       </div>
-      {/* <Supporters /> */}
+      <Supporters/>
       <Footer />
     </div>
   );

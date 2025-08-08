@@ -167,7 +167,7 @@ export const stablecoins = [
       42220: '0xcebA9300f2b948710d2653dD7B07f33A8B32118C', // Celo Mainnet
       56:    '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // BNB Smart Chain
       10:    '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // Optimism
-      534353:'0x06eFdB07B0B705C4D238Cc3C1F0E93F4D41Ea408', // Scroll Mainnet
+      534352:'0x06efdbff2a14a7c8e15944d1f4a48f9f95f663a4', // Scroll Mainnet
     },
     issuer: 'Circle',
     description: 'USD-backed stablecoin by Circle',
@@ -196,7 +196,7 @@ export const stablecoins = [
       42220: '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e', // Celo Mainnet
       56:    '0x55d398326f99059fF775485246999027B3197955', // BNB Smart Chain
       10:    '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', // Optimism
-      534353:'0xf55BeC1224Ef5348C2DC8B3da020a431E21Eb5fD', // Scroll Mainnet
+      534352:'0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df', // Scroll Mainnet
     },
     issuer: 'Tether',
     description: 'USD-backed stablecoin by Tether',
