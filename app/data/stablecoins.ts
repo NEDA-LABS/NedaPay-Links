@@ -172,7 +172,7 @@ export const stablecoins = [
     issuer: 'Circle',
     description: 'USD-backed stablecoin by Circle',
     website: 'https://www.circle.com/usdc',
-    chainIds: [8453, 42161, 137, 42220, 56, 10, 534353],
+    chainIds: [8453, 42161, 137, 42220, 56, 10, 534352],
   },
   {
     region: 'United States',
@@ -201,6 +201,6 @@ export const stablecoins = [
     issuer: 'Tether',
     description: 'USD-backed stablecoin by Tether',
     website: 'https://tether.to',
-    chainIds: [8453, 42161, 137, 42220, 56, 10, 534353],
+    chainIds: [8453, 42161, 137, 42220, 56, 10, 534352],
   },
 ];
