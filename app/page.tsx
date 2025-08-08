@@ -114,24 +114,11 @@ function HomeContent() {
                       walletSelectorRef.current.triggerLogin();
                     }
                   }}
-                  className="relative flex items-center justify-center !bg-blue-700 hover:bg-blue-300 text-gray-900 font-bold text-lg p-2 md:py-4 md:px-8 rounded-xl md:rounded-2xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
+                  className="relative flex items-center justify-center !bg-blue-700 hover:bg-blue-300 text-gray-900 font-bold text-lg p-2 md:py-4 md:px-8 rounded-xl md:rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
                   {/* Button Background Effect */}
                   {/* <div className="absolute inset-0 !bg-gradient-to-r !from-blue-600/5 !to-purple-600/5 opacity-0 group-hover:!opacity-100 transition-opacity duration-300"></div> */}
                   <span className="relative flex items-center text-white text-sm">
-                    <svg
-                      className="w-5 h-5 mr-3 text-blue-600"
-                      fill="none"
-                      stroke="white"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
                     Sign in with Email or Wallet
                   </span>
                 </button>
@@ -149,23 +136,10 @@ function HomeContent() {
               <div className="flex flex-col items-center gap-6">
                 <button
                   onClick={() => router.push("/dashboard")}
-                  className="relative flex items-center justify-center !bg-blue-700 hover:bg-blue-300 text-gray-900 font-bold text-lg py-4 px-8 rounded-xl border-2 border-white/20 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
+                  className="relative flex items-center justify-center !bg-blue-700 hover:bg-blue-300 text-gray-900 font-bold text-lg py-4 px-4 rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
                   {/* Button Background Effect */}
                   <span className="relative flex items-center text-white text-sm">
-                    <svg
-                      className="w-5 h-5 mr-3 text-blue-600"
-                      fill="none"
-                      stroke="white"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
                     Continue to Dashboard
                   </span>
                 </button>

@@ -22,7 +22,7 @@ const HeroSection = () => {
   const [isShortScreen, setIsShortScreen] = useState(false);
 
 useEffect(() => {
-  const checkHeight = () => setIsShortScreen(window.innerHeight <= 700);
+  const checkHeight = () => setIsShortScreen(window.innerHeight <= 400);
   console.log("height", window.innerHeight);
   checkHeight();
   window.addEventListener('resize', checkHeight);
@@ -40,7 +40,7 @@ const avatars = [
 ];
 
   return (
-    <div className="h-[85vh] w-[100vw] mt-[-100px] pt-[100px] sm:mb-[120px] md:pt-[50px]">
+    <div className="h-[95vh] w-[100vw] mt-[-100px] pt-[100px] sm:mb-[120px] md:pt-[50px]">
       <CurrencyTicker />
       <Image
         src="/vanishing-stripes.png"
@@ -125,7 +125,7 @@ const avatars = [
       </div>
        {/* <HeroFlags/> */}
       {/* miniapp cta */}
-      <div className="w-full items-center justify-between absolute bottom-3" style={{ display: isShortScreen ? 'none' : 'flex' }}>
+      <div className="relative w-full items-center justify-between" style={{ display: isShortScreen ? 'none' : 'flex' }}>
         <div className="shadow-2xl">
           <div className="pl-4 flex flex-col items-start justify-between flex-wrap relative z-10">
             <div className="flex items-center gap-5 justify-center pl-2">
