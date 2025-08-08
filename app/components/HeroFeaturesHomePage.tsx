@@ -161,7 +161,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
     <div className="relative overflow-hidden">
       <div className="flex justify-center hidden lg:flex">
         {" "}
-        <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center">
+        <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
           Everything You Need to Accept <br className="sm:flex md:hidden" />{" "}
           Stablecoin Payments
         </h3>

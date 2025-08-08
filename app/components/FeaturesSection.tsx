@@ -104,10 +104,10 @@ export default function BrandedGlassUI() {
         priority
       />
 
-      <div className=" z-10">
+      <div className="flex z-10">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center sm:flex lg:hidden">
-          <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center  mx-auto">
+          <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center  mx-auto bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
             Everything You Need to Accept <br className="sm:flex md:hidden" />{" "}
             Stablecoin Payments
           </h3>
@@ -140,13 +140,14 @@ export default function BrandedGlassUI() {
                 </div>
               );
             })}
-             <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all">
-        Explore More
-      </button>
+            
           </div>
 
           <div className="flex flex-col items-end justify-center lg:mr-[-200px]">
             <RollingFeaturesGallery />
+            <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all mx-auto mt-8">
+        Explore More
+      </button>
           </div>
         </div>
       </div>
