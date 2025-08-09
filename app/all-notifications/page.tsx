@@ -239,7 +239,7 @@ const MasterNotificationCenter: React.FC = () => {
   const unreadCount = localNotifications.filter((n) => !n.read).length + dbNotifications.filter((n) => n.status === 'unseen').length;
 
   return (
-      <div className="min-h-screen bg-gray-100 w-[100%]">
+      <div className="min-h-screen bg-gray-100 max-w-6xl mx-auto">
       <Header />
      
         <div className="mx-auto">
@@ -408,7 +408,7 @@ const MasterNotificationCenter: React.FC = () => {
         )}
       </main>
       <div className='fixed bottom-0 w-full'>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
     

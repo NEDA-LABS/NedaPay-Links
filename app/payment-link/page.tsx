@@ -429,7 +429,7 @@ function PaymentLinkPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen mx-auto">
       <Header />
 
       {/* <div className="container mx-auto max-w-6xl px-4 pt-6">
@@ -444,7 +444,7 @@ function PaymentLinkPage() {
         </button>
       </div> */}
 
-      <div className="container mx-auto max-w-6xl px-4 py-8">
+      <div className="w-full px-4 py-8 max-w-6xl mx-auto">
         <div className="text-center mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-200/30 to-purple-200/30 blur-3xl rounded-4xl"></div>
           
@@ -513,7 +513,7 @@ function PaymentLinkPage() {
           </div>
         )}
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-4 md:p-10 shadow-2xl border border-white/20 mb-12">
+        <div className="bg-white backdrop-blur-sm rounded-3xl p-4 md:p-10 shadow-2xl border border-white/20 mb-12">
           <div className="space-y-4">
             {/* Link Type Selector */}
             <div className="group">

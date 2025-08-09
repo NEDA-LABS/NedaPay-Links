@@ -38,7 +38,7 @@ export default function RootLayout({
         />
         <link rel="icon" type="image/png" href="/favicon.png" />
       </head>
-      <body className="bg-white text-black dark:text-white">
+      <body className="bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900">
         <div className="flex flex-col min-h-screen">
           <Providers>
             <AppToaster />

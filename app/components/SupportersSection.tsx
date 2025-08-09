@@ -1,23 +1,56 @@
-import React from 'react';
+import React from "react";
 import Image from "next/image";
 
 const BaseLogo = () => (
-  <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width="46"
+    height="46"
+    viewBox="0 0 46 46"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <g filter="url(#filter0_b_139_1266)">
       <rect width="46" height="46" rx="23" fill="url(#baseGradient)" />
-      <path d="M22.9803 34.3703C29.2728 34.3703 34.3739 29.2796 34.3739 23.0001C34.3739 16.7205 29.2728 11.6299 22.9803 11.6299C17.0104 11.6299 12.1129 16.212 11.6265 22.0443H26.6861V23.9558H11.6265C12.1129 29.7882 17.0104 34.3703 22.9803 34.3703Z" fill="white" />
+      <path
+        d="M22.9803 34.3703C29.2728 34.3703 34.3739 29.2796 34.3739 23.0001C34.3739 16.7205 29.2728 11.6299 22.9803 11.6299C17.0104 11.6299 12.1129 16.212 11.6265 22.0443H26.6861V23.9558H11.6265C12.1129 29.7882 17.0104 34.3703 22.9803 34.3703Z"
+        fill="white"
+      />
     </g>
     <defs>
-      <linearGradient id="baseGradient" x1="0" y1="0" x2="46" y2="46" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        id="baseGradient"
+        x1="0"
+        y1="0"
+        x2="46"
+        y2="46"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop offset="0%" stopColor="#3B82F6" />
         <stop offset="50%" stopColor="#1D4ED8" />
         <stop offset="100%" stopColor="#1E40AF" />
       </linearGradient>
-      <filter id="filter0_b_139_1266" x="-14" y="-14" width="74" height="74" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+      <filter
+        id="filter0_b_139_1266"
+        x="-14"
+        y="-14"
+        width="74"
+        height="74"
+        filterUnits="userSpaceOnUse"
+        colorInterpolationFilters="sRGB"
+      >
         <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feGaussianBlur in="BackgroundImageFix" stdDeviation="7" />
-        <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_139_1266" />
-        <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_139_1266" result="shape" />
+        <feComposite
+          in2="SourceAlpha"
+          operator="in"
+          result="effect1_backgroundBlur_139_1266"
+        />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_backgroundBlur_139_1266"
+          result="shape"
+        />
       </filter>
     </defs>
   </svg>
@@ -62,36 +95,35 @@ const ChainsWidget = () => {
 
 export default function BuiltOnBaseSection() {
   return (
-    <div className="py-20 px-6 sm:px-8 bg-gradient-to-b from-gray-950 via-gray-900 to-black relative overflow-hidden text-white">
+    <div className="px-6 bg-gradient-to-b from-gray-950 via-gray-900 to-black relative overflow-hidden text-white mb-8">
       {/* Background effects */}
       <div className="absolute -left-20 top-1/4 w-72 h-72 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl"></div>
       <div className="absolute -right-20 top-2/3 w-96 h-96 bg-gradient-to-l from-indigo-500/10 to-purple-500/10 rounded-full blur-3xl"></div>
 
-      <div className="max-w-4xl mx-auto relative z-10">
+      <div className="max-w-2xl mx-auto relative z-10">
         {/* Header */}
-        
+
         {/* Integration Card */}
         <div className="relative group">
-          
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-400/20 via-indigo-400/20 to-purple-400/20 rounded-3xl blur-lg opacity-25 group-hover:opacity-40 transition-all duration-500"></div>
 
-          <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-12 shadow-xl group-hover:shadow-2xl transition-all duration-500">
-            <div className="flex flex-col items-center text-center">
-            <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent mb-4">
-            Built on Base
-          </h2>
-        </div>
+          <div className="relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl py-4 shadow-xl group-hover:shadow-2xl transition-all duration-500">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="text-center">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent mb-4">
+                  Built on Base
+                </h2>
+              </div>
 
               {/* Base Logo */}
-              <div className="relative mb-8">
+              <div className="relative">
                 <div className="absolute -inset-4 bg-gradient-to-r from-blue-400/15 to-indigo-400/15 rounded-full blur-xl opacity-60 group-hover:opacity-80 transition-all duration-500"></div>
                 <div className="relative p-4 bg-gradient-to-br from-blue-100/10 to-indigo-100/10 rounded-2xl shadow-lg border border-blue-200/10 group-hover:scale-110 group-hover:shadow-xl transition-all duration-500">
                   <BaseLogo />
                 </div>
               </div>
 
-              <p className="text-blue-100/80 text-lg mb-6 max-w-lg leading-relaxed">
+              <p className="text-blue-100/80 text-lg max-w-lg leading-relaxed">
                 Delivering fast, secure, and cost-effective transactions.
               </p>
 

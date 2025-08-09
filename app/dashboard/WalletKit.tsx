@@ -27,11 +27,11 @@ export default function WalletKit() {
     wallets?.[0]?.walletClientType.toLowerCase() === "privy";
 
   return (
-    <div className="bg-white/5 rounded-2xl p-6 border border-white/20 text-center my-auto">
-      <div className="flex flex-row space-y-4">
+    <div className="flex items-center">
+      <div className="flex flex-row items-center my-auto">
         
         {isPrivyEmbedded && (
-          <div className="pt-4 mx-auto">
+          <div className="flex mx-auto items-center">
             <Button
               size="sm"
               variant="outline"
@@ -39,15 +39,15 @@ export default function WalletKit() {
               className="bg-white/10 text-white border-white/30 hover:bg-white/20 mx-auto"
             >
               <Wallet className="h-3 w-3 mr-1" />
-              Wallet
+              Send/Receive
             </Button>
           </div>
         )}
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <StablecoinBalanceButton />
           </div>
-        </div>
+        </div> */}
       </div>
       <WalletModal
       isOpen={isWalletModalOpen}
