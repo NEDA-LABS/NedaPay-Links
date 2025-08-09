@@ -342,9 +342,11 @@ export default function DashboardContent() {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-white/10 rounded-xl p-4 border border-white/20 items-center justify-centerm my-auto">
-                      <div className="flex items-center gap-2 items-center my-auto">
+                      <div className="flex flex-row flex-wrap items-center gap-2 items-center my-auto">
+                        
+                        {/* <div className="flex flex-row items-center gap-2">
                         <p className="text-white font-mono text-sm">
-                          {walletAddress?.slice(0, 6)}...
+                          {walletAddress?.slice(0, 3)}...
                           {walletAddress?.slice(-4)}
                         </p>
                         <Button
@@ -357,6 +359,8 @@ export default function DashboardContent() {
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
+                        </div> */}
+                        
                         <ChainSwitcher />
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-2">

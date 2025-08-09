@@ -7,7 +7,7 @@ const actions = [
     onClick: () => alert("Generate Invoice clicked"),
   },
   {
-    title: "Payment Link",
+    title: "Link",
     icon: Link,
     onClick: () => alert("Create Payment Link clicked"),
   },
@@ -29,7 +29,7 @@ export default function QuickActions() {
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
         Quick Actions
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {actions.map((action, idx) => (
           <button
             key={idx}

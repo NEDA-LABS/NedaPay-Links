@@ -39,7 +39,7 @@ export default function WalletKit() {
               className="bg-white/10 text-white border-white/30 hover:bg-white/20 mx-auto"
             >
               <Wallet className="h-3 w-3 mr-1" />
-              Send/Receive
+              Wallet
             </Button>
           </div>
         )}

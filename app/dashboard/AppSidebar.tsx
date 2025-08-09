@@ -102,8 +102,8 @@ function AppSidebarContent() {
     <Sidebar
       className={
         isCollapsed
-          ? "w-14 !bg-[#3E55E6] text-white shadow-lg"
-          : "w-64 !bg-[#3E55E6] text-white shadow-lg"
+          ? "w-14 !bg-gray-800 text-white shadow-lg"
+          : "w-64 !bg-gray-800 text-white shadow-lg"
       }
       collapsible="icon"
     >
@@ -118,7 +118,7 @@ function AppSidebarContent() {
             onClick={toggleSidebar}
             className="text-white hover:bg-white/10 rounded-md p-1"
           >
-            <Menu className="h-6 w-6 text-slate-800" />
+            <Menu className="h-6 w-6 text-white" />
           </button>
         </div>
 
@@ -261,7 +261,7 @@ export function AppSidebarToggle() {
   return (
     <button
       onClick={toggleSidebar}
-      className="text-slate-800 hover:bg-white/10 rounded-md p-1"
+      className="text-white hover:bg-white/10 rounded-md p-1"
       aria-label="Toggle sidebar"
     >
       <Menu className="h-6 w-6" />

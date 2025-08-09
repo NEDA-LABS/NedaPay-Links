@@ -422,11 +422,9 @@ export const StablecoinBalanceTracker = ({
   return (
     <div className="z-50 flex items-center justify-center md:p-4 overflow-auto rounded-2xl">
       <div className="w-full max-w-6xl bg-gray-800 rounded-2xl shadow-xl">
-        <div className="h-full overflow-auto">
-          {/* Header */}
+        <div className="h-full overflow-auto"> 
           <div className="p-6 sticky top-0 z-10">
             <div className="flex flex-col md:flex-row md:justify-between">
-
               <div className="mt-4 md:mt-0 flex space-x-2">
                 {/* <select
                   value={selectedCurrency}
@@ -439,7 +437,7 @@ export const StablecoinBalanceTracker = ({
                     </option>
                   ))}
                 </select> */}
-                <button
+                {/* <button
                   onClick={() => {
                     fetchAllBalances();
                     fetchExchangeRates();
@@ -447,15 +445,16 @@ export const StablecoinBalanceTracker = ({
                   disabled={loading}
                   className="px-4 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
-                  <RefreshCw className="text-blue-500 hover:text-blue-200"/>
-                  {/* <span>Refresh</span> */}
-                </button>
+                  <RefreshCw className="text-blue-500 hover:text-blue-200" />
+                  
+                </button> */}
               </div>
             </div>
           </div>
-
+          <h3 className="text-lg font-semibold text-white mb-4 text-center">Stablecoins</h3>
           {/* Stablecoin Cards Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-6">
+          <div className="grid grid-cols-2  lg:grid-cols-4 gap-1 md:gap-3 p-4">
+          
             {stablecoins.map((coin) => {
               if (!currentChain || !coin.chainIds.includes(currentChain.id))
                 return null;
@@ -471,69 +470,50 @@ export const StablecoinBalanceTracker = ({
               return (
                 <div
                   key={coin.baseToken}
-                  className={`bg-gray-600 rounded-xl shadow-lg transition-all duration-200 ${
+                  className={`rounded-xl border transition-all p-3 flex items-center justify-between shadow-sm ${
                     hasBalance
-                      ? "border border-green-200"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-green-500/40"
+                      : "bg-[#0f172a] border-white/10"
                   }`}
                 >
-                  <div className="p-2 flex flex-row gap-4 items-center justify-between">
-                    {/* Header */}
-                    {/* <div className="text-xl">{coin.flag}</div> */}
-
-                    {/* Balance */}
-                    <div className="">
-                      <div className="text-2xl font-bold text-gray-900">
-                        {loading ? (
-                          <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div>
-                        ) : (
-                          <div className="text-sm text-blue-400">
-                            {balance.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 6,
-                            })}{" "}
-                            {coin.baseToken}
-                          </div>
-                        )}
+                  {/* Left: Flag & Token */}
+                  <div className="flex items-center gap-3"> 
+                    <span className="text-2xl">{coin.flag}</span>
+                    <div>
+                      <div className="text-xs md:text-sm font-semibold text-white">
+                        {coin.baseToken}
                       </div>
-                      <div className="text-sm text-gray-100">
+                      <div className="text-xs md:text-sm text-gray-400">
                         ≈ {getCurrencySymbol(selectedCurrency)}
                         {convertedBalance.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
-                          maximumFractionDigits: 8,
+                          maximumFractionDigits: 6,
                         })}
                       </div>
                     </div>
+                  </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 !text-white font-bold"
-                        onClick={() => handleSwapClick(coin.baseToken)}
-                        disabled={!hasBalance}
-                      >
-                        <Repeat className="h-4 w-4" />
-                        
-                      </Button>
-                      {/* <button
-                        onClick={() => handleSwap(coin.baseToken)}
-                        disabled={!hasBalance}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          hasBalance
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        <div className="flex items-center justify-center space-x-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                          </svg>
-                          <span>Swap</span>
-                        </div>
-                      </button> */}
+                  {/* Right: Balance & Action */}
+                  <div className="flex flex-col md:flex-row items-center gap-2">
+                    <div className="text-right">
+                      <div className="text-xs md:text-sm font-bold text-white">
+                        {balance.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
                     </div>
+                    <button
+                      onClick={() => handleSwapClick(coin.baseToken)}
+                      disabled={!hasBalance}
+                      className={`p-2 rounded-lg transition ${
+                        hasBalance
+                          ? "bg-green-500/20 hover:bg-green-500/30 text-green-400"
+                          : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                      }`}
+                    >
+                      <Repeat className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               );
@@ -541,7 +521,7 @@ export const StablecoinBalanceTracker = ({
           </div>
 
           {/* Footer Stats */}
-          <div className="bg-gray-600 rounded-2xl shadow-xl m-6 p-6">
+          <div className="bg-slate-950/60 rounded-2xl shadow-xl m-6 p-6">
             <div className="grid grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-base font-bold text-white">
@@ -561,7 +541,6 @@ export const StablecoinBalanceTracker = ({
                 </div>
                 <div className="text-sm text-white">Currencies</div>
               </div>
-             
             </div>
           </div>
 
@@ -607,9 +586,7 @@ export const StablecoinBalanceButton = () => {
   return (
     <>
       {/* Floating Button */}
-      <button
-        className="z-40 bg-white/5 rounded-xl border border-white/20 text-center text-sm text-white font-medium p-2 hover:bg-white/10 flex items-center space-x-2 transition-all"
-      >
+      <button className="z-40 bg-white/5 rounded-xl border border-white/20 text-center text-sm text-white font-medium p-2 hover:bg-white/10 flex items-center space-x-2 transition-all">
         {loading ? (
           <Loader2 className="animate-spin h-5 w-5" />
         ) : (
