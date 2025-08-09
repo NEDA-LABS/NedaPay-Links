@@ -239,7 +239,7 @@ const MasterNotificationCenter: React.FC = () => {
   const unreadCount = localNotifications.filter((n) => !n.read).length + dbNotifications.filter((n) => n.status === 'unseen').length;
 
   return (
-      <div className="min-h-screen bg-gray-100 max-w-6xl mx-auto">
+      <div className="min-h-screen bg-gray-800 max-w-6xl mx-auto">
       <Header />
      
         <div className="mx-auto">
@@ -253,8 +253,7 @@ const MasterNotificationCenter: React.FC = () => {
           </div> */}
           <div className="flex items-center justify-between">
             <div className=' mx-auto'>
-              <h1 className="text-3xl font-bold text-gray-900">Master Notification Center</h1>
-              <p className="text-sm text-gray-600 mt-1">Stay updated with your notifications and transactions</p>
+              <h1 className="text-3xl font-bold text-white">Notification Center</h1>
             </div>
             {unreadCount > 0 && (
               <div className="relative">
@@ -352,7 +351,7 @@ const MasterNotificationCenter: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div key={event.id} className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <div key={event.id} className="p-4 bg-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       {getStatusIcon((event.data as OffRampTransaction).status)}

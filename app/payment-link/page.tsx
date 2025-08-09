@@ -449,12 +449,12 @@ function PaymentLinkPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-200/30 to-purple-200/30 blur-3xl rounded-4xl"></div>
           
           <h1 className="text-lg md:text-6xl font-extrabold text-gray-900 mb-1 tracking-tight">
-            <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-indigo-100 to-purple-100 bg-clip-text text-transparent">
               Create Instant Payment Links
             </span>
           </h1>
-          <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed pb-2 px-2">
-            Effortlessly generate payment links.
+          <p className="text-base md:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed pb-2 px-2">
+            Generate payment links with as few clicks as possible.
           </p>
         </div>
 
@@ -513,11 +513,11 @@ function PaymentLinkPage() {
           </div>
         )}
 
-        <div className="bg-white backdrop-blur-sm rounded-3xl p-4 md:p-10 shadow-2xl border border-white/20 mb-12">
+        <div className="bg-gray-800 backdrop-blur-sm rounded-3xl p-4 md:p-10 shadow-2xl border border-white/20 mb-12">
           <div className="space-y-4">
             {/* Link Type Selector */}
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <label className="block text-sm font-semibold text-white mb-3">
                 Link Type
               </label>
               <div className="grid grid-cols-2 gap-4">
@@ -526,8 +526,8 @@ function PaymentLinkPage() {
                   onClick={() => setLinkType("NORMAL")}
                   className={`px-4 !py-2 rounded-2xl border-2 transition-all duration-300 ${
                     linkType === "NORMAL"
-                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                      : "border-gray-200 text-gray-700 hover:border-gray-300"
+                      ? "bg-indigo-100 text-slate-700 shadow-sm shadow-purple-300"
+                      : "border-gray-200 text-gray-100 hover:border-gray-300"
                   }`}
                 >
                   Normal Payment
@@ -537,8 +537,8 @@ function PaymentLinkPage() {
                   onClick={() => setLinkType("OFF_RAMP")}
                   className={`px-4 !py-2 rounded-2xl border-2 transition-all duration-300 ${
                     linkType === "OFF_RAMP"
-                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                      : "border-gray-200 text-gray-700 hover:border-gray-300"
+                      ? "bg-indigo-100 text-slate-700 shadow-sm shadow-purple-300"
+                      : "border-gray-200 text-gray-100 hover:border-gray-300"
                   }`}
                 >
                   Off-Ramp to Bank/Phone
@@ -553,7 +553,7 @@ function PaymentLinkPage() {
                 <div className="group">
                   <label
                     htmlFor="currency"
-                    className="block text-sm font-semibold text-gray-700 mb-3"
+                    className="block text-sm font-semibold text-white mb-3"
                   >
                     Currency
                   </label>
@@ -563,7 +563,7 @@ function PaymentLinkPage() {
                       name="currency"
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                      className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-gray-100 backdrop-blur-sm appearance-none"
                     >
                       {supportedCurrencies.map((currency: any) => (
                         <option key={currency.code} value={currency.code}>
@@ -595,7 +595,7 @@ function PaymentLinkPage() {
                 <div className="group">
                   <label
                     htmlFor="offRampType"
-                    className="block text-sm font-semibold text-gray-700 mb-3"
+                    className="block text-sm font-semibold text-white mb-3"
                   >
                     Off-Ramp Type
                   </label>
@@ -605,8 +605,8 @@ function PaymentLinkPage() {
                       onClick={() => setOffRampType("PHONE")}
                       className={`px-4 py-2 rounded-2xl border-2 transition-all duration-300 ${
                         offRampType === "PHONE"
-                          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                          : "border-gray-200 text-gray-700 hover:border-gray-300"
+                          ? "bg-indigo-100 text-slate-700 shadow-sm shadow-purple-300"
+                          : "border-gray-200 text-gray-100 hover:border-gray-300"
                       }`}
                     >
                       Phone Number
@@ -616,8 +616,8 @@ function PaymentLinkPage() {
                       onClick={() => setOffRampType("BANK_ACCOUNT")}
                       className={`px-4 py-2 rounded-2xl border-2 transition-all duration-300 ${
                         offRampType === "BANK_ACCOUNT"
-                          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                          : "border-gray-200 text-gray-700 hover:border-gray-300"
+                          ? "bg-indigo-100 text-slate-700 shadow-sm shadow-purple-300"
+                          : "border-gray-200 text-gray-100 hover:border-gray-300"
                       }`}
                     >
                       Bank Account
@@ -628,7 +628,7 @@ function PaymentLinkPage() {
                 <div className="group">
                   <label
                     htmlFor="offRampValue"
-                    className="block text-sm font-semibold text-gray-700 mb-3"
+                    className="block text-sm font-semibold text-white mb-3"
                   >
                     {offRampType === "PHONE" ? "Phone Number" : "Bank Account"}
                   </label>
@@ -636,7 +636,7 @@ function PaymentLinkPage() {
                     type="text"
                     value={offRampValue}
                     onChange={(e) => setOffRampValue(e.target.value)}
-                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-gray-100 backdrop-blur-sm"
                     placeholder={
                       offRampType === "PHONE"
                         ? "e.g. +2348123456789"
@@ -648,7 +648,7 @@ function PaymentLinkPage() {
                 <div className="group">
                   <label
                     htmlFor="accountName"
-                    className="block text-sm font-semibold text-gray-700 mb-3"
+                    className="block text-sm font-semibold text-white mb-3"
                   >
                     Account Name
                   </label>
@@ -656,7 +656,7 @@ function PaymentLinkPage() {
                     type="text"
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
-                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                    className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-gray-100 backdrop-blur-sm"
                     placeholder="e.g. John Doe"
                   />
                 </div>
@@ -664,7 +664,7 @@ function PaymentLinkPage() {
                 <div className="group">
                   <label
                     htmlFor="offRampProvider"
-                    className="block text-sm font-semibold text-gray-700 mb-3"
+                    className="block text-sm font-semibold text-white mb-3"
                   >
                     {offRampType === "PHONE" ? "Mobile Network" : "Bank"}
                   </label>
@@ -674,7 +674,7 @@ function PaymentLinkPage() {
                       name="offRampProvider"
                       value={offRampProvider}
                       onChange={(e) => setOffRampProvider(e.target.value)}
-                      className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                      className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-gray-100 backdrop-blur-sm appearance-none"
                     >
                       <option value="">
                         Select{" "}
@@ -721,7 +721,7 @@ function PaymentLinkPage() {
                     />
                     <label
                       htmlFor="specifyChain"
-                      className="block text-sm font-semibold text-gray-700"
+                      className="block text-sm font-semibold text-white"
                     >
                       Specify Blockchain Network?
                     </label>
@@ -731,7 +731,7 @@ function PaymentLinkPage() {
                     <div className="group">
                       <label
                         htmlFor="chain"
-                        className="block text-sm font-semibold text-gray-700 mb-3"
+                        className="block text-sm font-semibold text-white mb-3"
                       >
                         Blockchain Network
                       </label>
@@ -741,7 +741,7 @@ function PaymentLinkPage() {
                           name="chain"
                           value={chainId}
                           onChange={(e) => setChainId(Number(e.target.value))}
-                          className="w-full px-6 py-2 text-base !text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                          className="w-full px-6 py-2 text-base !text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-gray-100 backdrop-blur-sm appearance-none"
                         >
                           {SUPPORTED_CHAINS.map((chain) => (
                             <option key={chain.id} value={chain.id}>
@@ -781,7 +781,7 @@ function PaymentLinkPage() {
                     />
                     <label
                       htmlFor="specifyCurrency"
-                      className="block text-sm font-semibold text-gray-700"
+                      className="block text-sm font-semibold text-white"
                     >
                       Specify Stablecoin?
                     </label>
@@ -791,7 +791,7 @@ function PaymentLinkPage() {
                     <div className="group">
                       <label
                         htmlFor="currency"
-                        className="block text-sm font-semibold text-gray-700 mb-3"
+                        className="block text-sm font-semibold text-white mb-3"
                       >
                         Currency
                       </label>
@@ -801,7 +801,7 @@ function PaymentLinkPage() {
                           name="currency"
                           value={currency}
                           onChange={(e) => setCurrency(e.target.value)}
-                          className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm appearance-none"
+                          className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-gray-100 backdrop-blur-sm appearance-none"
                         >
                           {stablecoins.map((coin: any) => (
                             <option key={coin.baseToken} value={coin.baseToken}>
@@ -835,7 +835,7 @@ function PaymentLinkPage() {
             <div className="group">
               <label
                 htmlFor="amount"
-                className="block text-sm font-semibold text-gray-700 mb-3"
+                className="block text-sm font-semibold text-white mb-3"
               >
                 Payment Amount{" "}
                 {linkType === "OFF_RAMP" ? "(Required)" : "(Optional)"}
@@ -847,7 +847,7 @@ function PaymentLinkPage() {
                   id="amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm"
+                  className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-gray-100 backdrop-blur-sm"
                   placeholder="0.00"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-6">
@@ -871,7 +871,7 @@ function PaymentLinkPage() {
             <div className="group">
               <label
                 htmlFor="description"
-                className="block text-sm font-semibold text-gray-700 mb-3"
+                className="block text-sm font-semibold text-white mb-3"
               >
                 Description
               </label>
@@ -881,7 +881,7 @@ function PaymentLinkPage() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-white/50 backdrop-blur-sm resize-none"
+                className="w-full px-6 py-2 text-base text-slate-700 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 bg-gray-100 backdrop-blur-sm resize-none"
                 placeholder="Payment for services, products, or invoices..."
               />
             </div>
@@ -898,7 +898,7 @@ function PaymentLinkPage() {
                 />
                 <label
                   htmlFor="expirationEnabled"
-                  className="block text-sm font-semibold text-gray-700"
+                  className="block text-sm font-semibold text-white"
                 >
                   Set Expiration Date
                 </label>
