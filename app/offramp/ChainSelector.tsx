@@ -32,11 +32,15 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
       ...prev,
       [chainId]: token
     }));
+    const chain = chains.find(c => c.id === parseInt(chainId)) || chains[0];
+    if (chain) {
+      onSelectChain(chain, token);
+    }
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">
+    <div className="bg-slate-800 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
+      <h2 className="text-lg font-semibold text-white mb-6">
         Select Network
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -46,7 +50,7 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
           return (
             <div
               key={chain.id}
-              className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
+              className="border border-gray-200 bg-gray-950 rounded-xl p-4 hover:shadow-md transition-shadow"
             >
               <div 
                 className="flex items-center gap-3 mb-3 cursor-pointer"
@@ -58,8 +62,8 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
                   className="w-8 h-8 rounded-full"
                 />
                 <div>
-                  <h3 className="font-medium text-gray-900">{chain.name}</h3>
-                  <p className="text-xs text-gray-500">{chain.nativeCurrency.symbol}</p>
+                  <h3 className="font-medium text-white">{chain.name}</h3>
+                  <p className="text-xs text-gray-100">{chain.nativeCurrency.symbol}</p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -75,12 +79,12 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
                 ))}
               </div>
               {/* Add a select button for this chain */}
-              <button
+              {/* <button
                 onClick={() => handleChainClick(chain)}
-                className="w-full mt-3 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm transform hover:-translate-y-0.5"
+                className="w-full mt-3 px-4 py-2 bg-blue-500 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 text-sm transform hover:-translate-y-0.5"
               >
                 Select {chain.name} with {currentSelectedToken}
-              </button>
+              </button> */}
             </div>
           );
         })}

@@ -187,7 +187,7 @@ export const stablecoins = [
       42220: 6, // Celo Mainnet
       56:    18,// BNB Smart Chain
       10:    6, // Optimism
-      534353:6, // Scroll Mainnet
+      534352:6, // Scroll Mainnet
     },
     addresses: {
       8453:   '0xF1e92B575dcAA24fFA1B3334499a8F3B6E2F9Eb2', // Base Mainnet

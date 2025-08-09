@@ -45,7 +45,7 @@ const OffRampPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen">
       <div className="overflow-y-auto">
         <Header />
         
@@ -56,7 +56,7 @@ const OffRampPage: React.FC = () => {
               Stablecoins to Fiat Offramp
             </div>
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
-              <span className="block bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-purple-100 to-blue-100 bg-clip-text text-transparent">
                 Convert stablecoins to Cash
               </span>
             </h1>
@@ -150,7 +150,7 @@ const OffRampPage: React.FC = () => {
           )}
         </div>
         
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
   );

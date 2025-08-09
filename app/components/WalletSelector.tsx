@@ -577,7 +577,7 @@ const WalletSelector = forwardRef<
               </div>
             </button>
           </div>
-          {user?.wallet?.walletClientType === 'privy' && (
+          {/* {user?.wallet?.walletClientType === 'privy' && (
             <div className="p-3 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => {
@@ -596,7 +596,7 @@ const WalletSelector = forwardRef<
                 </div>
               </button>
             </div>
-          )}
+          )} */}
         </div>
       )}
 

@@ -320,7 +320,7 @@ export default function DashboardContent() {
   };
 
   return (
-    <div className="space-y-8 px-2 lg:px-[] bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 max-w-6xl mx-auto">
+    <div className="space-y-2 px-2 lg:px-[] bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 max-w-6xl mx-auto">
       <Header />
       <div className="flex items-center justify-between">
         <div>

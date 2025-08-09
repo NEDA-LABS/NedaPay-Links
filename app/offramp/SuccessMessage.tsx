@@ -8,7 +8,7 @@ interface SuccessMessageProps {
 
 const SuccessMessage: React.FC<SuccessMessageProps> = ({ success, onBack }) => {
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
+    <div className="bg-gray-800 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
       <div className="text-center py-12">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
           <svg
@@ -25,8 +25,8 @@ const SuccessMessage: React.FC<SuccessMessageProps> = ({ success, onBack }) => {
             ></path>
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h2>
-        <p className="text-gray-600 mb-6">
+        <h2 className="text-2xl font-bold text-gray-100 mb-2">Payment Successful!</h2>
+        <p className="text-gray-100 mb-6">
           Your offramp transaction has been initiated successfully
         </p>
         
@@ -42,8 +42,8 @@ const SuccessMessage: React.FC<SuccessMessageProps> = ({ success, onBack }) => {
           Make Another Transaction
         </button>
         
-        <p className="text-sm text-gray-500 mt-4">
-          You can track the status of your transaction in your account history
+        <p className="text-sm text-gray-100 mt-4">
+          You can track the status of your transaction in your account <a href="/all-notifications" className="text-blue-300 hover:underline">notification center</a> 
         </p>
       </div>
     </div>

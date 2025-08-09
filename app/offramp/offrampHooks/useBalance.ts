@@ -51,6 +51,9 @@ export const useBalances = (chains: ChainConfig[], userAddress: string) => {
                 contract.decimals(),
               contract.balanceOf(userAddress),
             ]);
+            if(chain.id === 56 && token === 'USDT'){
+              return { chainId: chain.id, token, balance: ethers.utils.formatUnits(raw, 18) };
+            }
             return { chainId: chain.id, token, balance: ethers.utils.formatUnits(raw, decimals) };
           } catch {
             return { chainId: chain.id, token, balance: '0' };
