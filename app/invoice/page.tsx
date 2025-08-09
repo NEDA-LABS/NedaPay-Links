@@ -138,20 +138,8 @@ function InvoicePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen">
       <Header />
-      
-      {/* Back Button */}
-      {/* <div className="container mx-auto max-w-6xl px-4 pt-6">
-        <button
-          onClick={() => window.history.back()}
-          className="group flex items-center gap-2 px-4 py-2 !bg-white/80 !backdrop-blur-sm !border !border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
-        >
-          <span className="group-hover:-translate-x-1 transition-transform duration-300">←</span> 
-          Back
-        </button>
-      </div> */}
-
       <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Hero Section */}
         <div className="text-center mb-8 relative">
@@ -161,7 +149,7 @@ function InvoicePage() {
             Invoice Dashboard
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-            <span className="block bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-purple-100 to-blue-100 bg-clip-text text-transparent">
               Invoice Management
             </span>
           </h1>
@@ -184,18 +172,18 @@ function InvoicePage() {
 
         {/* Quick Actions Card */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="md:col-span-2 bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
+          <div className="md:col-span-2 bg-gray-800 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
             <div className="flex items-center gap-4 mb-6">
               <div className="p-4 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl">
                 <FaFileInvoiceDollar className="text-3xl text-purple-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Create New Invoice</h2>
-                <p className="text-gray-600">Generate professional crypto invoices in seconds</p>
+                <h2 className="text-2xl font-bold text-white">Create New Invoice</h2>
+                <p className="text-white">Generate professional crypto invoices in seconds</p>
               </div>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              {/* <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2 text-gray-600">
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                   Multi-currency support
@@ -212,7 +200,7 @@ function InvoicePage() {
                   <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
                   Automated tracking
                 </div>
-              </div>
+              </div> */}
               <button
                 onClick={() => {
                   setIsLoading(true);
@@ -234,28 +222,28 @@ function InvoicePage() {
           </div>
 
           {/* Stats Card */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-2xl border border-white/20">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Invoice Stats</h3>
+          <div className="bg-gray-800 backdrop-blur-sm rounded-3xl p-6 shadow-2xl border border-white/20">
+            <h3 className="text-lg font-semibold text-white mb-6">Invoice Stats</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 text-sm">Total Invoices</span>
-                <span className="font-bold text-gray-900">{invoices.length}</span>
+                <span className="text-white text-sm">Total Invoices</span>
+                <span className="font-bold text-white">{invoices.length}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 text-sm">Paid</span>
-                <span className="font-bold text-green-600">
+                <span className="text-white text-sm">Paid</span>
+                <span className="font-bold text-white">
                   {invoices.filter(inv => inv.status.toLowerCase() === 'paid').length}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 text-sm">Outstanding</span>
-                <span className="font-bold text-blue-600">
+                <span className="text-white text-sm">Outstanding</span>
+                <span className="font-bold text-white">
                   {invoices.filter(inv => inv.status.toLowerCase() === 'outstanding').length}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 text-sm">Overdue</span>
-                <span className="font-bold text-red-600">
+                <span className="text-white text-sm">Overdue</span>
+                <span className="font-bold text-white">
                   {invoices.filter(inv => inv.status.toLowerCase() === 'overdue').length}
                 </span>
               </div>
@@ -264,13 +252,13 @@ function InvoicePage() {
         </div>
 
         {/* Invoice List Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
+        <div className="bg-gray-800 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-indigo-100 rounded-xl">
                 <FaFileInvoiceDollar className="w-5 h-5 text-indigo-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Invoice History</h2>
+              <h2 className="text-2xl font-bold text-white">Invoice History</h2>
             </div>
             
             {/* Status Filter Tabs */}

@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaFileInvoiceDollar, FaCirclePlus, FaPlus } from "react-icons/fa6";
 import { usePrivy } from "@privy-io/react-auth";
+import {withDashboardLayout} from "../../utils/withDashboardLayout";
 
 import Header from '../../components/Header';
 import { stablecoins } from '../../data/stablecoins';
 
-export default function CreateInvoicePage() {
+function CreateInvoicePage() {
   const { authenticated, user } = usePrivy();
   const walletAddress = user?.wallet?.address;
   const isConnected = authenticated && !!walletAddress;
@@ -109,20 +110,8 @@ export default function CreateInvoicePage() {
   const totalAmount = lineItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen">
       <Header />
-      
-      {/* Back Button */}
-      <div className="container mx-auto max-w-4xl px-4 pt-6">
-        <button
-          onClick={() => window.history.back()}
-          className="group flex items-center gap-2 px-4 py-2 !bg-white/80 !backdrop-blur-sm !border !border-gray-200 !rounded-xl hover:!bg-white hover:!shadow-lg transition-all duration-300 text-sm font-medium text-gray-700 hover:text-gray-900"
-        >
-          <span className="group-hover:-translate-x-1 transition-transform duration-300">←</span> 
-          Back to Dashboard
-        </button>
-      </div>
-
       <div className="container mx-auto max-w-4xl px-4 py-8">
         {/* Hero Section */}
         <div className="text-center mb-8 relative">
@@ -132,41 +121,38 @@ export default function CreateInvoicePage() {
             Invoice Creation
           </div>
           <h1 className="text-2xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
-            <span className="block bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-purple-100 to-blue-100 bg-clip-text text-transparent">
               Create New Invoice
             </span>
           </h1>
-          <p className="text-sm text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Generate professional crypto invoices with ease and send them instantly to your clients.
-          </p>
         </div>
 
         {/* Main Form Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20 mb-8">
+        <div className="bg-gray-800 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20 mb-8">
           <div className="flex items-center gap-4 mb-8">
             <div className="p-4 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl">
               <FaFileInvoiceDollar className="text-3xl text-purple-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Invoice Details</h2>
-              <p className="text-gray-600 text-sm">Fill in the information below to create your invoice</p>
+              <h2 className="text-lg font-bold text-white">Invoice Details</h2>
+              <p className="text-white text-sm">Fill in the information below to create your invoice</p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Client Information Section */}
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
                 Client Information
               </h3>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-semibold mb-3 text-gray-700">
+                  <label className="block text-sm font-semibold mb-3 text-white">
                     Recipient (Company or Name)
                   </label>
                   <input
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     placeholder="Enter client name or company"
                     value={recipient}
                     onChange={e => setRecipient(e.target.value)}
@@ -175,12 +161,12 @@ export default function CreateInvoicePage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold mb-3 text-gray-700">
+                  <label className="block text-sm font-semibold mb-3 text-white">
                     Email Address
                   </label>
                   <input
                     type="email"
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     placeholder="client@example.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -192,17 +178,17 @@ export default function CreateInvoicePage() {
 
              {/* Business Information Section */}
              <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 Sender Information
               </h3>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-semibold mb-3 text-gray-700">
+                  <label className="block text-sm font-semibold mb-3 text-white">
                     Business/ Company/ Individual Name
                   </label>
                   <input
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     placeholder="Enter your Name"
                     value={senderId}
                     onChange={e => setSenderId(e.target.value)}
@@ -214,18 +200,18 @@ export default function CreateInvoicePage() {
 
             {/* Payment Settings Section */}
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                 Payment Settings
               </h3>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <div>
-                  <label className="block text-sm font-semibold mb-3 text-gray-700">
+                  <label className="block text-sm font-semibold mb-3 text-white">
                     Payment Collection
                     <span className="ml-2 text-blue-500 cursor-help" title="Payment frequency">ⓘ</span>
                   </label>
                   <select
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     value={paymentCollection}
                     onChange={e => setPaymentCollection(e.target.value)}
                   >
@@ -235,12 +221,12 @@ export default function CreateInvoicePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-3 text-gray-700">
+                  <label className="block text-sm font-semibold mb-3 text-white">
                     Due Date
                   </label>
                   <input
                     type="date"
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     value={dueDate}
                     onChange={e => setDueDate(e.target.value)}
                     required
@@ -248,11 +234,11 @@ export default function CreateInvoicePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-3 text-gray-700">
+                  <label className="block text-sm font-semibold mb-3 text-white">
                     Payment Currency
                   </label>
                   <select
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     value={currency}
                     onChange={e => setCurrency(e.target.value)}
                     required
@@ -269,17 +255,17 @@ export default function CreateInvoicePage() {
 
             {/* Payment Link Section */}
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                 Payment Link
               </h3>
               <div className="grid grid-cols-1 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold mb-3 text-gray-700">
-                    Select or Paste Payment Link (<span className="text-blue-500 text-xs">payment link can't be attached in more than one invoice</span>)
+                  <label className="block text-sm font-semibold mb-3 text-white">
+                    Select or Paste Payment Link (<span className="text-blue-200 text-xs">payment link can't be attached in more than one invoice</span>)
                   </label>
                   <select
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm mb-4"
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm mb-4"
                     value={paymentLink}
                     onChange={e => setPaymentLink(e.target.value)}
                   >
@@ -291,7 +277,7 @@ export default function CreateInvoicePage() {
                     ))}
                   </select>
                   <input
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white/50 backdrop-blur-sm"
+                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     placeholder="Or paste a payment link"
                     value={paymentLink}
                     onChange={e => setPaymentLink(e.target.value)}
@@ -303,14 +289,14 @@ export default function CreateInvoicePage() {
             {/* Invoice Items Section */}
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                   Invoice Items
                 </h3>
                 <button
                   type="button"
                   onClick={addLineItem}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 rounded-xl hover:from-purple-200 hover:to-blue-200 transition-all duration-300 text-sm font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl hover:from-purple-200 hover:to-blue-200 transition-all duration-300 text-sm font-medium"
                 >
                   <FaCirclePlus className="w-4 h-4" />
                   Add Item
@@ -319,10 +305,10 @@ export default function CreateInvoicePage() {
               
               <div className="space-y-4">
                 {lineItems.map((item, idx) => (
-                  <div key={idx} className="flex gap-4 items-center p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200">
+                  <div key={idx} className="flex gap-4 items-center backdrop-blur-sm rounded-xl">
                     <div className="flex-1">
                       <input
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-white"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-gray-100"
                         placeholder="Item description (e.g., Website Development)"
                         value={item.description}
                         onChange={e => handleLineItemChange(idx, "description", e.target.value)}
@@ -331,7 +317,7 @@ export default function CreateInvoicePage() {
                     </div>
                     <div className="w-40">
                       <input
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-white text-right"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-gray-100 text-right"
                         placeholder="0.00"
                         type="number"
                         min="0.01"
@@ -345,7 +331,7 @@ export default function CreateInvoicePage() {
                       <button
                         type="button"
                         onClick={() => setLineItems(prev => prev.filter((_, i) => i !== idx))}
-                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                        className="p-2 text-lg text-white hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
                       >
                         ×
                       </button>
@@ -462,3 +448,5 @@ export default function CreateInvoicePage() {
     </div>
   );
 }
+
+export default withDashboardLayout(CreateInvoicePage);
