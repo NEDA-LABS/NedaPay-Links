@@ -129,33 +129,9 @@ export default function BuiltOnBaseSection() {
 
               {/* Chains Widget */}
               <ChainsWidget />
-
-              {/* CTA Button */}
-              {/* <div className="mt-10">
-                <a
-                  href="https://base.org"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-8 py-3 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  Learn More About Base
-                  <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div> */}
             </div>
           </div>
         </div>
-
-        {/* Accent footer */}
-        {/* <div className="text-center mt-12">
-          <div className="inline-flex items-center text-sm text-white/60">
-            <div className="w-8 h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent mr-3"></div>
-            <span>Multi-chain Blockchain Infrastructure</span>
-            <div className="w-8 h-px bg-gradient-to-l from-transparent via-blue-300 to-transparent ml-3"></div>
-          </div>
-        </div> */}
       </div>
     </div>
   );
