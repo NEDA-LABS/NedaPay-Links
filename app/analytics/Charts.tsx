@@ -1,262 +1,257 @@
-// Charts.tsx
-import { useState, useEffect } from "react";
+"use client";
+
+import React from "react";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
-} from "chart.js";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
-import { useTheme } from "next-themes";
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from "recharts";
+import { Loader } from "lucide-react";
 
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-// Define theme-based colors
-const getThemeColors = (isDarkMode: boolean) => ({
-  textColor: isDarkMode ? "#e5e7eb" : "#111827",
-  gridColor: isDarkMode ? "#374151" : "#e5e7eb",
-  tooltipBg: isDarkMode ? "#1f2937" : "#ffffff",
-  tooltipBorder: isDarkMode ? "#4b5563" : "#d1d5db",
-});
-
-// Function to group transactions by day for Bar chart
-const groupTransactionsByDay = (transactions: any[]) => {
-  console.log("groupTransactionsByDay input transactions:", transactions); // Debug
-
-  const dailyCounts: Record<string, number> = {};
-
-  transactions.forEach((tx, index) => {
-    if (!tx.date || typeof tx.date !== "string") {
-      console.warn(`Invalid date at index ${index}:`, tx.date); // Debug
-      return;
-    }
-
-    // Try to parse date flexibly
-    let date: string;
-    try {
-      const parsedDate = new Date(tx.date);
-      if (isNaN(parsedDate.getTime())) {
-        throw new Error("Invalid date");
-      }
-      // Format as YYYY-MM-DD
-      date = parsedDate.toISOString().split("T")[0];
-    } catch (error) {
-      console.warn(`Failed to parse date at index ${index}:`, tx.date, error); // Debug
-      return;
-    }
-
-    dailyCounts[date] = (dailyCounts[date] || 0) + 1;
-  });
-
-  // Sort dates and prepare labels and data
-  const sortedDates = Object.keys(dailyCounts).sort();
-  const data = sortedDates.map((date) => dailyCounts[date]);
-
-  console.log("groupTransactionsByDay output:", { labels: sortedDates, data }); // Debug
-
-  return {
-    labels: sortedDates,
-    data,
-  };
+// Helper functions for date manipulation
+const parseISO = (dateStr: string) => new Date(dateStr);
+const formatDate = (date: Date, formatStr: string) => {
+  if (formatStr === "yyyy-MM-dd") {
+    return date.toISOString().split("T")[0];
+  }
+  if (formatStr === "MMM dd") {
+    return date.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+  }
+  if (formatStr === "MMM") {
+    return date.toLocaleDateString("en-US", { month: "short" });
+  }
+  return date.toLocaleDateString();
+};
+const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+const subDays = (date: Date, days: number) => new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
+const eachDayOfInterval = ({ start, end }: { start: Date; end: Date }) => {
+  const dates = [];
+  const currentDate = new Date(start);
+  while (currentDate <= end) {
+    dates.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  return dates;
 };
 
-// Chart components
-interface ChartProps {
-  data: any;
+// Custom tooltip component for dark theme
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-gray-800 p-4 border border-gray-700 rounded-lg shadow-lg">
+        <p className="text-gray-300 font-medium">{label}</p>
+        <p className="text-blue-400">
+          {payload[0].name}: <span className="font-bold">{payload[0].value.toLocaleString()}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom legend component for dark theme
+const renderColorfulLegendText = (value: string, entry: any) => {
+  const { color } = entry;
+  return (
+    <span className="text-gray-300" style={{ color }}>
+      {value}
+    </span>
+  );
+};
+
+// Revenue Line Chart Component
+export function RevenueLineChart({ data }: { data: any }) {
+  // Process data for the chart
+  const chartData = data.labels.map((date: string, index: number) => ({
+    date: formatDate(new Date(date), "MMM dd"),
+    amount: data.datasets[0].data[index],
+  }));
+
+  return (
+    <div className="w-full h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={chartData}
+          margin={{
+            top: 10,
+            right: 30,
+            left: 0,
+            bottom: 0,
+          }}
+        >
+          <defs>
+            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#1E40AF" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+          <XAxis
+            dataKey="date"
+            tick={{ fill: "#9CA3AF" }}
+            tickLine={{ stroke: "#4B5563" }}
+            axisLine={{ stroke: "#4B5563" }}
+          />
+          <YAxis
+            tick={{ fill: "#9CA3AF" }}
+            tickLine={{ stroke: "#4B5563" }}
+            axisLine={{ stroke: "#4B5563" }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend formatter={renderColorfulLegendText} />
+          <Area
+            type="monotone"
+            dataKey="amount"
+            stroke="#3B82F6"
+            fillOpacity={1}
+            fill="url(#colorRevenue)"
+            strokeWidth={2}
+            activeDot={{ r: 6, fill: "#2563EB" }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
-export function RevenueLineChart({ data }: ChartProps) {
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+// Transactions Bar Chart Component
+export function TransactionsBarChart({ data }: { data: any }) {
+  // Group transactions by day
+  const groupTransactionsByDay = (transactions: any[]) => {
+    const dailyCounts: Record<string, number> = {};
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+    transactions.forEach((tx) => {
+      if (!tx.date) return;
+      const date = formatDate(new Date(tx.date), "yyyy-MM-dd");
+      dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+    });
 
-  const isDarkMode = mounted ? theme === "dark" : false;
-  console.log("RevenueLineChart isDarkMode:", isDarkMode, "Mounted:", mounted); // Debug
-
-  const themeColors = getThemeColors(isDarkMode);
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top" as const,
-        labels: {
-          color: themeColors.textColor,
-          font: { size: 14, weight: "bold" as const },
-        },
-      },
-      tooltip: {
-        titleColor: themeColors.textColor,
-        bodyColor: themeColors.textColor,
-        footerColor: themeColors.textColor,
-        backgroundColor: themeColors.tooltipBg,
-        borderColor: themeColors.tooltipBorder,
-        borderWidth: 1,
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: themeColors.textColor,
-          font: { size: 13, weight: "bold" as const },
-        },
-        grid: {
-          color: themeColors.gridColor,
-        },
-      },
-      y: {
-        ticks: {
-          color: themeColors.textColor,
-          font: { size: 13, weight: "bold" as const },
-        },
-        grid: {
-          color: themeColors.gridColor,
-        },
-      },
-    },
+    const sortedDates = Object.keys(dailyCounts).sort();
+    return sortedDates.map((date) => ({
+      date: formatDate(new Date(date), "MMM dd"),
+      count: dailyCounts[date],
+    }));
   };
 
-  if (!mounted) return null;
-  return <Line key={`line-${isDarkMode}`} data={data} options={chartOptions} />;
-}
+  const chartData = groupTransactionsByDay(data.transactions || []);
 
-export function TransactionsBarChart({ data }: ChartProps) {
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted ? theme === "dark" : false;
-  console.log("TransactionsBarChart isDarkMode:", isDarkMode, "Mounted:", mounted); // Debug
-
-  const themeColors = getThemeColors(isDarkMode);
-
-  const { labels, data: aggregatedData } = groupTransactionsByDay(data.transactions || []);
-
-  const barData = {
-    labels,
-    datasets: [
-      {
-        label: "Transactions",
-        data: aggregatedData,
-        backgroundColor: "rgba(59, 130, 246, 0.8)",
-        borderRadius: 6,
-      },
-    ],
-  };
-
-  console.log("TransactionsBarChart barData:", barData); // Debug
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top" as const,
-        labels: {
-          color: themeColors.textColor,
-          font: { size: 14, weight: "bold" as const },
-        },
-      },
-      tooltip: {
-        titleColor: themeColors.textColor,
-        bodyColor: themeColors.textColor,
-        footerColor: themeColors.textColor,
-        backgroundColor: themeColors.tooltipBg,
-        borderColor: themeColors.tooltipBorder,
-        borderWidth: 1,
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: themeColors.textColor,
-          font: { size: 13, weight: "bold" as const },
-        },
-        grid: {
-          color: themeColors.gridColor,
-        },
-      },
-      y: {
-        ticks: {
-          color: themeColors.textColor,
-          font: { size: 13, weight: "bold" as const },
-        },
-        grid: {
-          color: themeColors.gridColor,
-        },
-        beginAtZero: true, // Ensure y-axis starts at 0
-      },
-    },
-  };
-
-  if (!mounted) return null;
-  // Return empty state if no data
-  if (!labels.length || !aggregatedData.length) {
-    return <div className="text-center text-gray-500">No transaction data available</div>;
+  if (chartData.length === 0) {
+    return (
+      <div className="w-full h-64 flex items-center justify-center text-gray-400">
+        No transaction data available
+      </div>
+    );
   }
 
-  return <Bar key={`bar-${isDarkMode}`} data={barData} options={chartOptions} />;
+  return (
+    <div className="w-full h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={chartData}
+          margin={{
+            top: 10,
+            right: 30,
+            left: 0,
+            bottom: 0,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+          <XAxis
+            dataKey="date"
+            tick={{ fill: "#9CA3AF" }}
+            tickLine={{ stroke: "#4B5563" }}
+            axisLine={{ stroke: "#4B5563" }}
+          />
+          <YAxis
+            tick={{ fill: "#9CA3AF" }}
+            tickLine={{ stroke: "#4B5563" }}
+            axisLine={{ stroke: "#4B5563" }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend formatter={renderColorfulLegendText} />
+          <Bar
+            dataKey="count"
+            name="Transactions"
+            fill="#7C3AED"
+            radius={[4, 4, 0, 0]}
+            animationDuration={1500}
+          >
+            {chartData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={`rgba(124, 58, 237, ${0.5 + (0.5 * index) / chartData.length})`}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
-export function CurrencyDoughnutChart({ data }: ChartProps) {
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+// Currency Doughnut Chart Component
+export function CurrencyDoughnutChart({ data }: { data: any }) {
+  // Transform data for Pie chart
+  const chartData = data.labels.map((label: string, index: number) => ({
+    name: label,
+    value: data.datasets[0].data[index],
+    color: data.datasets[0].backgroundColor[index],
+  }));
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  if (chartData.length === 0) {
+    return (
+      <div className="w-full h-64 flex items-center justify-center text-gray-400">
+        No currency data available
+      </div>
+    );
+  }
 
-  const isDarkMode = mounted ? theme === "dark" : false;
-  console.log("CurrencyDoughnutChart isDarkMode:", isDarkMode, "Mounted:", mounted); // Debug
-
-  const themeColors = getThemeColors(isDarkMode);
-
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top" as const,
-        labels: {
-          color: themeColors.textColor,
-          font: { size: 14, weight: "bold" as const },
-        },
-      },
-      tooltip: {
-        titleColor: themeColors.textColor,
-        bodyColor: themeColors.textColor,
-        footerColor: themeColors.textColor,
-        backgroundColor: themeColors.tooltipBg,
-        borderColor: themeColors.tooltipBorder,
-        borderWidth: 1,
-      },
-    },
-  };
-
-  if (!mounted) return null;
-  return <Doughnut key={`doughnut-${isDarkMode}`} data={data} options={doughnutOptions} />;
+  return (
+    <div className="w-full h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
+            animationDuration={1500}
+            label={({ name, percent = 0 }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          >
+            {chartData.map((entry: any, index: number) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#1F2937",
+              borderColor: "#4B5563",
+              borderRadius: "0.5rem",
+            }}
+            itemStyle={{ color: "#E5E7EB" }}
+            formatter={(value: number, name: string) => [
+              value.toLocaleString(),
+              name,
+            ]}
+          />
+          <Legend formatter={renderColorfulLegendText} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }

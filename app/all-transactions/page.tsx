@@ -959,7 +959,7 @@ function TransactionsPage() {
           </div>
         )}
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
