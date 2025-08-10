@@ -90,7 +90,7 @@ const OffRampForm: React.FC<{
   }
 
   return (
-    <div className="bg-gray-900/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-gray-700 mb-8">
+    <div className="bg-gray-900/90 backdrop-blur-sm rounded-3xl p-4 shadow-2xl border border-gray-700 mb-8">
       {/* Confirmation Modal */}
       {showConfirmation && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">

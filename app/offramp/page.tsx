@@ -49,7 +49,7 @@ const OffRampPage: React.FC = () => {
       <div className="overflow-y-auto">
         <Header />
         
-        <div className="container mx-auto max-w-6xl px-6 pt-6">
+        <div className="container mx-auto max-w-6xl px-1 pt-6">
           <div className="text-center mb-8 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-200/30 to-blue-200/30 blur-3xl rounded-4xl"></div>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-xs font-medium animate-pulse mb-4 border border-purple-200">

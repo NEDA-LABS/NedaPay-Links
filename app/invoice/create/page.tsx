@@ -112,7 +112,7 @@ function CreateInvoicePage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="container mx-auto max-w-6xl px-4 py-8">
+      <div className="container mx-auto md:max-w-6xl py-8">
         {/* Hero Section */}
         <div className="text-center mb-8 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-200/30 to-blue-200/30 blur-3xl rounded-4xl"></div>
@@ -128,7 +128,7 @@ function CreateInvoicePage() {
         </div>
 
         {/* Main Form Card */}
-        <div className="bg-gray-800 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20 mb-8">
+        <div className="relative bg-gray-800 backdrop-blur-sm rounded-3xl p-4 md:p-8 shadow-2xl border border-white/20 mb-8">
           <div className="flex items-center gap-4 mb-8">
             <div className="p-4 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl">
               <FaFileInvoiceDollar className="text-3xl text-purple-600" />

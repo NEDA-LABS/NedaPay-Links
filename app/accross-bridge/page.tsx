@@ -439,7 +439,7 @@ function BridgePage() {
         <Listbox.Button className="relative w-full bg-gray-800 border border-gray-700 rounded-xl py-3 pl-4 pr-10 text-left shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
           <span className="flex items-center gap-3">
             {chainConfig[value as keyof typeof chainConfig]?.icon}
-            <span className="font-medium text-white">{chainConfig[value as keyof typeof chainConfig]?.name}</span>
+            <span className="font-medium text-white text-sm">{chainConfig[value as keyof typeof chainConfig]?.name}</span>
           </span>
           <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <ChevronDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -558,7 +558,7 @@ function BridgePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-950">
+    <div className="min-h-screen">
       <Toaster
         position="top-right"
         toastOptions={{
@@ -572,7 +572,7 @@ function BridgePage() {
         }}
       />
       <Header />
-      <main className="max-w-2xl mx-auto p-4 pt-8">
+      <main className="max-w-2xl mx-auto p-1 pt-8">
         <div className="bg-gray-800 rounded-3xl shadow-2xl border border-gray-700 overflow-hidden">
           <div className="p-6 md:p-8 space-y-6">
             <div className="pb-4 border-b border-gray-700">
