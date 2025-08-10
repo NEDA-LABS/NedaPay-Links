@@ -17,7 +17,7 @@ function SupportPage() {
             aria-label="Discord Community"
           >
             <span className="text-gray-100">Join our Discord Community</span>
-            <FaDiscord className="w-6 h-6" />
+            <FaDiscord className="w-8 h-8" />
           </a>
         </div>
       </div>
