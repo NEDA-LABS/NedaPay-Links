@@ -174,8 +174,10 @@ export default function Features() {
             })}
           </div>
 
-          <div className="flex flex-col items-end justify-center lg:mr-[-200px]">
-            <RollingFeaturesGallery />
+          <div className="flex flex-col items-end justify-center mx-auto lg:mr-[-200px]">
+            <div className="w-[400px] md:w-full">
+              <RollingFeaturesGallery />
+            </div>
             <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all mx-auto mt-8">
               Explore
             </button>

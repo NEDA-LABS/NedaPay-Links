@@ -102,7 +102,7 @@ export default function ProfessionalFaqSection() {
             return (
               <div
                 key={index}
-                className="group bg-slate-950 rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-slate-300/60"
+                className="group bg-slate-950 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-slate-300/60"
               >
                 {/* Question Button */}
                 <button
@@ -123,9 +123,9 @@ export default function ProfessionalFaqSection() {
                     </h3>
                   </div>
                   <div className="flex-shrink-0 ml-4">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors duration-300">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 group-hover:bg-slate-200 flex items-center justify-center transition-colors duration-300">
                       <ChevronDown
-                        className={`h-4 w-4 text-slate-600 transform transition-transform duration-300 ${
+                        className={`h-4 w-4 text-slate-100 transform transition-transform duration-300 ${
                           isExpanded ? "rotate-180" : ""
                         }`}
                       />
