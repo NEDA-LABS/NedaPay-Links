@@ -112,7 +112,7 @@ function CreateInvoicePage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Hero Section */}
         <div className="text-center mb-8 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-200/30 to-blue-200/30 blur-3xl rounded-4xl"></div>
