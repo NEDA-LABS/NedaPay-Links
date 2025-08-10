@@ -271,7 +271,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   if (error) return <div>Error: {error}</div>;
    
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 transition-colors duration-300">
+    <div className="min-h-screen">
       <Header />
       {/* <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <button
@@ -283,8 +283,8 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
       </div> */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-10">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Settings</h1>
-          <p className="mt-2 text-gray-600 text-lg">Manage your merchant account settings</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-100 to-indigo-100 bg-clip-text text-transparent">Settings</h1>
+          <p className="mt-2 text-gray-200 text-lg">Manage your merchant account settings</p>
         </div>
   
         {!authenticated && (
@@ -295,9 +295,9 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
         )}
         {authenticated && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-            <div className="bg-white rounded-2xl shadow-xl h-fit overflow-hidden border border-gray-100 transition-all duration-300">
+            <div className="bg-gray-800 rounded-2xl shadow-xl h-fit overflow-hidden transition-all duration-300">
               <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-800">Settings</h2>
+                <h2 className="text-xl font-semibold text-gray-100">Settings</h2>
               </div>
               <div className="p-4">
                 <nav className="space-y-1">
@@ -307,7 +307,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                       className={`!w-full !text-left !px-4 !py-3 !rounded-lg !text-sm !font-medium !transition-all !duration-200 ${
                         activeTab === tab
                           ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 shadow-sm'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
+                          : 'text-gray-600 hover:bg-gray-50 !text-blue-100 hover:!text-blue-600'
                       }`}
                       onClick={() => setActiveTab(tab)}
                     >
@@ -321,52 +321,52 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                   ))}
                 </nav>
               </div>
-              <div className="p-4 bg-gradient-to-br from-gray-50 to-blue-50">
-                <div className="text-xs text-gray-500 mb-2">Connected Wallet</div>
-                <div className="font-mono text-sm text-gray-800 break-all">{account}</div>
+              <div className="p-4 bg-gray-800">
+                <div className="text-xs text-gray-100 mb-2">Connected Wallet</div>
+                <div className="font-mono text-sm text-gray-100 break-all">{account}</div>
               </div>
             </div>
   
-            <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 transition-all duration-300">
+            <div className="lg:col-span-3 bg-gray-800 rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
               {activeTab === 'profile' && (
                 <>
                   <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-800">Profile</h2>
-                    <p className="text-gray-600 text-sm mt-1">Manage your business/individual information</p>
+                    <h2 className="text-xl font-semibold text-gray-100">Profile</h2>
+                    <p className="text-gray-100 text-sm mt-1">Manage your business/individual information</p>
                   </div>
                   <div className="p-6">
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">User Name</label>
+                        <label className="block text-gray-100 font-medium mb-2">User Name</label>
                         <input
                           type="text"
-                          className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          className="w-full text-gray-800 p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                           value={businessName}
                           onChange={(e) => setBusinessName(e.target.value)}
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Email</label>
+                        <label className="block text-gray-100 font-medium mb-2">Email</label>
                         <input
                           type="email"
-                          className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                           value={businessEmail}
                           onChange={(e) => setBusinessEmail(e.target.value)}
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Phone</label>
+                        <label className="block text-gray-100 font-medium mb-2">Phone</label>
                         <input
                           type="text"
-                          className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                           value={businessPhone}
                           onChange={(e) => setBusinessPhone(e.target.value)}
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Business Category</label>
+                        <label className="block text-gray-100 font-medium mb-2">Business Category</label>
                         <select
-                          className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                           value={businessCategory}
                           onChange={(e) => setBusinessCategory(e.target.value)}
                         >
@@ -379,9 +379,9 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                         </select>
                       </div>
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Business Description</label>
+                        <label className="block text-gray-100 font-medium mb-2">Business Description</label>
                         <textarea
-                          className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                           rows={4}
                           value={businessDescription}
                           onChange={(e) => setBusinessDescription(e.target.value)}
@@ -608,8 +608,8 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
               {activeTab === 'notifications' && (
                 <>
                   <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-800">Notification Settings</h2>
-                    <p className="text-gray-600 text-sm mt-1">Configure how you receive notifications</p>
+                    <h2 className="text-xl font-semibold text-gray-100">Notification Settings</h2>
+                    <p className="text-gray-100 text-sm mt-1">Configure how you receive notifications</p>
                   </div>
                   <div className="p-6">
                     <div className="space-y-6">
@@ -621,9 +621,9 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                             checked={transactionNotifications}
                             onChange={(e) => setTransactionNotifications(e.target.checked)}
                           />
-                          <span className="text-gray-700 font-medium">Transaction Notifications</span>
+                          <span className="text-gray-100 font-medium">Transaction Notifications</span>
                         </label>
-                        <p className="text-gray-500 text-sm mt-1 ml-6">Receive notifications for all incoming payments</p>
+                        <p className="text-gray-100 text-sm mt-1 ml-6">Receive notifications for all incoming payments</p>
                       </div>
                       <div>
                         <label className="flex items-center gap-2">
@@ -633,9 +633,9 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                             checked={settlementNotifications}
                             onChange={(e) => setSettlementNotifications(e.target.checked)}
                           />
-                          <span className="text-gray-700 font-medium">Settlement Notifications</span>
+                          <span className="text-gray-100 font-medium">Settlement Notifications</span>
                         </label>
-                        <p className="text-gray-500 text-sm mt-1 ml-6">Receive notifications when funds are settled to your wallet</p>
+                        <p className="text-gray-100 text-sm mt-1 ml-6">Receive notifications when funds are settled to your wallet</p>
                       </div>
                       <div>
                         <label className="flex items-center gap-2">
@@ -645,9 +645,9 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                             checked={securityAlerts}
                             onChange={(e) => setSecurityAlerts(e.target.checked)}
                           />
-                          <span className="text-gray-700 font-medium">Security Alerts</span>
+                          <span className="text-gray-100 font-medium">Security Alerts</span>
                         </label>
-                        <p className="text-gray-500 text-sm mt-1 ml-6">Receive notifications about security events</p>
+                        <p className="text-gray-100 text-sm mt-1 ml-6">Receive notifications about security events</p>
                       </div>
                       <div>
                         <label className="flex items-center gap-2">
@@ -657,9 +657,9 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                             checked={marketingUpdates}
                             onChange={(e) => setMarketingUpdates(e.target.checked)}
                           />
-                          <span className="text-gray-700 font-medium">Marketing Updates</span>
+                          <span className="text-gray-100 font-medium">Marketing Updates</span>
                         </label>
-                        <p className="text-gray-500 text-sm mt-1 ml-6">Receive updates about new features and promotions</p>
+                        <p className="text-gray-100 text-sm mt-1 ml-6">Receive updates about new features and promotions</p>
                       </div>
                       <div className="pt-4">
                         <button
