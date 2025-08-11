@@ -14,7 +14,6 @@ const HeroFlags = () => {
             </div>
           ))}
         </div>
-        <span className="text-sm text-slate-50 !text-center">Accept different stablecoins across different regions</span>
       </div>
     </div>
   );
