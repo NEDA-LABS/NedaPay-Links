@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import TokenBalanceCard from './TokenBalanceCard';
 import { ChainConfig } from './offrampHooks/constants';
 import { useBalances } from './offrampHooks/useBalance';
+import { ArrowRight } from 'lucide-react';
 
 interface ChainSelectorProps {
   chains: ChainConfig[];
@@ -11,21 +12,7 @@ interface ChainSelectorProps {
 
 const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, userAddress }) => {
   const { balances, loading } = useBalances(chains, userAddress);
-  // Track selected token per chain
   const [selectedTokens, setSelectedTokens] = useState<Record<string, string>>({});
-
-  const handleChainClick = (chain: ChainConfig) => {
-    // Get the selected token for this chain, or default to the first token
-    const selectedToken = selectedTokens[chain.id] || chain.tokens[0];
-    
-    // Ensure we have a valid token before proceeding
-    if (selectedToken && chain.tokens.includes(selectedToken)) {
-      onSelectChain(chain, selectedToken);
-    } else if (chain.tokens.length > 0) {
-      // Fallback to first token if selected token is invalid
-      onSelectChain(chain, chain.tokens[0]);
-    }
-  };
 
   const handleTokenSelect = (chainId: string, token: string) => {
     setSelectedTokens(prev => ({
@@ -39,52 +26,58 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
   };
 
   return (
-    <div className="bg-slate-800 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
-      <h2 className="text-lg font-semibold text-white mb-6">
-        Select Network
+    <div className="bg-gradient-to-b from-slate-900 to-slate-800 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/10">
+      <h2 className="text-xl font-semibold text-white mb-2">
+        Select a Network & Token
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <p className="text-gray-400 text-sm mb-6">Click a token balance to proceed to the cash-out form</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {chains.map(chain => {
           const currentSelectedToken = selectedTokens[chain.id] || chain.tokens[0];
-          
+
           return (
             <div
               key={chain.id}
-              className="border border-gray-200 bg-gray-950 rounded-xl p-4 hover:shadow-md transition-shadow"
+              className="group border border-white/10 bg-slate-950 rounded-2xl p-5 hover:border-blue-500/50 hover:shadow-lg transition-all duration-200"
             >
-              <div 
-                className="flex items-center gap-3 mb-3 cursor-pointer"
-                onClick={() => handleChainClick(chain)}
-              >
+              {/* Chain Header */}
+              <div className="flex items-center gap-3 mb-4">
                 <img
                   src={chain.icon}
                   alt={chain.name}
-                  className="w-8 h-8 rounded-full"
+                  className="w-10 h-10 rounded-full ring-2 ring-white/20"
                 />
                 <div>
-                  <h3 className="font-medium text-white">{chain.name}</h3>
-                  <p className="text-xs text-gray-100">{chain.nativeCurrency.symbol}</p>
+                  <h3 className="font-semibold text-white">{chain.name}</h3>
+                  <p className="text-xs text-gray-400">{chain.nativeCurrency.symbol}</p>
                 </div>
               </div>
-              <div className="space-y-2">
+
+              {/* Token List */}
+              <div className="space-y-3">
                 {chain.tokens.map(token => (
-                  <TokenBalanceCard
+                  <div
                     key={`${chain.id}-${token}`}
-                    token={token}
-                    balance={balances[chain.id]?.[token] || '0'}
-                    loading={loading}
-                    isSelected={token === currentSelectedToken}
                     onClick={() => handleTokenSelect(chain.id.toString(), token)}
-                  />
+                    className={`cursor-pointer rounded-xl p-3 border transition-all duration-200 ${
+                      token === currentSelectedToken
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-white/10 hover:border-blue-400/50 hover:bg-blue-400/5'
+                    }`}
+                  >
+                    <TokenBalanceCard
+                      token={token}
+                      balance={balances[chain.id]?.[token] || '0'}
+                      loading={loading}
+                      isSelected={token === currentSelectedToken}
+                    />
+                    <div className="flex justify-end items-center text-blue-400 text-xs mt-1">
+                      Offramp <ArrowRight size={14} className="ml-1" />
+                    </div>
+                  </div>
                 ))}
               </div>
-              {/* Add a select button for this chain */}
-              {/* <button
-                onClick={() => handleChainClick(chain)}
-                className="w-full mt-3 px-4 py-2 bg-blue-500 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 text-sm transform hover:-translate-y-0.5"
-              >
-                Select {chain.name} with {currentSelectedToken}
-              </button> */}
             </div>
           );
         })}

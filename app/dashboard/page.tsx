@@ -320,7 +320,7 @@ export default function DashboardContent() {
   };
 
   return (
-    <div className="space-y-2 px-2 lg:px-[] bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 max-w-6xl mx-auto">
+    <div className="space-y-2 px-2 lg:px-[] max-w-6xl mx-auto">
       <Header />
       <div className="flex items-center justify-between">
         <div>
@@ -333,8 +333,8 @@ export default function DashboardContent() {
           </p>
         </div>
       </div>
-
-      <Card className="relative border-0 bg-gray-800 text-white shadow-2xl">
+      <div className="bg-gray-800/70 pt-12 rounded-2xl">
+      <Card className="relative border-0 bg-gray-800 text-white shadow-2xl w-[92%] mx-auto rounded-xl">
         <CardContent className="relative p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="lg:col-span-2 space-y-4">
@@ -394,6 +394,8 @@ export default function DashboardContent() {
         </CardContent>
       </Card>
       <StablecoinBalanceTracker isOpen={true} onClose={() => {}} setTotalBalance={() => {}} setLoading={() => {}} />
+
+      </div>
     </div>
   );
 }

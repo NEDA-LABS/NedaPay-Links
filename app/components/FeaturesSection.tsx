@@ -114,7 +114,7 @@ export default function Features() {
 
         <div className="flex flex-col lg:flex-row gap-4 pb-12 justify-center mx-auto">
           {/* Features Grid - 2 per row on large screens */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-20 rounded-2xl p-4 justify-center md:justify-start items-center my-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 rounded-2xl p-4 justify-center md:justify-start items-center my-auto">
             <Image
               src="/usdc.png"
               alt="Coins illustration"

@@ -393,7 +393,7 @@ const OffRampForm: React.FC<{
 
         {/* Submit Button */}
         <div className="space-y-4">
-          <div className="p-4 bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-xl border border-amber-700 backdrop-blur-sm">
+          {/* <div className="p-4 bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-xl border border-amber-700 backdrop-blur-sm">
             <div className="flex items-start gap-2">
               <Info className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
@@ -405,7 +405,7 @@ const OffRampForm: React.FC<{
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         
           <button
             type="submit"

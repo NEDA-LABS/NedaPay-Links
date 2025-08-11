@@ -55,7 +55,7 @@ const productItems = [
 ];
 
 const paymentItems = [
-  { title: "Transactions", url: "/all-transactions", icon: FileText },
+  { title: "Transactions from links", url: "/all-transactions", icon: FileText },
   // { title: "Dispute and Settlement", url: "/disputes", icon: Shield },
   { title: "Settings", url: "/settings", icon: Settings },
 ];

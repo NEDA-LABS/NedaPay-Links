@@ -199,7 +199,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
             width: cylinderWidth,
             transformStyle: "preserve-3d",
           }}
-          className="flex min-h-[200px] lg:min-h-[300px] cursor-grab items-center justify-center [transform-style:preserve-3d] active:cursor-grabbing"
+          className="flex min-h-[200px] md:min-h-[300px] cursor-grab items-center justify-center [transform-style:preserve-3d] active:cursor-grabbing"
         >
           {galleryFeatures.map((feature, i) => {
             const IconComponent = feature.icon;
@@ -217,7 +217,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   className={`
                     relative overflow-hidden rounded-3xl backdrop-blur-sm
-                    w-[200px] lg:w-[280px] md:py-8
+                    w-[200px] md:w-[280px] md:py-8
                     hover:shadow-2xl transition-all duration-500
                     
                     hover:border-white/20 hover:bg-gradient-to-br hover:from-slate-700/80 hover:to-slate-800/80
@@ -259,7 +259,7 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
                       />
 
                       {React.createElement(feature.icon as LucideIcon, {
-                        className: `w-12 h-12  lg:w-40 lg:h-40 text-white transition-all duration-300 relative z-10 group-hover:scale-110 `,
+                        className: `w-12 h-12  md:w-40 md:h-40 text-white transition-all duration-300 relative z-10 group-hover:scale-110 `,
                       })}
 
                       {/* Sparkle effect */}
@@ -271,10 +271,10 @@ const RollingFeaturesGallery: React.FC<RollingFeaturesGalleryProps> = ({
 
                   {/* Content */}
                   <div className="text-center relative z-10">
-                    <h3 className="sm:text-sm lg:text-xl font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
+                    <h3 className="sm:text-sm md:text-xl font-bold text-white group-hover:text-white transition-colors duration-300 leading-tight">
                       {feature.title}
                     </h3>
-                    <p className="text-xs lg:text-sm text-white group-hover:text-slate-200 transition-colors duration-300 leading-relaxed opacity-90">
+                    <p className="text-xs md:text-sm text-white group-hover:text-slate-200 transition-colors duration-300 leading-relaxed opacity-90">
                       {feature.description}
                     </p>
                   </div>

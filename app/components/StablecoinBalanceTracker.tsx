@@ -420,8 +420,8 @@ export const StablecoinBalanceTracker = ({
   if (!isOpen) return null;
 
   return (
-    <div className="z-50 flex items-center justify-center md:p-4 overflow-auto rounded-2xl">
-      <div className="w-full max-w-6xl bg-gray-800 rounded-2xl shadow-xl">
+    <div className="z-50 flex items-center justify-center md:p-4 overflow-auto rounded-2xl w-full">
+      <div className="max-w-6xl bg-gray-800 rounded-2xl shadow-xl w-[95%] mx-auto">
         <div className="h-full overflow-auto"> 
           <div className="p-6 sticky top-0 z-10">
             <div className="flex flex-col md:flex-row md:justify-between">

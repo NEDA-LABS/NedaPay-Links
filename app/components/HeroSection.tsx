@@ -52,7 +52,7 @@ const avatars = [
         <div className="flex flex-col gap-2  md:gap-6" style={{ gap: isShortScreen ? '2px' : '15px' }}>
           <ShinyText
             text="Unlock Seamless Payments Globally"
-            className="!text-xl  lg:!text-4xl 2xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent leading-tight text-center md:text-left "
+            className="!text-xl  md:!text-4xl 2xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent leading-tight text-center md:text-left "
           />
           {/* <h1 className="!text-2xl  lg:!text-5xl xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-slate-100 via-purple-300 to-indigo-300 bg-clip-text text-transparent leading-tight">
             Unlock Seamless Payments Globally
@@ -86,7 +86,7 @@ const avatars = [
             </div>
           ) : (
             <div className="flex flex-row items-start gap-6">
-              <div className="flex flex-row gap-2 mx-auto md:mx-0">
+              <div className="flex flex-row gap-2 mx-auto lg:mx-0">
                 <button
                   onClick={() => {
                     setLoading(true);
@@ -112,7 +112,7 @@ const avatars = [
           <HeroFlags/>
         </div>
         <div className="flex w-[100%] md:w-[60%] items-center gap-4 lg:py-0 my-auto">
-          <div className="relative w-full xl:w-[80%] items-center justify-center">
+          <div className="relative w-full md:w-[85%] xl:w-[80%] items-center justify-center">
             {/* <div className="absolute -bottom-1 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 border-2 border-pink-700 opacity-80 rounded-3xl" /> */}
             {/* <div className="absolute top-[-20px] left-[-20px] rounded-full w-[100px] h-[100px] bg-gradient-to-br from-purple-600 to-pink-500 z-10 "/> */}
             <Image

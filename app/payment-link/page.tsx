@@ -444,7 +444,7 @@ function PaymentLinkPage() {
         </button>
       </div> */}
 
-      <div className="w-full px-1 py-8 max-w-6xl mx-auto">
+      <div className="w-full lg:w-[50%] px-1 py-8 max-w-6xl mx-auto">
         <div className="text-center mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-200/30 to-purple-200/30 blur-3xl rounded-4xl"></div>
           
@@ -530,7 +530,7 @@ function PaymentLinkPage() {
                       : "border-gray-200 text-gray-100 hover:border-gray-300"
                   }`}
                 >
-                  Normal Payment
+                  stablecoin to wallet
                 </button>
                 <button
                   type="button"
@@ -541,7 +541,7 @@ function PaymentLinkPage() {
                       : "border-gray-200 text-gray-100 hover:border-gray-300"
                   }`}
                 >
-                  Off-Ramp to Bank/Phone
+                  stablecoin to fiat
                 </button>
               </div>
             </div>
