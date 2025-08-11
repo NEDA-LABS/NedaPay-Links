@@ -128,7 +128,7 @@ export default function Features() {
               alt="Coins illustration"
               height={100}
               width={100}
-              className="absolute top-[50%] left-[70%] overflow-hidden opacity-90"
+              className="absolute top-[50%] left-[50%] overflow-hidden opacity-90"
               priority
             />
             <Image
@@ -174,14 +174,14 @@ export default function Features() {
             })}
           </div>
 
-          {/* <div className="flex flex-col items-end justify-center mx-auto lg:mr-[-200px]">
+          <div className="flex flex-col items-end justify-center mx-auto lg:mr-[-200px]">
             <div className="w-[400px] md:w-full">
               <RollingFeaturesGallery />
             </div>
-            <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all mx-auto mt-8">
+            {/* <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all mx-auto mt-8">
               Explore
-            </button>
-          </div> */}
+            </button> */}
+          </div>
         </div>
       </div>
     </div>

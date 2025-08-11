@@ -19,6 +19,7 @@ import {
   BarChart3,
   FileIcon,
   ArrowRightLeft,
+  Home,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,6 +39,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 
 const overviewItems = [
+  { title: "Home", url: "/", icon: Home },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Notification Center", url: "/all-notifications", icon: Bell },
 ];
