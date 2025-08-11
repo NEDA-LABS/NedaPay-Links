@@ -20,6 +20,7 @@ import {
   Banknote,
   TrendingUp,
   PlayCircle,
+  MessageCircle,
 } from "lucide-react";
 import Features from "./components/FeaturesSection";
 import HowItWorksSection from "./components/HowItWorksSection";
@@ -67,14 +68,6 @@ function HomeContent() {
       <Header />
 
       <div className="w-full pb-8 md:py-12 mx-auto" style={{ zIndex: -100 }}>
-        {/* <Image
-            src="/bg-waves.png"
-            alt="Hero background"
-            fill
-            className="object-cover object-center opacity-30"
-            priority
-            quality={100}
-          /> */}
         <div
           className="absolute top-0 left-0 w-full h-full h-[90vh] bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 "
           style={{
@@ -93,18 +86,17 @@ function HomeContent() {
 
       {/* CTA Section */}
       {/* Enhanced CTA Section */}
-      <div className="w-[90%] mx-auto relative overflow-hidden">
-        {/* Animated Background Elements */}
-        {/* Grid Pattern Overlay */}
+      {/* <div className="w-[90%] mx-auto relative overflow-hidden">
+       
         <div className="relative z-10 px-8 text-center text-white">
-          {/* Enhanced Heading */}
+        
           <h2 className="text-2xl font-bold mb-8 leading-tight">
             <span className="bg-purple-900 bg-clip-text text-slate-50 drop-shadow-sm">
               Ready to accept stablecoin payments?
             </span>
           </h2>
 
-          {/* Enhanced CTA Buttons */}
+          
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
             {!authenticated ? (
               <div className="flex flex-col items-center gap-6">
@@ -114,10 +106,9 @@ function HomeContent() {
                       walletSelectorRef.current.triggerLogin();
                     }
                   }}
-                  className="relative flex items-center justify-center !bg-blue-700 hover:bg-blue-300 text-gray-900 font-bold text-lg p-2 md:py-4 md:px-8 rounded-xl md:rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
+                  className="relative flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-500 hover:bg-blue-300 text-gray-900 font-bold text-lg p-2 md:py-4 md:px-8 rounded-xl md:rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
-                  {/* Button Background Effect */}
-                  {/* <div className="absolute inset-0 !bg-gradient-to-r !from-blue-600/5 !to-purple-600/5 opacity-0 group-hover:!opacity-100 transition-opacity duration-300"></div> */}
+                  Button Background Effect
                   <span className="relative flex items-center text-white text-sm">
                     Sign in with Email or Wallet
                   </span>
@@ -127,18 +118,15 @@ function HomeContent() {
                   <WalletSelector ref={walletSelectorRef} />
                 </span>
 
-                {/* <p className="text-blue-100/80 text-sm max-w-md leading-relaxed">
-                  Sign with Email or Connect your wallet to get started and
-                  access your personalized Dashboard.
-                </p> */}
+                
               </div>
             ) : (
               <div className="flex flex-col items-center gap-6">
                 <button
                   onClick={() => router.push("/dashboard")}
-                  className="relative flex items-center justify-center !bg-blue-700 hover:bg-blue-300 text-gray-900 font-bold text-lg py-4 px-4 rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
+                  className="relative flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-500 hover:bg-blue-300 text-gray-900 font-bold text-lg py-4 px-4 rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full sm:w-auto min-w-[280px] overflow-hidden"
                 >
-                  {/* Button Background Effect */}
+                  Button Background Effect
                   <span className="relative flex items-center text-white text-sm">
                     Continue to Dashboard
                   </span>
@@ -147,8 +135,25 @@ function HomeContent() {
             )}
           </div>
         </div>
+      </div> */}
+      <Supporters />
+      <div className="relative z-10 pb-12">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
+          <button className="text-sm sm:w-auto group relative px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-slate-50 font-semibold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
+            <MessageCircle className="w-5 h-5" />
+            <a
+              href="https://discord.com/invite/2H3dQzruRV"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-slate-50 hover:text-blue-600 transition-colors duration-300"
+              aria-label="Discord Community"
+            >
+              Contact Support
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600/10 to-violet-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </a>
+          </button>
+        </div>
       </div>
-      <Supporters/>
       <Footer />
     </div>
   );

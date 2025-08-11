@@ -105,7 +105,7 @@ export default function Features() {
       />
 
       <div className="flex flex-col z-10 mx-auto justify-center items-center">
-        <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center sm:flex lg:hidden">
+        <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center">
           <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center  mx-auto bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
             Everything You Need to Accept <br className="sm:flex md:hidden" />{" "}
             Stablecoin Payments
@@ -128,7 +128,7 @@ export default function Features() {
               alt="Coins illustration"
               height={100}
               width={100}
-              className="absolute top-[50%] left-[50%] overflow-hidden opacity-90"
+              className="absolute top-[50%] left-[70%] overflow-hidden opacity-90"
               priority
             />
             <Image
@@ -153,7 +153,7 @@ export default function Features() {
               return (
                 <div
                   key={index}
-                  className="relative flex flex-col p-6 rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 hover:border-purple-500/40 transition-all duration-300 w-[230px] xl:w-[280px] mx-auto"
+                  className="relative flex flex-col p-6 rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 hover:border-purple-500/40 transition-all duration-300 w-[230px] xl:w-[300px] h-[180px] mx-auto"
                 >
                   {/* Icon in circle */}
                   <div className="absolute -top-4 left-4 w-8 h-8 rounded-full bg-gradient-to-br from-purple-700 to-orange-500 flex items-center justify-center text-white shadow-lg">
@@ -166,7 +166,7 @@ export default function Features() {
                   </h3>
 
                   {/* Description */}
-                  <p className="text-slate-300 text-sm">
+                  <p className="text-slate-300 text-sm items-center">
                     {feature.description}
                   </p>
                 </div>
@@ -174,14 +174,14 @@ export default function Features() {
             })}
           </div>
 
-          <div className="flex flex-col items-end justify-center mx-auto lg:mr-[-200px]">
+          {/* <div className="flex flex-col items-end justify-center mx-auto lg:mr-[-200px]">
             <div className="w-[400px] md:w-full">
               <RollingFeaturesGallery />
             </div>
             <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all mx-auto mt-8">
               Explore
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

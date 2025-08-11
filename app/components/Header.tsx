@@ -95,15 +95,15 @@ export default function Header() {
                <Link href="/" className="group flex items-center space-x-3">
                {/* Simplified Logo */}
                <div className="relative flex">
-                 <div className="flex bg-[#3E55E6] rounded-xl items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                 <div className="flex rounded-xl items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 -p-[8px]">
                    <Image src="/logo.svg" alt="Logo" width={60} height={60}/>
                  </div>
                  <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                   <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center">
+                   <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center -ml-4">
                      NEDAPay
                    </span>
                  </div>
-                 <span className="text-[0.6rem] z-10 text-slate-100 font-bold flex items-center justify-center">
+                 <span className="absolute -right-3 text-[0.6rem] z-10 text-slate-100 font-bold flex items-center justify-center ring-1 ring-slate-100 rounded-sm">
                      BETA
                    </span>
                </div>

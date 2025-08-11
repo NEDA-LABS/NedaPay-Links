@@ -151,50 +151,6 @@ export default function ProfessionalFaqSection() {
             );
           })}
         </div>
-
-        {/* Bottom CTA */}
-        <div className="bg-slate-800/50 rounded-xl p-8 md:p-10 text-center relative overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                               radial-gradient(circle at 75% 75%, rgba(255,255,255,0.05) 0%, transparent 50%)`,
-              }}
-            />
-          </div>
-
-          <div className="relative z-10">
-            <h3 className="text-xl font-bold text-slate-50 mb-3">
-              Still have questions?
-            </h3>
-            <p className="text-slate-50 mb-8 text-sm">
-              Our support team is here to help you get started with NEDA Pay
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
-              <button className="w-full text-sm sm:w-auto group relative px-8 py-4 bg-blue-700 text-slate-50 font-semibold rounded-2xl hover:bg-slate-50 transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
-                <MessageCircle className="w-5 h-5" />
-                <a
-                  href="https://discord.com/invite/2H3dQzruRV"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-slate-50 hover:text-blue-600 transition-colors duration-300"
-                  aria-label="Discord Community"
-                >
-                  Contact Support
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600/10 to-violet-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </a>
-              </button>
-
-              {/* <button className="w-full text-sm sm:w-auto px-8 py-4 bg-transparent text-white font-semibold rounded-2xl border-2 border-slate-600 hover:border-slate-500 hover:bg-slate-800/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900 flex items-center justify-center gap-2">
-                <FileText className="w-5 h-5" />
-                Documentation
-              </button> */}
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

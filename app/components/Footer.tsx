@@ -29,10 +29,7 @@ export default function Footer() {
             <span>Join our community Today</span>
             <FaDiscord className="w-5 h-5" />
           </a>
-        </div>
-
-        {/* Right Side - Social Icons */}
-        <div className="flex space-x-4">
+          <div className="flex space-x-4">
           <a
             href="https://x.com/NedaPay_xyz"
             target="_blank"
@@ -51,15 +48,7 @@ export default function Footer() {
           >
             <FaMedium className="w-5 h-5" strokeWidth={2.5} />
           </a>
-          {/* <a
-            href="https://github.com/0xMgwan/NedaPay/tree/main/merchant-portal"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-500 hover:text-blue-600 transition-colors duration-300"
-            aria-label="GitHub"
-          >
-            <FaGithub className="w-5 h-5" strokeWidth={2.5} />
-          </a> */}
+        </div>
         </div>
       </div>
     </footer>

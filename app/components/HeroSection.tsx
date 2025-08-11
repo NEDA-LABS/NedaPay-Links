@@ -22,7 +22,7 @@ const HeroSection = () => {
   const [isShortScreen, setIsShortScreen] = useState(false);
 
 useEffect(() => {
-  const checkHeight = () => setIsShortScreen(window.innerHeight <= 400);
+  const checkHeight = () => setIsShortScreen(window.innerHeight <= 667);
   console.log("height", window.innerHeight);
   checkHeight();
   window.addEventListener('resize', checkHeight);
@@ -48,23 +48,23 @@ const avatars = [
         fill
         className="object-cover border-b-2 border-slate-800 opacity-30"
       />
-      <div className="flex flex-col lg:flex-row justify-between lg:gap-8 px-4 py-8 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
-        <div className="flex flex-col gap-6">
+      <div className="flex flex-col lg:flex-row justify-between lg:gap-8 px-4 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
+        <div className="flex flex-col gap-2  md:gap-6" style={{ gap: isShortScreen ? '2px' : '15px' }}>
           <ShinyText
             text="Unlock Seamless Payments Globally"
-            className="!text-2xl  lg:!text-4xl 2xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-slate-100 via-purple-300 to-indigo-300 bg-clip-text leading-tight"
+            className="!text-xl  lg:!text-4xl 2xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent leading-tight text-center md:text-left "
           />
           {/* <h1 className="!text-2xl  lg:!text-5xl xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-slate-100 via-purple-300 to-indigo-300 bg-clip-text text-transparent leading-tight">
             Unlock Seamless Payments Globally
           </h1> */}
 
-          <p className="!text-l lg:!text-xl  font-bold text-slate-100 leading-relaxed drop-shadow-md">
-            Accept Stablecoins, Swap instantly, Cash Out Easily
+          <p className="!text-xs md:!text-xl  font-bold text-slate-100 leading-relaxed drop-shadow-md text-center md:text-left">
+            Accept or Send Stablecoins, Swap instantly, Cash Out Easily
           </p>
           {/* Clean CTA Section */}
-
-          {!authenticated ? (
-            <div className="flex flex-row items-start gap-4 w-full items-stretch">
+            <div className="pt-4">
+            {!authenticated ? (
+            <div className="flex flex-row items-center gap-4 w-full items-stretch mx-auto">
               <button
                 onClick={() => {
                   if (walletSelectorRef.current) {
@@ -86,35 +86,37 @@ const avatars = [
             </div>
           ) : (
             <div className="flex flex-row items-start gap-6">
-              <div className="flex flex-row gap-2">
+              <div className="flex flex-row gap-2 mx-auto md:mx-0">
                 <button
                   onClick={() => {
                     setLoading(true);
                     router.push("/dashboard");
                   }}
                   disabled={loading}
-                  className="relative items-center !px-4 !py-2 !bg-[#3E55E6] hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold rounded-xl md:!rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed h-[45px]"
+                  className="relative items-center !px-4 !py-2 !bg-[#3E55E6] hover:!from-blue-700 hover:!to-indigo-700 text-white font-semibold rounded-xl md:!rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
-                    <span className="xl:text-xl text-white text-center">
+                    <span className="text-xs md:text-sm xl:text-xl text-white text-center">
                       Explore Dashboard
                     </span>
                   )}
                 </button>
-                <YouTubeEmbedButton className="h-[45px]" />
+                <YouTubeEmbedButton />
               </div>
             </div>
           )}
+            </div>
+         
           <HeroFlags/>
         </div>
-        <div className="flex w-[80%] items-center gap-4 pt-20 lg:py-0 my-auto">
+        <div className="flex w-[100%] md:w-[60%] items-center gap-4 lg:py-0 my-auto">
           <div className="relative w-full xl:w-[80%] items-center justify-center">
-            <div className="absolute -bottom-1 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 opacity-80 rounded-3xl" />
+            {/* <div className="absolute -bottom-1 md:top-5 md:left-5 w-full h-full bg-gradient-to-br from-pink-600 to-purple-500 border-2 border-pink-700 opacity-80 rounded-3xl" /> */}
             {/* <div className="absolute top-[-20px] left-[-20px] rounded-full w-[100px] h-[100px] bg-gradient-to-br from-purple-600 to-pink-500 z-10 "/> */}
             <Image
-              src="/landing.png"
+              src="/hero.png"
               alt="folks"
               width={612}
               height={408}
@@ -125,29 +127,29 @@ const avatars = [
       </div>
        {/* <HeroFlags/> */}
       {/* miniapp cta */}
-      <div className="relative w-full items-center justify-between" style={{ display: isShortScreen ? 'none' : 'flex' }}>
-        <div className="shadow-2xl">
+      <div className="relative w-full items-center justify-between mt-4 md:mt-0">
+        <div className="shadow-2xl mx-auto md:mx-0">
           <div className="pl-4 flex flex-col items-start justify-between flex-wrap relative z-10">
-            <div className="flex items-center gap-5 justify-center pl-2">
-              <div>
+            <div className="flex items-center gap-5 justify-center pl-2 mx-auto">
+              <div className="mx-auto">
                 <h3 className="text-white/80 text-sm font-medium mb-2">
                   Also available as a{" "}
-                  <span className="text-sm font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+                  <a href="#" className="text-sm font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
                     Mini App
-                  </span>{" "}
+                  </a>{" "}
                   in Farcaster
                 </h3>
               </div>
             </div>
-            <a
+            {/* <a
               href="#"
-              className="flex items-center gap-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-500 hover:to-red-500 text-white px-7 md:py-1 rounded-full font-semibold shadow-lg shadow-purple-500/40 hover:shadow-pink-500/40 transition-all duration-300 hover:-translate-y-1 border border-white/20"
+              className="hidden md:flex items-center gap-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-500 hover:to-red-500 text-white px-7 md:py-1 rounded-full font-semibold shadow-lg shadow-purple-500/40 hover:shadow-pink-500/40 transition-all duration-300 hover:-translate-y-1 border border-white/20"
             >
               <span>Launch Mini App</span>
               <div className="bg-white/20 rounded-full p-2 transition-transform duration-300 hover:translate-x-1">
                 <ArrowUpRight />
               </div>
-            </a>
+            </a> */}
           </div>
         </div>
         {/* Icon and description section */}

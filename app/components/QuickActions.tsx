@@ -1,25 +1,29 @@
 import { FileText, Link, DollarSign, Shuffle } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+
+const router = useRouter();
 
 const actions = [
   {
     title: "Invoice",
     icon: FileText,
-    onClick: () => alert("Generate Invoice clicked"),
+    onClick: () => router.push("/invoice"),
   },
   {
-    title: "Link",
+    title: "Request",
     icon: Link,
-    onClick: () => alert("Create Payment Link clicked"),
+    onClick: () => router.push("/payment-link"),
   },
   {
     title: "Withdraw",
     icon: DollarSign,
-    onClick: () => alert("Transfer to Fiat clicked"),
+    onClick: () => router.push("/offramp"),
   },
   {
-    title: "Swap",
+    title: "Analytics",
     icon: Shuffle,
-    onClick: () => alert("Cross-Chain Swap clicked"),
+    onClick: () => router.push("/analytics"),
   },
 ];
 
