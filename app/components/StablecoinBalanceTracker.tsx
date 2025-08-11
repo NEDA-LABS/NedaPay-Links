@@ -274,7 +274,7 @@ export const StablecoinBalanceTracker = ({
 
           const balance = await fetchTokenBalance(
             tokenAddress,
-            decimals,
+            decimals = currentChain.id === 56 ? 18 : decimals,
             provider,
             address
           );

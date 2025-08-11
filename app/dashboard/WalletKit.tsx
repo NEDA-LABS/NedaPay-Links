@@ -24,7 +24,7 @@ export default function WalletKit() {
 
   // Check if the wallet is Privy embedded
   const isPrivyEmbedded =
-    wallets?.[0]?.walletClientType.toLowerCase() === "privy";
+    wallets?.[0]?.walletClientType.toLowerCase() === "privy" || wallets?.[0]?.walletClientType.toLowerCase() !== "metamask" || wallets?.[0]?.walletClientType.toLowerCase() !== "coinbase_wallet";
 
   return (
     <div className="flex items-center">
