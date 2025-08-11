@@ -38,10 +38,10 @@ import DailyRevenueChart from "./DailyRevenueChart";
 import Footer from "@/components/Footer";
 import ChainSwitcher from "@/components/ChainSwitcher";
 import WalletKit from "./WalletKit";
-import {
-  SidebarProvider,
-  useSidebar,
-} from "@/compliance/user/components/ui/sidebar";
+// import {
+//   SidebarProvider,
+//   useSidebar,
+// } from "@/compliance/user/components/ui/sidebar";
 import { StablecoinBalanceButton, StablecoinBalanceTracker } from "@/components/StablecoinBalanceTracker";
 import QuickActions from "@/components/QuickActions";
 
@@ -96,8 +96,8 @@ export default function DashboardContent() {
   const [swapFromSymbol, setSwapFromSymbol] = useState<string>("");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isTransactionLoading, setIsTransactionLoading] = useState(true);
-  const { state, toggleSidebar } = useSidebar();
-  const isCollapsed = state === "collapsed";
+  // const { state, toggleSidebar } = useSidebar();
+  // const isCollapsed = state === "collapsed";
   const [metrics, setMetrics] = useState({
     totalReceived: 0,
     totalTransactions: 0,
