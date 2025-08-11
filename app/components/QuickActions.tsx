@@ -1,33 +1,32 @@
 import { FileText, Link, DollarSign, Shuffle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-
-const router = useRouter();
-
-const actions = [
-  {
-    title: "Invoice",
-    icon: FileText,
-    onClick: () => router.push("/invoice"),
-  },
-  {
-    title: "Request",
-    icon: Link,
-    onClick: () => router.push("/payment-link"),
-  },
-  {
-    title: "Withdraw",
-    icon: DollarSign,
-    onClick: () => router.push("/offramp"),
-  },
-  {
-    title: "Analytics",
-    icon: Shuffle,
-    onClick: () => router.push("/analytics"),
-  },
-];
-
 export default function QuickActions() {
+  const router = useRouter();
+
+  const actions = [
+    {
+      title: "Invoice",
+      icon: FileText,
+      onClick: () => router.push("/invoice"),
+    },
+    {
+      title: "Request",
+      icon: Link,
+      onClick: () => router.push("/payment-link"),
+    },
+    {
+      title: "Withdraw",
+      icon: DollarSign,
+      onClick: () => router.push("/offramp"),
+    },
+    {
+      title: "Analytics",
+      icon: Shuffle,
+      onClick: () => router.push("/analytics"),
+    },
+  ];
+
   return (
     <div className="mt-6">
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
