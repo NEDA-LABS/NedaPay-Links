@@ -75,18 +75,18 @@ const CurrencyTicker = () => {
           animation: 'scroll 40s linear infinite',
         }}
       >
-        {pairs.map(({ code, flag, rate }) => (
+        {pairs.map((pair, index) => (
           <div
-            key={`${code}-${rate}`}
+            key={index}
             className="flex items-center gap-2 text-white text-sm whitespace-nowrap"
           >
-            <img src={flag} alt={code} className="w-5 h-4 rounded-sm" />
+            <img src={pair.flag} alt={pair.code} className="w-5 h-4 rounded-sm" />
             <span className='text-green-500 font-semibold text-xs md:text-base'>
-              {Number(rate).toLocaleString(undefined, {
+              {Number(pair.rate).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}{' '}
-              {code}
+              {pair.code}
             </span>
           </div>
         ))}

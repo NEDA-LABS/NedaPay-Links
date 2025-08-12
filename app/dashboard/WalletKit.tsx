@@ -24,18 +24,22 @@ export default function WalletKit() {
 
   // Check if the wallet is Privy embedded
   const isPrivyEmbedded =
-    wallets?.[0]?.walletClientType.toLowerCase() === "privy" || wallets?.[0]?.walletClientType.toLowerCase() !== "metamask" || wallets?.[0]?.walletClientType.toLowerCase() !== "coinbase_wallet";
-
+    wallets?.[0]?.walletClientType?.toLowerCase() === "privy" &&
+    wallets?.[0]?.walletClientType?.toLowerCase() !== "metamask" &&
+    wallets?.[0]?.walletClientType?.toLowerCase() !== "coinbase_wallet";
+  console.log(
+    "wallet typeeeeeeeeeee",
+    wallets?.[0]?.walletClientType.toLowerCase()
+  );
   return (
     <div className="flex items-center">
       <div className="flex flex-row items-center my-auto">
-        
         {isPrivyEmbedded && (
           <div className="flex mx-auto items-center">
             <Button
               size="sm"
               variant="outline"
-              onClick={() => openWalletModal('overview')}
+              onClick={() => openWalletModal("overview")}
               className="bg-white/10 text-white border-white/30 hover:bg-white/20 mx-auto"
             >
               <Wallet className="h-3 w-3 mr-1" />
@@ -50,10 +54,10 @@ export default function WalletKit() {
         </div> */}
       </div>
       <WalletModal
-      isOpen={isWalletModalOpen}
-      onClose={closeWalletModal}
-      defaultTab={defaultTab as 'overview' | 'send' | 'receive' | 'settings'}
-    />
+        isOpen={isWalletModalOpen}
+        onClose={closeWalletModal}
+        defaultTab={defaultTab as "overview" | "send" | "receive" | "settings"}
+      />
     </div>
   );
 }
