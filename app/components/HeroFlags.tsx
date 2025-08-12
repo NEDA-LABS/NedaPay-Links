@@ -3,7 +3,7 @@ import { stablecoins } from '../data/stablecoins';
 const HeroFlags = () => {
   return (
     <div className="flex items-center gap-6 pt-4 w-full">
-      <div className="flex flex-col items-center gap-2 mx-auto lg:mx-0">
+      <div className="flex flex-col items-center gap-2">
         <div className="flex -space-x-2">
           {stablecoins.slice(0, 10).map((coin, index) => (
             <div
