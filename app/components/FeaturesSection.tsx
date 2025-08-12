@@ -107,7 +107,7 @@ export default function Features() {
 
 
       <div className="flex flex-col z-10 mx-auto justify-center items-center">
-      <h1 className="text-4xl sm:text-2xl lg:text-7xl font-black mb-8 leading-tight">
+      <h1 className="text-3xl sm:text-2xl lg:text-5xl font-black mb-8 leading-tight">
             <span className="block text-white mb-2">Everything You Need</span>
             <span className="block text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-purple-600 bg-clip-text">
               Stablecoin Payments
@@ -183,7 +183,7 @@ export default function Features() {
           </div>
 
           <div className="flex flex-col items-end justify-center mx-auto lg:mr-[-200px]">
-            <div className="w-[400px] md:w-full">
+            <div className="w-[300px] md:w-full">
               <RollingFeaturesGallery />
             </div>
             {/* <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium shadow-lg hover:opacity-90 transition-all mx-auto mt-8">

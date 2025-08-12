@@ -48,8 +48,8 @@ const avatars = [
         fill
         className="object-cover border-b-2 border-slate-800 opacity-30"
       /> */}
-      <div className="flex flex-col lg:flex-row justify-between lg:gap-8 px-4 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
-        <div className="flex flex-col gap-2  md:gap-6" style={{ gap: isShortScreen ? '2px' : '15px' }}>
+      <div className="flex flex-col lg:flex-row justify-between lg:gap-8 px-4 lg:py-0 items-center rounded-2xl relative mt-[40px] mt-0">
+        <div className="flex flex-col" style={{ gap: isShortScreen ? '5px' : '15px' }}>
           <ShinyText
             text="Unlock Seamless Payments Globally"
             className="!text-xl  md:!text-4xl 2xl:!text-7xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent leading-tight text-left "

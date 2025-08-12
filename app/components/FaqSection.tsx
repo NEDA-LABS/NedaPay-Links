@@ -84,7 +84,7 @@ export default function ProfessionalFaqSection() {
             <HelpCircle className="w-4 h-4" />
             Support
           </div> */}
-          <h2 className="!text-lg md:!text-2xl font-bold text-slate-50 mb-6 leading-tight bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+          <h2 className="!text-lg md:!text-4xl font-bold text-slate-50 mb-6 leading-tight bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
             Frequently Asked Questions
           </h2>
           <p className="!text-sm text-slate-50 max-w-2xl mx-auto leading-relaxed">
