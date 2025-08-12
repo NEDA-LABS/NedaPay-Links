@@ -40,7 +40,7 @@ const avatars = [
 ];
 
   return (
-    <div className="h-[95vh] w-[100vw] mt-[-100px] pt-[100px] sm:mb-[120px] md:pt-[50px] bg-gradient-to-b from-[#1B1F3B]  via-[#121738] to-[#0B0F24]">
+    <div className="h-[95vh] w-[100vw] mt-[-100px] pt-[100px] sm:mb-[120px] md:pt-[50px] bg-gradient-to-b from-[#0B0F24]  via-[#121738] from-[#0B0F24]">
       <CurrencyTicker />
       {/* <Image
         src="/vanishing-stripes.png"
