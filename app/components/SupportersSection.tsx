@@ -95,10 +95,10 @@ const ChainsWidget = () => {
 
 export default function BuiltOnBaseSection() {
   return (
-    <div className="px-6 bg-gradient-to-b from-gray-950 via-gray-900 to-black relative overflow-hidden text-white mb-8">
+    <div className="px-6 relative overflow-hidden text-white mb-8">
       {/* Background effects */}
-      <div className="absolute -left-20 top-1/4 w-72 h-72 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl"></div>
-      <div className="absolute -right-20 top-2/3 w-96 h-96 bg-gradient-to-l from-indigo-500/10 to-purple-500/10 rounded-full blur-3xl"></div>
+      {/* <div className="absolute -left-20 top-1/4 w-72 h-72 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl"></div>
+      <div className="absolute -right-20 top-2/3 w-96 h-96 bg-gradient-to-l from-indigo-500/10 to-purple-500/10 rounded-full blur-3xl"></div> */}
 
       <div className="max-w-2xl mx-auto relative z-10">
         {/* Header */}

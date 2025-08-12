@@ -120,7 +120,14 @@ const avatars = [
               alt="folks"
               width={612}
               height={408}
-              className="w-full h-full rounded-3xl opacity-95"
+              className="hidden lg:flex w-full h-full rounded-3xl opacity-95"
+            />
+            <Image
+              src="/hero-mobile.png"
+              alt="folks"
+              width={612}
+              height={408}
+              className="lg:hidden flex w-full h-full rounded-3xl opacity-95"
             />
           </div>
         </div>
