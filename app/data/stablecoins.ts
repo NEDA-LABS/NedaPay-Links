@@ -2,7 +2,7 @@
 export const stablecoins = [
   {
     region: 'Nigeria',
-    flag: '🇳🇬',
+    flag: '/cngn-icon.jpeg',
     currency: 'NGN',
     baseToken: 'cNGN',
     name: 'Nigerian Naira Coin',
@@ -34,7 +34,7 @@ export const stablecoins = [
   // },
   {
     region: 'South Africa',
-    flag: '🇿🇦',
+    flag: '/zarp-coin.png',
     currency: 'ZAR',
     baseToken: 'ZARP',
     name: 'South African Rand Coin',
@@ -50,7 +50,7 @@ export const stablecoins = [
   },
   {
     region: 'Indonesia',
-    flag: '🇮🇩',
+    flag: '/idrx-coin.png',
     currency: 'IDR',
     baseToken: 'IDRX',
     name: 'Indonesian Rupiah Coin',
@@ -65,7 +65,7 @@ export const stablecoins = [
   },
   {
     region: 'Europe',
-    flag: '🇪🇺',
+    flag: '/eurc-coin.png',
     currency: 'EUR',
     baseToken: 'EURC',
     name: 'Euro Coin',
@@ -80,7 +80,7 @@ export const stablecoins = [
   },
   {
     region: 'Canada',
-    flag: '🇨🇦',
+    flag: '/cadc-coin.png',
     currency: 'CAD',
     baseToken: 'CADC',
     name: 'Canadian Dollar Coin',
@@ -95,7 +95,7 @@ export const stablecoins = [
   },
   {
     region: 'Brazil',
-    flag: '🇧🇷',
+    flag: '/brl-coin.png',
     currency: 'BRL',
     baseToken: 'BRL',
     name: 'Brazilian Real Coin',
@@ -110,7 +110,7 @@ export const stablecoins = [
   },
   {
     region: 'Turkey',
-    flag: '🇹🇷',
+    flag: '/tryb-icon.png',
     currency: 'TRY',
     baseToken: 'TRYB',
     name: 'Turkish Lira Coin',
@@ -125,7 +125,7 @@ export const stablecoins = [
   },
   {
     region: 'New Zealand',
-    flag: '🇳🇿',
+    flag: '/nzdd-icon.png',
     currency: 'NZD',
     baseToken: 'NZDD',
     name: 'New Zealand Dollar Coin',
@@ -140,7 +140,7 @@ export const stablecoins = [
   },
   {
     region: 'Mexico',
-    flag: '🇲🇽',
+    flag: '/mxne-coin.png',
     currency: 'MXN',
     baseToken: 'MXNe',
     name: 'Mexican Peso Coin',
@@ -155,7 +155,7 @@ export const stablecoins = [
   },
   {
     region: 'United States',
-    flag: '🇺🇸',
+    flag: '/usdc-logo.svg',
     currency: 'USD',
     baseToken: 'USDC',
     name: 'USD Coin',
@@ -176,7 +176,7 @@ export const stablecoins = [
   },
   {
     region: 'United States',
-    flag: '🇺🇸',
+    flag: '/usdt-icon.png',
     currency: 'USD',
     baseToken: 'USDT',
     name: 'Tether USD',

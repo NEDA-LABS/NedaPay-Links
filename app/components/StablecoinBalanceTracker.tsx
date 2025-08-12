@@ -6,7 +6,8 @@ import { stablecoins } from "../data/stablecoins";
 import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
 import { X, AlertCircle, Wallet, Loader2, ChevronRight, Repeat, RefreshCw } from "lucide-react";
 import SwapModal from "./SwapModal";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/Button"; 
+import Image from "next/image";
 
 type ChainId = 8453 | 42161 | 137 | 42220 | 56;
 
@@ -338,7 +339,7 @@ export const StablecoinBalanceTracker = ({
                   }`}
                 >
                   <div className="flex items-center gap-3"> 
-                    <span className="text-2xl">{coin.flag}</span>
+                    <Image src={coin.flag} alt={coin.name} width={24} height={24} className="text-2xl rounded-full"/>
                     <div>
                       <div className="text-xs md:text-sm font-semibold text-white">
                         {coin.baseToken}
