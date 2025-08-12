@@ -40,14 +40,14 @@ const avatars = [
 ];
 
   return (
-    <div className="h-[95vh] w-[100vw] mt-[-100px] pt-[100px] sm:mb-[120px] md:pt-[50px]">
+    <div className="h-[95vh] w-[100vw] mt-[-100px] pt-[100px] sm:mb-[120px] md:pt-[50px] bg-gradient-to-b from-[#1B1F3B]  via-[#121738] to-[#0B0F24]">
       <CurrencyTicker />
-      <Image
+      {/* <Image
         src="/vanishing-stripes.png"
         alt="Hero Background"
         fill
         className="object-cover border-b-2 border-slate-800 opacity-30"
-      />
+      /> */}
       <div className="flex flex-col lg:flex-row justify-between lg:gap-8 px-4 lg:py-0 items-center rounded-2xl relative sm:mt-[30px] mt-0">
         <div className="flex flex-col gap-2  md:gap-6" style={{ gap: isShortScreen ? '2px' : '15px' }}>
           <ShinyText

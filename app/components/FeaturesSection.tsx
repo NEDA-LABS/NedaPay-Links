@@ -104,13 +104,21 @@ export default function Features() {
         priority
       />
 
+
+
       <div className="flex flex-col z-10 mx-auto justify-center items-center">
-        <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center">
+      <h1 className="text-4xl sm:text-2xl lg:text-7xl font-black mb-8 leading-tight">
+            <span className="block text-white mb-2">Everything You Need</span>
+            <span className="block text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-purple-600 bg-clip-text">
+              Stablecoin Payments
+            </span>
+          </h1>
+        {/* <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center">
           <h3 className="flex text-xl lg:text-2xl font-bold text-slate-50 text-center items-center  mx-auto bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
             Everything You Need to Accept <br className="sm:flex md:hidden" />{" "}
             Stablecoin Payments
           </h3>
-        </div>
+        </div> */}
 
         <div className="flex flex-col lg:flex-row gap-4 pb-12 justify-center mx-auto">
           {/* Features Grid - 2 per row on large screens */}
