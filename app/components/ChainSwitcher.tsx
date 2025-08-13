@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import { useWallets } from '@privy-io/react-auth';
-import { polygon, arbitrum, optimism, base, bsc, mainnet, scroll } from 'viem/chains';
+import { polygon, arbitrum, optimism, base, bsc, mainnet, scroll, celo } from 'viem/chains';
 
 // Define supported chains with their metadata
 const SUPPORTED_CHAINS = [
@@ -30,9 +30,13 @@ const SUPPORTED_CHAINS = [
     ...scroll,
     icon: '/scroll.svg',
   },
+  {
+    ...celo,
+    icon: '/celo.svg',
+  },
 ];
 
-const DEFAULT_CHAIN = SUPPORTED_CHAINS[5]; // Ethereum mainnet
+const DEFAULT_CHAIN = SUPPORTED_CHAINS[3]; // Base
 
 const ChainSwitcher: React.FC = () => {
   const { wallets } = useWallets();

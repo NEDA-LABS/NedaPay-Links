@@ -23,6 +23,7 @@ import Header from "@/components/Header";
 import { withDashboardLayout } from "@/utils/withDashboardLayout";
 import { type Address } from "viem";
 import Image from "next/image";
+
 // Chain configuration with SVG components
 const chainConfig = {
   10: { 
@@ -83,6 +84,14 @@ const chainConfig = {
   },
 };
 
+// Helper function to get token decimals by chain
+const getTokenDecimals = (token: any, chainId: number): number => {
+  if (typeof token.decimals === 'number') {
+    return token.decimals;
+  }
+  return token.decimals[chainId] || 18; // Default to 18 decimals
+};
+
 // Token configuration with SVG components
 const TOKENS = {
   ETH: {
@@ -106,7 +115,17 @@ const TOKENS = {
   USDC: {
     name: "USD Coin",
     symbol: "USDC",
-    decimals: 6,
+    // Special handling for BNB Chain (56) with 18 decimals
+    decimals: {
+      1: 6,
+      10: 6,
+      42161: 6,
+      8453: 6,
+      137: 6,
+      56: 18,  // BNB Chain uses 18 decimals
+      42220: 6,
+      534352: 6,
+    },
     addresses: {
       1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       10: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
@@ -214,6 +233,12 @@ function BridgePage() {
   // Get token details
   const tokenDetails = TOKENS[selectedToken];
   const tokenAddress = tokenDetails.addresses[fromChainId as keyof typeof tokenDetails.addresses] as `0x${string}`;
+  
+  // Get token decimals for current chain
+  const tokenDecimals = useMemo(() => 
+    getTokenDecimals(tokenDetails, fromChainId), 
+    [tokenDetails, fromChainId]
+  );
 
   // Balance fetching
   const { data: balance } = useBalance({
@@ -296,7 +321,6 @@ function BridgePage() {
       errors.push("Invalid recipient address");
     }
     if (balance && amount) {
-      const tokenDecimals = tokenDetails.decimals;
       const balanceValue = Number(formatUnits(balance.value, tokenDecimals));
       if (Number(amount) > balanceValue) {
         errors.push("Insufficient balance");
@@ -309,7 +333,7 @@ function BridgePage() {
       errors.push("This token is not supported on selected chains");
     }
     return { isValid: errors.length === 0, errors };
-  }, [amount, fromChainId, toChainId, recipient, balance, tokenDetails, routeSupported, tokenSupported]);
+  }, [amount, fromChainId, toChainId, recipient, balance, tokenDecimals, routeSupported, tokenSupported]);
 
   // Helper function to get token address
   const getTokenAddress = useCallback((token: typeof tokenDetails, chainId: number): string => {
@@ -330,6 +354,10 @@ function BridgePage() {
     try {
       const inputToken = getTokenAddress(tokenDetails, fromChainId);
       const outputToken = getTokenAddress(tokenDetails, toChainId);
+      
+      // Get decimals for both chains
+      const inputDecimals = getTokenDecimals(tokenDetails, fromChainId);
+      const outputDecimals = getTokenDecimals(tokenDetails, toChainId);
 
       const quoteParams = {
         route: {
@@ -338,13 +366,13 @@ function BridgePage() {
           inputToken: inputToken as Address,
           outputToken: outputToken as Address,
         },
-        inputAmount: parseUnits(amount.toString(), tokenDetails.decimals),
+        inputAmount: parseUnits(amount.toString(), inputDecimals),
       };
 
       const q = await acrossClient.getQuote(quoteParams);
       
       if (q.isAmountTooLow) {
-        throw new Error(`Amount too low. Minimum: ${formatUnits(q.limits.minDeposit, tokenDetails.decimals)} ${tokenDetails.symbol}`);
+        throw new Error(`Amount too low. Minimum: ${formatUnits(q.limits.minDeposit, inputDecimals)} ${tokenDetails.symbol}`);
       }
       
       setQuote(q);
@@ -357,6 +385,17 @@ function BridgePage() {
       setLoading(false);
     }
   }, [amount, fromChainId, toChainId, validation.isValid, tokenDetails, needsChainSwitch, getTokenAddress]);
+
+   //fetch quote when amount changes
+   useEffect(() => {
+    if (!amount || !validation.isValid || needsChainSwitch) return;
+    
+    const timeoutId = setTimeout(() => {
+      getQuote();
+    }, 800);
+    
+    return () => clearTimeout(timeoutId);
+  }, [amount, getQuote, validation.isValid, needsChainSwitch]);
 
   // Execute bridge
   const executeBridge = useCallback(async () => {
@@ -420,11 +459,11 @@ function BridgePage() {
   const setMaxAmount = useCallback(() => {
     if (!balance) return;
     const buffer = selectedToken === "ETH" ? 0.001 : 0;
-    const balanceValue = Number(formatUnits(balance.value, tokenDetails.decimals));
+    const balanceValue = Number(formatUnits(balance.value, tokenDecimals));
     const maxAmount = Math.max(0, balanceValue - buffer);
-    setAmount(maxAmount.toFixed(tokenDetails.decimals > 6 ? 6 : tokenDetails.decimals));
+    setAmount(maxAmount.toFixed(tokenDecimals > 6 ? 6 : tokenDecimals));
     toast("Max amount set", { icon: "⬆️" });
-  }, [balance, tokenDetails, selectedToken]);
+  }, [balance, tokenDecimals, selectedToken]);
 
   // Chain selection component
   const ChainSelect = ({ value, onChange, label, disabled }: { 
@@ -435,8 +474,8 @@ function BridgePage() {
   }) => (
     <Listbox value={value} onChange={onChange} disabled={disabled}>
       <div className="relative">
-        <Listbox.Label className="block text-sm font-medium text-gray-300 mb-2">{label}</Listbox.Label>
-        <Listbox.Button className="relative w-full bg-gray-800 border border-gray-700 rounded-xl py-3 pl-4 pr-10 text-left shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+        <Listbox.Label className="block text-sm font-medium text-gray-300 md:mb-2">{label}</Listbox.Label>
+        <Listbox.Button className="relative w-full bg-gray-800 border border-gray-700 rounded-xl py-2 md:py-3 pl-4 pr-10 text-left shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
           <span className="flex items-center gap-3">
             {chainConfig[value as keyof typeof chainConfig]?.icon}
             <span className="font-medium text-white text-sm">{chainConfig[value as keyof typeof chainConfig]?.name}</span>
@@ -449,7 +488,6 @@ function BridgePage() {
           leave="transition ease-in duration-100"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
-          // className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden"
         >
           <Listbox.Options className="max-h-60 overflow-auto">
             {Object.entries(chainConfig).map(([id, chain]) => (
@@ -486,7 +524,7 @@ function BridgePage() {
   }) => (
     <Listbox value={value} onChange={onChange} disabled={disabled}>
       <div className="relative">
-        <Listbox.Button className="relative w-full bg-gray-800 border border-gray-700 rounded-xl py-3 pl-4 pr-10 text-left shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+        <Listbox.Button className="relative w-full bg-gray-800 border border-gray-700 rounded-xl py-2 md:py-3 pl-4 pr-10 text-left shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
           <span className="flex items-center gap-3">
             {TOKENS[value].icon}
             <span className="font-medium text-white">{value}</span>
@@ -499,7 +537,6 @@ function BridgePage() {
           leave="transition ease-in duration-100"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
-          // className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden"
         >
           <Listbox.Options className="max-h-60 overflow-auto">
             {tokenOptions.map((token) => (
@@ -557,6 +594,9 @@ function BridgePage() {
     );
   }
 
+  // Get destination token decimals
+  const toTokenDecimals = getTokenDecimals(tokenDetails, toChainId);
+
   return (
     <div className="min-h-screen">
       <Toaster
@@ -572,12 +612,12 @@ function BridgePage() {
         }}
       />
       <Header />
-      <main className="max-w-2xl mx-auto p-1 pt-8">
+      <main className="max-w-2xl mx-auto p-1 md:pt-8">
         <div className="bg-gray-800 rounded-3xl shadow-2xl border border-gray-700 overflow-hidden">
-          <div className="p-6 md:p-8 space-y-6">
+          <div className="p-6 md:p-8 space-y-2 md:space-y-6">
             <div className="pb-4 border-b border-gray-700">
-              <h1 className="text-2xl font-bold text-white">Cross-Chain Bridge</h1>
-              <p className="text-gray-400 mt-1">Transfer assets between networks instantly</p>
+              <h1 className="text-base md:text-2xl font-bold text-white">Cross-Chain Bridge</h1>
+              <p className="text-sm text-gray-400 mt-1">Transfer assets between networks instantly</p>
             </div>
             
             {/* Chain Selection */}
@@ -654,7 +694,7 @@ function BridgePage() {
                 {balance && (
                   <div className="flex items-center">
                     <span className="text-sm text-gray-400">
-                      Balance: {Number(formatUnits(balance.value, tokenDetails.decimals)).toFixed(6)} {tokenDetails.symbol}
+                      Balance: {Number(formatUnits(balance.value, tokenDecimals)).toFixed(6)} {tokenDetails.symbol}
                     </span>
                     <button
                       onClick={setMaxAmount}
@@ -674,7 +714,7 @@ function BridgePage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.0"
-                  className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-4 px-4 text-xl font-semibold text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-2 md:py-4 px-4 text-xl font-semibold text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   disabled={executing || isSwitchingChain || !routeSupported || !tokenSupported}
                 />
               </div>
@@ -761,7 +801,7 @@ function BridgePage() {
             {quote && (
               <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border border-green-700 rounded-xl p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-white">Bridge Quote</h3>
+                  <h3 className="text-base md:text-lg font-semibold text-white">Bridge Quote</h3>
                   <div className="flex items-center text-green-400">
                     <ClockIcon className="h-4 w-4 mr-1" />
                     <span className="text-sm font-medium">~{Math.round(quote.estimatedFillTimeSec / 60)} min</span>
@@ -770,8 +810,8 @@ function BridgePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-gray-800 rounded-lg p-4">
                     <div className="text-sm text-gray-400 mb-1">You'll Receive</div>
-                    <div className="text-2xl font-bold text-white">
-                      {Number(formatUnits(quote.deposit.outputAmount, tokenDetails.decimals)).toFixed(6)} {tokenDetails.symbol}
+                    <div className="text-base font-bold text-white">
+                      {Number(formatUnits(quote.deposit.outputAmount, toTokenDecimals)).toFixed(6)} {tokenDetails.symbol}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       on {chainConfig[toChainId as keyof typeof chainConfig]?.name}
@@ -779,11 +819,11 @@ function BridgePage() {
                   </div>
                   <div className="bg-gray-800 rounded-lg p-4">
                     <div className="text-sm text-gray-400 mb-1">Bridge Fee</div>
-                    <div className="text-2xl font-bold text-white">
-                      {Number(formatUnits(quote.fees.totalRelayFee.total, tokenDetails.decimals)).toFixed(6)} {tokenDetails.symbol}
+                    <div className="text-base font-bold text-white">
+                      {Number(formatUnits(quote.fees.totalRelayFee.total, tokenDecimals)).toFixed(6)} {tokenDetails.symbol}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      ~{((Number(formatUnits(quote.fees.totalRelayFee.total, tokenDetails.decimals)) / Number(amount)) * 100).toFixed(3)}%
+                      ~{((Number(formatUnits(quote.fees.totalRelayFee.total, tokenDecimals)) / Number(amount)) * 100).toFixed(3)}%
                     </div>
                   </div>
                 </div>

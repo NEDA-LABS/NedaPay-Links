@@ -29,7 +29,7 @@ export default function QuickActions() {
 
   return (
     <div className="mt-6">
-      <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+      <h2 className="text-lg font-semibold text-gray-800 text-white mb-4">
         Quick Actions
       </h2>
       <div className="grid grid-cols-2 lg:grid-cols-2 gap-4">
@@ -37,10 +37,10 @@ export default function QuickActions() {
           <button
             key={idx}
             onClick={action.onClick}
-            className="flex items-center gap-3 px-4 py-3 bg-gray-800 rounded-xl shadow hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-700"
+            className="flex items-center gap-3 px-4 py-3 bg-gray-800 rounded-xl shadow hover:shadow-lg transition-all duration-200 border border-gray-700"
           >
             <action.icon className="w-6 h-6 text-indigo-500" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+            <span className="text-sm font-medium text-gray-200">
               {action.title}
             </span>
           </button>

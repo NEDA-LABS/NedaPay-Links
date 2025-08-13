@@ -3,13 +3,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { stablecoins } from "../data/stablecoins";
-import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
+import { SUPPORTED_CHAINS } from "@/data/platformSupportedChains";
 import { X, AlertCircle, Wallet, Loader2, ChevronRight, Repeat, RefreshCw } from "lucide-react";
 import SwapModal from "./SwapModal";
 import { Button } from "@/components/Button"; 
 import Image from "next/image";
 
-type ChainId = 8453 | 42161 | 137 | 42220 | 56;
+type ChainId = 8453 | 42161 | 137 | 42220 | 56 | 534352 | 10;
 
 interface Chain {
   id: number;

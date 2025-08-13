@@ -1,6 +1,6 @@
 "use client";
 
-import { base, polygon, arbitrum, celo, scroll, bsc } from "wagmi/chains";
+import { base, polygon, arbitrum, celo, scroll, bsc, optimism } from "wagmi/chains";
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 import { http, fallback } from "wagmi";
@@ -19,45 +19,51 @@ const wagmiConfig = createPrivyConfig({
   ssr: true,
   transports: {
     [base.id]: fallback([
-      http(process.env.NEXT_PUBLIC_COINBASE_BASE_RPC || 'https://api.developer.coinbase.com/rpc/v1/base/n4RnEAzBQtErAI53dP6DCa6l6HRGODgV'),
+      http(process.env.NEXT_PUBLIC_COINBASE_BASE_RPC),
       http('https://mainnet.base.org'),
       http('https://base-mainnet.g.alchemy.com/v2/demo'),
       http('https://base.llamarpc.com'),
       http('https://1rpc.io/base')
     ]),
     [polygon.id]: fallback([
-      http(process.env.NEXT_PUBLIC_POLYGON_RPC || 'https://polygon-mainnet.g.alchemy.com/v2/demo'),
+      http(process.env.NEXT_PUBLIC_POLYGON_RPC || polygon.rpcUrls.default.http[0]),
       http('https://polygon-rpc.com'),
       http('https://rpc-mainnet.matic.network'),
       http('https://polygon.llamarpc.com'),
       http('https://1rpc.io/matic')
     ]),
     [bsc.id]: fallback([
-      http(process.env.NEXT_PUBLIC_BSC_RPC || 'https://bsc-dataseed1.bnbchain.org'),
+      http(process.env.NEXT_PUBLIC_BSC_RPC || bsc.rpcUrls.default.http[0]),
       http('https://bscrpc.com'),
       http('https://bsc-mainnet.public.blastapi.io'),
       http('https://1rpc.io/bnb'),
       http('https://binance.llamarpc.com')
     ]),
     [arbitrum.id]: fallback([
-      http(process.env.NEXT_PUBLIC_ARBITRUM_RPC || 'https://arb1.arbitrum.io/rpc'),
+      http(process.env.NEXT_PUBLIC_ARBITRUM_RPC || arbitrum.rpcUrls.default.http[0]),
       http('https://arbitrum-mainnet.infura.io/v3/demo'),
       http('https://arbitrum.public-rpc.com'),
       http('https://1rpc.io/arb'),
       http('https://arbitrum.llamarpc.com')
     ]),
     [celo.id]: fallback([
-      http(process.env.NEXT_PUBLIC_CELO_RPC || 'https://forno.celo.org'),
+      http(process.env.NEXT_PUBLIC_CELO_RPC || celo.rpcUrls.default.http[0]),
       http('https://celo-mainnet.infura.io/v3/demo'),
       http('https://rpc.ankr.com/celo'),
       http('https://1rpc.io/celo'),
       http('https://celo.llamarpc.com')
     ]),
     [scroll.id]: fallback([
-      http(process.env.NEXT_PUBLIC_SCROLL_RPC || 'https://rpc.scroll.io'),
+      http(process.env.NEXT_PUBLIC_SCROLL_RPC || scroll.rpcUrls.default.http[0]),
       http('https://scroll-mainnet.public.blastapi.io'),
       http('https://1rpc.io/scroll'),
       http('https://scroll.llamarpc.com')
+    ]),
+    [optimism.id]: fallback([
+      http(process.env.NEXT_PUBLIC_OPTIMISM_RPC || optimism.rpcUrls.default.http[0]),
+      http('https://optimistic.etherscan.io'),
+      http('https://1rpc.io/optimism'),
+      http('https://optimism.llamarpc.com')
     ])
   }
 });
