@@ -1,6 +1,56 @@
 // Stablecoins data from stablecoins.earth
 export const stablecoins = [
   {
+    region: 'United States',
+    flag: '/usdc-logo.svg',
+    currency: 'USD',
+    baseToken: 'USDC',
+    name: 'USD Coin',
+    decimals: 6,
+    addresses: {
+      8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // Base Mainnet
+      42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // Arbitrum One
+      137:   '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon Mainnet
+      42220: '0xcebA9300f2b948710d2653dD7B07f33A8B32118C', // Celo Mainnet
+      56:    '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // BNB Smart Chain
+      10:    '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // Optimism
+      534352:'0x06efdbff2a14a7c8e15944d1f4a48f9f95f663a4', // Scroll Mainnet
+    },
+    issuer: 'Circle',
+    description: 'USD-backed stablecoin by Circle',
+    website: 'https://www.circle.com/usdc',
+    chainIds: [8453, 42161, 137, 42220, 56, 10, 534352],
+  },
+  {
+    region: 'United States',
+    flag: '/usdt-icon.png',
+    currency: 'USD',
+    baseToken: 'USDT',
+    name: 'Tether USD',
+    decimals: {
+      8453: 6,  // Base Mainnet
+      42161: 6, // Arbitrum One
+      137:   6, // Polygon Mainnet
+      42220: 6, // Celo Mainnet
+      56:    18,// BNB Smart Chain
+      10:    6, // Optimism
+      534352:6, // Scroll Mainnet
+    },
+    addresses: {
+      8453:   '0xF1e92B575dcAA24fFA1B3334499a8F3B6E2F9Eb2', // Base Mainnet
+      42161: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', // Arbitrum One
+      137:   '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', // Polygon Mainnet
+      42220: '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e', // Celo Mainnet
+      56:    '0x55d398326f99059fF775485246999027B3197955', // BNB Smart Chain
+      10:    '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', // Optimism
+      534352:'0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df', // Scroll Mainnet
+    },
+    issuer: 'Tether',
+    description: 'USD-backed stablecoin by Tether',
+    website: 'https://tether.to',
+    chainIds: [8453, 42161, 137, 42220, 56, 10, 534352],
+  },
+  {
     region: 'Nigeria',
     flag: '/cngn-icon.jpeg',
     currency: 'NGN',
@@ -152,55 +202,5 @@ export const stablecoins = [
     description: 'Stablecoin pegged 1:1 to the Mexican Peso (MXN)',
     website: 'https://stablecoins.earth',
     chainIds: [8453],
-  },
-  {
-    region: 'United States',
-    flag: '/usdc-logo.svg',
-    currency: 'USD',
-    baseToken: 'USDC',
-    name: 'USD Coin',
-    decimals: 6,
-    addresses: {
-      8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // Base Mainnet
-      42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // Arbitrum One
-      137:   '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon Mainnet
-      42220: '0xcebA9300f2b948710d2653dD7B07f33A8B32118C', // Celo Mainnet
-      56:    '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // BNB Smart Chain
-      10:    '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // Optimism
-      534352:'0x06efdbff2a14a7c8e15944d1f4a48f9f95f663a4', // Scroll Mainnet
-    },
-    issuer: 'Circle',
-    description: 'USD-backed stablecoin by Circle',
-    website: 'https://www.circle.com/usdc',
-    chainIds: [8453, 42161, 137, 42220, 56, 10, 534352],
-  },
-  {
-    region: 'United States',
-    flag: '/usdt-icon.png',
-    currency: 'USD',
-    baseToken: 'USDT',
-    name: 'Tether USD',
-    decimals: {
-      8453: 6,  // Base Mainnet
-      42161: 6, // Arbitrum One
-      137:   6, // Polygon Mainnet
-      42220: 6, // Celo Mainnet
-      56:    18,// BNB Smart Chain
-      10:    6, // Optimism
-      534352:6, // Scroll Mainnet
-    },
-    addresses: {
-      8453:   '0xF1e92B575dcAA24fFA1B3334499a8F3B6E2F9Eb2', // Base Mainnet
-      42161: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', // Arbitrum One
-      137:   '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', // Polygon Mainnet
-      42220: '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e', // Celo Mainnet
-      56:    '0x55d398326f99059fF775485246999027B3197955', // BNB Smart Chain
-      10:    '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', // Optimism
-      534352:'0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df', // Scroll Mainnet
-    },
-    issuer: 'Tether',
-    description: 'USD-backed stablecoin by Tether',
-    website: 'https://tether.to',
-    chainIds: [8453, 42161, 137, 42220, 56, 10, 534352],
   },
 ];
