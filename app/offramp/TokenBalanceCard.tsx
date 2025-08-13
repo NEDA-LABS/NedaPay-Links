@@ -1,32 +1,35 @@
+// TokenBalanceCard.tsx
 import React from 'react';
-import { Loader2 } from 'lucide-react';
 
-const TokenBalanceCard: React.FC<{
+interface TokenBalanceCardProps {
   token: string;
   balance: string;
   loading: boolean;
-  isSelected?: boolean;
-  onClick?: () => void;
-}> = ({ token, balance, loading, isSelected, onClick }) => {
+  isSelected: boolean;
+  compactView?: boolean;
+}
+
+const TokenBalanceCard: React.FC<TokenBalanceCardProps> = ({ 
+  token, 
+  balance, 
+  loading, 
+  isSelected,
+  compactView = false
+}) => {
   return (
-    <div 
-      className={`flex justify-between items-center p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
-        isSelected ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-200'
-      }`} 
-      onClick={onClick}
-    >
-      <div>
-        <span className="text-slate-800 text-sm">{token}</span>
-      </div>
-      {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
-      ) : (
-        <span className="font-medium text-slate-800">
-          {parseFloat(balance).toLocaleString(undefined, {
-            maximumFractionDigits: 6,
-          })}
-        </span>
-      )}
+    <div className={`flex justify-between items-center ${compactView ? 'flex-row' : 'flex-col md:flex-row'}`}>
+      <span className={`font-medium ${isSelected ? 'text-white' : 'text-gray-300'} truncate`}>
+        {token}
+      </span>
+      <span className={`text-sm ${isSelected ? 'text-blue-100' : 'text-gray-100'} ml-2 md:ml-0`}>
+        {loading ? (
+          <div className="animate-pulse flex space-x-2">
+            <div className="h-4 w-12 bg-slate-700 rounded"></div>
+          </div>
+        ) : (
+          parseFloat(balance).toFixed(4)
+        )}
+      </span>
     </div>
   );
 };

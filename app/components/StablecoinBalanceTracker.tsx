@@ -8,6 +8,8 @@ import { X, AlertCircle, Wallet, Loader2, ChevronRight, Repeat, RefreshCw } from
 import SwapModal from "./SwapModal";
 import { Button } from "@/components/Button"; 
 import Image from "next/image";
+import ChainSwitcher from "@/components/ChainSwitcher";
+import WalletKit from "@/dashboard/WalletKit";
 
 type ChainId = 8453 | 42161 | 137 | 42220 | 56 | 534352 | 10;
 
@@ -428,22 +430,45 @@ export const StablecoinBalanceButton = () => {
 
   return (
     <>
-      <button 
-        className="z-40 bg-white/5 rounded-xl border border-white/20 text-center text-sm text-white font-medium p-2 hover:bg-white/10 flex items-center space-x-2 transition-all"
-      >
-        {loading ? (
-          <Loader2 className="animate-spin h-5 w-5" />
-        ) : (
-          <span>${totalBalance.toFixed(2)}</span>
-        )}
-      </button>
+      <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 hover:bg-slate-800/70 transition-all cursor-pointer"
+           onClick={() => setModalOpen(true)}>
+        
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+        
+          <h3 className="text-slate-300 text-base font-medium">Total Balance</h3>
+          <ChainSwitcher />
+        </div>
 
-      <StablecoinBalanceTracker
+        {/* Balance Amount */}
+        <div className="mb-4 flex items-center justify-center mx-auto">
+          {loading ? (
+            <div className="flex items-center space-x-3">
+              <Loader2 className="animate-spin h-8 w-8 text-slate-400" />
+              <div className="h-8 bg-slate-700/50 rounded w-32 animate-pulse"></div>
+            </div>
+          ) : (
+            <div className="flex text-4xl font-bold text-white text-center justify-center">
+              ${totalBalance.toLocaleString('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+              })}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center justify-center gap-8 mx-auto">
+        <WalletKit buttonName="Send" />
+        <WalletKit buttonName="Receive" />
+        </div>
+        
+      </div>
+
+      {/* <StablecoinBalanceTracker
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         setTotalBalance={setTotalBalance}
         setLoading={setLoading}
-      />
+      /> */}
     </>
   );
 };

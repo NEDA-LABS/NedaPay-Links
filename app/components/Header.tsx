@@ -17,13 +17,13 @@ import {
   Banknote,
   Coins,
   Link as LinkIcon,
-  Receipt
+  Receipt,
 } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Image from "next/image";
 import { AppSidebarToggle } from "@/dashboard/AppSidebar";
 import { SidebarProvider } from "@/compliance/user/components/ui/sidebar";
-import {LayoutDashboard} from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 
 // Import your actual components
 import WalletSelector from "./WalletSelector";
@@ -72,15 +72,11 @@ export default function Header() {
   if (!mounted) return null;
 
   return (
-    
-      <header
+    <header
       className={`
         sticky top-0 z-50 
         transition-all duration-300
-        ${scrolled 
-          ? "shadow-lg bg-[#004a6d]/50" 
-          : "shadow-sm"
-        }
+        ${scrolled ? "shadow-lg bg-[#004a6d]/50" : "shadow-sm"}
       `}
     >
       {/* Simple top border */}
@@ -88,37 +84,33 @@ export default function Header() {
 
       <div className="mx-auto sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
           {/* Logo Section */}
-          <div className="flex items-center pr-3">
-            {pathname === "/" && 
-               <Link href="/" className="group flex items-center space-x-3">
-               {/* Simplified Logo */}
-               <div className="relative flex">
-                 <div className="flex rounded-xl items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 -p-[8px]">
-                   <Image src="/logo.svg" alt="Logo" width={60} height={60}/>
-                 </div>
-                 <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                   <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center -ml-4">
-                     NEDAPay
-                   </span>
-                 </div>
-                 <span className="absolute -right-3 text-[0.6rem] z-10 text-slate-100 font-bold flex items-center justify-center ring-1 ring-slate-100 rounded-sm">
-                     BETA
-                   </span>
-               </div>
-             </Link>
-            }
-           {pathname !== "/"  && 
-           <div className="flex  md:hidden">
-            <AppSidebarToggle/>
-           </div>
-           }
+          <div className="flex items-center">
+            {pathname !== "/" && (
+              <div className="flex  md:hidden">
+                <AppSidebarToggle />
+              </div>
+            )}
+            <Link href="/" className="group flex items-center space-x-3">
+              {/* Simplified Logo */}
+              <div className="relative flex">
+                <div className="flex rounded-xl items-center justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 -p-[8px]">
+                  <Image src="/logo.svg" alt="Logo" width={60} height={60} />
+                </div>
+                <div className="flex justify-center group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                  <span className="text-sm relative z-10 text-slate-100 font-extrabold drop-shadow-lg p-1 hidden md:!flex items-center -ml-4">
+                    NEDAPay
+                  </span>
+                </div>
+                <span className="absolute -right-3 text-[0.6rem] z-10 text-slate-100 font-bold flex items-center justify-center ring-1 ring-slate-100 rounded-sm">
+                  BETA
+                </span>
+              </div>
+            </Link>
           </div>
 
           {/* Navigation and Actions */}
           <div className="flex items-center space-x-2 sm:space-x-4">
-            
             {/* Navigation Links */}
             {pathname === "/" && (
               <nav className="flex items-center space-x-2">
@@ -127,9 +119,7 @@ export default function Header() {
                   onClick={handleFAQClick}
                   className="relative overflow-hidden px-3 sm:px-4 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 font-medium bg-slate-200 shadow-sm group hidden md:!flex"
                 >
-                  <span className="relative z-10 flex items-center">
-                    FAQ
-                  </span>
+                  <span className="relative z-10 flex items-center">FAQ</span>
                 </a>
               </nav>
             )}
@@ -143,22 +133,20 @@ export default function Header() {
               </a>
             )} */}
 
-              {/* Action Buttons Container */}
-              <div className="flex items-center space-x-1 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2">
-                {/* Stablecoin Balance Modal Toggle */}
-                {/* <button
+            {/* Action Buttons Container */}
+            <div className="flex items-center space-x-1 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2">
+              {/* Stablecoin Balance Modal Toggle */}
+              {/* <button
                   onClick={() => setIsBalanceModalOpen(true)}
                   className="transition-colors bg-[#3E55E6] rounded-xl p-2"
                   title="View Stablecoin Balances"
                 >
                   <Coins className="w-5 h-5 hover:text-white" />
                 </button> */}
-                <NotificationTab />
-                
-                
-                
-                {/* Theme Toggle */}
-                {/* <button 
+              <NotificationTab />
+
+              {/* Theme Toggle */}
+              {/* <button 
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className={`p-2 rounded-full transition-all duration-300 ${
                   theme === "dark"
@@ -193,29 +181,21 @@ export default function Header() {
               </button> */}
               <WalletSelector />
               {/* Side Menu Button */}
-              
-                {/* <button
+
+              {/* <button
                 onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
                 className="p-2 rounded-xl transition-all duration-300 !bg-[#3E55E6] hover:from-blue-500 hover:to-indigo-500 border border-2 border-slate-200"
                 aria-label="Open menu"
               >
                 <Menu size={16} className="text-white hover:text-slate-700 transition-colors duration-300" />
               </button> */}
-              
-              
-              
             </div>
           </div>
         </div>
       </div>
-    
-    {/* Side Bar Modal */}
-    {/* <Sidebar isOpen={isSideMenuOpen} onClose={() => setIsSideMenuOpen(false)} authenticated={authenticated} /> */}
+
+      {/* Side Bar Modal */}
+      {/* <Sidebar isOpen={isSideMenuOpen} onClose={() => setIsSideMenuOpen(false)} authenticated={authenticated} /> */}
     </header>
-    
-    
-
-    
-
   );
 }

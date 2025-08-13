@@ -36,8 +36,8 @@ import {
 } from "lucide-react";
 import DailyRevenueChart from "./DailyRevenueChart";
 import Footer from "@/components/Footer";
-import ChainSwitcher from "@/components/ChainSwitcher";
-import WalletKit from "./WalletKit";
+
+
 // import {
 //   SidebarProvider,
 //   useSidebar,
@@ -344,9 +344,9 @@ export default function DashboardContent() {
                     <div className="bg-white/10 rounded-xl p-4 border border-white/20 items-center justify-centerm my-auto">
                       <div className="flex flex-row flex-wrap items-center gap-2 items-center my-auto">
                         
-                        {/* <div className="flex flex-row items-center gap-2">
-                        <p className="text-white font-mono text-sm">
-                          {walletAddress?.slice(0, 3)}...
+                        <div className="flex flex-row items-center gap-2">
+                        <p className="text-white font-mono text-base">
+                          {walletAddress?.slice(0, 5)}...
                           {walletAddress?.slice(-4)}
                         </p>
                         <Button
@@ -359,19 +359,19 @@ export default function DashboardContent() {
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
-                        </div> */}
+                        </div>
                         
-                        <ChainSwitcher />
+                        
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-2">
-                            <StablecoinBalanceButton />
+                            
                           </div>
                         </div>
-                        <WalletKit />
+                        
                       </div>
                       <QuickActions />
                     </div>
-                    <DailyRevenueChart transactions={transactions} />
+                    <StablecoinBalanceButton />
                   </div>
                 </>
               ) : (

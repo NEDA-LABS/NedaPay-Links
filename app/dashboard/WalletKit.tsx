@@ -7,7 +7,11 @@ import SwapModal from "@/components/SwapModal";
 import { useState } from "react";
 import WalletModal from "@/components/WalletEmbedded";
 
-export default function WalletKit() {
+interface WalletKitProps {
+  buttonName: string;
+}
+
+export default function WalletKit({ buttonName }: WalletKitProps) {
   const { wallets } = useWallets();
 
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
@@ -34,7 +38,7 @@ export default function WalletKit() {
   return (
     <div className="flex items-center">
       <div className="flex flex-row items-center my-auto">
-        {isPrivyEmbedded && (
+        
           <div className="flex mx-auto items-center">
             <Button
               size="sm"
@@ -42,11 +46,11 @@ export default function WalletKit() {
               onClick={() => openWalletModal("overview")}
               className="bg-white/10 text-white border-white/30 hover:bg-white/20 mx-auto"
             >
-              <Wallet className="h-3 w-3 mr-1" />
-              Wallet
+              {/* <Wallet className="h-3 w-3 mr-1" /> */}
+              {buttonName}
             </Button>
           </div>
-        )}
+        
         {/* <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <StablecoinBalanceButton />

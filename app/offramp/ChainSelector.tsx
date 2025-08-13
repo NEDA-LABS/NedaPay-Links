@@ -3,7 +3,7 @@ import TokenBalanceCard from './TokenBalanceCard';
 import { ChainConfig } from './offrampHooks/constants';
 import { useBalances } from './offrampHooks/useBalance';
 import { ArrowRight } from 'lucide-react';
-import {useWallets} from '@privy-io/react-auth';
+import { useWallets } from '@privy-io/react-auth';
 
 interface ChainSelectorProps {
   chains: ChainConfig[];
@@ -21,6 +21,7 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
       ...prev,
       [chainId]: token
     }));
+    
     const chain = chains.find(c => c.id === parseInt(chainId)) || chains[0];
     if (chain) {
       await wallets[0].switchChain(chain.id);
@@ -29,30 +30,35 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
   };
 
   return (
-    <div className="bg-gradient-to-b from-slate-900 to-slate-800 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/10">
-      <h2 className="text-xl font-semibold text-white mb-2">
-        Select a Network & Token
-      </h2>
-      <p className="text-gray-400 text-sm mb-6">Click a token balance to proceed to the cash-out form</p>
+    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-purple-900/30 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/10 overflow-hidden">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-white bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Select Network & Token
+        </h2>
+        <p className="text-gray-400 text-sm mt-2">
+          Click a token to proceed to cash-out
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {chains.map(chain => {
           const currentSelectedToken = selectedTokens[chain.id] || chain.tokens[0];
-
           return (
             <div
               key={chain.id}
-              className="group border border-white/10 bg-slate-950 rounded-2xl p-5 hover:border-blue-500/50 hover:shadow-lg transition-all duration-200"
+              className="border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-800/50 rounded-2xl p-5 transition-all duration-300 hover:shadow-lg hover:border-purple-500/30 group"
             >
               {/* Chain Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <img
-                  src={chain.icon}
-                  alt={chain.name}
-                  className="w-10 h-10 rounded-full ring-2 ring-white/20"
-                />
+              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
+                <div className="relative">
+                  <img
+                    src={chain.icon}
+                    alt={chain.name}
+                    className="w-12 h-12 rounded-full p-1 bg-white"
+                  />
+                </div>
                 <div>
-                  <h3 className="font-semibold text-white">{chain.name}</h3>
+                  <h3 className="font-bold text-white">{chain.name}</h3>
                   <p className="text-xs text-gray-400">{chain.nativeCurrency.symbol}</p>
                 </div>
               </div>
@@ -63,20 +69,30 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
                   <div
                     key={`${chain.id}-${token}`}
                     onClick={() => handleTokenSelect(chain.id.toString(), token)}
-                    className={`cursor-pointer rounded-xl p-3 border transition-all duration-200 ${
-                      token === currentSelectedToken
-                        ? 'border-blue-500 bg-blue-500/10'
-                        : 'border-white/10 hover:border-blue-400/50 hover:bg-blue-400/5'
-                    }`}
+                    className={`
+                      cursor-pointer rounded-xl p-3 transition-all duration-200
+                      flex flex-col md:flex-row md:items-center justify-between
+                      ${token === currentSelectedToken
+                        ? 'bg-gradient-to-r from-blue-600/30 to-purple-600/30 border border-blue-500/50 shadow-lg'
+                        : 'bg-slate-900/50 border border-white/10 hover:border-blue-400/50 hover:bg-blue-500/10'
+                      }
+                    `}
                   >
-                    <TokenBalanceCard
-                      token={token}
-                      balance={balances[chain.id]?.[token] || '0'}
-                      loading={loading}
-                      isSelected={token === currentSelectedToken}
-                    />
-                    <div className="flex justify-end items-center text-blue-400 text-xs mt-1">
-                      Offramp <ArrowRight size={14} className="ml-1" />
+                    <div className="flex-1 min-w-0">
+                      <TokenBalanceCard
+                        token={token}
+                        balance={balances[chain.id]?.[token] || '0'}
+                        loading={loading}
+                        isSelected={token === currentSelectedToken}
+                        compactView={true}
+                      />
+                    </div>
+                    
+                    <div className={`flex items-center mt-2 md:mt-0 md:ml-3 ${
+                      token === currentSelectedToken ? 'text-blue-300' : 'text-blue-400'
+                    }`}>
+                      <span className="text-xs font-medium">Offramp</span>
+                      <ArrowRight size={16} className="ml-1" />
                     </div>
                   </div>
                 ))}
@@ -84,6 +100,12 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
             </div>
           );
         })}
+      </div>
+      
+      <div className="mt-6 pt-4 border-t border-white/10 text-center">
+        <p className="text-xs text-gray-500">
+          Powered by secure off-chain protocols
+        </p>
       </div>
     </div>
   );
