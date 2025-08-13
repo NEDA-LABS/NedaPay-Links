@@ -429,7 +429,6 @@ export const StablecoinBalanceButton = () => {
   return (
     <>
       <button 
-        onClick={() => setModalOpen(true)}
         className="z-40 bg-white/5 rounded-xl border border-white/20 text-center text-sm text-white font-medium p-2 hover:bg-white/10 flex items-center space-x-2 transition-all"
       >
         {loading ? (
