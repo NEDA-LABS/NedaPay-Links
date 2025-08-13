@@ -37,14 +37,15 @@ import {
 import DailyRevenueChart from "./DailyRevenueChart";
 import Footer from "@/components/Footer";
 
-
 // import {
 //   SidebarProvider,
 //   useSidebar,
 // } from "@/compliance/user/components/ui/sidebar";
-import { StablecoinBalanceButton, StablecoinBalanceTracker } from "@/components/StablecoinBalanceTracker";
+import {
+  StablecoinBalanceButton,
+  StablecoinBalanceTracker,
+} from "@/components/StablecoinBalanceTracker";
 import QuickActions from "@/components/QuickActions";
-
 
 // Define ABIs and constants
 const ERC20_ABI = [
@@ -334,67 +335,68 @@ export default function DashboardContent() {
         </div>
       </div>
       <div className="bg-gray-800/70 pt-12 rounded-2xl">
-      <Card className="relative border-0 bg-gray-800 text-white shadow-2xl w-[92%] mx-auto rounded-xl">
-        <CardContent className="relative p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              {authenticated ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white/10 rounded-xl p-4 border border-white/20 items-center justify-centerm my-auto">
-                      <div className="flex flex-row flex-wrap items-center gap-2 items-center my-auto">
-                        
-                        <div className="flex flex-row items-center gap-2">
-                        <p className="text-white font-mono text-base">
-                          {walletAddress?.slice(0, 5)}...
-                          {walletAddress?.slice(-4)}
-                        </p>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 w-6 p-0 text-white/70 hover:text-white"
-                          onClick={() =>
-                            navigator.clipboard.writeText(walletAddress || "")
-                          }
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                        </div>
-                        
-                        
-                        <div className="flex items-center gap-2">
+        <Card className="relative border-0 bg-gray-800 text-white shadow-2xl w-[92%] mx-auto rounded-xl">
+          <CardContent className="relative p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="lg:col-span-2 space-y-4">
+                {authenticated ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="rounded-xl p-4 items-center justify-centerm my-auto">
+                        <div className="flex flex-row flex-wrap items-center gap-2 items-center my-auto">
+                          <div className="flex flex-row items-center gap-2">
+                            <p className="text-white font-mono text-base">
+                              {walletAddress?.slice(0, 5)}...
+                              {walletAddress?.slice(-4)}
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-white/70 hover:text-white"
+                              onClick={() =>
+                                navigator.clipboard.writeText(
+                                  walletAddress || ""
+                                )
+                              }
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+
                           <div className="flex items-center gap-2">
-                            
+                            <div className="flex items-center gap-2"></div>
                           </div>
                         </div>
-                        
+                        <QuickActions />
                       </div>
-                      <QuickActions />
+                      <StablecoinBalanceButton />
                     </div>
-                    <StablecoinBalanceButton />
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <Shield className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        Please Connect Wallet
+                      </h2>
+                      <p className="text-white/80">
+                        Connect your wallet to get started
+                      </p>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <Shield className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Please Connect Wallet
-                    </h2>
-                    <p className="text-white/80">
-                      Connect your wallet to get started
-                    </p>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-      <StablecoinBalanceTracker isOpen={true} onClose={() => {}} setTotalBalance={() => {}} setLoading={() => {}} />
-
+          </CardContent>
+        </Card>
+        <StablecoinBalanceTracker
+          isOpen={true}
+          onClose={() => {}}
+          setTotalBalance={() => {}}
+          setLoading={() => {}}
+        />
       </div>
     </div>
   );

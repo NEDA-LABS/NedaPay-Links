@@ -430,45 +430,72 @@ export const StablecoinBalanceButton = () => {
 
   return (
     <>
-      <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 hover:bg-slate-800/70 transition-all cursor-pointer"
-           onClick={() => setModalOpen(true)}>
-        
+       <div className="group relative overflow-hidden">
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-800/60 via-slate-800/40 to-slate-900/60 backdrop-blur-md rounded-3xl"></div>
+      
+      {/* Subtle Border Glow */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      {/* Main Card */}
+      <div 
+        className="relative bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-600/30 p-8 hover:bg-slate-800/50 hover:border-slate-500/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
+        onClick={() => setModalOpen(true)}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-        
-          <h3 className="text-slate-300 text-base font-medium">Total Balance</h3>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <h3 className="text-slate-300 text-lg font-medium tracking-wide">Total Stablecoins Balance</h3>
+          </div>
           <ChainSwitcher />
         </div>
 
-        {/* Balance Amount */}
-        <div className="mb-4 flex items-center justify-center mx-auto">
+        {/* Balance Section */}
+        <div className="mb-8 text-center">
           {loading ? (
-            <div className="flex items-center space-x-3">
-              <Loader2 className="animate-spin h-8 w-8 text-slate-400" />
-              <div className="h-8 bg-slate-700/50 rounded w-32 animate-pulse"></div>
+            <div className="flex items-center justify-center space-x-4">
+              <Loader2 className="animate-spin h-10 w-10 text-blue-400" />
+              <div className="space-y-2">
+                <div className="h-12 bg-gradient-to-r from-slate-700/50 to-slate-600/30 rounded-xl w-48 animate-pulse"></div>
+                <div className="h-4 bg-slate-700/30 rounded w-24 mx-auto animate-pulse"></div>
+              </div>
             </div>
           ) : (
-            <div className="flex text-4xl font-bold text-white text-center justify-center">
-              ${totalBalance.toLocaleString('en-US', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-              })}
+            <div className="space-y-2">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent leading-none">
+                ${totalBalance.toLocaleString('en-US', { 
+                  minimumFractionDigits: 2, 
+                  maximumFractionDigits: 2 
+                })}
+              </div>
+              <p className="text-slate-400 text-sm font-medium">USD</p>
             </div>
           )}
         </div>
-        <div className="flex items-center justify-center gap-8 mx-auto">
-        <WalletKit buttonName="Send" />
-        <WalletKit buttonName="Receive" />
-        </div>
-        
-      </div>
 
-      {/* <StablecoinBalanceTracker
-        isOpen={modalOpen}
+        {/* Action Buttons */}
+        <div className="flex items-center justify-center gap-4">
+          <div className="hover:scale-105 transition-transform duration-200">
+            <WalletKit buttonName="Send" />
+          </div>
+          <div className="w-px h-8 bg-slate-600/50"></div>
+          <div className="hover:scale-105 transition-transform duration-200">
+            <WalletKit buttonName="Receive" />
+          </div>
+        </div>
+
+        {/* Subtle Corner Accent */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-500/5 to-transparent rounded-3xl"></div>
+      </div>
+    </div>
+
+      <StablecoinBalanceTracker
+        isOpen={false}
         onClose={() => setModalOpen(false)}
         setTotalBalance={setTotalBalance}
         setLoading={setLoading}
-      /> */}
+      />
     </>
   );
 };
