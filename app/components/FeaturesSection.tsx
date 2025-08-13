@@ -107,10 +107,10 @@ export default function Features() {
 
 
       <div className="flex flex-col z-10 mx-auto justify-center items-center">
-      <h1 className="text-3xl sm:text-2xl lg:text-5xl font-black mb-8 leading-tight">
+      <h1 className="text-3xl sm:text-2xl lg:text-5xl font-black mb-8 text-center">
             <span className="block text-white mb-2">Everything You Need</span>
             <span className="block text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-purple-600 bg-clip-text">
-              Stablecoin Payments
+              To Send and Receive Stablecoin Payments
             </span>
           </h1>
         {/* <div className="flex flex-col lg:flex-row justify-between gap-4 pb-12 justify-center">
@@ -128,7 +128,7 @@ export default function Features() {
               alt="Coins illustration"
               height={100}
               width={100}
-              className="absolute top-[30%] left-[5%] overflow-hidden opacity-90"
+              className="absolute left-[0%] top-[50%] md:left-[5%] overflow-hidden opacity-90"
               priority
             />
             <Image
@@ -136,7 +136,7 @@ export default function Features() {
               alt="Coins illustration"
               height={100}
               width={100}
-              className="absolute top-[50%] left-[50%] overflow-hidden opacity-90"
+              className="absolute right-[0%] top-[50%] md:left-[50%] overflow-hidden opacity-90"
               priority
             />
             <Image
@@ -144,7 +144,7 @@ export default function Features() {
               alt="Coins illustration"
               height={100}
               width={100}
-              className="absolute top-[65%] md:top-[80%] left-[30%] overflow-hidden opacity-90"
+              className="absolute top-[65%] left-[0%] md:top-[80%] md:left-[20%] overflow-hidden opacity-90"
               priority
             />
             <Image
@@ -152,7 +152,7 @@ export default function Features() {
               alt="Coins illustration"
               height={100}
               width={100}
-              className="absolute top-[7%] md:top-[10%] left-[30%] overflow-hidden opacity-90"
+              className="absolute top-[7%] right-[0%] md:top-[10%] md:left-[30%] overflow-hidden opacity-90"
               priority
             />
 

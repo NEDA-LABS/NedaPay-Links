@@ -141,7 +141,7 @@ const avatars = [
               <div className="mx-auto">
                 <h3 className="text-white/80 text-sm font-medium mb-2">
                   Also available as a{" "}
-                  <a href="#" className="text-sm font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+                  <a href="https://farcaster.xyz/miniapps/nhIkqfY9DK47/nedapay" target="_blank" className="text-sm font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
                     Mini App
                   </a>{" "}
                   in Farcaster
