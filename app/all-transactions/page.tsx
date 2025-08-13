@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import Image from "next/image";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Search,
@@ -67,13 +68,18 @@ const statusConfig = {
   },
 };
 
-const currencySymbols: { [key: string]: string } = stablecoins.reduce(
+const currencySymbols: { [key: string]: { icon: string; label: string } } = stablecoins.reduce(
   (acc, coin) => ({
     ...acc,
-    [coin.baseToken]: coin.flag || "🌐",
+    [coin.baseToken]: {
+      icon: coin.flag ? `${coin.flag}` : "https://via.placeholder.com/24",
+      label: coin.baseToken
+    },
   }),
-  {} as { [key: string]: string }
+  {} as { [key: string]: { icon: string; label: string } }
 );
+
+console.log("currency symbols", currencySymbols);
 
 function TransactionsPage() {
   const { authenticated, user } = usePrivy();
@@ -193,7 +199,7 @@ function TransactionsPage() {
   }, []);
 
   const formatCurrency = (amount: number, currency: string) => {
-    const symbol = currencySymbols[currency] || currency;
+    const symbol = currencySymbols[currency]?.label || currency;
     return `${symbol} ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
@@ -304,21 +310,37 @@ function TransactionsPage() {
                   <p className="text-sm font-medium text-gray-400">
                     Total Volume
                   </p>
-                  {Object.keys(stats.totalsByCurrency).length === 0 ? (
-                    <p className="text-2xl font-bold text-white">$0.00</p>
-                  ) : Object.keys(stats.totalsByCurrency).length === 1 ? (
-                    <p className="text-2xl font-bold text-white">
-                      {formatCurrencyTotals(stats.totalsByCurrency)}
-                    </p>
-                  ) : (
-                    <div className="space-y-1">
-                      {Object.entries(stats.totalsByCurrency).map(([currency, amount]) => (
-                        <p key={currency} className="text-lg font-bold text-white">
-                          {formatCurrency(amount, currency)}
-                        </p>
-                      ))}
-                    </div>
-                  )}
+                  <div className="space-y-1">
+                    {Object.keys(stats.totalsByCurrency).length === 0 ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded bg-gray-700 flex items-center justify-center">
+                          <DollarSign className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <span className="text-2xl font-bold text-white">$0.00</span>
+                      </div>
+                    ) : (
+                      Object.entries(stats.totalsByCurrency).map(([currency, amount]) => (
+                        <div key={currency} className="flex items-center gap-2">
+                          {currencySymbols[currency] ? (
+                            <Image
+                              src={currencySymbols[currency].icon}
+                              alt={"label"}
+                              width={24}
+                              height={24}
+                              className="rounded-full"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded bg-gray-700 flex items-center justify-center">
+                              <DollarSign className="w-4 h-4 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="text-lg font-bold text-white">
+                            {formatCurrency(amount, currency)}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
                 <div className="p-3 bg-blue-900/50 rounded-lg">
                   <DollarSign className="w-6 h-6 text-blue-400" />

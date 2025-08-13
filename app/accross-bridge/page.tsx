@@ -84,6 +84,18 @@ const chainConfig = {
   },
 };
 
+// Explorer configuration
+const explorerConfig: Record<number, string> = {
+  1: "https://etherscan.io/tx/",
+  10: "https://optimistic.etherscan.io/tx/",
+  42161: "https://arbiscan.io/tx/",
+  8453: "https://basescan.org/tx/",
+  137: "https://polygonscan.com/tx/",
+  56: "https://bscscan.com/tx/",
+  534352: "https://scrollscan.com/tx/",
+  42220: "https://celoscan.io/tx/",
+};
+
 // Helper function to get token decimals by chain
 const getTokenDecimals = (token: any, chainId: number): number => {
   if (typeof token.decimals === 'number') {
@@ -176,6 +188,16 @@ interface Progress {
   actionSuccess?: boolean;
 }
 
+interface CompletedBridge {
+  fromChainId: number;
+  toChainId: number;
+  tokenSymbol: string;
+  amountSent: string;
+  amountReceived: string;
+  depositTxHash?: string;
+  fillTxHash?: string;
+}
+
 function BridgePage() {
   const { login, authenticated, ready } = usePrivy();
   const { wallets } = useWallets();
@@ -203,6 +225,11 @@ function BridgePage() {
   const [supportedChains, setSupportedChains] = useState<any[]>([]);
   const [routeSupported, setRouteSupported] = useState(true);
   const [tokenSupported, setTokenSupported] = useState(true);
+  
+  // Bridge completion modal state
+  const [isBridgeComplete, setIsBridgeComplete] = useState(false);
+  const [completedBridge, setCompletedBridge] = useState<CompletedBridge | null>(null);
+  const [stepProgress, setStepProgress] = useState<TransactionProgress[]>([]);
 
   // Compute available tokens
   const availableTokens = useMemo(() => {
@@ -400,10 +427,13 @@ function BridgePage() {
   // Execute bridge
   const executeBridge = useCallback(async () => {
     if (!quote || !walletClient || !address || needsChainSwitch) return;
+    
     setExecuting(true);
     setError("");
     setSuccess("");
     setProgress(null);
+    setStepProgress([]); // Reset step progress
+    
     try {
       const deposit = { ...quote.deposit, recipient: recipient || address };
       await acrossClient.executeQuote({
@@ -411,6 +441,8 @@ function BridgePage() {
         deposit,
         onProgress: (p: TransactionProgress) => {
           setProgress(p);
+          setStepProgress(prev => [...prev, p]); // Track all progress steps
+          
           if (p.step === "approve" && p.status === "txSuccess") {
             const msg = "Token approval successful! 🎉";
             setSuccess(msg);
@@ -425,6 +457,25 @@ function BridgePage() {
             const msg = "Bridge complete! Funds received ✅";
             setSuccess(msg);
             toast.success(msg);
+            
+            // Capture deposit transaction from step history
+            const depositStep = stepProgress.find(step => step.step === 'deposit' && step.status === 'txSuccess');
+            
+            // Set completed bridge data for modal
+            setCompletedBridge({
+              fromChainId,
+              toChainId,
+              tokenSymbol: selectedToken,
+              amountSent: amount,
+              amountReceived: formatUnits(quote.deposit.outputAmount, getTokenDecimals(tokenDetails, toChainId)),
+              depositTxHash: depositStep?.txReceipt?.transactionHash,
+              fillTxHash: p.txReceipt?.transactionHash,
+            });
+            
+            // Show completion modal
+            setIsBridgeComplete(true);
+            
+            // Reset form
             setQuote(null);
             setAmount("");
             setProgress(null);
@@ -445,7 +496,7 @@ function BridgePage() {
     } finally {
       setExecuting(false);
     }
-  }, [quote, walletClient, address, recipient, needsChainSwitch]);
+  }, [quote, walletClient, address, recipient, needsChainSwitch, fromChainId, toChainId, selectedToken, stepProgress, tokenDetails]);
 
   // Swap chains
   const swapChains = () => {
@@ -594,8 +645,70 @@ function BridgePage() {
     );
   }
 
-  // Get destination token decimals
-  const toTokenDecimals = getTokenDecimals(tokenDetails, toChainId);
+  // Bridge Completion Modal
+  const BridgeCompleteModal = () => {
+    if (!isBridgeComplete || !completedBridge) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+        <div className="bg-gray-800 border border-gray-700 rounded-2xl max-w-md w-full p-6">
+          <div className="text-center">
+            <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto" />
+            <h3 className="text-2xl font-bold text-white mt-4">Bridge Complete!</h3>
+            <p className="text-gray-400 mt-2">
+              You have successfully bridged {completedBridge.amountSent} {completedBridge.tokenSymbol} from {chainConfig[completedBridge.fromChainId as keyof typeof chainConfig]?.name} to {chainConfig[completedBridge.toChainId as keyof typeof chainConfig]?.name}.
+            </p>
+            
+            <div className="mt-6 space-y-3 text-left bg-gray-900 rounded-lg p-4">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Sent:</span>
+                <span className="text-white">{completedBridge.amountSent} {completedBridge.tokenSymbol}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Received:</span>
+                <span className="text-white">{completedBridge.amountReceived} {completedBridge.tokenSymbol}</span>
+              </div>
+              
+              {completedBridge.depositTxHash && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Deposit TX:</span>
+                  <a 
+                    href={`${explorerConfig[completedBridge.fromChainId]}${completedBridge.depositTxHash}`} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline"
+                  >
+                    View
+                  </a>
+                </div>
+              )}
+              
+              {completedBridge.fillTxHash && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Fill TX:</span>
+                  <a 
+                    href={`${explorerConfig[completedBridge.toChainId]}${completedBridge.fillTxHash}`} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline"
+                  >
+                    View
+                  </a>
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => setIsBridgeComplete(false)}
+              className="mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen">
@@ -811,7 +924,7 @@ function BridgePage() {
                   <div className="bg-gray-800 rounded-lg p-4">
                     <div className="text-sm text-gray-400 mb-1">You'll Receive</div>
                     <div className="text-base font-bold text-white">
-                      {Number(formatUnits(quote.deposit.outputAmount, toTokenDecimals)).toFixed(6)} {tokenDetails.symbol}
+                      {Number(formatUnits(quote.deposit.outputAmount, getTokenDecimals(tokenDetails, toChainId))).toFixed(6)} {tokenDetails.symbol}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       on {chainConfig[toChainId as keyof typeof chainConfig]?.name}
@@ -893,6 +1006,9 @@ function BridgePage() {
           </div>
         </div>
       </main>
+      
+      {/* Bridge Completion Modal */}
+      <BridgeCompleteModal />
     </div>
   );
 }
