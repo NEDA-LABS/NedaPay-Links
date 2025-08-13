@@ -93,7 +93,7 @@ const OffRampForm: React.FC<{
     <div className="bg-gray-900/90 backdrop-blur-sm rounded-3xl p-4 shadow-2xl border border-gray-700 mb-8">
       {/* Confirmation Modal */}
       {showConfirmation && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex md:items-center items-end justify-center p-4">
           <div className="bg-gray-800 rounded-2xl border border-gray-700 max-w-md w-full p-6 relative">
             <button
               onClick={() => setShowConfirmation(false)}
