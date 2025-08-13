@@ -90,7 +90,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
     : GAS_FEES.NORMAL[chainName];
   
   const feeCurrency = gasAbstractionActive ? token : chain.nativeCurrency.symbol;
-  const supportedAbstractionChains = ["BASE"];
+  const supportedAbstractionChains = ["BASE", "CELO"];
 
   // Calculate receive amount
   const receiveAmount = amount && rate
