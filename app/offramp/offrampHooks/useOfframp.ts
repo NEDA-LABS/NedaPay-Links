@@ -90,7 +90,8 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
     : GAS_FEES.NORMAL[chainName];
   
   const feeCurrency = gasAbstractionActive ? token : chain.nativeCurrency.symbol;
-  const supportedAbstractionChains = ["BASE", "CELO"];
+  const supportedAbstractionChains = ["BASE", "CELO", "ARBITRUM"];
+  const supportedAbstractionTokens = ["USDC"];
 
   // Calculate receive amount
   const receiveAmount = amount && rate
@@ -100,7 +101,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   // Initialize Biconomy
   useEffect(() => {
     const initBiconomy = async () => {
-      if (!activeWallet?.address || isCoinbaseWallet || !supportedAbstractionChains.includes(chainName)) return;
+      if (!activeWallet?.address || isCoinbaseWallet || !supportedAbstractionChains.includes(chainName) || !supportedAbstractionTokens.includes(token)) return;
 
       setGasAbstractionInitializing(true);
       setGasAbstractionFailed(false);
