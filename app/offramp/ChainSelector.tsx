@@ -3,6 +3,7 @@ import TokenBalanceCard from './TokenBalanceCard';
 import { ChainConfig } from './offrampHooks/constants';
 import { useBalances } from './offrampHooks/useBalance';
 import { ArrowRight } from 'lucide-react';
+import {useWallets} from '@privy-io/react-auth';
 
 interface ChainSelectorProps {
   chains: ChainConfig[];
@@ -13,14 +14,16 @@ interface ChainSelectorProps {
 const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, userAddress }) => {
   const { balances, loading } = useBalances(chains, userAddress);
   const [selectedTokens, setSelectedTokens] = useState<Record<string, string>>({});
+  const { wallets } = useWallets();
 
-  const handleTokenSelect = (chainId: string, token: string) => {
+  const handleTokenSelect = async (chainId: string, token: string) => {
     setSelectedTokens(prev => ({
       ...prev,
       [chainId]: token
     }));
     const chain = chains.find(c => c.id === parseInt(chainId)) || chains[0];
     if (chain) {
+      await wallets[0].switchChain(chain.id);
       onSelectChain(chain, token);
     }
   };

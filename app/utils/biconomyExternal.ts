@@ -25,7 +25,7 @@ export type WalletType = {
 const CHAIN_CONFIG: Record<number, Chain> = {
   8453: { id: 8453, name: 'Base', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: ['https://mainnet.base.org'] } }, blockExplorers: { default: { name: 'Basescan', url: 'https://basescan.org' } } },
   42161: { id: 42161, name: 'Arbitrum One', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: ['https://arb1.arbitrum.io/rpc'] } }, blockExplorers: { default: { name: 'Arbiscan', url: 'https://arbiscan.io' } } },
-  137: { id: 137, name: 'Polygon', nativeCurrency: { name: 'Matic', symbol: 'MATIC', decimals: 18 }, rpcUrls: { default: { http: ['https://polygon-rpc.com'] } }, blockExplorers: { default: { name: 'Polygonscan', url: 'https://polygonscan.com' } } },
+  137: { id: 137, name: 'Polygon', nativeCurrency: { name: 'Matic', symbol: 'POL', decimals: 18 }, rpcUrls: { default: { http: ['https://polygon-rpc.com'] } }, blockExplorers: { default: { name: 'Polygonscan', url: 'https://polygonscan.com' } } },
   42220: { id: 42220, name: 'Celo', nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 }, rpcUrls: { default: { http: ['https://forno.celo.org'] } }, blockExplorers: { default: { name: 'Celoscan', url: 'https://celoscan.io' } } }
 };
 

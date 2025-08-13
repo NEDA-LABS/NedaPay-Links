@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 interface SuccessMessageProps {
   success: string;
@@ -8,30 +9,24 @@ interface SuccessMessageProps {
 
 const SuccessMessage: React.FC<SuccessMessageProps> = ({ success, onBack }) => {
   return (
-    <div className="bg-gray-800 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
-      <div className="text-center py-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-          <svg
-            className="w-8 h-8 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 13l4 4L19 7"
-            ></path>
-          </svg>
+    <div className="bg-gray-800 backdrop-blur-sm rounded-3xl px-4 shadow-2xl border border-white/20">
+      <div className="text-center py-4">
+        <div className="inline-flex items-center justify-center w-30 h-30 mb-4">
+          <Image
+            src="/logo.svg"
+            alt="Success"
+            width={100}
+            height={100}
+          />
+         
         </div>
-        <h2 className="text-2xl font-bold text-gray-100 mb-2">Payment Successful!</h2>
+        <h2 className="text-lg font-bold text-gray-100 mb-2">Payment Successful!</h2>
         <p className="text-gray-100 mb-6">
           Your offramp transaction has been initiated successfully
         </p>
         
         <div className="bg-gray-50 rounded-xl p-6 text-left mb-6">
-          <pre className="whitespace-pre-wrap text-sm text-gray-800">{success}</pre>
+          <pre className="whitespace-pre-wrap text-xs text-gray-800">{success}</pre>
         </div>
         
         <button
@@ -40,8 +35,9 @@ const SuccessMessage: React.FC<SuccessMessageProps> = ({ success, onBack }) => {
         >
           <ArrowLeft className="w-4 h-4" />
           Make Another Transaction
+
         </button>
-        
+        <p className='text-xs'>If withdraw fails, your tokens will be refunded</p>
         <p className="text-sm text-gray-100 mt-4">
           You can track the status of your transaction in your account <a href="/all-notifications" className="text-blue-300 hover:underline">notification center</a> 
         </p>

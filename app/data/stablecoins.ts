@@ -6,11 +6,19 @@ export const stablecoins = [
     currency: 'USD',
     baseToken: 'USDC',
     name: 'USD Coin',
-    decimals: 6,
+    decimals: {
+      8453: 6,  // Base Mainnet
+      42161: 6, // Arbitrum One
+      137:   6, // Polygon Mainnet
+      42220: 6, // Celo Mainnet
+      56:    18,// BNB Smart Chain
+      10:    6, // Optimism
+      534352:6, // Scroll Mainnet
+    },
     addresses: {
       8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // Base Mainnet
       42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // Arbitrum One
-      137:   '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon Mainnet
+      137:   '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Polygon Mainnet
       42220: '0xcebA9300f2b948710d2653dD7B07f33A8B32118C', // Celo Mainnet
       56:    '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // BNB Smart Chain
       10:    '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // Optimism
