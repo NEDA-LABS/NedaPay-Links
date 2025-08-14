@@ -7,6 +7,7 @@ import { MetricCard } from "./MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Badge } from "@/components/Badge";
+import { Copy, Check } from "lucide-react";
 import SwapModal from "@/components/SwapModal";
 import { PaymentMethods } from "./PaymentMethods";
 import Header from "@/components/Header";
@@ -25,7 +26,7 @@ import {
   BarChart3,
   PieChart,
   ExternalLink,
-  Copy,
+  Copy as CopyIcon,
   Sparkles,
   Zap,
   Globe,
@@ -107,6 +108,8 @@ export default function DashboardContent() {
     monthlyGrowth: 0,
   });
   const [selectedStablecoin, setSelectedStablecoin] = useState<string>("");
+
+  const [copied, setCopied] = useState(false);
 
   // Set up provider and multicall contract
   const provider = useMemo(
@@ -353,14 +356,18 @@ export default function DashboardContent() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-6 w-6 p-0 text-white/70 hover:text-white"
-                              onClick={() =>
-                                navigator.clipboard.writeText(
-                                  walletAddress || ""
-                                )
-                              }
+                              className="h-6 w-6 p-0 text-white/70 hover:text-white z-100"
+                              onClick={() => {
+                                navigator.clipboard.writeText(walletAddress || "")
+                                setCopied(true)
+                                setTimeout(() => setCopied(false), 2000)
+                              }}
                             >
-                              <Copy className="h-3 w-3" />
+                              {copied ? (
+                                <Check className="h-3 w-3" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
                             </Button>
                           </div>
 
