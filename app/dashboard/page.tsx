@@ -329,16 +329,16 @@ export default function DashboardContent() {
       <Header />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl md:text-4xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-white">
             Your Dashboard
           </h1>
-          <p className="text-sm md:text-lg text-white text-muted-foreground mt-2">
+          {/* <p className="text-sm md:text-lg text-white text-muted-foreground mt-2">
             Seamlessly manage stablecoin payments and monitor your business
             performance
-          </p>
+          </p> */}
         </div>
       </div>
-      <div className="bg-gray-800/70 pt-12 rounded-2xl">
+      <div className="bg-gray-800/70 md:pt-12 rounded-2xl">
         <Card className="relative border-0 bg-gray-800 text-white shadow-2xl w-[92%] mx-auto rounded-xl">
           <CardContent className="relative p-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

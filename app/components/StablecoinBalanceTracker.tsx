@@ -288,7 +288,7 @@ export const StablecoinBalanceTracker = ({
     <div className="z-50 flex items-center justify-center md:p-4 overflow-auto rounded-2xl w-full">
       <div className="max-w-6xl bg-gray-800 rounded-2xl shadow-xl w-[95%] mx-auto">
         <div className="h-full overflow-auto"> 
-          <div className="p-6 sticky top-0 z-10">
+          <div className="md:p-6 sticky top-0 z-10">
             <div className="flex flex-col md:flex-row md:justify-between">
               <div className="mt-4 md:mt-0 flex space-x-2">
                 {wallets[0]?.walletClientType === "coinbase_wallet" && loading && (
@@ -300,10 +300,10 @@ export const StablecoinBalanceTracker = ({
               </div>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-white mb-4 text-center">Stablecoins</h3>
+          <h3 className="text-lg font-semibold text-white text-center">Stablecoins</h3>
           
           {errors.length > 0 && (
-            <div className="p-3 bg-red-900/30 rounded-lg mx-4 mb-4">
+            <div className="p-3 bg-red-900/30 rounded-lg mx-4 mb-3">
               {errors.map((err, i) => (
                 <div key={i} className="text-red-400 text-sm flex items-center">
                   <AlertCircle className="mr-2 h-4 w-4" /> {err}
@@ -440,18 +440,18 @@ export const StablecoinBalanceButton = () => {
       
       {/* Main Card */}
       <div 
-        className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-600/30 p-8 hover:bg-slate-800/50 hover:border-slate-500/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
+        className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-600/30 p-2 hover:bg-slate-800/50 hover:border-slate-500/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <h3 className="text-slate-300 text-lg font-medium tracking-wide">Total Stablecoins Balance</h3>
+            <h3 className="text-slate-300 text-sm md:text-lg font-medium tracking-wide">Total Stablecoins Balance</h3>
           </div>
           <ChainSwitcher />
         </div>
 
         {/* Balance Section */}
-        <div className="mb-8 text-center">
+        <div className="md:mb-8 text-center">
           {loading ? (
             <div className="flex items-center justify-center space-x-4">
               <Loader2 className="animate-spin h-10 w-10 text-blue-400" />
@@ -462,7 +462,7 @@ export const StablecoinBalanceButton = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent leading-none">
+              <div className="text-base md:text-6xl font-bold bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent leading-none">
                 ${totalBalance.toLocaleString('en-US', { 
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
