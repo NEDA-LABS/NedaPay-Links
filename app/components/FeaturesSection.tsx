@@ -152,7 +152,7 @@ export default function Features() {
               alt="Coins illustration"
               height={100}
               width={100}
-              className="absolute top-[7%] right-[0%] md:top-[10%] md:left-[30%] overflow-hidden opacity-90"
+              className="absolute top-[7%] right-[0%] md:top-[15%] md:left-[30%] overflow-hidden opacity-90"
               priority
             />
 
