@@ -31,10 +31,10 @@ export default function WalletKit({ buttonName }: WalletKitProps) {
     wallets?.[0]?.walletClientType?.toLowerCase() === "privy" &&
     wallets?.[0]?.walletClientType?.toLowerCase() !== "metamask" &&
     wallets?.[0]?.walletClientType?.toLowerCase() !== "coinbase_wallet";
-  console.log(
-    "wallet typeeeeeeeeeee",
-    wallets?.[0]?.walletClientType.toLowerCase()
-  );
+  // console.log(
+  //   "wallet typeeeeeeeeeee",
+  //   wallets?.[0]?.walletClientType.toLowerCase()
+  // );
   return (
     <div className="flex items-center">
       <div className="flex flex-row items-center my-auto">

@@ -76,6 +76,7 @@ export const StablecoinBalanceTracker = ({
       setErrors(["Authentication or wallet not available"]);
       return;
     }
+    
 
     setErrors([]);
     const wallet = wallets[0];

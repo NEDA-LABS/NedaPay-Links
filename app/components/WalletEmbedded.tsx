@@ -9,7 +9,7 @@ import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalL
 import toast from 'react-hot-toast';
 import {stablecoins} from '@/data/stablecoins'
 
-const SUPPORTED = [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
+const SUPPORTED = [base, bsc, scroll, celo, arbitrum, polygon, optimism];
 
 const ERC20_ABI = [
   {
@@ -319,7 +319,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
       >
         {/* Modal */}
         <div 
-          className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+          className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -374,7 +374,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
               <button
                 key={id}
                 onClick={() => setActiveTab(id as any)}
-                className={`flex-1 flex items-center justify-center gap-2 p-4 text-sm font-medium transition ${
+                className={`flex-1 flex items-center justify-center gap-1 p-2 text-sm font-medium transition ${
                   activeTab === id
                     ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'

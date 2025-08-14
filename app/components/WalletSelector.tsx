@@ -10,7 +10,7 @@ import {
   forwardRef,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { base } from "wagmi/chains";
 import { Name } from "@coinbase/onchainkit/identity";
 import { getBasename } from "../utils/getBaseName";
@@ -27,6 +27,24 @@ interface BasenameDisplayProps {
   addressClassName?: string;
   isMobile?: boolean;
 }
+
+// Helper function to get active wallet (prioritizes embedded wallet)
+const getActiveWallet = (wallets: any[]) => {
+  if (!wallets || wallets.length === 0) return null;
+  
+  // First, check if there's an embedded wallet and prioritize it
+  const embeddedWallet = wallets.find(wallet => 
+    wallet.walletClientType === 'privy' || 
+    wallet.connectorType === 'embedded'
+  );
+  
+  if (embeddedWallet) {
+    return embeddedWallet;
+  }
+  
+  // If no embedded wallet, use the first connected wallet
+  return wallets[0];
+};
 
 // Reusable BasenameDisplay Component
 const BasenameDisplay: React.FC<BasenameDisplayProps> = ({
@@ -182,8 +200,8 @@ const WalletSelector = forwardRef<
   } = useUserSync();
 
   // Privy hooks
-  const { authenticated, user, connectWallet, logout, ready, login } =
-    usePrivy();
+  const { authenticated, user, connectWallet, logout, ready, login } = usePrivy();
+  const { wallets } = useWallets();
 
   // Link account hook
   const { linkEmail } = useLinkAccount({
@@ -197,12 +215,27 @@ const WalletSelector = forwardRef<
     },
   });
 
-  // Get the primary wallet address safely
-  const walletAddress = user?.wallet?.address;
-  // localStorage.setItem("walletAddress", walletAddress || "");
-  
+  // Get active wallet and address using the helper function
+  const activeWallet = getActiveWallet(wallets);
+  const walletAddress = activeWallet?.address;
+  const walletType = activeWallet?.walletClientType;
+
   const emailAddress = user?.email?.address;
   const isConnected = authenticated && (walletAddress || emailAddress);
+
+  // Debug logging to see which wallet is active
+  useEffect(() => {
+    if (wallets.length > 0) {
+      console.log('All wallets:', wallets.map(w => ({ 
+        address: w.address, 
+        type: w.walletClientType 
+      })));
+      console.log('Active wallet:', { 
+        address: activeWallet?.address, 
+        type: activeWallet?.walletClientType 
+      });
+    }
+  }, [wallets, activeWallet]);
 
   // Show authentication modal only on / and once per session
   useEffect(() => {
@@ -271,19 +304,6 @@ const WalletSelector = forwardRef<
     []
   );
 
-  // Debug Privy state
-  // useEffect(() => {
-  //   console.log("Privy State:", {
-  //     ready,
-  //     authenticated,
-  //     user,
-  //     walletAddress,
-  //     walletClientType: user?.wallet?.walletClientType,
-  //     emailAddress,
-  //     isConnected,
-  //   });
-  // }, [ready, authenticated, user, walletAddress, emailAddress, isConnected]);
-
   // Enhanced format email for mobile display
   const formatEmail = useCallback(
     (email: string | undefined, maxLength: number = 20): string => {
@@ -335,7 +355,7 @@ const WalletSelector = forwardRef<
     };
   }, [showOptions]);
 
-  // Handle wallet connection state and persistence
+  // Handle wallet connection state and persistence - using activeWallet
   useEffect(() => {
     if (ready && isConnected) {
       const address = walletAddress || emailAddress || "";
@@ -351,7 +371,11 @@ const WalletSelector = forwardRef<
 
         window.dispatchEvent(
           new CustomEvent("walletConnected", {
-            detail: { address, authenticated: true },
+            detail: { 
+              address, 
+              authenticated: true,
+              walletType: activeWallet?.walletClientType 
+            },
           })
         );
       }
@@ -364,11 +388,34 @@ const WalletSelector = forwardRef<
         window.dispatchEvent(new CustomEvent("walletDisconnected"));
       }
     }
-  }, [ready, isConnected, walletAddress, emailAddress]);
+  }, [ready, isConnected, walletAddress, emailAddress, activeWallet]);
 
-  // Handle logout
+  // Clear state when user is not authenticated
+  useEffect(() => {
+    if (!authenticated) {
+      // Clear any wallet-related state when user logs out
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("walletConnected");
+        localStorage.removeItem("walletAddress");
+        sessionStorage.removeItem("hasShownAuthModal");
+      }
+    }
+  }, [authenticated]);
+
+  // Handle logout - disconnect all wallets before logout
   const handleLogout = async () => {
     try {
+      // Disconnect all wallets first
+      for (const wallet of wallets) {
+        try {
+          await wallet.disconnect();
+          console.log(`Disconnected wallet: ${wallet.address}`);
+        } catch (error) {
+          console.warn(`Failed to disconnect wallet ${wallet.address}:`, error);
+        }
+      }
+
+      // Then logout from Privy
       await logout();
       setShowOptions(false);
 
@@ -396,10 +443,8 @@ const WalletSelector = forwardRef<
     }
   };
 
-  // Render wallet icon
+  // Render wallet icon - using walletType from activeWallet
   const renderWalletIcon = () => {
-    const walletType = user?.wallet?.walletClientType;
-
     if (walletType === "coinbase_wallet") {
       return (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -416,6 +461,13 @@ const WalletSelector = forwardRef<
           width="18"
           height="18"
         />
+      );
+    } else if (walletType === "privy") {
+      // Add icon for embedded wallet
+      return (
+        <div className="w-5 h-5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+          <FaWallet className="text-white text-xs"/>
+        </div>
       );
     }
 
