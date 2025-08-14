@@ -38,19 +38,18 @@ export default function WalletKit({ buttonName }: WalletKitProps) {
   return (
     <div className="flex items-center">
       <div className="flex flex-row items-center my-auto">
-        
-          <div className="flex mx-auto items-center">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => openWalletModal("overview")}
-              className="bg-white/10 text-white border-white/30 hover:bg-white/20 mx-auto"
-            >
-              {/* <Wallet className="h-3 w-3 mr-1" /> */}
-              {buttonName}
-            </Button>
-          </div>
-        
+        <div className="flex mx-auto items-center">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => openWalletModal("overview")}
+            className=" text-white border-white/10 hover:bg-white/20 mx-auto"
+          >
+            {/* <Wallet className="h-3 w-3 mr-1" /> */}
+            {buttonName}
+          </Button>
+        </div>
+
         {/* <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <StablecoinBalanceButton />

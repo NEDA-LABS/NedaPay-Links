@@ -430,7 +430,7 @@ export const StablecoinBalanceButton = () => {
 
   return (
     <>
-       <div className="group relative overflow-hidden">
+       <div className="group relative">
       {/* Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-800/60 via-slate-800/40 to-slate-900/60 backdrop-blur-md rounded-3xl"></div>
       
@@ -439,8 +439,7 @@ export const StablecoinBalanceButton = () => {
       
       {/* Main Card */}
       <div 
-        className="relative bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-600/30 p-8 hover:bg-slate-800/50 hover:border-slate-500/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
-        onClick={() => setModalOpen(true)}
+        className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-600/30 p-8 hover:bg-slate-800/50 hover:border-slate-500/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -474,7 +473,7 @@ export const StablecoinBalanceButton = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-center gap-4">
+        {/* <div className="flex items-center justify-center gap-4">
           <div className="hover:scale-105 transition-transform duration-200">
             <WalletKit buttonName="Send" />
           </div>
@@ -482,11 +481,11 @@ export const StablecoinBalanceButton = () => {
           <div className="hover:scale-105 transition-transform duration-200">
             <WalletKit buttonName="Receive" />
           </div>
-        </div>
+        </div> */}
 
         {/* Subtle Corner Accent */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-500/5 to-transparent rounded-3xl"></div>
+        {/* <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-3xl"></div> */}
+        {/* <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-500/5 to-transparent rounded-3xl"></div> */}
       </div>
     </div>
 

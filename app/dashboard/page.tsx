@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import DailyRevenueChart from "./DailyRevenueChart";
 import Footer from "@/components/Footer";
+import WalletKit from "./WalletKit";
 
 // import {
 //   SidebarProvider,
@@ -369,7 +370,14 @@ export default function DashboardContent() {
                         </div>
                         <QuickActions />
                       </div>
-                      <StablecoinBalanceButton />
+                      <div className="flex flex-col gap-2">
+                        <StablecoinBalanceButton />
+                        <div className="flex flex-row items-center justify-center mx-auto gap-2">
+                          <WalletKit buttonName="Send" />
+                          <div className="w-px h-8 bg-slate-600/50"></div>
+                          <WalletKit buttonName="Receive" />
+                        </div>
+                      </div>
                     </div>
                   </>
                 ) : (
