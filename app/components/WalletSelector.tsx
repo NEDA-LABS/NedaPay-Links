@@ -10,7 +10,7 @@ import {
   forwardRef,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { base } from "wagmi/chains";
 import { Name } from "@coinbase/onchainkit/identity";
 import { getBasename } from "../utils/getBaseName";
@@ -84,6 +84,23 @@ const BasenameDisplay: React.FC<BasenameDisplayProps> = ({
       clearTimeout(debounceTimer);
     };
   }, [address]);
+
+  const getActiveWallet = (wallets: any[]) => {
+    if (!wallets || wallets.length === 0) return null;
+    
+    // First, check if there's an embedded wallet and prioritize it
+    const embeddedWallet = wallets.find(wallet => 
+      wallet.walletClientType === 'privy' || 
+      wallet.connectorType === 'embedded'
+    );
+    
+    if (embeddedWallet) {
+      return embeddedWallet;
+    }
+    
+    // If no embedded wallet, use the first connected wallet
+    return wallets[0];
+  };
 
   if (isLoading) {
     return (
@@ -173,6 +190,8 @@ const WalletSelector = forwardRef<
   const router = useRouter();
   const pathname = usePathname();
 
+  
+
   // Email sync and update
   const {
     userData,
@@ -181,9 +200,16 @@ const WalletSelector = forwardRef<
     hasEmail,
   } = useUserSync();
 
-  // Privy hooks
-  const { authenticated, user, connectWallet, logout, ready, login } =
-    usePrivy();
+  // Privy hooks - Added clearActiveWallet to fully disconnect wallets
+  const { 
+    authenticated, 
+    user, 
+    connectWallet, 
+    logout, 
+    ready, 
+    login,
+   // Crucial for complete wallet disconnection
+  } = usePrivy();
 
   // Link account hook
   const { linkEmail } = useLinkAccount({
@@ -199,7 +225,7 @@ const WalletSelector = forwardRef<
 
   // Get the primary wallet address safely
   const walletAddress = user?.wallet?.address;
-  // localStorage.setItem("walletAddress", walletAddress || "");
+  const {wallets} = useWallets();
   
   const emailAddress = user?.email?.address;
   const isConnected = authenticated && (walletAddress || emailAddress);
@@ -270,19 +296,6 @@ const WalletSelector = forwardRef<
     },
     []
   );
-
-  // Debug Privy state
-  // useEffect(() => {
-  //   console.log("Privy State:", {
-  //     ready,
-  //     authenticated,
-  //     user,
-  //     walletAddress,
-  //     walletClientType: user?.wallet?.walletClientType,
-  //     emailAddress,
-  //     isConnected,
-  //   });
-  // }, [ready, authenticated, user, walletAddress, emailAddress, isConnected]);
 
   // Enhanced format email for mobile display
   const formatEmail = useCallback(
@@ -366,9 +379,20 @@ const WalletSelector = forwardRef<
     }
   }, [ready, isConnected, walletAddress, emailAddress]);
 
-  // Handle logout
+  // Enhanced logout handling - COMPLETE WALLET DISCONNECTION
   const handleLogout = async () => {
     try {
+      // Disconnect all wallets first
+      for (const wallet of wallets) {
+        try {
+          await wallet.disconnect();
+          console.log(`Disconnected wallet: ${wallet.address}`);
+        } catch (error) {
+          console.warn(`Failed to disconnect wallet ${wallet.address}:`, error);
+        }
+      }
+
+      // Then logout from Privy
       await logout();
       setShowOptions(false);
 
@@ -577,26 +601,6 @@ const WalletSelector = forwardRef<
               </div>
             </button>
           </div>
-          {/* {user?.wallet?.walletClientType === 'privy' && (
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => {
-                  setShowWithdrawalModal(true);
-                  setIsLoadingWallet(true);
-                }}
-                className="options w-full text-center px-4 py-2 text-orange-600 dark:text-orange-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-lg"
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <FaWallet size={20} />
-                  {isLoadingWallet ? (
-                    <span>Loading...</span>
-                  ) : (
-                    <span>Wallet</span>
-                  )}
-                </div>
-              </button>
-            </div>
-          )} */}
         </div>
       )}
 
