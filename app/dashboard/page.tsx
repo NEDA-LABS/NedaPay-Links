@@ -356,7 +356,7 @@ export default function DashboardContent() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-6 w-6 p-0 text-white/70 hover:text-white z-100"
+                              className="h-6 w-6 p-0 text-white/70 hover:text-white"
                               onClick={() => {
                                 navigator.clipboard.writeText(walletAddress || "")
                                 setCopied(true)

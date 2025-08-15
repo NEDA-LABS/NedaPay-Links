@@ -7,9 +7,7 @@ import { formatUnits, parseEther, parseUnits, isAddress, encodeFunctionData } fr
 import { base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet } from 'viem/chains';
 import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalLink, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {stablecoins} from '@/data/stablecoins'
-
-const SUPPORTED = [base, bsc, scroll, celo, arbitrum, polygon, optimism];
+import {stablecoins} from '@/data/stablecoins';
 
 const ERC20_ABI = [
   {
@@ -87,6 +85,10 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [privateKey, setPrivateKey] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+
+  const isPrivyEmbedded = wallets?.[0]?.walletClientType.toLowerCase() === 'privy' ? true : false;
+
+  const SUPPORTED = isPrivyEmbedded ? [base, bsc, arbitrum, polygon, optimism, mainnet] : [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
 
   // Reset tab when modal opens
   useEffect(() => {
@@ -370,13 +372,13 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
               { id: 'send', label: 'Send', icon: Send },
               { id: 'receive', label: 'Receive', icon: Download },
               { id: 'settings', label: 'Settings', icon: ArrowUpDown }
-            ].map(({ id, label, icon: Icon }) => (
+            ].map(({ id, label, icon: Icon}) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id as any)}
                 className={`flex-1 flex items-center justify-center gap-1 p-2 text-sm font-medium transition ${
                   activeTab === id
-                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-copyblue-50'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
@@ -389,7 +391,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
           {/* Tab Content */}
           <div className="p-6 min-h-[400px] max-h-[500px] overflow-y-auto">
             {activeTab === 'overview' && (
-              <div className="space-y-6">
+              <div className="space-y-2 md:space-y-6">
                 {/* Balances */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Assets</h3>
@@ -450,7 +452,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             )}
 
             {activeTab === 'send' && (
-              <div className="space-y-6">
+              <div className="space-y-2 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">Send Tokens</h3>
                 
                 {/* Token Selection */}
@@ -537,19 +539,19 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             )}
 
             {activeTab === 'receive' && (
-              <div className="space-y-6">
+              <div className="space-y-2 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">Receive Tokens</h3>
                 
                 {/* Address Display */}
-                <div className="bg-gray-50 p-6 rounded-xl">
+                <div className="bg-gray-50 p-2 rounded-xl">
                   <div className="text-center">
                     <div className="text-sm text-gray-600 mb-2">Your Wallet Address</div>
-                    <div className="font-mono text-lg text-gray-900 break-all mb-4">
+                    <div className="font-mono text-sm text-gray-900 break-all mb-2">
                       {address}
                     </div>
                     <button
                       onClick={() => copyToClipboard(address || '', 'Address')}
-                      className="flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      className="flex items-center justify-center gap-2 mx-auto p-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition"
                     >
                       <Copy className="h-4 w-4" />
                       Copy Address
@@ -600,11 +602,11 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             )}
 
             {activeTab === 'settings' && (
-              <div className="space-y-6">
+              <div className="space-y-1 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">Wallet Settings</h3>
                 
                 {/* Export Private Key */}
-                <div className="border border-yellow-200 bg-yellow-50 p-6 rounded-xl">
+                <div className="border border-yellow-200 bg-yellow-50 p-2 rounded-xl">
                   <div className="flex items-start gap-3">
                     <div className="text-yellow-600 text-xl">⚠️</div>
                     <div className="flex-1">

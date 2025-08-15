@@ -17,7 +17,6 @@ import { getBasename } from "../utils/getBaseName";
 import { useUserSync } from "../hooks/useUserSync";
 import { useLinkAccount } from "@privy-io/react-auth";
 import AuthenticationModal from "./AuthenticationModal";
-import WalletFundsModal from "./WalletFundsModal";
 import { FaWallet, FaSignOutAlt } from "react-icons/fa";
 
 // Type definitions for BasenameDisplay component
@@ -601,19 +600,6 @@ const WalletSelector = forwardRef<
               </div>
             </button>
           </div>
-        </div>
-      )}
-
-      {showWithdrawalModal && (
-        <div className="inset-0 flex items-center justify-center z-[9999] p-4">
-        <WalletFundsModal
-          isOpen={showWithdrawalModal}
-          onClose={() => {
-            setShowWithdrawalModal(false);
-            setIsLoadingWallet(false);
-          }}
-          walletAddress={walletAddress}
-        />
         </div>
       )}
 

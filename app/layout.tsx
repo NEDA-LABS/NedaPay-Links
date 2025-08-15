@@ -9,12 +9,12 @@ import {Analytics} from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: 'NedaPay',
-  description: 'Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
+  description: 'Send and Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
   keywords: ['NedaPay', 'Stablecoins', 'Swap', 'Cash Out', 'Track Transactions'],
   authors: [{ name: 'NedaPay' }],
   openGraph: {
     title: 'NedaPay',
-    description: 'Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
+    description: 'Send and Accept Stablecoins, Swap instantly, Cash Out Easily, Track Transactions',
     type: 'website',
     locale: 'en',
     siteName: 'NedaPay',
