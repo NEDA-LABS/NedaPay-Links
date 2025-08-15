@@ -153,7 +153,7 @@ const ChainSwitcher: React.FC = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isSwitching}
-        className="flex items-center gap-2 px-3 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center gap-2 p-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSwitching ? (
           <Loader2 className="animate-spin w-4 h-4" />
@@ -168,7 +168,7 @@ const ChainSwitcher: React.FC = () => {
               }}
             />
             <span className="text-sm font-medium">{currentChain.name}</span>
-            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-8 md:w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
           </>
         )}
       </button>
