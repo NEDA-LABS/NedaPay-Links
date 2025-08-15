@@ -530,7 +530,7 @@ function PaymentLinkPage() {
                       : "border-gray-200 text-gray-100 hover:border-gray-300"
                   }`}
                 >
-                  stablecoin to wallet
+                  stablecoin payment
                 </button>
                 <button
                   type="button"
@@ -541,7 +541,7 @@ function PaymentLinkPage() {
                       : "border-gray-200 text-gray-100 hover:border-gray-300"
                   }`}
                 >
-                  stablecoin to fiat
+                  Fiat payment
                 </button>
               </div>
             </div>

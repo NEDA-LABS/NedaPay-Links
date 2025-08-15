@@ -152,7 +152,7 @@ function CreateInvoicePage() {
                     Recipient (Company or Name)
                   </label>
                   <input
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
+                    className="w-full px-4 py-4 text-slate-800 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     placeholder="Enter client name or company"
                     value={recipient}
                     onChange={e => setRecipient(e.target.value)}
@@ -166,7 +166,7 @@ function CreateInvoicePage() {
                   </label>
                   <input
                     type="email"
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
+                    className="w-full px-4 py-4 text-slate-800 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     placeholder="client@example.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -188,7 +188,7 @@ function CreateInvoicePage() {
                     Business/ Company/ Individual Name
                   </label>
                   <input
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
+                    className="w-full px-4 py-4 text-slate-800 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     placeholder="Enter your Name"
                     value={senderId}
                     onChange={e => setSenderId(e.target.value)}
@@ -211,7 +211,7 @@ function CreateInvoicePage() {
                     <span className="ml-2 text-blue-500 cursor-help" title="Payment frequency">ⓘ</span>
                   </label>
                   <select
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
+                    className="w-full px-4 py-4 text-slate-800 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     value={paymentCollection}
                     onChange={e => setPaymentCollection(e.target.value)}
                   >
@@ -226,7 +226,7 @@ function CreateInvoicePage() {
                   </label>
                   <input
                     type="date"
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
+                    className="w-full px-4 py-4 text-slate-800 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     value={dueDate}
                     onChange={e => setDueDate(e.target.value)}
                     required
@@ -238,7 +238,7 @@ function CreateInvoicePage() {
                     Payment Currency
                   </label>
                   <select
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
+                    className="w-full px-4 py-4 text-slate-800 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     value={currency}
                     onChange={e => setCurrency(e.target.value)}
                     required
@@ -265,7 +265,7 @@ function CreateInvoicePage() {
                     Select or Paste Payment Link (<span className="text-blue-200 text-xs">payment link can't be attached in more than one invoice</span>)
                   </label>
                   <select
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm mb-4"
+                    className="w-full px-4 py-4 text-slate-800 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm mb-4"
                     value={paymentLink}
                     onChange={e => setPaymentLink(e.target.value)}
                   >
@@ -277,7 +277,7 @@ function CreateInvoicePage() {
                     ))}
                   </select>
                   <input
-                    className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
+                    className="w-full px-4 py-4 text-slate-800 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-100 backdrop-blur-sm"
                     placeholder="Or paste a payment link"
                     value={paymentLink}
                     onChange={e => setPaymentLink(e.target.value)}
@@ -308,7 +308,7 @@ function CreateInvoicePage() {
                   <div key={idx} className="flex gap-4 items-center backdrop-blur-sm rounded-xl">
                     <div className="flex-1">
                       <input
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-gray-100"
+                        className="w-full px-4 py-3 text-slate-800 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-gray-100"
                         placeholder="Item description (e.g., Website Development)"
                         value={item.description}
                         onChange={e => handleLineItemChange(idx, "description", e.target.value)}
@@ -317,7 +317,7 @@ function CreateInvoicePage() {
                     </div>
                     <div className="w-40">
                       <input
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-gray-100 text-right"
+                        className="w-full px-4 py-3 text-slate-800 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-gray-100 text-right"
                         placeholder="0.00"
                         type="number"
                         min="0.01"
