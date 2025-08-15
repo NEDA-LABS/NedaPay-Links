@@ -479,7 +479,7 @@ const WalletSelector = forwardRef<
                   <BasenameDisplay
                     address={walletAddress}
                     basenameClassName="basename-display"
-                    addressClassName="address-display !text-slate-800"
+                    addressClassName="address-display !text-white"
                     isMobile={true}
                   />
                 </div>

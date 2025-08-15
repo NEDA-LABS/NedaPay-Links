@@ -96,7 +96,7 @@ function AppSidebarContent() {
     });
     const data = await response.json();
     const settings = data.settings;
-    setBusinessName(settings.businessName || 'No User Name');
+    setBusinessName(settings.businessName || '@user');
   };
 
 
