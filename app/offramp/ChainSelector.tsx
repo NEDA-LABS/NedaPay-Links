@@ -32,8 +32,8 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
   return (
     <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-purple-900/30 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/10 overflow-hidden">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          Select Network & Token
+        <h2 className="text-lg font-bold text-white bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Select Token
         </h2>
         <p className="text-gray-400 text-sm mt-2">
           Click a token to proceed to cash-out
@@ -54,11 +54,11 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
                   <img
                     src={chain.icon}
                     alt={chain.name}
-                    className="w-12 h-12 rounded-full p-1 bg-white"
+                    className="w-9 h-9 rounded-full p-1 bg-white"
                   />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white">{chain.name}</h3>
+                  <h3 className="text-sm font-bold text-white">{chain.name}</h3>
                   <p className="text-xs text-gray-400">{chain.nativeCurrency.symbol}</p>
                 </div>
               </div>
@@ -70,12 +70,9 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
                     key={`${chain.id}-${token}`}
                     onClick={() => handleTokenSelect(chain.id.toString(), token)}
                     className={`
-                      cursor-pointer rounded-xl p-3 transition-all duration-200
-                      flex flex-col md:flex-row md:items-center justify-between
-                      ${token === currentSelectedToken
-                        ? 'bg-gradient-to-r from-blue-600/30 to-purple-600/30 border border-blue-500/50 shadow-lg'
-                        : 'bg-slate-900/50 border border-white/10 hover:border-blue-400/50 hover:bg-blue-500/10'
-                      }
+                      cursor-pointer rounded-xl p-2 transition-all duration-200
+                      flex flex-row items-center justify-between
+                      bg-gradient-to-r from-blue-600/30 to-purple-600/30 border border-blue-500/50 shadow-lg
                     `}
                   >
                     <div className="flex-1 min-w-0">
@@ -88,12 +85,10 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
                       />
                     </div>
                     
-                    <div className={`flex items-center mt-2 md:mt-0 md:ml-3 ${
-                      token === currentSelectedToken ? 'text-blue-300' : 'text-blue-400'
-                    }`}>
-                      <span className="text-xs font-medium">Offramp</span>
+                    {/* <div className={`flex items-center mt-2 md:mt-0 md:ml-3`}>
+                      <span className="text-xs font-medium">offramp</span>
                       <ArrowRight size={16} className="ml-1" />
-                    </div>
+                    </div> */}
                   </div>
                 ))}
               </div>

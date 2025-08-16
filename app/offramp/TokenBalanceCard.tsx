@@ -18,12 +18,12 @@ const TokenBalanceCard: React.FC<TokenBalanceCardProps> = ({
 }) => {
   return (
     <div className={`flex justify-between items-center ${compactView ? 'flex-row' : 'flex-col md:flex-row'}`}>
-      <span className={`font-medium ${isSelected ? 'text-white' : 'text-gray-300'} truncate`}>
+      <span className={`font-medium text-sm ${isSelected ? 'text-white' : 'text-gray-300'} truncate`}>
         {token}
       </span>
       <span className={`text-sm ${isSelected ? 'text-blue-100' : 'text-gray-100'} ml-2 md:ml-0`}>
         {loading ? (
-          <div className="animate-pulse flex space-x-2">
+          <div className="animate-pulse flex space-x-1">
             <div className="h-4 w-12 bg-slate-700 rounded"></div>
           </div>
         ) : (
