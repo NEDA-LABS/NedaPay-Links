@@ -1,4 +1,3 @@
-// app/api/webhooks/sumsub/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
@@ -30,26 +29,58 @@ interface ApplicantReviewedPayload {
   sandboxMode?: boolean;
 }
 
-// Verify SHA-256 signature
-function verifySignature(payload: string, signature: string, secret: string): boolean {
-  if (!signature || !secret) {
+// Verify signature using Sumsub's expected format
+function verifySignature(
+  payload: string, 
+  digestHeader: string, 
+  algorithmHeader: string, 
+  secret: string
+): boolean {
+  if (!digestHeader || !algorithmHeader || !secret) {
+    console.error('Missing required headers or secret:', {
+      hasDigest: !!digestHeader,
+      hasAlgorithm: !!algorithmHeader,
+      hasSecret: !!secret
+    });
     return false;
   }
 
-  // Remove 'sha256=' prefix if present
-  const cleanSignature = signature.replace(/^sha256=/, '');
-  
-  // Calculate expected signature
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(payload, 'utf8')
-    .digest('hex');
+  // Map Sumsub algorithm names to Node.js crypto algorithm names
+  const algorithmMap: Record<string, string> = {
+    'HMAC_SHA1_HEX': 'sha1',
+    'HMAC_SHA256_HEX': 'sha256',
+    'HMAC_SHA512_HEX': 'sha512',
+  };
 
-  // Use timingSafeEqual to prevent timing attacks
-  return crypto.timingSafeEqual(
-    Buffer.from(cleanSignature, 'hex'),
-    Buffer.from(expectedSignature, 'hex')
-  );
+  const algorithm = algorithmMap[algorithmHeader];
+  if (!algorithm) {
+    console.error('Unsupported algorithm:', algorithmHeader);
+    return false;
+  }
+
+  try {
+    // Calculate expected digest
+    const calculatedDigest = crypto
+      .createHmac(algorithm, secret)
+      .update(payload, 'utf8')
+      .digest('hex');
+
+    console.log('Signature verification:', {
+      algorithm: algorithmHeader,
+      expectedDigest: calculatedDigest,
+      receivedDigest: digestHeader,
+      payloadLength: payload.length
+    });
+
+    // Use timingSafeEqual to prevent timing attacks
+    return crypto.timingSafeEqual(
+      Buffer.from(digestHeader, 'hex'),
+      Buffer.from(calculatedDigest, 'hex')
+    );
+  } catch (error) {
+    console.error('Error during signature verification:', error);
+    return false;
+  }
 }
 
 // Process applicantReviewed webhook
@@ -210,8 +241,16 @@ export async function POST(request: NextRequest) {
     // Read the raw body
     const body = await request.text();
     
-    // Get signature from headers
-    const signature = request.headers.get('x-signature');
+    // Get signature headers (note the correct header names from Sumsub docs)
+    const payloadDigest = request.headers.get('x-payload-digest');
+    const payloadDigestAlgorithm = request.headers.get('x-payload-digest-alg');
+    
+    console.log('Webhook headers:', {
+      payloadDigest: payloadDigest ? 'present' : 'missing',
+      payloadDigestAlgorithm,
+      bodyLength: body.length,
+      allHeaders: Object.fromEntries(request.headers.entries())
+    });
     
     // Verify webhook secret is configured
     if (!SUMSUB_WEBHOOK_SECRET) {
@@ -219,8 +258,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
     }
     
-    // Verify signature
-    if (!signature || !verifySignature(body, signature, SUMSUB_WEBHOOK_SECRET)) {
+    // Verify signature using Sumsub's format
+    if (!payloadDigest || !payloadDigestAlgorithm || 
+        !verifySignature(body, payloadDigest, payloadDigestAlgorithm, SUMSUB_WEBHOOK_SECRET)) {
       console.error('Invalid webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
