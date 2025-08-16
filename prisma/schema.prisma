@@ -21,6 +21,7 @@ model User {
   merchantSettings MerchantSettings?
   kycApplications  KYCApplication[]
   kybApplications  KYBApplication[]
+  sumsubApplications SumsubApplication[]
 }
 
 model MerchantSettings {
@@ -397,4 +398,105 @@ model AuditLog {
   createdAt   DateTime @default(now())
   
   @@map("audit_logs")
+}
+
+//SUMSUB----------------------------------------------------------------------------------------
+// Add these enums to your existing schema
+enum SumsubVerificationStatus {
+  INIT
+  PENDING
+  QUEUED
+  PRECHECKED
+  ON_HOLD
+  COMPLETED
+}
+
+enum SumsubReviewAnswer {
+  GREEN   // Approved
+  RED     // Rejected
+  YELLOW  // Manual review required
+}
+
+enum SumsubReviewRejectType {
+  FINAL
+  RETRY
+}
+
+enum SumsubWebhookEventType {
+  APPLICANT_CREATED
+  APPLICANT_PENDING
+  APPLICANT_REVIEWED
+  APPLICANT_ON_HOLD
+  APPLICANT_RESET
+  APPLICANT_DELETED
+  VIDEO_IDENT_STATUS_CHANGED
+}
+
+// New models to add to your schema
+
+// Main Sumsub application tracking
+model SumsubApplication {
+  id                    String                    @id @default(cuid())
+  userId                String
+  applicantId           String                    @unique  // Sumsub's applicant ID
+  inspectionId          String                    @unique  // Sumsub's inspection ID
+  externalUserId        String?                   // Your user ID sent to Sumsub
+  levelName             String                    // Sumsub verification level
+  applicantType         String?                   // individual, company
+  verificationStatus    SumsubVerificationStatus  @default(INIT)
+  reviewAnswer          SumsubReviewAnswer?
+  reviewRejectType      SumsubReviewRejectType?
+  sandboxMode           Boolean                   @default(false)
+  
+  // Timestamps
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  submittedAt           DateTime?                 // When applicant submitted docs
+  reviewedAt            DateTime?                 // When review was completed
+  
+  // Relations
+  user                  User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  webhookEvents         SumsubWebhookEvent[]
+  reviewHistory         SumsubReviewHistory[]
+  
+  @@map("sumsub_applications")
+}
+
+// Track all webhook events received from Sumsub
+model SumsubWebhookEvent {
+  id                    String                    @id @default(cuid())
+  sumsubApplicationId   String
+  correlationId         String                    @unique  // Sumsub's correlation ID for idempotency
+  eventType             SumsubWebhookEventType
+  payload               Json                      // Store full webhook payload
+  processed             Boolean                   @default(false)
+  processedAt           DateTime?
+  errorMessage          String?                   // If processing failed
+  createdAt             DateTime                  @default(now())
+  
+  // Relations
+  sumsubApplication     SumsubApplication         @relation(fields: [sumsubApplicationId], references: [id], onDelete: Cascade)
+  
+  @@index([correlationId])
+  @@index([eventType, createdAt])
+  @@map("sumsub_webhook_events")
+}
+
+// Track review history and status changes
+model SumsubReviewHistory {
+  id                    String                    @id @default(cuid())
+  sumsubApplicationId   String
+  reviewAnswer          SumsubReviewAnswer
+  reviewRejectType      SumsubReviewRejectType?
+  rejectLabels          String[]                  // Array of rejection reasons
+  buttonIds             String[]                  // Sumsub button IDs for rejection reasons
+  moderationComment     String?                   // Sumsub's moderation comment
+  clientComment         String?                   // Your custom comment
+  reviewMode            String?                   // ongoingAML, ongoingDocExpired, etc.
+  reviewedAt            DateTime                  @default(now())
+  
+  // Relations
+  sumsubApplication     SumsubApplication         @relation(fields: [sumsubApplicationId], references: [id], onDelete: Cascade)
+  
+  @@map("sumsub_review_history")
 }
