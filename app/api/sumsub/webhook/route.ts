@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { PrismaClient } from '@prisma/client';
+
+// Initialize Prisma client
+const prisma = new PrismaClient();
 
 // Environment variables you need to set
 const SUMSUB_WEBHOOK_SECRET = process.env.SUMSUB_WEBHOOK_SECRET;
@@ -83,7 +87,153 @@ function verifySignature(
   }
 }
 
-// Process applicantReviewed webhook
+// Store webhook event for idempotency and audit trail
+async function storeWebhookEvent(payload: ApplicantReviewedPayload, sumsubApplicationId: string) {
+  try {
+    // Check if we've already processed this webhook (idempotency check)
+    const existingEvent = await prisma.sumsubWebhookEvent.findUnique({
+      where: { correlationId: payload.correlationId }
+    });
+
+    if (existingEvent) {
+      console.log(`Webhook ${payload.correlationId} already processed, skipping`);
+      return existingEvent;
+    }
+
+    // Store the webhook event
+    const webhookEvent = await prisma.sumsubWebhookEvent.create({
+      data: {
+        sumsubApplicationId,
+        correlationId: payload.correlationId,
+        eventType: 'APPLICANT_REVIEWED',
+        payload: payload as any, // Store full payload as JSON
+        processed: false,
+      }
+    });
+
+    return webhookEvent;
+  } catch (error) {
+    console.error('Error storing webhook event:', error);
+    throw error;
+  }
+}
+
+// Find or create Sumsub application record
+async function findOrCreateSumsubApplication(payload: ApplicantReviewedPayload) {
+  try {
+    // First, try to find existing application
+    let sumsubApplication = await prisma.sumsubApplication.findUnique({
+      where: { applicantId: payload.applicantId }
+    });
+
+    if (sumsubApplication) {
+      return sumsubApplication;
+    }
+
+    // If not found, we need to find the user by externalUserId (which should be your user ID)
+    const user = await prisma.user.findFirst({
+      where: { 
+        OR: [
+          { id: payload.externalUserId },
+          { privyUserId: payload.externalUserId },
+          // Add other user identifier fields if needed
+        ]
+      }
+    });
+
+    if (!user) {
+      throw new Error(`User not found for externalUserId: ${payload.externalUserId}`);
+    }
+
+    // Create new Sumsub application record
+    sumsubApplication = await prisma.sumsubApplication.create({
+      data: {
+        userId: user.id,
+        applicantId: payload.applicantId,
+        inspectionId: payload.inspectionId,
+        externalUserId: payload.externalUserId,
+        levelName: payload.levelName,
+        verificationStatus: 'COMPLETED', // Since we're getting a review result
+        reviewAnswer: payload.reviewResult.reviewAnswer as any,
+        reviewRejectType: payload.reviewResult.reviewRejectType as any,
+        sandboxMode: payload.sandboxMode || false,
+        submittedAt: new Date(), // We don't have exact submission time, use now
+        reviewedAt: new Date(parseInt(payload.createdAtMs)),
+      }
+    });
+
+    return sumsubApplication;
+  } catch (error) {
+    console.error('Error finding/creating Sumsub application:', error);
+    throw error;
+  }
+}
+
+// Update Sumsub application with review results
+async function updateSumsubApplicationWithReview(
+  sumsubApplication: any,
+  payload: ApplicantReviewedPayload
+) {
+  try {
+    const updatedApplication = await prisma.sumsubApplication.update({
+      where: { id: sumsubApplication.id },
+      data: {
+        verificationStatus: 'COMPLETED',
+        reviewAnswer: payload.reviewResult.reviewAnswer as any,
+        reviewRejectType: payload.reviewResult.reviewRejectType as any,
+        reviewedAt: new Date(parseInt(payload.createdAtMs)),
+        updatedAt: new Date(),
+      }
+    });
+
+    return updatedApplication;
+  } catch (error) {
+    console.error('Error updating Sumsub application:', error);
+    throw error;
+  }
+}
+
+// Store review history
+async function storeReviewHistory(sumsubApplicationId: string, payload: ApplicantReviewedPayload) {
+  try {
+    const reviewHistory = await prisma.sumsubReviewHistory.create({
+      data: {
+        sumsubApplicationId,
+        reviewAnswer: payload.reviewResult.reviewAnswer as any,
+        reviewRejectType: payload.reviewResult.reviewRejectType as any,
+        rejectLabels: payload.reviewResult.rejectLabels || [],
+        buttonIds: payload.reviewResult.buttonIds || [],
+        moderationComment: payload.reviewResult.moderationComment,
+        clientComment: payload.reviewResult.clientComment,
+        reviewMode: payload.reviewMode,
+        reviewedAt: new Date(parseInt(payload.createdAtMs)),
+      }
+    });
+
+    return reviewHistory;
+  } catch (error) {
+    console.error('Error storing review history:', error);
+    throw error;
+  }
+}
+
+// Mark webhook event as processed
+async function markWebhookEventProcessed(webhookEventId: string, success: boolean, error?: string) {
+  try {
+    await prisma.sumsubWebhookEvent.update({
+      where: { id: webhookEventId },
+      data: {
+        processed: true,
+        processedAt: new Date(),
+        errorMessage: error || null,
+      }
+    });
+  } catch (updateError) {
+    console.error('Error updating webhook event status:', updateError);
+  }
+}
+
+// Process applicantReviewed webhook with database interactions
 async function processApplicantReviewed(payload: ApplicantReviewedPayload) {
   console.log('Processing applicantReviewed webhook:', {
     applicantId: payload.applicantId,
@@ -92,57 +242,80 @@ async function processApplicantReviewed(payload: ApplicantReviewedPayload) {
     reviewStatus: payload.reviewStatus
   });
 
-  // Handle different review answers
-  switch (payload.reviewResult.reviewAnswer) {
-    case 'GREEN':
-      await handleApprovedApplicant(payload);
-      break;
-    case 'RED':
-      await handleRejectedApplicant(payload);
-      break;
-    case 'YELLOW':
-      await handlePendingApplicant(payload);
-      break;
-    default:
-      console.warn('Unknown review answer:', payload.reviewResult.reviewAnswer);
+  let webhookEvent: any = null;
+
+  try {
+    // Find or create Sumsub application record
+    const sumsubApplication = await findOrCreateSumsubApplication(payload);
+    
+    // Store webhook event for audit trail and idempotency
+    webhookEvent = await storeWebhookEvent(payload, sumsubApplication.id);
+    
+    // If already processed, return early
+    if (webhookEvent.processed) {
+      return;
+    }
+
+    // Update application with review results
+    await updateSumsubApplicationWithReview(sumsubApplication, payload);
+    
+    // Store review history
+    await storeReviewHistory(sumsubApplication.id, payload);
+
+    // Handle different review answers
+    switch (payload.reviewResult.reviewAnswer) {
+      case 'GREEN':
+        await handleApprovedApplicant(payload, sumsubApplication);
+        break;
+      case 'RED':
+        await handleRejectedApplicant(payload, sumsubApplication);
+        break;
+      case 'YELLOW':
+        await handlePendingApplicant(payload, sumsubApplication);
+        break;
+      default:
+        console.warn('Unknown review answer:', payload.reviewResult.reviewAnswer);
+    }
+
+    // Mark webhook as successfully processed
+    await markWebhookEventProcessed(webhookEvent.id, true);
+
+  } catch (error) {
+    console.error('Error processing applicant reviewed webhook:', error);
+    
+    // Mark webhook as failed if we have the webhook event
+    if (webhookEvent) {
+      await markWebhookEventProcessed(
+        webhookEvent.id, 
+        false, 
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+    }
+    
+    throw error;
   }
 }
 
 // Handle approved applicant
-async function handleApprovedApplicant(payload: ApplicantReviewedPayload) {
+async function handleApprovedApplicant(payload: ApplicantReviewedPayload, sumsubApplication: any) {
   try {
     console.log(`Applicant ${payload.applicantId} approved`);
     
-    // Your business logic here:
-    // - Update user status in database
-    // - Send approval email
-    // - Enable user features
-    // - Log the approval
-    
-    // Example database update (replace with your actual database logic)
-    /*
-    await db.user.update({
-      where: { externalUserId: payload.externalUserId },
+    // Update user's verification status
+    await prisma.user.update({
+      where: { id: sumsubApplication.userId },
       data: { 
-        kycStatus: 'approved',
-        kycCompletedAt: new Date(payload.createdAtMs),
-        sumsub: {
-          applicantId: payload.applicantId,
-          inspectionId: payload.inspectionId,
-          reviewResult: payload.reviewResult
-        }
+        // Add your user fields for KYC status
+        // kycStatus: 'approved',
+        // kycCompletedAt: new Date(parseInt(payload.createdAtMs)),
+        updatedAt: new Date(),
       }
     });
-    */
     
-    // Example notification (replace with your notification service)
-    /*
-    await sendNotification({
-      userId: payload.externalUserId,
-      type: 'kyc_approved',
-      message: 'Your identity verification has been approved!'
-    });
-    */
+    // Add your business logic here:
+    // - Send approval email
+    // - Enable user features
+    // - Trigger other workflows
     
   } catch (error) {
     console.error('Error handling approved applicant:', error);
@@ -151,51 +324,29 @@ async function handleApprovedApplicant(payload: ApplicantReviewedPayload) {
 }
 
 // Handle rejected applicant
-async function handleRejectedApplicant(payload: ApplicantReviewedPayload) {
+async function handleRejectedApplicant(payload: ApplicantReviewedPayload, sumsubApplication: any) {
   try {
     console.log(`Applicant ${payload.applicantId} rejected`);
     console.log('Reject labels:', payload.reviewResult.rejectLabels);
     console.log('Reject type:', payload.reviewResult.reviewRejectType);
     
-    // Your business logic here:
-    // - Update user status in database
-    // - Send rejection email with reason
-    // - Log rejection details
-    // - Handle retry vs final rejection
-    
     const isRetryAllowed = payload.reviewResult.reviewRejectType === 'RETRY';
     
-    // Example database update
-    /*
-    await db.user.update({
-      where: { externalUserId: payload.externalUserId },
+    // Update user's verification status
+    await prisma.user.update({
+      where: { id: sumsubApplication.userId },
       data: { 
-        kycStatus: isRetryAllowed ? 'rejected_retry' : 'rejected_final',
-        kycRejectedAt: new Date(payload.createdAtMs),
-        kycRejectReason: payload.reviewResult.rejectLabels?.join(', '),
-        sumsub: {
-          applicantId: payload.applicantId,
-          inspectionId: payload.inspectionId,
-          reviewResult: payload.reviewResult
-        }
+        // Add your user fields for KYC status
+        // kycStatus: isRetryAllowed ? 'rejected_retry' : 'rejected_final',
+        // kycRejectedAt: new Date(parseInt(payload.createdAtMs)),
+        // kycRejectReason: payload.reviewResult.rejectLabels?.join(', '),
+        updatedAt: new Date(),
       }
     });
-    */
     
-    // Example notification
-    /*
-    await sendNotification({
-      userId: payload.externalUserId,
-      type: 'kyc_rejected',
-      message: isRetryAllowed 
-        ? 'Your identity verification was rejected. Please try again with different documents.'
-        : 'Your identity verification was rejected. Please contact support for assistance.',
-      metadata: {
-        rejectLabels: payload.reviewResult.rejectLabels,
-        canRetry: isRetryAllowed
-      }
-    });
-    */
+    // Add your business logic here:
+    // - Send rejection email with reason
+    // - Handle retry vs final rejection
     
   } catch (error) {
     console.error('Error handling rejected applicant:', error);
@@ -204,30 +355,24 @@ async function handleRejectedApplicant(payload: ApplicantReviewedPayload) {
 }
 
 // Handle pending applicant (manual review required)
-async function handlePendingApplicant(payload: ApplicantReviewedPayload) {
+async function handlePendingApplicant(payload: ApplicantReviewedPayload, sumsubApplication: any) {
   try {
     console.log(`Applicant ${payload.applicantId} requires manual review`);
     
-    // Your business logic here:
-    // - Update user status in database
-    // - Send pending notification
-    // - Alert admin team for manual review
-    
-    // Example database update
-    /*
-    await db.user.update({
-      where: { externalUserId: payload.externalUserId },
+    // Update user's verification status
+    await prisma.user.update({
+      where: { id: sumsubApplication.userId },
       data: { 
-        kycStatus: 'pending_manual_review',
-        kycPendingAt: new Date(payload.createdAtMs),
-        sumsub: {
-          applicantId: payload.applicantId,
-          inspectionId: payload.inspectionId,
-          reviewResult: payload.reviewResult
-        }
+        // Add your user fields for KYC status
+        // kycStatus: 'pending_manual_review',
+        // kycPendingAt: new Date(parseInt(payload.createdAtMs)),
+        updatedAt: new Date(),
       }
     });
-    */
+    
+    // Add your business logic here:
+    // - Send pending notification
+    // - Alert admin team for manual review
     
   } catch (error) {
     console.error('Error handling pending applicant:', error);
@@ -289,7 +434,7 @@ export async function POST(request: NextRequest) {
       sandboxMode: payload.sandboxMode
     });
     
-    // Process the webhook
+    // Process the webhook with database interactions
     await processApplicantReviewed(payload);
     
     // Return success response
@@ -304,6 +449,9 @@ export async function POST(request: NextRequest) {
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
+  } finally {
+    // Clean up Prisma connection
+    await prisma.$disconnect();
   }
 }
 

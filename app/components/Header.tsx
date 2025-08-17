@@ -19,11 +19,9 @@ import {
   Link as LinkIcon,
   Receipt,
 } from "lucide-react";
-import Sidebar from "./Sidebar";
 import Image from "next/image";
 import { AppSidebarToggle } from "@/dashboard/AppSidebar";
 import { SidebarProvider } from "@/compliance/user/components/ui/sidebar";
-import { LayoutDashboard } from "lucide-react";
 
 // Import your actual components
 import WalletSelector from "./WalletSelector";

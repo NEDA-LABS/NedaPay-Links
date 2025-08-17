@@ -213,11 +213,11 @@ const WalletSelector = forwardRef<
   // Link account hook
   const { linkEmail } = useLinkAccount({
     onSuccess: ({ user, linkMethod, linkedAccount }) => {
-      console.log("Linked account to user ", linkedAccount);
+      // console.log("Linked account to user ", linkedAccount);
       toast.success("Email linked successfully!");
     },
     onError: (error) => {
-      console.error("Failed to link account with error ", error);
+      // console.error("Failed to link account with error ", error);
       toast.error("Failed to link email. Please try again.");
     },
   });
