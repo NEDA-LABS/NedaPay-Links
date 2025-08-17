@@ -413,7 +413,7 @@ const SumsubVerification = () => {
           </div>
 
           <div className="mt-6 text-center text-gray-400 text-sm">
-            <p>Having trouble with verification? Contact support@example.com</p>
+            <p>Having trouble with verification? Contact <a href="mailto:support@nedapay.xyz" className="text-blue-500 hover:text-blue-700 underline">support@nedapay.xyz</a></p>
           </div>
         </div>
       </div>

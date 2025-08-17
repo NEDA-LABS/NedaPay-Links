@@ -383,7 +383,7 @@ export const StablecoinBalanceTracker = ({
             })}
           </div>
 
-          <div className="bg-slate-950/60 rounded-2xl shadow-xl m-6 p-6">
+          {/* <div className="bg-slate-950/60 rounded-2xl shadow-xl m-6 p-6">
             <div className="grid grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-base font-bold text-white">
@@ -404,7 +404,7 @@ export const StablecoinBalanceTracker = ({
                 <div className="text-sm text-white">Currencies</div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {swapModalOpen && (
             <SwapModal
