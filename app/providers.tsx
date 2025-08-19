@@ -84,7 +84,7 @@ export function Providers(props: { children: ReactNode }) {
               createOnLogin: "users-without-wallets",
             },
           },
-          supportedChains: [base, bsc, arbitrum, polygon, celo, scroll]
+          supportedChains: [base, bsc, arbitrum, polygon, celo, scroll, optimism]
         }}
       >
         <QueryClientProvider client={queryClient}>

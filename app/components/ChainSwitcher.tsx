@@ -134,7 +134,7 @@ const ChainSwitcher: React.FC = () => {
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative z-50" ref={dropdownRef}>
       {error && (
         <div className="absolute bottom-full mb-2 left-0 bg-red-50 border border-red-200 rounded-lg p-3 z-50 max-w-xs">
           <div className="flex items-center gap-2">

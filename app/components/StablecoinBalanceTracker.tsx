@@ -288,7 +288,7 @@ export const StablecoinBalanceTracker = ({
     <div className="z-50 flex items-center justify-center md:p-4 overflow-auto rounded-2xl w-full">
       <div className="max-w-6xl bg-gray-800 rounded-2xl shadow-xl w-[95%] mx-auto">
         <div className="h-full overflow-auto"> 
-          <div className="md:p-6 sticky top-0 z-10">
+          {/* <div className="md:p-6 sticky top-0 z-10">
             <div className="flex flex-col md:flex-row md:justify-between">
               <div className="mt-4 md:mt-0 flex space-x-2">
                 {wallets[0]?.walletClientType === "coinbase_wallet" && loading && (
@@ -299,7 +299,7 @@ export const StablecoinBalanceTracker = ({
                 )}
               </div>
             </div>
-          </div>
+          </div> */}
           <h3 className="text-lg font-semibold text-white text-center">Stablecoins</h3>
           
           {errors.length > 0 && (

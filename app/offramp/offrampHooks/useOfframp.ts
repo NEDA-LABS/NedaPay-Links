@@ -101,7 +101,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   // Initialize Biconomy
   useEffect(() => {
     const initBiconomy = async () => {
-      if (!activeWallet?.address || isCoinbaseWallet || !supportedAbstractionChains.includes(chainName)) return;
+      if (!activeWallet?.address || isCoinbaseWallet || !supportedAbstractionChains.includes(chainName) || !isEmbeddedWallet) return;
   
       setGasAbstractionInitializing(true);
       setGasAbstractionFailed(false);
