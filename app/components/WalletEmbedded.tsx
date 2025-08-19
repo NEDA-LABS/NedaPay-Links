@@ -89,7 +89,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const [isExporting, setIsExporting] = useState(false);
 
   const isPrivyEmbedded = wallets?.[0]?.walletClientType.toLowerCase() === 'privy';
-  const SUPPORTED = isPrivyEmbedded ? [base, bsc, arbitrum, polygon, optimism, mainnet] : [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
+  const SUPPORTED = [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
 
   // Use Wagmi's useBalance for native token
   const { data: nativeBalance, refetch: refetchNativeBalance } = useBalance({

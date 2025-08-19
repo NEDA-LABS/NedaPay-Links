@@ -7,6 +7,7 @@ import Header from '../components/Header';
 import { stablecoins } from '../data/stablecoins';
 import { useKycStatus} from '@/hooks/useKycStatus';
 import { useKybStatus } from '@/hooks/useKybStatus';
+import useSumsub from '@/hooks/useSumsub';
 import { withDashboardLayout } from '../utils/withDashboardLayout';
 import { Loader } from 'lucide-react';
 
@@ -18,9 +19,8 @@ function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // KYC/KYB Status
-  const { status: kycStatus, loading: kycLoading } = useKycStatus(address as string);
-  const { status: kybStatus, loading: kybLoading } = useKybStatus(address as string);
+  // KYC
+  const { kycStatus, loading, error: sumsubError } = useSumsub();
 
   // Privy hooks
   const { getAccessToken } = usePrivy();
@@ -264,7 +264,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     }
   };
 
-  console.log("kyc/kyb status", kybStatus.status);
+  console.log("kyc/kyb status", kycStatus); //debugg
 
   if (!mounted) return null;
   if (isLoading) return <div><Loader className="animate-spin text-blue-500 mx-auto" size={24} /></div>;
@@ -761,7 +761,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                               To comply with financial regulations and unlock all platform features, please complete our identity verification process.
                               This typically takes less than 5 minutes.
                             </p>
-                            {(kybStatus.status === 'SUBMITTED' || kycStatus.status === 'SUBMITTED') ? (
+                            {(kycStatus === 'approved') ? (
                               <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-full bg-blue-100 text-blue-600">
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -770,22 +770,22 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                                 </div>
                                 <span className="text-blue-600 font-medium">Verification In Progress</span>
                               </div>
-                            ) : ((kybStatus.details?.createdAt) || kycStatus.details?.createdAt) ? (
+                            ) : (kycStatus === 'pending') ? (
                               <a
-                                href="/verification"
+                                href=""
                                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-md transition-all duration-300"
                               >
-                                Continue Verification
+                                Submitted: Pending
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                                 </svg>
                               </a>
                             ) : (
                               <a
-                                href="/compliance/user"
+                                href="/verification"
                                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-md transition-all duration-300"
                               >
-                                Begin Verification
+                                Verify Your Identity
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                                 </svg>

@@ -1,4 +1,4 @@
-// hooks/useSumsubVerification.ts
+"use client";
 import { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { PrismaClient } from '@prisma/client';
@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 type KYCStatus = 'not_started' | 'pending' | 'approved' | 'rejected';
 
-export default function useSumsubVerification() {
+export default function useSumsub() {
   const { user: privyUser } = usePrivy();
   const [kycStatus, setKycStatus] = useState<KYCStatus>('not_started');
   const [loading, setLoading] = useState(true);

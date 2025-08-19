@@ -1,6 +1,6 @@
 "use client";
 
-import { base, polygon, arbitrum, celo, scroll, bsc, optimism } from "wagmi/chains";
+import { base, polygon, arbitrum, celo, scroll, bsc, optimism, mainnet } from "wagmi/chains";
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 import { http, fallback } from "wagmi";
@@ -84,7 +84,7 @@ export function Providers(props: { children: ReactNode }) {
               createOnLogin: "users-without-wallets",
             },
           },
-          supportedChains: [base, bsc, arbitrum, polygon, celo, scroll, optimism]
+          supportedChains: [base, bsc, arbitrum, polygon, celo, scroll, optimism, mainnet]
         }}
       >
         <QueryClientProvider client={queryClient}>
