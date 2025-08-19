@@ -1,18 +1,37 @@
-import { createWalletClient, custom, http, erc20Abi, type Hex, type Chain } from 'viem';
+import { createWalletClient, custom, http, erc20Abi, encodeFunctionData, type Hex, type Chain } from 'viem';
+import { 
+  base,
+  arbitrum,
+  polygon,
+  celo,
+  bsc,
+  mainnet,
+  optimism,
+  avalanche
+} from 'viem/chains';
 import { 
   createMeeClient, 
   toMultichainNexusAccount,
   getMeeScanLink,
+  getMEEVersion,
+  MEEVersion,
   type MeeClient,
   type MultichainSmartAccount 
 } from '@biconomy/abstractjs';
+import { ethers } from 'ethers';
 
 // Types
 export type BiconomyEmbeddedClient = {
   meeClient: MeeClient;
   smartAccount: MultichainSmartAccount;
-  walletClient: any;
+  authorization?: any; // Store the authorization for EIP-7702
 };
+
+export type SignAuthorizationFunction = (params: {
+  contractAddress: `0x${string}`;
+  chainId: number;
+  nonce: number;
+}) => Promise<any>;
 
 export type WalletType = {
   address: `0x${string}`;
@@ -21,57 +40,82 @@ export type WalletType = {
   walletClientType?: string;
 };
 
-// Chain configuration map
+// Chain configuration map using viem chain imports
 const CHAIN_CONFIG: Record<number, Chain> = {
-  8453: { id: 8453, name: 'Base', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: ['https://mainnet.base.org'] } }, blockExplorers: { default: { name: 'Basescan', url: 'https://basescan.org' } } },
-  42161: { id: 42161, name: 'Arbitrum One', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: ['https://arb1.arbitrum.io/rpc'] } }, blockExplorers: { default: { name: 'Arbiscan', url: 'https://arbiscan.io' } } },
-  137: { id: 137, name: 'Polygon', nativeCurrency: { name: 'Matic', symbol: 'MATIC', decimals: 18 }, rpcUrls: { default: { http: ['https://polygon-rpc.com'] } }, blockExplorers: { default: { name: 'Polygonscan', url: 'https://polygonscan.com' } } },
-  42220: { id: 42220, name: 'Celo', nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 }, rpcUrls: { default: { http: ['https://forno.celo.org'] } }, blockExplorers: { default: { name: 'Celoscan', url: 'https://celoscan.io' } } }
+  [mainnet.id]: mainnet,
+  [base.id]: base,
+  [arbitrum.id]: arbitrum,
+  [polygon.id]: polygon,
+  [celo.id]: celo,
+  [bsc.id]: bsc,
+  [optimism.id]: optimism,
+  [avalanche.id]: avalanche,
 };
 
 export const initializeBiconomyEmbedded = async (
   wallet: WalletType,
-  signAuthorization: any,
+  authorization: any, // EIP-7702 authorization - required for embedded wallets
   chainId: number
 ): Promise<BiconomyEmbeddedClient> => {
   if (!wallet?.address) {
+    console.log("Wallet not connected or address not available");
     throw new Error('Wallet not connected or address not available');
   }
 
-  // Get chain configuration
+  if (!authorization) {
+    console.log("Authorization is required for embedded wallet gas abstraction (EIP-7702)");
+    throw new Error('Authorization is required for embedded wallet gas abstraction (EIP-7702)');
+  }
+
+  // Get chain configuration from viem chains
   const chain = CHAIN_CONFIG[chainId];
   if (!chain) {
-    throw new Error(`Unsupported chain ID: ${chainId}`);
+    throw new Error(`Unsupported chain ID: ${chainId}. Supported chains: ${Object.keys(CHAIN_CONFIG).join(', ')}`);
   }
 
   // Switch to selected chain
   await wallet.switchChain(chainId);
   
-  const provider = await wallet.getEthereumProvider();
+  let provider = await wallet.getEthereumProvider();
+  console.log("provider", provider);
+
   if (!provider) {
+    console.log("provider not available");
     throw new Error('Ethereum provider not available');
   }
 
   // Create wallet client
-  const walletClient = createWalletClient({
-    chain,
-    transport: custom(provider),
-    account: wallet.address as `0x${string}`
-  });
+  // const walletClient = createWalletClient({
+  //   chain,
+  //   transport: custom(provider),
+  //   account: wallet.address as `0x${string}`
+  // });
 
+  // console.log("walletClient", walletClient);
+  // console.log("wallet.address", wallet.address);
+  
   // Create Nexus smart account
   const smartAccount = await toMultichainNexusAccount({
-    chains: [chain],
-    transports: [http()],
-    signer: walletClient
+    chainConfigurations: [
+      {
+        chain: chain,
+        transport: custom(provider),
+        version: getMEEVersion(MEEVersion.V2_1_0)
+      }
+    ],
+    signer: await wallet.getEthereumProvider(),
+    accountAddress: wallet.address as `0x${string}`,
   });
+
+  console.log("smartAccount", smartAccount);
 
   // Create MEE client
   const meeClient = await createMeeClient({
     account: smartAccount
   });
+  console.log("meeClient", meeClient);
 
-  return { meeClient, smartAccount, walletClient };
+  return { meeClient, smartAccount, authorization };
 };
 
 export const executeGasAbstractedTransferEmbedded = async (
@@ -79,48 +123,57 @@ export const executeGasAbstractedTransferEmbedded = async (
   toAddress: `0x${string}`,
   amountInWei: bigint,
   tokenAddress: `0x${string}`,
-  chainId: number
+  executionChainId: number, // Chain where the transaction executes
+  feeTokenChainId: number = executionChainId, // Chain where gas is paid (can be different for multichain)
+  feeTokenAddress: `0x${string}` = tokenAddress // Token used to pay gas (can be different)
 ): Promise<any> => {
-  // Get chain configuration
-  const chain = CHAIN_CONFIG[chainId];
-  if (!chain) {
-    throw new Error(`Unsupported chain ID: ${chainId}`);
+  // Get chain configurations from viem chains
+  const executionChain = CHAIN_CONFIG[executionChainId];
+  const feeChain = CHAIN_CONFIG[feeTokenChainId];
+  
+  if (!executionChain) {
+    throw new Error(`Unsupported execution chain ID: ${executionChainId}. Supported chains: ${Object.keys(CHAIN_CONFIG).join(', ')}`);
+  }
+  
+  if (!feeChain) {
+    throw new Error(`Unsupported fee token chain ID: ${feeTokenChainId}. Supported chains: ${Object.keys(CHAIN_CONFIG).join(', ')}`);
   }
 
-  if (!biconomyClient.meeClient || !biconomyClient.smartAccount) {
-    throw new Error('Biconomy client not properly initialized');
+  if (!biconomyClient.meeClient || !biconomyClient.smartAccount || !biconomyClient.authorization) {
+    throw new Error('Biconomy client not properly initialized or missing authorization');
   }
 
   try {
-    // Build transfer instruction
-    const transferInstruction = await biconomyClient.smartAccount.buildComposable({
-      type: 'default',
-      data: {
-        abi: erc20Abi,
-        chainId: chain.id,
+    // Build transfer instruction for multichain
+    const transferInstruction = {
+      calls: [{
         to: tokenAddress,
-        functionName: 'transfer',
-        args: [toAddress, amountInWei],
-      }
-    });
+        value: 0n,
+        data: encodeFunctionData({
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [toAddress, amountInWei]
+        })
+      }],
+      chainId: executionChain.id
+    };
 
-    // Get fusion quote
-    const fusionQuote = await biconomyClient.meeClient.getFusionQuote({
+    // Get quote (NOT fusion quote for embedded wallets)
+    const quote = await biconomyClient.meeClient.getQuote({
       instructions: [transferInstruction],
-      trigger: {
-        chainId: chain.id,
-        tokenAddress,
-        amount: amountInWei
-      },
+      // CRITICAL: delegate must be true for embedded wallets (EIP-7702)
+      delegate: true,
+      // CRITICAL: authorization is required for embedded wallets
+      authorization: biconomyClient.authorization,
       feeToken: {
-        address: tokenAddress,
-        chainId: chain.id
+        address: feeTokenAddress,
+        chainId: feeTokenChainId // Can pay gas on different chain
       }
     });
 
-    // Execute fusion quote
-    const { hash } = await biconomyClient.meeClient.executeFusionQuote({ 
-      fusionQuote 
+    // Execute the quote (NOT fusion quote)
+    const { hash } = await biconomyClient.meeClient.executeQuote({ 
+      quote 
     });
 
     // Wait for transaction completion
@@ -131,4 +184,79 @@ export const executeGasAbstractedTransferEmbedded = async (
     console.error('Error executing gas-abstracted transfer:', error);
     throw error;
   }
+};
+
+// Alternative version using buildComposable if you prefer that approach
+export const executeGasAbstractedTransferEmbeddedV2 = async (
+  biconomyClient: BiconomyEmbeddedClient,
+  toAddress: `0x${string}`,
+  amountInWei: bigint,
+  tokenAddress: `0x${string}`,
+  executionChainId: number,
+  feeTokenChainId: number = executionChainId,
+  feeTokenAddress: `0x${string}` = tokenAddress
+): Promise<any> => {
+  const executionChain = CHAIN_CONFIG[executionChainId];
+  const feeChain = CHAIN_CONFIG[feeTokenChainId];
+  
+  if (!executionChain || !feeChain) {
+    throw new Error(`Unsupported chain ID. Supported chains: ${Object.keys(CHAIN_CONFIG).join(', ')}`);
+  }
+
+  if (!biconomyClient.meeClient || !biconomyClient.smartAccount || !biconomyClient.authorization) {
+    throw new Error('Biconomy client not properly initialized or missing authorization');
+  }
+
+  try {
+    // Build transfer instruction using buildComposable
+    const transferInstruction = await biconomyClient.smartAccount.buildComposable({
+      type: 'default',
+      data: {
+        abi: erc20Abi,
+        chainId: executionChain.id,
+        to: tokenAddress,
+        functionName: 'transfer',
+        args: [toAddress, amountInWei],
+      }
+    });
+
+    // Get quote with EIP-7702 parameters for embedded wallets
+    const quote = await biconomyClient.meeClient.getQuote({
+      instructions: [transferInstruction],
+      delegate: true, // Required for embedded wallets
+      authorization: biconomyClient.authorization, // Required for embedded wallets
+      feeToken: {
+        address: feeTokenAddress,
+        chainId: feeTokenChainId
+      }
+    });
+
+    // Execute the quote
+    const { hash } = await biconomyClient.meeClient.executeQuote({ 
+      quote 
+    });
+
+    // Wait for completion
+    await biconomyClient.meeClient.waitForSupertransactionReceipt({ hash });
+
+    return hash;
+  } catch (error) {
+    console.error('Error executing gas-abstracted transfer:', error);
+    throw error;
+  }
+};
+
+// Helper function to get supported chain IDs
+export const getSupportedChainIds = (): number[] => {
+  return Object.keys(CHAIN_CONFIG).map(Number);
+};
+
+// Helper function to get chain by ID
+export const getChainById = (chainId: number): Chain | undefined => {
+  return CHAIN_CONFIG[chainId];
+};
+
+// Helper function to check if chain is supported
+export const isChainSupported = (chainId: number): boolean => {
+  return chainId in CHAIN_CONFIG;
 };

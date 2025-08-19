@@ -41,7 +41,7 @@ export async function syncPrivyUser(privyUser: PrivyUser): Promise<UserData> {
       create: userData,
     });
 
-    console.log('User synced successfully:', user.id);
+    // console.log('User synced successfully:', user.id); debugg
     return user;
   } catch (error) {
     console.error('Error syncing Privy user:', error);

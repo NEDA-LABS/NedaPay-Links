@@ -49,7 +49,7 @@ function verifySignature(
     return false;
   }
 
-  // Map Sumsub algorithm names to Node.js crypto algorithm names
+  // Mapping Sumsub algorithm names to Node.js crypto algorithm names
   const algorithmMap: Record<string, string> = {
     HMAC_SHA1_HEX: "sha1",
     HMAC_SHA256_HEX: "sha256",
@@ -63,7 +63,7 @@ function verifySignature(
   }
 
   try {
-    // Calculate expected digest
+    // Expected digest
     const calculatedDigest = crypto
       .createHmac(algorithm, secret)
       .update(payload, "utf8")
@@ -87,7 +87,7 @@ function verifySignature(
   }
 }
 
-// Store webhook event for idempotency and audit trail
+// Store webhook event 
 async function storeWebhookEvent(
   payload: ApplicantReviewedPayload,
   sumsubApplicationId: string

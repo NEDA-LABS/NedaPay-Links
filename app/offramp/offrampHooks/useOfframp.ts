@@ -90,7 +90,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
     : GAS_FEES.NORMAL[chainName];
   
   const feeCurrency = gasAbstractionActive ? token : chain.nativeCurrency.symbol;
-  const supportedAbstractionChains = ["BASE"];
+  const supportedAbstractionChains = ["BASE", "ARBITRUM", "CELO", "POLYGON", "BNB"];
   const supportedAbstractionTokens = ["USDC"];
 
   // Calculate receive amount
@@ -102,25 +102,37 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   useEffect(() => {
     const initBiconomy = async () => {
       if (!activeWallet?.address || isCoinbaseWallet || !supportedAbstractionChains.includes(chainName)) return;
-
+  
       setGasAbstractionInitializing(true);
       setGasAbstractionFailed(false);
-
+  
       try {
-        // Switch to selected chain
+        // For embedded wallets, ensure the wallet is fully ready
+        if (isEmbeddedWallet) {
+          // Check if the wallet is ready by trying to get the provider
+          const provider = await activeWallet.getEthereumProvider();
+          if (!provider || !provider.request) {
+            console.warn("Wallet provider not ready, skipping Biconomy initialization");
+            setGasAbstractionFailed(true);
+            return;
+          }
+        }
+  
+        // Switch to selected chain first
         await activeWallet.switchChain(chain.id);
         
         if (isEmbeddedWallet && signAuthorization) {
-            const client = await initializeBiconomyEmbedded(
-              activeWallet,
-              signAuthorization,
-              chain.id
-            );
-            setBiconomyEmbeddedClient(client);
-          } else if (!isEmbeddedWallet) {
-            const client = await initializeBiconomyExternal(activeWallet, chain.id);
-            setBiconomyExternalClient(client);
-          }
+          // Pass the signAuthorization function, not a pre-signed authorization
+          const client = await initializeBiconomyEmbedded(
+            activeWallet,
+            signAuthorization, // This is the function from useSign7702Authorization
+            chain.id
+          );
+          setBiconomyEmbeddedClient(client);
+        } else if (!isEmbeddedWallet) {
+          const client = await initializeBiconomyExternal(activeWallet, chain.id);
+          setBiconomyExternalClient(client);
+        }
       } catch (err) {
         console.warn("Biconomy initialization failed:", err);
         setGasAbstractionFailed(true);
@@ -128,9 +140,14 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
         setGasAbstractionInitializing(false);
       }
     };
-
-    initBiconomy();
-  }, [activeWallet, signAuthorization, isEmbeddedWallet, isCoinbaseWallet, chain]);
+  
+    // Add a delay to ensure wallet is fully ready
+    const timer = setTimeout(() => {
+      initBiconomy();
+    }, 2000); // 2 second delay to ensure wallet is ready
+  
+    return () => clearTimeout(timer);
+  }, [activeWallet?.address, signAuthorization, isEmbeddedWallet, isCoinbaseWallet, chain.id]);
 
   // Fetch supported currencies
   useEffect(() => {
