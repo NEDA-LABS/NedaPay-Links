@@ -54,7 +54,7 @@ const CHAIN_CONFIG: Record<number, Chain> = {
 
 export const initializeBiconomyEmbedded = async (
   wallet: WalletType,
-  authorization: any, // EIP-7702 authorization - required for embedded wallets
+  signAuthorization: any, // EIP-7702 authorization - required for embedded wallets
   chainId: number
 ): Promise<BiconomyEmbeddedClient> => {
   if (!wallet?.address) {
@@ -62,10 +62,14 @@ export const initializeBiconomyEmbedded = async (
     throw new Error('Wallet not connected or address not available');
   }
 
-  if (!authorization) {
+
+
+  if (!signAuthorization) {
     console.log("Authorization is required for embedded wallet gas abstraction (EIP-7702)");
     throw new Error('Authorization is required for embedded wallet gas abstraction (EIP-7702)');
   }
+
+  console.log("chain number", chainId);
 
   // Get chain configuration from viem chains
   const chain = CHAIN_CONFIG[chainId];
@@ -83,6 +87,21 @@ export const initializeBiconomyEmbedded = async (
     console.log("provider not available");
     throw new Error('Ethereum provider not available');
   }
+  
+  // const signer = (await wallet.getEthereumProvider()).getSigner();
+  // const nonce = await signer.getTransactionCount(wallet.address);
+  const nexus120Singleton = '0x000000004F43C49e93C970E84001853a70923B03';
+
+  const authorization = await signAuthorization({
+    account: wallet,
+    contractAddress: nexus120Singleton,
+  
+    // Chain ID 0 makes it valid across all chains
+    chainId: chainId, 
+  
+    // Use nonce 0 for fresh embedded wallet accounts
+    nonce: 0   
+  });
 
   // Create wallet client
   // const walletClient = createWalletClient({
@@ -168,7 +187,7 @@ export const executeGasAbstractedTransferEmbedded = async (
       feeToken: {
         address: feeTokenAddress,
         chainId: feeTokenChainId // Can pay gas on different chain
-      }
+      },
     });
 
     // Execute the quote (NOT fusion quote)
@@ -177,66 +196,6 @@ export const executeGasAbstractedTransferEmbedded = async (
     });
 
     // Wait for transaction completion
-    await biconomyClient.meeClient.waitForSupertransactionReceipt({ hash });
-
-    return hash;
-  } catch (error) {
-    console.error('Error executing gas-abstracted transfer:', error);
-    throw error;
-  }
-};
-
-// Alternative version using buildComposable if you prefer that approach
-export const executeGasAbstractedTransferEmbeddedV2 = async (
-  biconomyClient: BiconomyEmbeddedClient,
-  toAddress: `0x${string}`,
-  amountInWei: bigint,
-  tokenAddress: `0x${string}`,
-  executionChainId: number,
-  feeTokenChainId: number = executionChainId,
-  feeTokenAddress: `0x${string}` = tokenAddress
-): Promise<any> => {
-  const executionChain = CHAIN_CONFIG[executionChainId];
-  const feeChain = CHAIN_CONFIG[feeTokenChainId];
-  
-  if (!executionChain || !feeChain) {
-    throw new Error(`Unsupported chain ID. Supported chains: ${Object.keys(CHAIN_CONFIG).join(', ')}`);
-  }
-
-  if (!biconomyClient.meeClient || !biconomyClient.smartAccount || !biconomyClient.authorization) {
-    throw new Error('Biconomy client not properly initialized or missing authorization');
-  }
-
-  try {
-    // Build transfer instruction using buildComposable
-    const transferInstruction = await biconomyClient.smartAccount.buildComposable({
-      type: 'default',
-      data: {
-        abi: erc20Abi,
-        chainId: executionChain.id,
-        to: tokenAddress,
-        functionName: 'transfer',
-        args: [toAddress, amountInWei],
-      }
-    });
-
-    // Get quote with EIP-7702 parameters for embedded wallets
-    const quote = await biconomyClient.meeClient.getQuote({
-      instructions: [transferInstruction],
-      delegate: true, // Required for embedded wallets
-      authorization: biconomyClient.authorization, // Required for embedded wallets
-      feeToken: {
-        address: feeTokenAddress,
-        chainId: feeTokenChainId
-      }
-    });
-
-    // Execute the quote
-    const { hash } = await biconomyClient.meeClient.executeQuote({ 
-      quote 
-    });
-
-    // Wait for completion
     await biconomyClient.meeClient.waitForSupertransactionReceipt({ hash });
 
     return hash;

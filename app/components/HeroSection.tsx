@@ -59,7 +59,7 @@ const avatars = [
           </h1> */}
 
           <p className="!text-xs md:!text-xl  font-bold text-slate-100 leading-relaxed drop-shadow-md text-left">
-            Accept or Send Stablecoins, Swap instantly, Cash Out Easily
+            Send and Accept Stablecoins, Swap instantly, Cash Out Easily
           </p>
           {/* Clean CTA Section */}
             <div className="pt-4">

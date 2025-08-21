@@ -90,7 +90,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
     : GAS_FEES.NORMAL[chainName];
   
   const feeCurrency = gasAbstractionActive ? token : chain.nativeCurrency.symbol;
-  const supportedAbstractionChains = ["BASE", "ARBITRUM", "CELO", "POLYGON", "BNB"];
+  const supportedAbstractionChains = ["BASE", "ARBITRUM", "CELO", "POLYGON", "BSC"];
   const supportedAbstractionTokens = ["USDC"];
 
   // Calculate receive amount
@@ -101,7 +101,7 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   // Initialize Biconomy
   useEffect(() => {
     const initBiconomy = async () => {
-      if (!activeWallet?.address || isCoinbaseWallet || !supportedAbstractionChains.includes(chainName) || !isEmbeddedWallet) return;
+      if (!activeWallet?.address || isCoinbaseWallet || !isEmbeddedWallet) return;
   
       setGasAbstractionInitializing(true);
       setGasAbstractionFailed(false);
@@ -117,16 +117,15 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
             return;
           }
         }
-  
+        
         // Switch to selected chain first
         await activeWallet.switchChain(chain.id);
-        
         if (isEmbeddedWallet && signAuthorization) {
           // Pass the signAuthorization function, not a pre-signed authorization
           const client = await initializeBiconomyEmbedded(
             activeWallet,
             signAuthorization, // This is the function from useSign7702Authorization
-            chain.id
+            chain.id,
           );
           setBiconomyEmbeddedClient(client);
         } else if (!isEmbeddedWallet) {
