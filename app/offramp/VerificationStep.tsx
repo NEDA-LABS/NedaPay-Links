@@ -190,13 +190,13 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
 
                   {/* Dropdown Menu */}
                   {isDropdownOpen && !isAccountVerified && (
-                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
                       {COUNTRY_CODES.map((country) => (
                         <button
                           key={country.code}
                           type="button"
                           onClick={() => handleCountryCodeChange(country.code)}
-                          className="w-full flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 text-left transition-colors"
+                          className="flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 text-left transition-colors"
                         >
                           <span className="text-lg">{country.flag}</span>
                           <span className="font-medium text-gray-900 text-sm">{country.code}</span>
@@ -213,7 +213,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
                   id="accountNumber"
                   value={phoneNumber}
                   onChange={handlePhoneNumberChange}
-                  className={`flex-1 px-4 py-3 text-base text-gray-900 rounded-r-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500 ${
+                  className={`flex-1 w-50 md:w-full px-4 py-3 text-base text-gray-900 rounded-r-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500 ${
                     inputError ? 'border-red-400 focus:ring-red-400' : ''
                   }`}
                   placeholder="123 456 789"
