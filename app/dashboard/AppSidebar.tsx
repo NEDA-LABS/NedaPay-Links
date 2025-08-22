@@ -39,8 +39,8 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 
 const overviewItems = [
-  { title: "Home", url: "/", icon: Home },
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  // { title: "Home", url: "/", icon: Home },
+  { title: "Home", url: "/dashboard", icon: Home },
   { title: "Notification Center", url: "/all-notifications", icon: Bell },
 ];
 

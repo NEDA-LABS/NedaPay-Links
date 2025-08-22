@@ -52,9 +52,9 @@ const OffRampPage: React.FC = () => {
         <div className="container mx-auto xl:w-[50%] max-w-6xl px-1 pt-6">
           <div className="text-center mb-8 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-200/30 to-blue-200/30 blur-3xl rounded-4xl"></div>
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-xs font-medium animate-pulse mb-4 border border-purple-200">
+            {/* <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-xs font-medium animate-pulse mb-4 border border-purple-200">
               Stablecoins to Fiat Offramp
-            </div>
+            </div> */}
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
               <span className="block bg-gradient-to-r from-purple-100 to-blue-100 bg-clip-text text-transparent">
                 Convert stablecoins to Cash
