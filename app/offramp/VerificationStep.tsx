@@ -1,5 +1,5 @@
-import React from 'react';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Loader2, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
 
 interface VerificationStepProps {
   institution: string;
@@ -17,6 +17,15 @@ interface VerificationStepProps {
   fiat: string;
 }
 
+// Country codes for supported African countries
+const COUNTRY_CODES = [
+  { code: '+255', country: 'Tanzania', flag: '🇹🇿' },
+  { code: '+254', country: 'Kenya', flag: '🇰🇪' },
+  { code: '+256', country: 'Uganda', flag: '🇺🇬' },
+  { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
+  { code: '+233', country: 'Ghana', flag: '🇬🇭' },
+];
+
 const VerificationStep: React.FC<VerificationStepProps> = ({
   institution,
   setInstitution,
@@ -33,6 +42,90 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
   fiat
 }) => {
   const isMobileNetwork = institution && institutions.find(i => i.code === institution)?.type === "mobile_money";
+  
+  // Mobile number specific states
+  const [selectedCountryCode, setSelectedCountryCode] = useState('+255'); // Default to Tanzania
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [inputError, setInputError] = useState('');
+
+  // Format phone number as user types
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, '');
+    
+    // Add spaces for better readability
+    if (digits.length > 3 && digits.length <= 6) {
+      return digits.replace(/(\d{3})(\d+)/, '$1 $2');
+    } else if (digits.length > 6) {
+      return digits.replace(/(\d{3})(\d{3})(\d+)/, '$1 $2 $3');
+    }
+    return digits;
+  };
+
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const formatted = formatPhoneNumber(value);
+    setPhoneNumber(formatted);
+    setInputError('');
+    
+    // Update the parent component's accountIdentifier with full number
+    const fullNumber = selectedCountryCode + formatted.replace(/\D/g, '');
+    setAccountIdentifier(fullNumber);
+    
+    // Validate phone number length
+    const digits = formatted.replace(/\D/g, '');
+    if (digits.length > 0 && digits.length < 8) {
+      setInputError('Phone number seems too short');
+    } else if (digits.length > 15) {
+      setInputError('Phone number seems too long');
+    }
+  };
+
+  const handleRegularAccountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAccountIdentifier(e.target.value);
+    setInputError('');
+  };
+
+  // Update country code and rebuild full number
+  const handleCountryCodeChange = (newCode: string) => {
+    setSelectedCountryCode(newCode);
+    setIsDropdownOpen(false);
+    
+    // Update full number with new country code
+    if (phoneNumber) {
+      const fullNumber = newCode + phoneNumber.replace(/\D/g, '');
+      setAccountIdentifier(fullNumber);
+    }
+  };
+
+  // Parse existing accountIdentifier when switching to mobile network
+  useEffect(() => {
+    if (isMobileNetwork && accountIdentifier && accountIdentifier.startsWith('+')) {
+      // Try to extract country code and phone number
+      const countryCode = COUNTRY_CODES.find(cc => accountIdentifier.startsWith(cc.code));
+      if (countryCode) {
+        setSelectedCountryCode(countryCode.code);
+        const remainingNumber = accountIdentifier.slice(countryCode.code.length);
+        setPhoneNumber(formatPhoneNumber(remainingNumber));
+      }
+    } else if (!isMobileNetwork) {
+      // Reset mobile-specific states when switching to bank
+      setPhoneNumber('');
+      setSelectedCountryCode('+255');
+    }
+  }, [isMobileNetwork, institution]);
+
+  // Reset states when institution changes
+  const handleInstitutionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setInstitution(e.target.value);
+    setAccountIdentifier("");
+    setPhoneNumber('');
+    setInputError('');
+  };
+
+  const selectedCountry = COUNTRY_CODES.find(c => c.code === selectedCountryCode);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -55,10 +148,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
           <select
             id="institution"
             value={institution}
-            onChange={(e) => {
-              setInstitution(e.target.value);
-              setAccountIdentifier("");
-            }}
+            onChange={handleInstitutionChange}
             onFocus={fetchInstitutions}
             className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500"
             required
@@ -80,23 +170,97 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
           >
             {isMobileNetwork ? "Mobile Number" : "Bank Account Number"}
           </label>
-          <input
-            type="text"
-            id="accountNumber"
-            value={accountIdentifier}
-            onChange={(e) => {
-              setAccountIdentifier(e.target.value);
-            }}
-            className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500"
-            placeholder={isMobileNetwork ? "e.g. +2551234567890" : "e.g. 1234567890"}
-            required
-            disabled={isAccountVerified}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            {isMobileNetwork 
-              ? "Include country code (e.g., +2551234567890)" 
-              : "Enter full account number without spaces"}
-          </p>
+
+          {isMobileNetwork ? (
+            <div className="space-y-2">
+              {/* Country Code + Phone Number Input */}
+              <div className="flex">
+                {/* Country Code Dropdown */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center space-x-2 px-3 py-3 bg-gray-200 border border-gray-300 border-r-0 rounded-l-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all min-w-[100px]"
+                    disabled={isAccountVerified}
+                  >
+                    <span className="text-lg">{selectedCountry?.flag}</span>
+                    <span className="text-gray-900 font-medium text-sm">{selectedCountryCode}</span>
+                    <ChevronDown size={14} className="text-gray-600" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isDropdownOpen && !isAccountVerified && (
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                      {COUNTRY_CODES.map((country) => (
+                        <button
+                          key={country.code}
+                          type="button"
+                          onClick={() => handleCountryCodeChange(country.code)}
+                          className="w-full flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 text-left transition-colors"
+                        >
+                          <span className="text-lg">{country.flag}</span>
+                          <span className="font-medium text-gray-900 text-sm">{country.code}</span>
+                          <span className="text-xs text-gray-600">{country.country}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Phone Number Input */}
+                <input
+                  type="tel"
+                  id="accountNumber"
+                  value={phoneNumber}
+                  onChange={handlePhoneNumberChange}
+                  className={`flex-1 px-4 py-3 text-base text-gray-900 rounded-r-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500 ${
+                    inputError ? 'border-red-400 focus:ring-red-400' : ''
+                  }`}
+                  placeholder="123 456 789"
+                  required
+                  disabled={isAccountVerified}
+                />
+              </div>
+
+              {/* Full Number Preview */}
+              {phoneNumber && (
+                <div className="bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600">
+                  <span className="text-xs text-gray-300">Full Number: </span>
+                  <span className="text-sm font-mono text-white">{selectedCountryCode + phoneNumber.replace(/\D/g, '')}</span>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {inputError && (
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400" />
+                  <p className="text-xs text-red-400">{inputError}</p>
+                </div>
+              )}
+
+              {/* Help Text */}
+              {/* <p className="text-xs text-gray-300 mt-1">
+                Enter your mobile number without the country code
+              </p> */}
+            </div>
+          ) : (
+            <div>
+              {/* Bank Account Input */}
+              <input
+                type="text"
+                id="accountNumber"
+                value={accountIdentifier}
+                onChange={handleRegularAccountChange}
+                className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500"
+                placeholder="1234567890"
+                required
+                disabled={isAccountVerified}
+              />
+              <p className="text-xs text-gray-300 mt-1">
+                Enter full account number without spaces
+              </p>
+            </div>
+          )}
         </div>
         
         <div>
@@ -131,6 +295,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
               !institution ||
               !accountIdentifier ||
               !accountName
+              // (isMobileNetwork && inputError)
             }
             className="w-full px-4 py-3 bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base transform hover:-translate-y-0.5 flex items-center justify-center"
           >
