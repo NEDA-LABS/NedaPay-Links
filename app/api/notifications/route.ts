@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message, recipient, type, status, relatedTransactionId } = body;
+    const { message, recipient, type, status, relatedTransactionId, broadcastId } = body;
 
     // Validate required fields
     if (!message || !recipient || !type || !status) {
@@ -26,6 +26,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // If broadcastId is provided, check for existing notification to prevent duplicates
+    if (broadcastId) {
+      const existingNotification = await prisma.notification.findFirst({
+        where: {
+          broadcastId: broadcastId,
+          recipient: recipient,
+        },
+      });
+
+      if (existingNotification) {
+        return NextResponse.json(
+          { error: "Notification with this broadcastId already exists for this recipient" },
+          { status: 409 } // Conflict status code
+        );
+      }
+    }
+
     // Create notification
     const notification = await prisma.notification.create({
       data: {
@@ -34,6 +51,7 @@ export async function POST(request: NextRequest) {
         type,
         status,
         relatedTransactionId: relatedTransactionId || null,
+        broadcastId: broadcastId || null,
       },
     });
 
@@ -54,13 +72,23 @@ export async function GET(request: NextRequest) {
     const recipient = searchParams.get("recipient");
     const status = searchParams.get("status");
     const type = searchParams.get("type");
+    const broadcastId = searchParams.get("broadcastId");
     const limit = searchParams.get("limit");
+
+    // Require recipient parameter
+    if (!recipient) {
+      return NextResponse.json(
+        { error: "Recipient parameter is required" },
+        { status: 400 }
+      );
+    }
 
     // Build where clause
     const where: any = {};
-    if (recipient) where.recipient = recipient;
+    where.recipient = recipient; // Always filter by recipient
     if (status) where.status = status;
     if (type) where.type = type;
+    if (broadcastId) where.broadcastId = broadcastId;
 
     // Build query options
     const queryOptions: any = {
@@ -92,12 +120,15 @@ export async function PUT(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const notificationId = searchParams.get("id");
+    const broadcastId = searchParams.get("broadcastId");
+    const recipient = searchParams.get("recipient");
     const body = await request.json();
     const { status } = body;
 
-    if (!notificationId) {
+    // Validate that we have either notificationId or (broadcastId + recipient)
+    if (!notificationId && (!broadcastId || !recipient)) {
       return NextResponse.json(
-        { error: "Notification ID is required" },
+        { error: "Either notification ID or (broadcastId + recipient) is required" },
         { status: 400 }
       );
     }
@@ -118,11 +149,24 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update notification
-    const updatedNotification = await prisma.notification.update({
-      where: { id: notificationId },
-      data: { status },
-    });
+    let updatedNotification;
+
+    if (notificationId) {
+      // Update by notification ID
+      updatedNotification = await prisma.notification.update({
+        where: { id: notificationId },
+        data: { status },
+      });
+    } else if (broadcastId && recipient) {
+      // Update by broadcastId and recipient
+      updatedNotification = await prisma.notification.updateMany({
+        where: {
+          broadcastId: broadcastId,
+          recipient: recipient,
+        },
+        data: { status },
+      });
+    }
 
     return NextResponse.json(updatedNotification, { status: 200 });
   } catch (error: any) {
@@ -145,17 +189,32 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const notificationId = searchParams.get("id");
+    const broadcastId = searchParams.get("broadcastId");
+    const recipient = searchParams.get("recipient");
 
-    if (!notificationId) {
+    // Validate that we have either notificationId or (broadcastId + recipient)
+    if (!notificationId && (!broadcastId || !recipient)) {
       return NextResponse.json(
-        { error: "Notification ID is required" },
+        { error: "Either notification ID or (broadcastId + recipient) is required" },
         { status: 400 }
       );
     }
 
-    await prisma.notification.delete({
-      where: { id: notificationId },
-    });
+    if (notificationId) {
+      // Delete by notification ID
+      await prisma.notification.delete({
+        where: { id: notificationId },
+      });
+    } else if (broadcastId && recipient) {
+      // Delete by broadcastId and recipient
+      // We've already validated that both broadcastId and recipient exist
+      await prisma.notification.deleteMany({
+        where: {
+          broadcastId: broadcastId,
+          recipient: recipient as string, // Type assertion since we've validated it's not null
+        },
+      });
+    }
 
     return NextResponse.json(
       { message: "Notification deleted successfully" },

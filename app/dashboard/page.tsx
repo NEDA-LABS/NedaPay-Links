@@ -48,6 +48,7 @@ import {
   StablecoinBalanceTracker,
 } from "@/components/StablecoinBalanceTracker";
 import QuickActions from "@/components/QuickActions";
+import BroadCastNotificationListener from "@/components/pushNotificationsListener";
 
 // Define ABIs and constants
 const ERC20_ABI = [
@@ -327,6 +328,7 @@ export default function DashboardContent() {
   return (
     <div className="space-y-2 px-2 lg:px-[] max-w-6xl mx-auto">
       <Header />
+      <BroadCastNotificationListener />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">
