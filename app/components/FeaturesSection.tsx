@@ -107,7 +107,7 @@ export default function Features() {
 
 
       <div className="flex flex-col z-10 mx-auto justify-center items-center">
-      <h1 className="text-3xl sm:text-2xl lg:text-5xl font-black mb-8 text-center">
+      <h1 className="text-xl lg:text-5xl font-black mb-8 text-center">
             <span className="block text-white mb-2">Everything You Need</span>
             <span className="block text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-purple-600 bg-clip-text">
               To Send and Receive Stablecoin Payments
