@@ -58,6 +58,18 @@ interface WalletModalProps {
   defaultTab?: 'overview' | 'send' | 'receive' | 'settings';
 }
 
+// Mock prices for native tokens (in a real app, use an API)
+const NATIVE_TOKEN_PRICES: Record<number, number> = {
+  [mainnet.id]: 2000, // ETH
+  [base.id]: 0.0005, // BASE
+  [bsc.id]: 300, // BNB
+  [scroll.id]: 0.0004, // ETH
+  [celo.id]: 0.5, // CELO
+  [arbitrum.id]: 0.001, // ETH
+  [polygon.id]: 0.7, // MATIC
+  [optimism.id]: 0.0006, // ETH
+};
+
 export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }: WalletModalProps) {
   const { wallets } = useWallets();
   const { address, isConnected } = useAccount();
@@ -66,12 +78,13 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const publicClient = usePublicClient();
   const { fundWallet } = useFundWallet();
   const { sendTransaction } = useSendTransaction();
-  const { exportWallet } = usePrivy();
+  const { exportWallet, user } = usePrivy();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'send' | 'receive' | 'settings'>(defaultTab);
-  const [activeChain, setActiveChain] = useState<typeof base | typeof bsc | typeof arbitrum | typeof polygon | typeof optimism | typeof mainnet | typeof scroll | typeof celo>(base); 
+  const [activeChain, setActiveChain] = useState<any>(base);
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSwitchingChain, setIsSwitchingChain] = useState(false);
   
   // Fund states
   const [fundAmount, setFundAmount] = useState('');
@@ -170,12 +183,13 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
       const tokenBalances: TokenBalance[] = [];
       
       // Add native token balance
-      if (nativeBalance && nativeBalance.value > 0n) {
+      if (nativeBalance) {
         const formatted = parseFloat(formatUnits(nativeBalance.value, nativeBalance.decimals));
+        const price = NATIVE_TOKEN_PRICES[activeChain.id] || 1;
         tokenBalances.push({
           symbol: nativeBalance.symbol,
           balance: formatted.toFixed(6),
-          usd: (formatted * 2000).toFixed(2), // Mock price
+          usd: (formatted * price).toFixed(2),
           decimals: nativeBalance.decimals,
           isNative: true
         });
@@ -239,15 +253,18 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   /* ---------- Switch Chain ---------- */
   const switchChain = async (chain: any) => {
     try {
+      setIsSwitchingChain(true);
       setIsLoading(true);
       if (switchChainAsync) {
         await switchChainAsync({ chainId: chain.id });
       }
       setActiveChain(chain);
+      setBalances([]); // Clear balances while loading new ones
       toast.success(`Switched to ${chain.name}`);
     } catch (e: any) {
       toast.error(e.message || 'Failed to switch chain');
     } finally {
+      setIsSwitchingChain(false);
       setIsLoading(false);
     }
   };
@@ -384,13 +401,16 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                 <button
                   key={c.id}
                   onClick={() => switchChain(c)}
-                  disabled={isLoading}
+                  disabled={isSwitchingChain || isLoading}
                   className={`px-1 py-1 text-sm rounded-lg transition font-medium ${
                     activeChain.id === c.id
                       ? 'bg-white text-blue-600 shadow-lg dark:bg-gray-800 dark:text-blue-400'
                       : 'bg-white/20 text-white hover:bg-white/30 dark:bg-gray-700/50 dark:hover:bg-gray-700'
-                  } disabled:opacity-50`}
+                  } disabled:opacity-50 flex items-center justify-center min-w-[60px]`}
                 >
+                  {isSwitchingChain && activeChain.id === c.id ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1" />
+                  ) : null}
                   {c.name}
                 </button>
               ))}
@@ -427,10 +447,12 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                 {/* Balances */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Your Assets</h3>
-                  {isLoading && balances.length === 0 ? (
+                  {isLoading || isSwitchingChain ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-                      <p className="text-gray-500 dark:text-gray-400 mt-2">Loading balances...</p>
+                      <p className="text-gray-500 dark:text-gray-400 mt-2">
+                        {isSwitchingChain ? 'Switching chain...' : 'Loading balances...'}
+                      </p>
                     </div>
                   ) : balances.length > 0 ? (
                     <div className="space-y-3">
@@ -638,6 +660,29 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             {activeTab === 'settings' && (
               <div className="space-y-1 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Wallet Settings</h3>
+                
+                {/* Privy Dashboard Info */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700">
+                  <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Advanced Wallet Management</h4>
+                  <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">
+                    For more advanced wallet features, transaction history, and additional tokens, 
+                    visit your Privy dashboard.
+                  </p>
+                  <a
+                    href="https://home.privy.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm"
+                  >
+                    Open Privy Dashboard
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                  {user && user.email && (
+                    <p className="text-blue-600 dark:text-blue-400 text-xs mt-2">
+                      Login with: {user.email.address}
+                    </p>
+                  )}
+                </div>
                 
                 {/* Export Private Key */}
                 <div className="border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded-xl">
