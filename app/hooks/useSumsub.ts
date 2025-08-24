@@ -1,4 +1,3 @@
-"use client";
 import { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { PrismaClient } from '@prisma/client';

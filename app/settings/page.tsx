@@ -21,6 +21,7 @@ function SettingsPage() {
 
   // KYC
   const { kycStatus, loading, error: sumsubError } = useSumsub();
+  console.log("kycStatus", kycStatus);
 
   // Privy hooks
   const { getAccessToken } = usePrivy();
@@ -264,10 +265,10 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     }
   };
 
-  console.log("kyc/kyb status", kycStatus); //debugg
+  console.log("kyc status", kycStatus); //debugg
 
   if (!mounted) return null;
-  if (isLoading) return <div><Loader className="animate-spin text-blue-500 mx-auto" size={24} /></div>;
+  if (isLoading) return <div className="flex items-center justify-center h-screen"><Loader className="animate-spin text-blue-100 mx-auto" size={24} /></div>;
   if (error) return <div>Error: {error}</div>;
    
   return (
@@ -316,7 +317,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                       {tab === 'security' && 'Security'}
                       {tab === 'notifications' && 'Notifications'}
                       {tab === 'api' && 'API Keys'}
-                      {tab === 'kyc' && 'KYC/KYB Verification'}
+                      {tab === 'kyc' && 'KYC Verification'}
                     </button>
                   ))}
                 </nav>
@@ -743,8 +744,8 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
               {activeTab === 'kyc' && (
                 <>
                   <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-800">KYC/KYB Verification</h2>
-                    <p className="text-gray-600 text-sm mt-1">Complete identity verification to access all features</p>
+                    <h2 className="text-xl font-semibold text-slate-200">KYC Verification</h2>
+                    <p className="text-gray-200 text-sm mt-1">Complete identity verification to access all features</p>
                   </div>
                   <div className="p-6">
                     <div className="max-w-2xl mx-auto">
@@ -768,7 +769,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                                   </svg>
                                 </div>
-                                <span className="text-blue-600 font-medium">Verification In Progress</span>
+                                <span className="text-blue-600 font-medium">Verification Completed</span>
                               </div>
                             ) : (kycStatus === 'pending') ? (
                               <a
