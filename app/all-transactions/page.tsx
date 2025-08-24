@@ -79,7 +79,6 @@ const currencySymbols: { [key: string]: { icon: string; label: string } } = stab
   {} as { [key: string]: { icon: string; label: string } }
 );
 
-console.log("currency symbols", currencySymbols);
 
 function TransactionsPage() {
   const { authenticated, user } = usePrivy();

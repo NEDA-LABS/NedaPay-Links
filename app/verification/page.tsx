@@ -144,22 +144,22 @@ const SumsubVerification = () => {
 
   const expirationHandler = async (): Promise<string> => {
     try {
-      console.log("Access token expired, generating new one...");
+      // console.log("Access token expired, generating new one...");
       const newToken = await generateAccessToken();
       setAccessToken(newToken);
       return newToken;
     } catch (err) {
-      console.error("Failed to handle token expiration:", err);
+      // console.error("Failed to handle token expiration:", err);
       throw err;
     }
   };
 
   const handleMessage = (type: string, payload: any): void => {
-    console.log("WebSDK onMessage", type, payload);
+    // console.log("WebSDK onMessage", type, payload);
   };
 
   const handleError = (error: any): void => {
-    console.error("WebSDK onError", error);
+    // console.error("WebSDK onError", error);
   };
 
   const config: SumsubConfig = {
