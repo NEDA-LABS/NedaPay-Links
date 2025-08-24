@@ -1,57 +1,46 @@
 import { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { PrismaClient } from '@prisma/client';
-
-
-const prisma = new PrismaClient();
 
 type KYCStatus = 'not_started' | 'pending' | 'approved' | 'rejected';
+
+interface KYCResponse {
+  kycStatus: KYCStatus;
+  applicationId: string | null;
+  reviewedAt: string | null;
+}
 
 export default function useSumsub() {
   const { user: privyUser } = usePrivy();
   const [kycStatus, setKycStatus] = useState<KYCStatus>('not_started');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkKYC = async () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         if (!privyUser?.wallet?.address) {
           setKycStatus('not_started');
           return;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { wallet: privyUser.wallet.address },
-          include: {
-            sumsubApplications: {
-              orderBy: { createdAt: 'desc' },
-              take: 1
-            }
-          }
-        });
+        // Call the API route instead of using Prisma directly
+        const response = await fetch(
+          `/api/sumsub?wallet=${encodeURIComponent(privyUser.wallet.address)}`
+        );
 
-        if (!user || !user.sumsubApplications.length) {
-          setKycStatus('not_started');
-          return;
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const latestApp = user.sumsubApplications[0];
+        const data: KYCResponse = await response.json();
         
-        if (latestApp.reviewedAt) {
-          if (latestApp.reviewAnswer === 'GREEN') {
-            setKycStatus('approved');
-          } else if (latestApp.reviewAnswer === 'RED') {
-            setKycStatus('rejected');
-          } else {
-            setKycStatus('pending');
-          }
-        } else {
-          setKycStatus('pending');
-        }
+        setKycStatus(data.kycStatus);
+        setApplicationId(data.applicationId);
+
       } catch (err) {
         setError(err as Error);
         console.error('KYC check failed:', err);
@@ -63,5 +52,33 @@ export default function useSumsub() {
     checkKYC();
   }, [privyUser]);
 
-  return { kycStatus, loading, error };
+  // Helper function to refresh KYC status
+  const refreshKYCStatus = async () => {
+    if (!privyUser?.wallet?.address) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `/api/sumsub?wallet=${encodeURIComponent(privyUser.wallet.address)}`
+      );
+      
+      if (response.ok) {
+        const data: KYCResponse = await response.json();
+        setKycStatus(data.kycStatus);
+        setApplicationId(data.applicationId);
+      }
+    } catch (err) {
+      console.error('Failed to refresh KYC status:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { 
+    kycStatus, 
+    loading, 
+    error, 
+    applicationId,
+    refreshKYCStatus 
+  };
 }
