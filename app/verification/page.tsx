@@ -317,10 +317,10 @@ const SumsubVerification = () => {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-3">
+            <h2 className="text-base md:text-2xl font-bold text-gray-800 mb-3">
               Email Verification Required
             </h2>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-sm text-gray-600 leading-relaxed">
               To complete identity verification, please add and verify your
               email address. This helps us ensure the security of your account.
             </p>

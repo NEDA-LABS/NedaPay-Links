@@ -20,6 +20,7 @@ import {
   FileIcon,
   ArrowRightLeft,
   Home,
+  IdCard,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -37,40 +38,55 @@ import {
 } from "@/compliance/user/components/ui/sidebar";
 import { usePrivy } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
-
-const overviewItems = [
-  // { title: "Home", url: "/", icon: Home },
-  { title: "Home", url: "/dashboard", icon: Home },
-  { title: "Notification Center", url: "/all-notifications", icon: Bell },
-];
-
-const productItems = [
-  { title: "Payment Link", url: "/payment-link", icon: Send },
-  { title: "Generate Invoice", url: "/invoice", icon: FileIcon },
-  // { title: "Swap Coins", url: "/swap-coins", icon: Activity },
-  { title: "Transfer to Fiat", url: "/offramp", icon: CreditCard },
-  // { title: "Customize Dashboard", url: "/settings", icon: Sparkles },
-  { title: "Cross-Chain Swap", url: "/accross-bridge", icon: ArrowRightLeft },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-];
-
-const paymentItems = [
-  { title: "Transactions from links", url: "/all-transactions", icon: FileText },
-  // { title: "Dispute and Settlement", url: "/disputes", icon: Shield },
-  { title: "Settings", url: "/settings", icon: Settings },
-];
-
-const resourceItems = [
-  // { title: "API - Integration", url: "/api", icon: Code },
-  { title: "Support", url: "/support", icon: HelpCircle },
-];
+import useSumsub from "@/hooks/useSumsub";
 
 function AppSidebarContent() {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
-  const {getAccessToken} = usePrivy();
-  const [businessName, setBusinessName] = useState('@user');
+  const { getAccessToken } = usePrivy();
+  const [businessName, setBusinessName] = useState("@user");
+
+  const { kycStatus, loading, error: sumsubError } = useSumsub();
+
+  let overviewItems: any[] = [];
+  kycStatus === "approved"
+    ? (overviewItems = [
+        // { title: "Home", url: "/", icon: Home },
+        { title: "Home", url: "/dashboard", icon: Home },
+        { title: "Notification Center", url: "/all-notifications", icon: Bell },
+      ])
+    : (overviewItems = [
+        // { title: "Home", url: "/", icon: Home },
+        { title: "Home", url: "/dashboard", icon: Home },
+        { title: "KYC", url: "/verification", icon: IdCard },
+        { title: "Notification Center", url: "/all-notifications", icon: Bell },
+      ]);
+
+  const productItems = [
+    { title: "Payment Link", url: "/payment-link", icon: Send },
+    { title: "Generate Invoice", url: "/invoice", icon: FileIcon },
+    // { title: "Swap Coins", url: "/swap-coins", icon: Activity },
+    { title: "Transfer to Fiat", url: "/offramp", icon: CreditCard },
+    // { title: "Customize Dashboard", url: "/settings", icon: Sparkles },
+    { title: "Cross-Chain Swap", url: "/accross-bridge", icon: ArrowRightLeft },
+    { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  ];
+
+  const paymentItems = [
+    {
+      title: "Transactions from links",
+      url: "/all-transactions",
+      icon: FileText,
+    },
+    // { title: "Dispute and Settlement", url: "/disputes", icon: Shield },
+    { title: "Settings", url: "/settings", icon: Settings },
+  ];
+
+  const resourceItems = [
+    // { title: "API - Integration", url: "/api", icon: Code },
+    { title: "Support", url: "/support", icon: HelpCircle },
+  ];
 
   const getNavClass = (url: string) => {
     const isActive =
@@ -89,16 +105,15 @@ function AppSidebarContent() {
 
   const fetchSettings = async () => {
     const accessToken = await getAccessToken();
-    const response = await fetch('/api/settings', {
+    const response = await fetch("/api/settings", {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
     const data = await response.json();
     const settings = data.settings;
-    setBusinessName(settings.businessName || '@user');
+    setBusinessName(settings.businessName || "@user");
   };
-
 
   return (
     <Sidebar
@@ -251,9 +266,7 @@ function AppSidebarContent() {
 }
 
 export function AppSidebar() {
-  return (
-      <AppSidebarContent />
-  );
+  return <AppSidebarContent />;
 }
 
 // New standalone toggle component
