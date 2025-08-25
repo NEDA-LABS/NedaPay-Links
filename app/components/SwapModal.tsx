@@ -4,14 +4,15 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
 import {useWallets} from '@privy-io/react-auth';
 import { formatUnits, parseUnits } from 'viem';
-import { base, bsc, scroll } from 'viem/chains';
+import { base, bsc, scroll, polygon, arbitrum, optimism, celo } from 'viem/chains';
 import { stablecoins } from '@/data/stablecoins';
 import { getAerodromeQuote, swapAerodrome } from '@/utils/aerodrome';
 import { checkAllowance, approveToken } from '@/utils/erc20';
 import { addTransaction } from '@/utils/transactionStorage';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
-const SUPPORTED_CHAINS = [base, bsc, scroll];
+const SUPPORTED_CHAINS = [base, bsc, scroll, polygon, arbitrum, optimism, celo];
 
 const ERC20_ABI = [
   {
@@ -229,7 +230,7 @@ const SwapModal: React.FC<SwapModalProps> = memo(
           </div>
 
           {/* chain switch */}
-          <div className="flex justify-center gap-2 p-2">
+          <div className="flex flex-wrap justify-center gap-2 p-2">
             {SUPPORTED_CHAINS.map((c) => (
               <button
                 key={c.id}
@@ -258,7 +259,7 @@ const SwapModal: React.FC<SwapModalProps> = memo(
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xl">{fromTokenObj?.flag}</span>
+                <Image src={fromTokenObj ? fromTokenObj.flag : ""} alt={fromTokenObj?  fromTokenObj.name : ""} width={20} height={20} className="text-xl rounded-full"/>
                 <span className="font-medium">{fromSymbol}</span>
               </div>
               <input
@@ -304,7 +305,7 @@ const SwapModal: React.FC<SwapModalProps> = memo(
                 <option value="">Select token</option>
                 {availableTokens.map((c) => (
                   <option key={c.baseToken} value={c.baseToken}>
-                    {c.flag} {c.baseToken}
+                    {c.baseToken}
                   </option>
                 ))}
               </select>
