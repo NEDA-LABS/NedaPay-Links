@@ -36,19 +36,22 @@ interface TokenResponse {
     userId: string;
   };
 }
-// const { linkEmail } = useLinkAccount({
-//   onSuccess: ({ user, linkMethod, linkedAccount }) => {
-//     // console.log("Linked account to user ", linkedAccount);
-//     toast.success("Email linked successfully!");
-//   },
-//   onError: (error) => {
-//     // console.error("Failed to link account with error ", error);
-//     toast.error("Failed to link email. Please try again.");
-//   },
-// });
+
+const LoadingSpinner = ({ size = "h-12 w-12" }: { size?: string }) => (
+  <div className={`animate-spin rounded-full ${size} border-b-2 border-blue-600 mx-auto mb-4`}></div>
+);
+
+const CenteredCard = ({ children, maxWidth = "max-w-md" }: { children: React.ReactNode; maxWidth?: string }) => (
+  <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <div className={`${maxWidth} w-full bg-white rounded-3xl shadow-lg p-8 text-center`}>
+      {children}
+    </div>
+  </div>
+);
+
 const SumsubVerification = () => {
   const { user, ready: privyReady } = usePrivy();
-  const { hasEmail, addEmail } = useUserSync();
+  const { hasEmail, addEmail, isLoading: userSyncLoading } = useUserSync();
   const { linkEmail } = useLinkAccount({
     onSuccess: () => {
       toast.success("Email linked successfully!");
@@ -62,14 +65,18 @@ const SumsubVerification = () => {
   });
 
   const [accessToken, setAccessToken] = React.useState<string>("");
-  const [loading, setLoading] = React.useState<boolean>(true);
+  const [tokenLoading, setTokenLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>("");
   const [linkingEmail, setLinkingEmail] = React.useState<boolean>(false);
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState<boolean>(false);
 
   const applicantEmail = user?.email?.address;
   const userId = user?.id;
   const levelName = "id-and-liveness";
   const API_URL = "/api/sumsub/generate-access-token";
+
+  // Combined loading state for initial checks
+  const isInitialLoading = !privyReady || userSyncLoading || !initialLoadComplete;
 
   const generateAccessToken = async (): Promise<string> => {
     if (!applicantEmail) {
@@ -107,30 +114,36 @@ const SumsubVerification = () => {
     }
   };
 
+  // Initial loading effect with minimum wait time
   React.useEffect(() => {
-    if (!privyReady) return;
+    if (!privyReady || userSyncLoading) return;
 
-    // Only proceed with token generation if user has email
-    if (!hasEmail) {
-      setLoading(false);
-      return;
-    }
+    const timer = setTimeout(() => {
+      setInitialLoadComplete(true);
+    }, 1500); // Minimum 1.5 second wait to prevent flash
+
+    return () => clearTimeout(timer);
+  }, [privyReady, userSyncLoading]);
+
+  // Token generation effect
+  React.useEffect(() => {
+    if (!initialLoadComplete || !hasEmail) return;
 
     const initializeToken = async () => {
       try {
-        setLoading(true);
+        setTokenLoading(true);
         const token = await generateAccessToken();
         setAccessToken(token);
         setError("");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error occurred");
       } finally {
-        setLoading(false);
+        setTokenLoading(false);
       }
     };
 
     initializeToken();
-  }, [privyReady, hasEmail]);
+  }, [initialLoadComplete, hasEmail]);
 
   const updateAccessToken = async (): Promise<void> => {
     try {
@@ -144,12 +157,10 @@ const SumsubVerification = () => {
 
   const expirationHandler = async (): Promise<string> => {
     try {
-      // console.log("Access token expired, generating new one...");
       const newToken = await generateAccessToken();
       setAccessToken(newToken);
       return newToken;
     } catch (err) {
-      // console.error("Failed to handle token expiration:", err);
       throw err;
     }
   };
@@ -160,6 +171,17 @@ const SumsubVerification = () => {
 
   const handleError = (error: any): void => {
     // console.error("WebSDK onError", error);
+  };
+
+  const handleEmailLink = async () => {
+    try {
+      setLinkingEmail(true);
+      linkEmail();
+    } catch (error) {
+      setLinkingEmail(false);
+      console.error("Error linking email:", error);
+      toast.error("Failed to initiate email linking. Please try again.");
+    }
   };
 
   const config: SumsubConfig = {
@@ -254,139 +276,136 @@ const SumsubVerification = () => {
     adaptIframeHeight: true,
   };
 
-  if (!privyReady) {
+  // Initial loading state (prevents flash)
+  if (isInitialLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Loading Authentication
-          </h2>
-          <p className="text-gray-600">
-            Please wait while we prepare your verification session...
-          </p>
+      <CenteredCard>
+        <LoadingSpinner />
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+          Loading Authentication
+        </h2>
+        <p className="text-gray-600">
+          Please wait while we prepare your verification session...
+        </p>
+        <div className="mt-4 text-sm text-gray-500">
+          Checking your account details and preparing the verification interface.
         </div>
-      </div>
+      </CenteredCard>
     );
   }
 
+  // No email state
   if (!hasEmail) {
     return (
       <div>
         <Header />
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-3xl shadow-lg p-8 text-center">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                Email Verification Required
-              </h2>
-              <p className="text-gray-600">
-                To complete identity verification, please add and verify your
-                email address.
-              </p>
+        <CenteredCard>
+          <div className="mb-6">
+            <div className="bg-blue-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="h-8 w-8 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
             </div>
-
-            <button
-              onClick={() => {
-                try {
-                  setLinkingEmail(true);
-                  linkEmail();
-                } catch (error) {
-                  setLinkingEmail(false);
-                  console.error("Error linking email:", error);
-                }
-              }}
-              disabled={linkingEmail}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              {linkingEmail ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Verifying Email...
-                </span>
-              ) : (
-                "Add Email Address"
-              )}
-            </button>
-
-            <p className="text-gray-500 text-sm mt-4">
-              You'll receive a verification code to confirm your email address.
+            <h2 className="text-2xl font-bold text-gray-800 mb-3">
+              Email Verification Required
+            </h2>
+            <p className="text-gray-600 leading-relaxed">
+              To complete identity verification, please add and verify your
+              email address. This helps us ensure the security of your account.
             </p>
           </div>
-        </div>
-      </div>
-    );
-  }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Initializing Verification
-          </h2>
-          <p className="text-gray-600">
-            Please wait while we prepare your verification session...
+          <button
+            onClick={handleEmailLink}
+            disabled={linkingEmail}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+          >
+            {linkingEmail ? (
+              <span className="flex items-center justify-center">
+                <LoadingSpinner size="h-5 w-5" />
+                <span className="ml-2">Verifying Email...</span>
+              </span>
+            ) : (
+              "Add Email Address"
+            )}
+          </button>
+
+          <p className="text-gray-500 text-sm mt-4 leading-relaxed">
+            You'll receive a verification code to confirm your email address.
+            The process typically takes less than a minute.
           </p>
-        </div>
+        </CenteredCard>
       </div>
     );
   }
 
+  // Token loading state
+  if (tokenLoading) {
+    return (
+      <CenteredCard>
+        <LoadingSpinner />
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+          Initializing Verification
+        </h2>
+        <p className="text-gray-600">
+          Setting up your secure verification session...
+        </p>
+        <div className="mt-4 text-sm text-gray-500">
+          This may take a few moments while we configure your verification environment.
+        </div>
+      </CenteredCard>
+    );
+  }
+
+  // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
-          <div className="bg-red-100 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="h-6 w-6 text-red-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Verification Error
-          </h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <CenteredCard>
+        <div className="bg-red-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+          <svg
+            className="h-8 w-8 text-red-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
+          </svg>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-3">
+          Verification Error
+        </h2>
+        <p className="text-gray-600 mb-6 leading-relaxed">{error}</p>
+        <div className="space-y-3">
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
           >
             Try Again
           </button>
+          <p className="text-gray-500 text-sm">
+            If the problem persists, please contact our support team.
+          </p>
         </div>
-      </div>
+      </CenteredCard>
     );
   }
 
+  // Main verification interface
   return (
     <div>
       <Header />
@@ -413,7 +432,15 @@ const SumsubVerification = () => {
           </div>
 
           <div className="mt-6 text-center text-gray-400 text-sm">
-            <p>Having trouble with verification? Contact <a href="mailto:support@nedapay.xyz" className="text-blue-500 hover:text-blue-700 underline">support@nedapay.xyz</a></p>
+            <p>
+              Having trouble with verification?{" "}
+              <a
+                href="mailto:support@nedapay.xyz"
+                className="text-blue-500 hover:text-blue-700 underline transition-colors"
+              >
+                Contact Support
+              </a>
+            </p>
           </div>
         </div>
       </div>
