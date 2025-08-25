@@ -4,7 +4,7 @@ import {FaXTwitter, FaGithub, FaMedium, FaDiscord} from "react-icons/fa6";
 
 export default function Footer() {
   return (
-    <footer className="w-full  border-t shadow-lg backdrop-blur-sm py-6 px-4 sm:px-6 border-t-2 !border-blue-900 bg-slate-950/50">
+    <footer className="w-full shadow-lg backdrop-blur-sm py-6 px-4 sm:px-6 !border-blue-900 bg-slate-950/50">
       <div className="max-w-6xl mx-auto flex flex-col justify-between items-center gap-4 text-sm text-slate-600">
         {/* Left Side */}
         <div className="text-center sm:text-left text-slate-50">
@@ -50,6 +50,7 @@ export default function Footer() {
           </a>
         </div>
         </div>
+        <a href="mailto:support@nedapay.xyz" className="text-slate-50 hover:text-blue-600 transition-colors duration-300 underline">contact support</a>
       </div>
     </footer>
   );
