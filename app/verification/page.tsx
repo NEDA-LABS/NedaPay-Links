@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { usePrivy, useLinkAccount } from "@privy-io/react-auth";
 import { useUserSync } from "../hooks/useUserSync";
 import toast from "react-hot-toast";
+import { withDashboardLayout } from "@/utils/withDashboardLayout";
 
 interface SumsubConfig {
   lang: string;
@@ -412,10 +413,10 @@ const SumsubVerification = () => {
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="max-w-4xl mx-auto w-full">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="text-base md:text-3xl font-bold text-white mb-2">
               Identity Verification
             </h1>
-            <p className="text-gray-300">
+            <p className="text-xs text-gray-300">
               Complete verification to access all platform features
             </p>
           </div>
@@ -448,4 +449,4 @@ const SumsubVerification = () => {
   );
 };
 
-export default SumsubVerification;
+export default withDashboardLayout(SumsubVerification);
