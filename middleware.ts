@@ -7,8 +7,6 @@ const PROTECTED_ROUTES = [
   '/payments',
   '/payment-link',
   '/stablecoins',
-  '/settings',
-  '/offramp'
 ];
 
 export function middleware(request: NextRequest) {
