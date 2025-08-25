@@ -59,8 +59,6 @@ export const config = {
     '/payments/:path*',
     '/payment-link/:path*',
     '/stablecoins/:path*',
-    '/settings/:path*',
-    '/offramp/:path*'
   ],
 };
 
