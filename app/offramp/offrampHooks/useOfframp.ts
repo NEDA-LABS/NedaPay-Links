@@ -220,7 +220,15 @@ const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   // Fetch institutions for selected fiat
   const fetchInstitutions = useCallback(async () => {
     try {
-      const data = await fetchSupportedInstitutions(fiat);
+      let data = await fetchSupportedInstitutions(fiat);
+      
+      // If fiat is TZS, filter out bank institutions
+      if (fiat === 'TZS') {
+        data = data.filter(inst => inst.type !== 'bank');
+      }
+      
+      // console.log("fiat", fiat);
+      // console.log(data);
       setInstitutions(data);
     } catch (err) {
       setError("Failed to fetch institutions");

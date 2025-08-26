@@ -204,6 +204,7 @@ export async function verifyAccount(institution: string, accountIdentifier: stri
 
 export async function fetchSupportedInstitutions(currencyCode: string): Promise<Array<{ name: string; code: string; type: string }>> {
   const response = await axios.get(`${PAYCREST_API_URL}/v1/institutions/${currencyCode}`, { headers });
+  // console.log(response.data.data);
   return response.data.data;
 }
 

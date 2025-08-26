@@ -42,6 +42,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
   fiat
 }) => {
   const isMobileNetwork = institution && institutions.find(i => i.code === institution)?.type === "mobile_money";
+
   
   // Mobile number specific states
   const [selectedCountryCode, setSelectedCountryCode] = useState('+255'); // Default to Tanzania
@@ -145,6 +146,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
           >
             Choose Bank or Mobile Network
           </label>
+          {fiat === "TZS" ? (<span className="text-red-500 text-sm">cashouts to Bank in Tanzania are unavailable at the moment!</span>) : null}
           <select
             id="institution"
             value={institution}
