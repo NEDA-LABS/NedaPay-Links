@@ -146,7 +146,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
           >
             Choose Bank or Mobile Network
           </label>
-          {fiat === "TZS" ? (<span className="text-red-500 text-sm">cashouts to Bank in Tanzania are unavailable at the moment!</span>) : null}
+          {fiat === "TZS" ? (<span className="text-white text-xs md:text-sm bg-blue-800/50 rounded-xl px-2 py-1">cashouts to Bank in Tanzania are unavailable at the moment!</span>) : null}
           <select
             id="institution"
             value={institution}

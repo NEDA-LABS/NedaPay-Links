@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Loader2, AlertTriangle, Info, ArrowLeft, X } from 'lucide-react';
 import FeeInfoPanel from './FeeInfoPanel';
 import VerificationStep from './VerificationStep';
@@ -8,6 +8,7 @@ import SuccessMessage from './SuccessMessage';
 import useOffRamp from './offrampHooks/useOfframp';
 import { ChainConfig } from './offrampHooks/constants';
 import { TOKEN_ADDRESSES, TOKEN_ABI, GAS_FEES } from './offrampHooks/tokenConfig';
+import { fetchTokenRate } from '@/utils/paycrest';
 
 type SupportedToken = keyof typeof TOKEN_ADDRESSES;
 
@@ -18,8 +19,12 @@ const OffRampForm: React.FC<{
   onBack: () => void;
   isAccountVerified: boolean;
   setIsAccountVerified: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ chain, token, onTokenChange, onBack }) => {
+}> = ({ chain, token, onTokenChange, onBack, isAccountVerified, setIsAccountVerified }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [inputMode, setInputMode] = useState<'crypto' | 'fiat'>('crypto');
+  const [fiatInput, setFiatInput] = useState('');
+  const [isRateFetching, setIsRateFetching] = useState(false);
+  const [rateError, setRateError] = useState<string | null>(null);
   
   const {
     amount,
@@ -39,8 +44,6 @@ const OffRampForm: React.FC<{
     isLoading,
     error,
     success,
-    isAccountVerified,
-    setIsAccountVerified,
     balance,
     handleVerifyAccount,
     handleFetchRate,
@@ -59,23 +62,147 @@ const OffRampForm: React.FC<{
     usdcToFiatRate
   } = useOffRamp(chain, token);
 
-  // Fetch rate automatically with debounce
+  // Enhanced rate fetching function with retry logic
+  const fetchRateWithRetry = useCallback(async (retryCount = 0, maxRetries = 3) => {
+    if (!fiat || isRateFetching) return;
+    
+    setIsRateFetching(true);
+    setRateError(null);
+    
+    try {
+      await handleFetchRate();
+      setRateError(null);
+    } catch (error) {
+      console.error('Rate fetch error:', error);
+      
+      if (retryCount < maxRetries) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, retryCount) * 1000;
+        setTimeout(() => {
+          fetchRateWithRetry(retryCount + 1, maxRetries);
+        }, delay);
+      } else {
+        setRateError('Failed to fetch exchange rate. Please try again.');
+      }
+    } finally {
+      if (retryCount === 0) {
+        setIsRateFetching(false);
+      }
+    }
+  }, [fiat, handleFetchRate, isRateFetching]);
+
+  // Fetch rate when fiat currency changes with debouncing
   useEffect(() => {
-    if (!amount || !fiat || parseFloat(amount) <= 0) {
-      setRate("");
+    if (!fiat) {
+      setRate('');
+      setRateError(null);
       return;
     }
 
     const timer = setTimeout(() => {
-      handleFetchRate();
+      fetchRateWithRetry();
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [amount, fiat]);
+  }, [fiat, fetchRateWithRetry]);
+
+  // Refetch rate when input values change (with longer debounce)
+  useEffect(() => {
+    if (!fiat || !rate) return;
+
+    const hasValidInput = inputMode === 'crypto' 
+      ? amount && parseFloat(amount) > 0
+      : fiatInput && parseFloat(fiatInput) > 0;
+
+    if (hasValidInput) {
+      const timer = setTimeout(() => {
+        fetchRateWithRetry();
+      }, 2000); // Longer debounce for input changes
+
+      return () => clearTimeout(timer);
+    }
+  }, [amount, fiatInput, inputMode, fetchRateWithRetry]);
+
+  // Calculate crypto amount when in fiat mode
+  useEffect(() => {
+    if (inputMode === 'fiat' && fiatInput && rate && parseFloat(rate) > 0 && parseFloat(fiatInput) > 0) {
+      const netRate = parseFloat(rate) * 0.995; // 0.5% fee
+      const requiredCrypto = parseFloat(fiatInput) / netRate;
+      setAmount(requiredCrypto.toFixed(6));
+    } else if (inputMode === 'fiat' && !fiatInput) {
+      setAmount('');
+    }
+  }, [fiatInput, rate, inputMode, setAmount]);
+
+  // Calculate fiat amount when in crypto mode
+  useEffect(() => {
+    if (inputMode === 'crypto' && amount && rate && parseFloat(rate) > 0 && parseFloat(amount) > 0) {
+      const received = parseFloat(amount) * 0.995 * parseFloat(rate);
+      setFiatInput(received.toFixed(2));
+    } else if (inputMode === 'crypto' && !amount) {
+      setFiatInput('');
+    }
+  }, [amount, rate, inputMode]);
+
+  // Handle mode switch and sync values
+  const handleModeChange = (newMode: 'crypto' | 'fiat') => {
+    if (newMode === inputMode) return;
+
+    // Only sync if we have valid rate and current input
+    if (rate && parseFloat(rate) > 0) {
+      if (inputMode === 'crypto' && amount && parseFloat(amount) > 0) {
+        const received = parseFloat(amount) * 0.995 * parseFloat(rate);
+        setFiatInput(received.toFixed(2));
+      } 
+      // else if (inputMode === 'fiat' && fiatInput && parseFloat(fiatInput) > 0) {
+      //   const netRate = parseFloat(rate) * 0.995;
+      //   const required = parseFloat(fiatInput) / netRate;
+      //   setAmount(required.toFixed(6));
+      // }
+    }
+
+    setInputMode(newMode);
+  };
+
+  // Calculate received fiat for displays
+  const receivedFiat = inputMode === 'fiat' && fiatInput
+    ? parseFloat(fiatInput).toFixed(2)
+    : rate && amount && parseFloat(rate) > 0 && parseFloat(amount) > 0
+      ? ((parseFloat(amount) * 0.995) * parseFloat(rate)).toFixed(2)
+      : '0.00';
+
+  // Calculate fiat balance
+  const fiatBalance = balance && rate && parseFloat(rate) > 0 && parseFloat(balance) > 0
+    ? (parseFloat(balance) * parseFloat(rate)).toFixed(2)
+    : null;
+
+  // Calculate available based on mode
+  const available = inputMode === 'crypto'
+    ? `${balance || '0'} ${token.toUpperCase()}`
+    : fiatBalance
+      ? `${fiatBalance} ${fiat}`
+      : rate && balance
+        ? 'Calculating...'
+        : 'Select currency first';
 
   // New function to handle form submission flow
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate inputs
+    if (!rate || parseFloat(rate) <= 0) {
+      setRateError('Please wait for exchange rate to load');
+      return;
+    }
+    
+    if (!amount || parseFloat(amount) <= 0) {
+      return;
+    }
+    
+    if (inputMode === 'fiat' && (!fiatInput || parseFloat(fiatInput) <= 0)) {
+      return;
+    }
+
     setShowConfirmation(true);
   };
 
@@ -83,6 +210,22 @@ const OffRampForm: React.FC<{
   const confirmAndSubmit = async () => {
     setShowConfirmation(false);
     await handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+  };
+
+  const calculateTokenAmount = async (amount: number) => {
+    // if (!rate || !fiatAmount) return "0";
+    const rate = await fetchTokenRate(token, 1, fiat, chain.name);
+    try {
+      const parsedAmount = amount;
+      const tokenAmount = (parsedAmount + (parsedAmount * 0.05)) / parseFloat(rate);
+      const formattedAmount = tokenAmount.toFixed(6);
+      setAmount(formattedAmount);
+      return formattedAmount;
+    } catch (error) {
+      console.error("Amount calculation error:", error);
+      setRateError("Failed to calculate token amount");
+      return "0";
+    }
   };
 
   if (success) {
@@ -132,9 +275,14 @@ const OffRampForm: React.FC<{
               <div className="flex justify-between">
                 <span className="text-gray-400">You Will Receive:</span>
                 <span className="text-green-400 font-bold">
-                  {amount && rate 
-                    ? `${((parseFloat(amount) - parseFloat(amount) * 0.005) * parseFloat(rate)).toFixed(2)} ${fiat}` 
-                    : 'N/A'}
+                  {receivedFiat} {fiat}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-400">Exchange Rate:</span>
+                <span className="text-white font-medium">
+                  1 {token.toUpperCase()} = {rate} {fiat}
                 </span>
               </div>
               
@@ -190,7 +338,7 @@ const OffRampForm: React.FC<{
               Convert {token.toUpperCase()} to Cash
             </h2>
             <p className="text-gray-400 text-xs">
-              {chain.name} Network • {token.toUpperCase()} Balance: 
+              {chain.name} Network • Balance: 
               <span className="font-medium ml-1">
                 {balanceLoading ? (
                   <span className="inline-flex">
@@ -198,7 +346,14 @@ const OffRampForm: React.FC<{
                     Loading...
                   </span>
                 ) : (
-                  `${balance} ${token.toUpperCase()}`
+                  <>
+                    {balance} {token.toUpperCase()}
+                    {fiatBalance && fiat && (
+                      <span className="text-gray-500 ml-1">
+                        (≈ {fiatBalance} {fiat})
+                      </span>
+                    )}
+                  </>
                 )}
               </span>
             </p>
@@ -217,169 +372,234 @@ const OffRampForm: React.FC<{
               Enter Amount and Currency
             </h3>
           </div>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label
-                htmlFor="amount"
-                className="block text-sm font-semibold mb-3 text-gray-100"
-              >
-                Amount ({token})
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  id="amount"
-                  value={amount}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow only positive numbers with max 2 decimal places
-                    if (/^\d*\.?\d{0,2}$/.test(value) || value === '') {
-                      setAmount(value);
-                    }
-                  }}
-                  className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500"
-                  placeholder={`Minimum 1 ${token}`}
-                  min="0.01"
-                  step="0.01"
-                  required
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Available: {balanceLoading ? (
-                  <span className="inline-flex items-center">
-                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                    Loading...
-                  </span>
-                ) : (
-                  `${balance} ${token}`
-                )}
-              </p>
-            </div>
-            
-            <div>
-              <label
-                htmlFor="fiat"
-                className="block text-sm font-semibold mb-3 text-gray-100"
-              >
-                Fiat Currency
-              </label>
-              <select
-                id="fiat"
-                value={fiat}
-                onChange={(e) => {
-                  setFiat(e.target.value);
-                  fetchInstitutions();
-                  setInstitution("");
-                  setIsAccountVerified(false);
-                }}
-                className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100"
-              >
-                <option value="" className="bg-gray-100 text-gray-500">Select Currency</option>
-                {currencies.map((currency) => (
-                  <option 
-                    key={currency.code} 
-                    value={currency.code}
-                    className="bg-gray-100 text-gray-900"
-                  >
-                    {currency.name} ({currency.code})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
+
+          {/* Fiat Currency Selection First */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-semibold text-gray-100">
-                Exchange Rate
-              </label>
-            </div>
-            
-            <div className={`p-4 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
-              rate 
-                ? "bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-700" 
-                : "bg-gray-800/50 border-gray-700"
-            }`}>
-              {rate ? (
-                <div className="grid grid-rows-1 gap-2">
-                  <div>
-                    <p className="text-blue-400 font-medium text-sm">
-                      1 {token} = {rate} {fiat}
-                    </p>
-                  </div>
-                  <div className="border-l-2 border-blue-700 pl-3">
-                    <p className="text-green-400 font-medium text-sm">
-                      You will receive:
-                    </p>
-                    <p className="text-green-300 font-semibold">
-                      {((parseFloat(amount) - parseFloat(amount) * 0.005) * parseFloat(rate)).toFixed(2)} {fiat}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-2">
-                  {amount && fiat ? (
-                    <div className="flex items-center justify-center text-gray-500">
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Fetching rates...
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-sm">
-                      Enter amount and select currency to see rates
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+            <label
+              htmlFor="fiat"
+              className="block text-sm font-semibold mb-3 text-gray-100"
+            >
+              Select Fiat Currency *
+            </label>
+            <select
+              id="fiat"
+              value={fiat}
+              onChange={(e) => {
+                setFiat(e.target.value);
+                setRate('');
+                setRateError(null);
+                fetchInstitutions();
+                setInstitution("");
+                setIsAccountVerified(false);
+                // Clear amounts when currency changes
+                setAmount('');
+                setFiatInput('');
+              }}
+              className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100"
+              required
+            >
+              <option value="" className="bg-gray-100 text-gray-500">Select Currency</option>
+              {currencies.map((currency) => (
+                <option 
+                  key={currency.code} 
+                  value={currency.code}
+                  className="bg-gray-100 text-gray-900"
+                >
+                  {currency.name} ({currency.code})
+                </option>
+              ))}
+            </select>
           </div>
+
+          {fiat && (
+            <>
+              {/* Mode Toggle */}
+              <div className="flex bg-gray-800 rounded-xl p-1 mb-4 max-w-sm mx-auto">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange('crypto')}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'crypto' ? 'bg-purple-700 text-white' : 'text-gray-400'}`}
+                >
+                  {token.toUpperCase()}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange('fiat')}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'fiat' ? 'bg-purple-700 text-white' : 'text-gray-400'}`}
+                >
+                  {fiat}
+                </button>
+              </div>
+              
+              {/* Amount Input */}
+              <div>
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-semibold mb-3 text-gray-100"
+                >
+                  {inputMode === 'crypto' ? `Amount to Send (${token.toUpperCase()})` : `Amount to Send (${fiat})`} *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="amount"
+                    value={inputMode === 'crypto' ? amount : fiatInput}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (inputMode === 'crypto') {
+                        if (/^\d*\.?\d{0,6}$/.test(value) || value === '') {
+                          setAmount(value);
+                        }
+                      } else {
+                        if (/^\d*\.?\d{0,2}$/.test(value) || value === '') {
+                          setFiatInput(value);
+                          calculateTokenAmount(parseFloat(value));
+                          
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500"
+                    placeholder={`Minimum 1 ${token.toUpperCase()}`}
+                    min="0.01"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Available: {balanceLoading ? (
+                    <span className="inline-flex items-center">
+                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                      Loading...
+                    </span>
+                  ) : (
+                    available
+                  )}
+                </p>
+              </div>
+            </>
+          )}
+          
+          {/* Exchange Rate Display */}
+          {fiat && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-gray-100">
+                  Exchange Rate
+                </label>
+                {(isRateFetching || (!rate && !rateError)) && (
+                  <span className="text-xs text-blue-400 flex items-center">
+                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                    Fetching rate...
+                  </span>
+                )}
+              </div>
+              
+              <div className={`p-4 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
+                rate && !rateError
+                  ? "bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-700" 
+                  : rateError
+                    ? "bg-gradient-to-r from-red-900/30 to-rose-900/30 border-red-700"
+                    : "bg-gray-800/50 border-gray-700"
+              }`}>
+                {rateError ? (
+                  <div className="text-center py-2">
+                    <div className="flex items-center justify-center text-red-400 mb-2">
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      {rateError}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fetchRateWithRetry()}
+                      disabled={isRateFetching}
+                      className="text-xs bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                    >
+                      {isRateFetching ? 'Retrying...' : 'Retry'}
+                    </button>
+                  </div>
+                ) : rate && parseFloat(rate) > 0 ? (
+                  <div className="grid grid-rows-1 gap-2">
+                    <div>
+                      <p className="text-blue-400 font-medium text-sm">
+                        1 {token.toUpperCase()} = {rate} {fiat}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        Rate includes 0.5% service fee
+                      </p>
+                    </div>
+                    {((inputMode === 'crypto' && amount) || (inputMode === 'fiat' && fiatInput)) && (
+                      <div className="border-l-2 border-blue-700 pl-3">
+                        <p className="text-green-400 font-medium text-sm">
+                          {inputMode === 'crypto' ? 'You will receive:' : 'You will send:'}
+                        </p>
+                        <p className="text-green-300 font-semibold">
+                          {inputMode === 'crypto' 
+                            ? `${receivedFiat} ${fiat}`
+                            : `${amount} ${token.toUpperCase()}`}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-2">
+                    <p className="text-gray-500 text-sm">
+                      {isRateFetching ? 'Fetching exchange rate...' : 'Waiting for rate...'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Step 2: Recipient Details */}
-        <VerificationStep
-          institution={institution}
-          setInstitution={setInstitution}
-          accountIdentifier={accountIdentifier}
-          setAccountIdentifier={setAccountIdentifier}
-          accountName={accountName}
-          setAccountName={setAccountName}
-          isAccountVerified={isAccountVerified}
-          setIsAccountVerified={setIsAccountVerified}
-          isLoading={isLoading}
-          handleVerifyAccount={handleVerifyAccount}
-          institutions={institutions}
-          fetchInstitutions={fetchInstitutions}
-          fiat={fiat}
-        />
+        {rate && !rateError && (
+          <VerificationStep
+            institution={institution}
+            setInstitution={setInstitution}
+            accountIdentifier={accountIdentifier}
+            setAccountIdentifier={setAccountIdentifier}
+            accountName={accountName}
+            setAccountName={setAccountName}
+            isAccountVerified={isAccountVerified}
+            setIsAccountVerified={setIsAccountVerified}
+            isLoading={isLoading}
+            handleVerifyAccount={handleVerifyAccount}
+            institutions={institutions}
+            fetchInstitutions={fetchInstitutions}
+            fiat={fiat}
+          />
+        )}
 
         {/* Step 3: Transaction Memo */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-blue-400 bg-gradient-to-r from-blue-900/50 to-indigo-900/50 rounded-full px-3 py-1">
-              Step 3
-            </span>
-            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
-              Transaction Description
-            </h3>
+        {rate && !rateError && isAccountVerified && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-blue-400 bg-gradient-to-r from-blue-900/50 to-indigo-900/50 rounded-full px-3 py-1">
+                Step 3
+              </span>
+              <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                Transaction Description
+              </h3>
+            </div>
+            <div>
+              <label
+                htmlFor="memo"
+                className="block text-sm font-semibold mb-3 text-gray-400"
+              >
+                Transaction Memo *
+              </label>
+              <textarea
+                id="memo"
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500"
+                rows={3}
+                placeholder="Add a memo for this transaction..."
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label
-              htmlFor="memo"
-              className="block text-sm font-semibold mb-3 text-gray-400"
-            >
-              Transaction Memo
-            </label>
-            <textarea
-              id="memo"
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500"
-              rows={3}
-              placeholder="Add a memo for this transaction..."
-              required
-            />
-          </div>
-        </div>
+        )}
 
         {/* Error and Success Messages */}
         {error && (
@@ -392,44 +612,35 @@ const OffRampForm: React.FC<{
         )}
 
         {/* Submit Button */}
-        <div className="space-y-4">
-          {/* <div className="p-4 bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-xl border border-amber-700 backdrop-blur-sm">
-            <div className="flex items-start gap-2">
-              <Info className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-amber-400 text-sm font-medium">
-                  Important:
-                </p>
-                <p className="text-amber-500 text-xs mt-1">
-                  Verify account details before initiating payment, funds sent to the wrong account cannot be retrieved.
-                </p>
-              </div>
-            </div>
-          </div> */}
-        
-          <button
-            type="submit"
-            disabled={isLoading || !rate || !isAccountVerified}
-            className="w-full py-3 px-6 bg-gradient-to-r from-purple-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 text-white font-medium text-base rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 flex items-center justify-center"
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            ) : (
-              <div className="flex items-center">
-                <span>Initiate Offramp Payment</span>
-                <span className="ml-2 text-xs bg-white/10 px-2 py-1 rounded-md">
-                  {amount && rate 
-                    ? `${((parseFloat(amount) - parseFloat(amount) * 0.005) * parseFloat(rate)).toFixed(2)} ${fiat}` 
-                    : ''}
-                </span>
-              </div>
-            )}
-          </button>
-          
-          <p className="text-xs text-gray-500 text-center">
-            Funds will be refunded to your wallet if the transaction fails
-          </p>
-        </div>
+        {rate && !rateError && isAccountVerified && (
+          <div className="space-y-4">
+            <button
+              type="submit"
+              disabled={isLoading || !rate || !isAccountVerified || !amount || !memo || isRateFetching}
+              className="w-full py-3 px-6 bg-gradient-to-r from-purple-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 text-white font-medium text-base rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 flex items-center justify-center"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : isRateFetching ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Updating rate...
+                </>
+              ) : (
+                <div className="flex items-center">
+                  <span>Initiate Offramp Payment</span>
+                  <span className="ml-2 text-xs bg-white/10 px-2 py-1 rounded-md">
+                    {receivedFiat} {fiat}
+                  </span>
+                </div>
+              )}
+            </button>
+            
+            <p className="text-xs text-gray-500 text-center">
+              Funds will be refunded to your wallet if the transaction fails
+            </p>
+          </div>
+        )}
       </form>
     </div>
   );

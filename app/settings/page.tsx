@@ -73,8 +73,6 @@ function SettingsPage() {
   createdAt: string;
 }
 
-
-
 const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [webhookUrl, setWebhookUrl] = useState('');
 
@@ -274,14 +272,6 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   return (
     <div className="min-h-screen">
       <Header />
-      {/* <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-        <button
-          onClick={() => window.history.back()}
-          className="!group !flex !items-center !gap-2 !px-4 !py-2 !bg-white !border !border-gray-200 !rounded-full !text-sm !font-semibold !text-gray-700 !hover:bg-blue-50 !hover:shadow-md !transition-all !duration-300"
-        >
-          <span className="transform group-hover:-translate-x-1 transition-transform duration-200">←</span> Back
-        </button>
-      </div> */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-10">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-100 to-indigo-100 bg-clip-text text-transparent">Settings</h1>
@@ -296,13 +286,14 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
         )}
         {authenticated && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-            <div className="bg-gray-800 rounded-2xl shadow-xl h-fit overflow-hidden transition-all duration-300">
+            {/* Desktop Sidebar */}
+            <div className="hidden lg:block bg-gray-800 rounded-2xl shadow-xl h-fit overflow-hidden transition-all duration-300">
               <div className="p-6 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-100">Settings</h2>
               </div>
               <div className="p-4">
                 <nav className="space-y-1">
-                  {['profile', 'notifications', 'kyc'].map((tab) => (
+                  {['profile', 'payment', 'security', 'notifications', 'api', 'kyc'].map((tab) => (
                     <button
                       key={tab}
                       className={`!w-full !text-left !px-4 !py-3 !rounded-lg !text-sm !font-medium !transition-all !duration-200 ${
@@ -325,6 +316,38 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
               <div className="p-4 bg-gray-800">
                 <div className="text-xs text-gray-100 mb-2">Connected Wallet</div>
                 <div className="font-mono text-sm text-gray-100 break-all">{account}</div>
+              </div>
+            </div>
+  
+            {/* Mobile Tab Navigation */}
+            <div className="lg:hidden sticky top-16 z-10 bg-gray-900 pt-2 pb-1 overflow-x-auto shadow-md rounded-2xl">
+              <div className="flex space-x-2 px-2">
+                {['profile', 'notifications', 'kyc'].map((tab) => (
+                  <button
+                    key={tab}
+                    className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                      activeTab === tab
+                        ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 shadow-sm'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                    onClick={() => {
+                      setActiveTab(tab);
+                      // Scroll to top when changing tabs
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    {tab === 'profile' && 'Profile'}
+                    {tab === 'payment' && 'Payment'}
+                    {tab === 'security' && 'Security'}
+                    {tab === 'notifications' && 'Notifications'}
+                    {tab === 'api' && 'API'}
+                    {tab === 'kyc' && 'KYC'}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 px-4 py-2 bg-gray-800 rounded-lg mx-2">
+                <div className="text-xs text-gray-400 mb-1">Connected Wallet</div>
+                <div className="font-mono text-xs text-gray-300 truncate">{account}</div>
               </div>
             </div>
   
@@ -758,7 +781,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-800 mb-2">Verify Your Identity</h3>
-                            <p className="text-gray-600 mb-4">
+                            <p className="text-gray-600 mb-4 text-sm">
                               To comply with financial regulations and unlock all platform features, please complete our identity verification process.
                               This typically takes less than 5 minutes.
                             </p>
@@ -795,65 +818,6 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                           </div>
                         </div>
                       </div>
-  
-                      {/* <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                        <h4 className="font-medium text-gray-800 mb-4">Verification Status</h4>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-full ${kycStatus === 'verified' ? 'bg-green-100 text-green-600' : kycStatus === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
-                                {kycStatus === 'verified' ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                  </svg>
-                                ) : kycStatus === 'pending' ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                  </svg>
-                                ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                                  </svg>
-                                )}
-                              </div>
-                              <span className="font-medium">Identity Verification</span>
-                            </div>
-                            <span className={`text-sm font-medium ${
-                              kycStatus === 'verified' ? 'text-green-600' : 
-                              kycStatus === 'pending' ? 'text-amber-600' : 'text-gray-600'
-                            }`}>
-                              {kycStatus === 'verified' ? 'Verified' : kycStatus === 'pending' ? 'Pending Review' : 'Not Started'}
-                            </span>
-                          </div>
-  
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-full ${kybStatus === 'verified' ? 'bg-green-100 text-green-600' : kybStatus === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
-                                {kybStatus === 'verified' ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                  </svg>
-                                ) : kybStatus === 'pending' ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                  </svg>
-                                ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                                  </svg>
-                                )}
-                              </div>
-                              <span className="font-medium">Business Verification</span>
-                            </div>
-                            <span className={`text-sm font-medium ${
-                              kybStatus === 'verified' ? 'text-green-600' : 
-                              kybStatus === 'pending' ? 'text-amber-600' : 'text-gray-600'
-                            }`}>
-                              {kybStatus === 'verified' ? 'Verified' : kybStatus === 'pending' ? 'Pending Review' : 'Not Started'}
-                            </span>
-                          </div>
-                        </div>
-                      </div> */}
                     </div>
                   </div>
                 </>
@@ -864,6 +828,6 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
       </div>
     </div>
   );
-  }
+}
 
 export default withDashboardLayout(SettingsPage);
