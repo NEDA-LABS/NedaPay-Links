@@ -126,7 +126,7 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
   };
 
   const selectedCountry = COUNTRY_CODES.find(c => c.code === selectedCountryCode);
-
+  console.log("isAccountVerified vvv",isAccountVerified) //debugg
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">

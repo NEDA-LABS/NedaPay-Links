@@ -19,7 +19,7 @@ const OffRampForm: React.FC<{
   onBack: () => void;
   isAccountVerified: boolean;
   setIsAccountVerified: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ chain, token, onTokenChange, onBack, isAccountVerified, setIsAccountVerified }) => {
+}> = ({ chain, token, onTokenChange, onBack }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [inputMode, setInputMode] = useState<'crypto' | 'fiat'>('crypto');
   const [fiatInput, setFiatInput] = useState('');
@@ -44,6 +44,8 @@ const OffRampForm: React.FC<{
     isLoading,
     error,
     success,
+    isAccountVerified,
+    setIsAccountVerified,
     balance,
     handleVerifyAccount,
     handleFetchRate,
@@ -63,33 +65,33 @@ const OffRampForm: React.FC<{
   } = useOffRamp(chain, token);
 
   // Enhanced rate fetching function with retry logic
-  const fetchRateWithRetry = useCallback(async (retryCount = 0, maxRetries = 3) => {
-    if (!fiat || isRateFetching) return;
+  // const fetchRateWithRetry = useCallback(async (retryCount = 0, maxRetries = 3) => {
+  //   if (!fiat || isRateFetching) return;
     
-    setIsRateFetching(true);
-    setRateError(null);
+  //   setIsRateFetching(true);
+  //   setRateError(null);
     
-    try {
-      await handleFetchRate();
-      setRateError(null);
-    } catch (error) {
-      console.error('Rate fetch error:', error);
+  //   try {
+  //     await handleFetchRate();
+  //     setRateError(null);
+  //   } catch (error) {
+  //     console.error('Rate fetch error:', error);
       
-      if (retryCount < maxRetries) {
-        // Exponential backoff: 1s, 2s, 4s
-        const delay = Math.pow(2, retryCount) * 1000;
-        setTimeout(() => {
-          fetchRateWithRetry(retryCount + 1, maxRetries);
-        }, delay);
-      } else {
-        setRateError('Failed to fetch exchange rate. Please try again.');
-      }
-    } finally {
-      if (retryCount === 0) {
-        setIsRateFetching(false);
-      }
-    }
-  }, [fiat, handleFetchRate, isRateFetching]);
+  //     if (retryCount < maxRetries) {
+  //       // Exponential backoff: 1s, 2s, 4s
+  //       const delay = Math.pow(2, retryCount) * 1000;
+  //       setTimeout(() => {
+  //         fetchRateWithRetry(retryCount + 1, maxRetries);
+  //       }, delay);
+  //     } else {
+  //       setRateError('Failed to fetch exchange rate. Please try again.');
+  //     }
+  //   } finally {
+  //     if (retryCount === 0) {
+  //       setIsRateFetching(false);
+  //     }
+  //   }
+  // }, [fiat, handleFetchRate, isRateFetching]);
 
   // Fetch rate when fiat currency changes with debouncing
   useEffect(() => {
@@ -100,11 +102,11 @@ const OffRampForm: React.FC<{
     }
 
     const timer = setTimeout(() => {
-      fetchRateWithRetry();
+      handleFetchRate();
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [fiat, fetchRateWithRetry]);
+  }, [fiat, handleFetchRate]);
 
   // Refetch rate when input values change (with longer debounce)
   useEffect(() => {
@@ -116,12 +118,12 @@ const OffRampForm: React.FC<{
 
     if (hasValidInput) {
       const timer = setTimeout(() => {
-        fetchRateWithRetry();
+        handleFetchRate();
       }, 2000); // Longer debounce for input changes
 
       return () => clearTimeout(timer);
     }
-  }, [amount, fiatInput, inputMode, fetchRateWithRetry]);
+  }, [amount, fiatInput, inputMode, handleFetchRate]);
 
   // Calculate crypto amount when in fiat mode
   useEffect(() => {
@@ -231,7 +233,7 @@ const OffRampForm: React.FC<{
   if (success) {
     return <SuccessMessage success={success} onBack={onBack} />;
   }
-
+  
   return (
     <div className="bg-gray-900/90 backdrop-blur-sm rounded-3xl p-4 shadow-2xl border border-gray-700 mb-8">
       {/* Confirmation Modal */}
