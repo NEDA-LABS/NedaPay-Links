@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import { SidebarProvider } from '@/compliance/user/components/ui/sidebar';
 import Footer from '@/components/Footer';
 import { withDashboardLayout } from '@/utils/withDashboardLayout';
+import { fetchTokenRate } from '@/utils/paycrest';
 
 // Fallback UUID generator
 function uuidFallback() {
@@ -104,14 +105,26 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const formatAmount = (amount: string, currency: string) => {
+const formatAmount = async (amount: string, currency: string): Promise<string> => {
   const numAmount = parseFloat(amount);
   if (isNaN(numAmount)) return `${currency} ${amount}`;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'USD',
-    minimumFractionDigits: 2,
-  }).format(numAmount);
+  
+  try {
+    const rate = await fetchTokenRate('USDC', 1, currency, 'base');
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: 2,
+    }).format(parseFloat(rate) * numAmount);
+  } catch (error) {
+    console.error('Error formatting amount:', error);
+    // Fallback to just formatting the number without conversion
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: 2,
+    }).format(numAmount);
+  }
 };
 
 const MasterNotificationCenter: React.FC = () => {
@@ -121,6 +134,7 @@ const MasterNotificationCenter: React.FC = () => {
   const [dbNotifications, setDbNotifications] = useState<DatabaseNotification[]>([]);
   const [offrampTransactions, setOfframpTransactions] = useState<OffRampTransaction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [formattedAmounts, setFormattedAmounts] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<'all' | 'notifications' | 'transactions'>('all');
   const userAddress = user?.wallet?.address || wallets?.[0]?.address;
 
@@ -221,6 +235,25 @@ const MasterNotificationCenter: React.FC = () => {
     }
   }, [userAddress]);
 
+  // Format amounts when transactions change
+  useEffect(() => {
+    const formatTransactionAmounts = async () => {
+      const amounts: Record<string, string> = {};
+      for (const tx of offrampTransactions) {
+        try {
+          const formatted = await formatAmount(tx.amount, tx.currency);
+          amounts[tx.id] = formatted;
+        } catch (error) {
+          console.error(`Error formatting amount for transaction ${tx.id}:`, error);
+          amounts[tx.id] = `${tx.currency} ${tx.amount}`;
+        }
+      }
+      setFormattedAmounts(amounts);
+    };
+
+    formatTransactionAmounts();
+  }, [offrampTransactions]);
+
   // Combine and sort events
   const allEvents: EventItem[] = [
     ...localNotifications.map((n) => ({ id: n.id, type: 'notification' as const, timestamp: n.timestamp, data: n })),
@@ -267,7 +300,7 @@ const MasterNotificationCenter: React.FC = () => {
     
       <main className="mx-auto p-6 mb-20">
         <div className="flex space-x-4 mb-6">
-          {(['all', 'notifications', 'transactions'] as const).map((f) => (
+          {(['all'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -376,7 +409,7 @@ const MasterNotificationCenter: React.FC = () => {
                       <div>
                         <p className="text-xs text-gray-500">Amount</p>
                         <p className="text-sm font-medium text-gray-900">
-                          {formatAmount((event.data as OffRampTransaction).amount, (event.data as OffRampTransaction).currency)}
+                          {formattedAmounts[(event.data as OffRampTransaction).id] || 'Loading...'}
                         </p>
                       </div>
                     </div>

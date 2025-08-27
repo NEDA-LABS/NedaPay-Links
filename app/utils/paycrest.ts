@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const PAYCREST_API_URL = 'https://api.paycrest.io';
+export const PAYCREST_API_URL = 'https://api.paycrest.io';
 const CLIENT_ID = process.env.PAYCREST_CLIENT_ID!;
 const CLIENT_SECRET = process.env.PAYCREST_CLIENT_SECRET!;
 
