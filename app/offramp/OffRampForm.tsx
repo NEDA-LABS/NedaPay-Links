@@ -511,7 +511,7 @@ const OffRampForm: React.FC<{
                     </div>
                     <button
                       type="button"
-                      onClick={() => fetchRateWithRetry()}
+                      onClick={() => handleFetchRate()}
                       disabled={isRateFetching}
                       className="text-xs bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded-md transition-colors disabled:opacity-50"
                     >
@@ -524,9 +524,9 @@ const OffRampForm: React.FC<{
                       <p className="text-blue-400 font-medium text-sm">
                         1 {token.toUpperCase()} = {rate} {fiat}
                       </p>
-                      <p className="text-gray-400 text-xs">
+                      {/* <p className="text-gray-400 text-xs">
                         Rate includes 0.5% service fee
-                      </p>
+                      </p> */}
                     </div>
                     {((inputMode === 'crypto' && amount) || (inputMode === 'fiat' && fiatInput)) && (
                       <div className="border-l-2 border-blue-700 pl-3">
