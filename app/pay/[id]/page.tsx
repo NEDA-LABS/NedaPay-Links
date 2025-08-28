@@ -12,11 +12,14 @@ import {
   QrCode,
   Wallet,
   Download,
+  LogIn,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
 import { stablecoins } from "@/data/stablecoins";
-import { mainnet, base, polygon, arbitrum, celo, scroll } from "viem/chains";
+import { mainnet, base, polygon, arbitrum, celo, scroll, bsc } from "viem/chains";
+import Header from "@/components/Header";
+import { usePrivy } from "@privy-io/react-auth";
 
 const PaymentQRCode = dynamicImport(() => import("./QRCode"), { ssr: false });
 const PayWithWallet = dynamicImport(() => import("./PayWithWallet"), { ssr: false });
@@ -29,11 +32,13 @@ const NORMAL_PAYMENT_CHAINS = [
   polygon, 
   arbitrum, 
   celo, 
-  scroll
+  scroll,
+  bsc
 ];
 
 export default function PayPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
+  const { authenticated, login, ready } = usePrivy();
   const [copied, setCopied] = useState(false);
   const [isValidLink, setIsValidLink] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -115,8 +120,13 @@ export default function PayPage({ params }: { params: { id: string } }) {
       }
     };
 
-    validateLink();
-  }, [searchParams]);
+    // Only validate link if Privy is ready and user is authenticated
+    if (ready && authenticated) {
+      validateLink();
+    } else if (ready && !authenticated) {
+      setIsLoading(false);
+    }
+  }, [searchParams, ready, authenticated]);
 
   // Update available tokens when chain changes
   useEffect(() => {
@@ -158,14 +168,15 @@ export default function PayPage({ params }: { params: { id: string } }) {
     setShowAmountInput(false);
   };
 
-  console.log("custom amount", customAmount); //debugging
-  console.log("amount", amount);
-  if (isLoading) {
+  // Show loading while Privy is initializing
+  if (!ready || isLoading) {
     return (
       <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
           <div className="text-center space-y-3">
-            <h1 className="text-2xl font-bold text-gray-900">Validating Payment Link...</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {!ready ? "Loading..." : "Validating Payment Link..."}
+            </h1>
             <div className="flex justify-center">
               <svg className="animate-spin w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -182,6 +193,41 @@ export default function PayPage({ params }: { params: { id: string } }) {
     );
   }
 
+  // Show login prompt if user is not authenticated
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
+        <Header />
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-6">
+          <div className="text-center space-y-3">
+            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+              <LogIn size={32} className="text-blue-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Authentication Required</h1>
+            <p className="text-gray-600">
+              You need to log in to access this payment page.
+            </p>
+          </div>
+          
+          <button
+            onClick={login}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2"
+          >
+            <LogIn size={20} />
+            Login to Continue
+          </button>
+
+          <div className="text-center text-sm text-gray-500">
+            <p>Secure authentication powered by Privy</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  console.log("custom amount", customAmount); //debugging
+  console.log("amount", amount);
+
   if (!isValidLink) {
     return (
       <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
@@ -196,6 +242,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
   }
 
   return (
+    <>
+    <Header />
     <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
         <div className="text-center space-y-3">
@@ -274,12 +322,12 @@ export default function PayPage({ params }: { params: { id: string } }) {
             {qrDataUrl ? (
               <div className="flex flex-col items-center">
                 <img src={qrDataUrl} alt="Payment QR Code" className="w-40 h-40" />
-                <button
+                {/* <button
                   onClick={downloadQRCode}
                   className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-300 flex items-center gap-2"
                 >
                   <Download size={14} /> Download QR
-                </button>
+                </button> */}
               </div>
             ) : (
               <PaymentQRCode to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} />
@@ -375,7 +423,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
                 onClick={() => setShowAmountInput(true)}
                 className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-300"
               >
-                Enter Payment Amount
+                {!customAmount ? "Enter Payment Amount" : `[${customAmount}] Change Amount`}
               </button>
             )}
             {(!amount && customAmount) || amount ? (
@@ -418,5 +466,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
         </div>
       </div>
     </div>
+    </>
+    
   );
 }

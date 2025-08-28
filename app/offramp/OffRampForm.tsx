@@ -156,11 +156,7 @@ const OffRampForm: React.FC<{
         const received = parseFloat(amount) * 0.995 * parseFloat(rate);
         setFiatInput(received.toFixed(2));
       } 
-      // else if (inputMode === 'fiat' && fiatInput && parseFloat(fiatInput) > 0) {
-      //   const netRate = parseFloat(rate) * 0.995;
-      //   const required = parseFloat(fiatInput) / netRate;
-      //   setAmount(required.toFixed(6));
-      // }
+      
     }
 
     setInputMode(newMode);

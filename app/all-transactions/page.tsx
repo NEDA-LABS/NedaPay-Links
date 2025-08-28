@@ -25,6 +25,7 @@ import {
 import { stablecoins } from "../data/stablecoins";
 import Header from "../components/Header";
 import { withDashboardLayout } from "../utils/withDashboardLayout";
+import axios from "axios";
 
 interface Transaction {
   id: string;
@@ -104,10 +105,15 @@ function TransactionsPage() {
 
     try {
       setRefreshing(true);
-      const response = await fetch(`/api/transactions?merchantId=${user.wallet?.address}`);
-      if (response.ok) {
-        const data = await response.json();
-        setTransactions(data);
+      const response = await axios.get(`/api/transactions?merchantId=${user.wallet?.address}`, {
+        headers: {
+          'X-App-Secret': process.env.NEXT_PUBLIC_APP_ACCESS, // From .env.local
+          'X-Requested-With': 'XMLHttpRequest', // CSRF protection
+          'Content-Type': 'application/json'
+        },
+      });
+      if (response.data.success) {
+        setTransactions(response.data.data);
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);

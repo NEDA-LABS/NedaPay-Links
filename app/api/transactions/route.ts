@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
   }
   const { searchParams } = new URL(req.url);
   const merchantId = searchParams.get('merchantId');
-  if (!merchantId) {
+  const appAccess = req.headers.get('x-app-secret');
+  if (!merchantId || appAccess !== process.env.NEXT_PUBLIC_APP_ACCESS) {
     // Return 404 to prevent build/static analysis failures
     return new NextResponse('Not Found', { status: 404 });
   }
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     where: { merchantId },
     orderBy: { createdAt: 'desc' },
   });
-  return NextResponse.json(transactions);
+  return NextResponse.json({ success: true, data: transactions });
 }
 
 // POST: Add a new transaction
