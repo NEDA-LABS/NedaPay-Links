@@ -244,7 +244,7 @@ export default function NotificationTab() {
           />
           
           {/* Notification Panel */}
-          <div className="absolute -right-20 md:right-0 mt-2 w-72 md:w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-[70vh] md:max-h-[80vh] flex flex-col">
+          <div className="fixed md:absolute right-2 md:right-0 mt-2 w-80 md:w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-[70vh] md:max-h-[80vh] flex flex-col">
             {/* Header */}
             <div className="p-4 border-b border-slate-100 flex justify-between items-center flex-shrink-0">
               <div className="flex items-center gap-2">
@@ -304,7 +304,7 @@ export default function NotificationTab() {
                               <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                             )}
                             <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              notification.type === 'payment' 
+                              notification.type === 'payment_received' 
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-gray-100 text-gray-800'
                             }`}>
