@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
+import { createNotification } from '@/utils/createNotification';
 
 const prisma = new PrismaClient();
 const CLIENT_SECRET = process.env.PAYCREST_CLIENT_SECRET!;
@@ -44,6 +45,9 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'payment_order.settled':
+
+      // create notification
+      await createNotification(data.id, data.fromAddress, ((parseFloat(data.amount)/0.95)).toString(), data.recipient?.currency, data.recipient?.accountName);
         // console.log('Payment order settled:', data);
         // Update transaction status to settled
         await prisma.offRampTransaction.upsert({
