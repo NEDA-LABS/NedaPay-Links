@@ -349,8 +349,8 @@ export default function OffRampPayment({
       const order = await axios.post("/api/paycrest/orders", {
         amount: parseFloat(tokenAmount),
         rate,
-        token: selectedToken.toLowerCase(),
-        network: selectedChain.toLowerCase(),
+        token: selectedToken,
+        network: selectedChain,
         recipient: {
           institution: offRampProvider,
           accountIdentifier: offRampValue,
