@@ -20,6 +20,7 @@ import { stablecoins } from "@/data/stablecoins";
 import { mainnet, base, polygon, arbitrum, celo, scroll, bsc } from "viem/chains";
 import Header from "@/components/Header";
 import { usePrivy } from "@privy-io/react-auth";
+import Image from "next/image";
 
 const PaymentQRCode = dynamicImport(() => import("./QRCode"), { ssr: false });
 const PayWithWallet = dynamicImport(() => import("./PayWithWallet"), { ssr: false });
@@ -247,15 +248,18 @@ export default function PayPage({ params }: { params: { id: string } }) {
   return (
     <>
     <Header />
-    <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-4">
+    <div className="min-h-screen bg-gray-800 flex items-center justify-center p-2">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-2">
         <div className="text-center space-y-3">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {linkType === 'OFF_RAMP' ? 'Off-Ramp Payment' : 'Payment Request'}
+          <h1 className="text-xl font-bold text-gray-900">
+            {linkType === 'OFF_RAMP' ? 'Payment Request' : 'Payment Request'}
           </h1>
+          {linkType === 'OFF_RAMP' && (
+            <p className="text-sm text-gray-600">Pay with stablecoin, Receiver gets Cash</p>
+          )}
         </div>
 
-        <div className="text-center bg-gray-50 p-4 rounded-xl">
+        <div className="text-center bg-gray-50 p-2 rounded-xl">
           <p className="text-sm text-gray-600 mb-1">Amount</p>
           <p className="text-3xl font-bold text-gray-900">
             {amount ? `${amount} ` : 'Any Amount '}
@@ -271,7 +275,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
         </div>
 
         {description && (
-          <div className="text-center bg-gray-50 p-4 rounded-xl">
+          <div className="text-center bg-gray-50 p-2 rounded-xl">
             <p className="text-sm text-gray-600 mb-1">Description</p>
             <p className="text-lg font-medium text-gray-900">
               {decodeURIComponent(description)}
