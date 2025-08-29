@@ -196,8 +196,9 @@ export default function PayPage({ params }: { params: { id: string } }) {
   // Show login prompt if user is not authenticated
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
-        <Header />
+      <>
+      <Header />
+      <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">      
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-6">
           <div className="text-center space-y-3">
             <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
@@ -222,6 +223,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </div>
         </div>
       </div>
+      </>
+      
     );
   }
 

@@ -1,10 +1,12 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { toast } from 'react-hot-toast';
-import { stablecoins } from "../../data/stablecoins";
-import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
+import { stablecoins } from "@/data/stablecoins";
+import { SUPPORTED_CHAINS_NORMAL as SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
 import { utils } from "ethers";
+import { usePrivy, useWallets, useSendTransaction } from "@privy-io/react-auth";
 
 export default function WalletConnectButton({ 
   to, 
@@ -21,42 +23,20 @@ export default function WalletConnectButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [provider, setProvider] = useState<any>(null);
   const [userAmount, setUserAmount] = useState(amount);
   const [isOpenAmount, setIsOpenAmount] = useState(false);
+  
+  const { ready, authenticated, user } = usePrivy();
+  const { wallets } = useWallets();
+  const { sendTransaction } = useSendTransaction();
+  
+  const connectedWallet = wallets[0];
+  const currentChainId = connectedWallet?.chainId.split(":")[1] ? parseInt(connectedWallet.chainId.split(":")[1]) : null;
 
   useEffect(() => {
     setIsOpenAmount(parseFloat(amount) === 0);
     setUserAmount(amount);
   }, [amount]);
-
-  // Initialize WalletConnect provider
-  useEffect(() => {
-    const initProvider = async () => {
-      try {
-        const WalletConnectProvider = (await import("@walletconnect/web3-provider")).default;
-        const newProvider = new WalletConnectProvider({
-          rpc: SUPPORTED_CHAINS.reduce((acc, chain) => {
-            acc[chain.id] = chain.rpcUrls[0];
-            return acc;
-          }, {} as Record<number, string>),
-          chainId: chainId || 8453,
-        });
-        setProvider(newProvider);
-      } catch (e) {
-        console.error("Error initializing WalletConnect:", e);
-        setError("Failed to initialize WalletConnect");
-      }
-    };
-
-    initProvider();
-
-    return () => {
-      if (provider) {
-        provider.disconnect();
-      }
-    };
-  }, [chainId]);
 
   const saveTransactionToDB = async (
     merchantId: string,
@@ -136,13 +116,33 @@ export default function WalletConnectButton({
     }
   };
 
+  const switchChain = async (targetChainId: number) => {
+    try {
+      if (!connectedWallet) {
+        throw new Error("No wallet connected");
+      }
+
+      const targetChain = SUPPORTED_CHAINS.find(c => c.id === targetChainId);
+      if (!targetChain) {
+        throw new Error("Unsupported chain");
+      }
+
+      await connectedWallet.switchChain(targetChainId);
+      return true;
+    } catch (switchError: any) {
+      console.error('Error switching chain:', switchError);
+      setError(`Failed to switch to ${SUPPORTED_CHAINS.find(c => c.id === targetChainId)?.name || 'target'} network`);
+      return false;
+    }
+  };
+
   const handleWalletConnect = async () => {
     setError(null);
     setLoading(true);
 
     try {
-      if (!provider) {
-        throw new Error("WalletConnect not initialized");
+      if (!connectedWallet) {
+        throw new Error("No wallet connected");
       }
 
       // Validate inputs
@@ -161,109 +161,88 @@ export default function WalletConnectButton({
         throw new Error("Amount must be greater than 0");
       }
 
-      // Enable session
-      await provider.enable();
-
       // Switch chain if needed
-      if (chainId && provider.chainId !== chainId) {
+      if (chainId && currentChainId !== chainId) {
         try {
-          await provider.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: `0x${chainId.toString(16)}` }],
-          });
-        } catch (switchError: any) {
-          if (switchError.code === 4902) {
-            const targetChain = SUPPORTED_CHAINS.find(c => c.id === chainId);
-            if (!targetChain) {
-              throw new Error("Unsupported chain");
-            }
-
-            await provider.request({
-              method: "wallet_addEthereumChain",
-              params: [{
-                chainId: `0x${chainId.toString(16)}`,
-                chainName: targetChain.name,
-                nativeCurrency: targetChain.nativeCurrency,
-                rpcUrls: targetChain.rpcUrls,
-                blockExplorerUrls: targetChain.blockExplorerUrls
-              }],
-            });
-          } else {
-            throw new Error(`Please switch to ${SUPPORTED_CHAINS.find(c => c.id === chainId)?.name || "the correct network"} manually`);
-          }
+          await switchChain(chainId);
+        } catch (error) {
+          setError(error instanceof Error ? error.message : "Failed to switch chains");
+          setLoading(false);
+          return;
         }
       }
 
-      const web3Provider = new ethers.providers.Web3Provider(provider);
-      const signer = web3Provider.getSigner();
-      const walletAddress = await signer.getAddress();
+      const walletAddress = await connectedWallet.address;
 
+      // Find token info from stablecoins
       const token = stablecoins.find(
-        sc => sc.baseToken.toLowerCase() === currency?.toLowerCase()
+        (sc) =>
+          sc.baseToken.toLowerCase() === currency?.toLowerCase() ||
+          sc.currency.toLowerCase() === currency?.toLowerCase()
       );
 
-      let tx;
-      if (token && token.addresses && token.addresses[(chainId || 8453) as keyof typeof token.addresses]) {
-        const erc20ABI = [
+      if (
+        token &&
+        token.addresses &&
+        token.addresses[(chainId || 8453) as keyof typeof token.addresses] && // Default to Base if chainId not specified
+        token.addresses[(chainId || 8453) as keyof typeof token.addresses] !== "0x0000000000000000000000000000000000000000"
+      ) {
+        // ERC-20 transfer
+        const tokenAddress = token.addresses[(chainId || 8453) as keyof typeof token.addresses];
+        let decimals = token.decimals[(chainId || 8453) as keyof typeof token.decimals] || 18;
+        
+        let value;
+        try {
+          value = utils.parseUnits(paymentAmount, decimals as number);
+        } catch {
+          setError("Invalid amount format.");
+          setLoading(false);
+          return;
+        }
+
+        // Prepare ERC-20 transfer data
+        const erc20Interface = new utils.Interface([
           "function transfer(address to, uint256 amount) public returns (bool)",
-          "function decimals() public view returns (uint8)",
-        ];
-        const contract = new ethers.Contract(
-          token.addresses[(chainId || 8453) as keyof typeof token.addresses] as string, 
-          erc20ABI, 
-          signer
+        ]);
+        
+        const data = erc20Interface.encodeFunctionData("transfer", [to, value]);
+
+        // Send transaction using Privy
+        const { hash } = await sendTransaction({
+          to: tokenAddress as string,
+          value: "0",
+          data,
+        });
+
+        // Save transaction to DB
+        const saved = await saveTransactionToDB(
+          to,
+          walletAddress,
+          paymentAmount,
+          currency,
+          description,
+          "Pending",
+          hash,
+          chainId || 8453
         );
 
-        let decimals = token.decimals || 18;
-        try {
-          if (typeof decimals === 'object') {
-            decimals = await contract.decimals();
-          } else if (!decimals) {
-            decimals = await contract.decimals();
-          }
-        } catch (error) {
-          console.warn("Failed to get token decimals, using default:", error);
-          decimals = 18;
+        if (!saved) {
+          throw new Error("Failed to record transaction");
         }
 
-        const value = utils.parseUnits(paymentAmount, decimals as number);
-        tx = await contract.transfer(to, value);
-      } else {
-        const value = utils.parseEther(paymentAmount);
-        tx = await signer.sendTransaction({
-          to,
-          value
-        });
-      }
+        const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+        const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
+        const toastMessage = description
+          ? `Payment sent: ${paymentAmount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
+          : `Payment sent: ${paymentAmount} ${currency} from ${shortSender} to ${shortMerchant}`;
+        
+        toast.success(toastMessage, { duration: 3000 });
 
-      // Save transaction to DB
-      const saved = await saveTransactionToDB(
-        to,
-        walletAddress,
-        paymentAmount,
-        currency,
-        description,
-        "Pending",
-        tx.hash,
-        chainId || 8453
-      );
-
-      if (!saved) {
-        throw new Error("Failed to record transaction");
-      }
-
-      const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
-      const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
-      const toastMessage = description
-        ? `Payment sent: ${paymentAmount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
-        : `Payment sent: ${paymentAmount} ${currency} from ${shortSender} to ${shortMerchant}`;
-      
-      toast.success(toastMessage, { duration: 3000 });
-
-      const receipt = await tx.wait();
-      if (receipt.status === 1) {
+        // Wait for transaction confirmation
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
         await updateTransactionStatus(
-          tx.hash,
+          hash,
           to,
           walletAddress,
           paymentAmount,
@@ -273,7 +252,59 @@ export default function WalletConnectButton({
         );
         toast.success("Transaction confirmed!");
       } else {
-        throw new Error("Transaction failed on-chain");
+        // Native token transfer
+        let value;
+        try {
+          value = utils.parseEther(paymentAmount);
+        } catch {
+          setError("Invalid amount format.");
+          setLoading(false);
+          return;
+        }
+
+        // Send transaction using Privy
+        const { hash } = await sendTransaction({
+          to,
+          value: value.toString(),
+        });
+
+        // Save transaction to DB
+        const saved = await saveTransactionToDB(
+          to,
+          walletAddress,
+          paymentAmount,
+          currency,
+          description,
+          "Pending",
+          hash,
+          chainId || 8453
+        );
+
+        if (!saved) {
+          throw new Error("Failed to record transaction");
+        }
+
+        const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+        const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
+        const toastMessage = description
+          ? `Payment sent: ${paymentAmount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
+          : `Payment sent: ${paymentAmount} ${currency} from ${shortSender} to ${shortMerchant}`;
+        
+        toast.success(toastMessage, { duration: 3000 });
+
+        // Wait for transaction confirmation
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        await updateTransactionStatus(
+          hash,
+          to,
+          walletAddress,
+          paymentAmount,
+          currency,
+          description,
+          chainId || 8453
+        );
+        toast.success("Transaction confirmed!");
       }
     } catch (e: any) {
       console.error("WalletConnect error:", e);
@@ -319,9 +350,9 @@ export default function WalletConnectButton({
 
       <button
         onClick={handleWalletConnect}
-        disabled={loading || !provider || (isOpenAmount && (!userAmount || parseFloat(userAmount) <= 0))}
+        disabled={loading || !connectedWallet || (isOpenAmount && (!userAmount || parseFloat(userAmount) <= 0))}
         className={`w-full px-4 py-3 rounded-lg font-semibold transition-colors ${
-          loading || !provider || (isOpenAmount && (!userAmount || parseFloat(userAmount) <= 0))
+          loading || !connectedWallet || (isOpenAmount && (!userAmount || parseFloat(userAmount) <= 0))
             ? 'bg-gray-300 cursor-not-allowed'
             : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white'
         }`}

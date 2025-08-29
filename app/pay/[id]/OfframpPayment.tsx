@@ -9,8 +9,61 @@ import {
   verifyAccount,
   initiatePaymentOrder,
 } from "../../utils/paycrest";
+import dynamic from "next/dynamic";
 import { usePrivy, useWallets, useSendTransaction } from "@privy-io/react-auth";
-import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
+
+const WalletConnectButton = dynamic(() => import("./WalletConnectButton"), {
+  ssr: false,
+});
+
+// Chain configuration
+const SUPPORTED_CHAINS = [
+  {
+    name: "base",
+    id: 8453,
+    supports: ["USDC"],
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://mainnet.base.org"],
+    blockExplorerUrls: ["https://basescan.org"],
+    explorerUrl: "https://basescan.org",
+  },
+  {
+    name: "arbitrum-one",
+    id: 42161,
+    supports: ["USDC", "USDT"],
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://arb1.arbitrum.io/rpc"],
+    blockExplorerUrls: ["https://arbiscan.io"],
+    explorerUrl: "https://arbiscan.io",
+  },
+  {
+    name: "polygon",
+    id: 137,
+    supports: ["USDC", "USDT"],
+    nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18 },
+    rpcUrls: ["https://polygon-rpc.com"],
+    blockExplorerUrls: ["https://polygonscan.com"],
+    explorerUrl: "https://polygonscan.com",
+  },
+  {
+    name: "celo",
+    id: 42220,
+    supports: ["USDC", "USDT"],
+    nativeCurrency: { name: "Celo", symbol: "CELO", decimals: 18 },
+    rpcUrls: ["https://forno.celo.org"],
+    blockExplorerUrls: ["https://celoscan.io"],
+    explorerUrl: "https://celoscan.io",
+  },
+  {
+    name: "bnb",
+    id: 56,
+    supports: ["USDC", "USDT"],
+    nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+    rpcUrls: ["https://bsc-dataseed.binance.org"],
+    blockExplorerUrls: ["https://bscscan.com"],
+    explorerUrl: "https://bscscan.com",
+  },
+];
 
 // Token configuration
 const SUPPORTED_TOKENS = ["USDC", "USDT"];
@@ -35,6 +88,13 @@ const TOKEN_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)",
 ];
+
+function isMobile() {
+  if (typeof window === "undefined") return false;
+  return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+}
 
 export default function OffRampPayment({
   to,
@@ -71,16 +131,61 @@ export default function OffRampPayment({
   const [selectedToken, setSelectedToken] = useState<string>("");
   const [selectedChain, setSelectedChain] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [currentChainId, setCurrentChainId] = useState<number | null>(null);
   const [txStatus, setTxStatus] = useState<
-    "idle" | "preparing" | "submitting" | "pending" | "confirming" | "confirmed" | "failed"
+    | "idle"
+    | "preparing"
+    | "submitting"
+    | "pending"
+    | "confirming"
+    | "confirmed"
+    | "failed"
   >("idle");
 
-  const { ready, authenticated, user } = usePrivy();
   const { wallets } = useWallets();
-  const { sendTransaction } = useSendTransaction();
-  
   const connectedWallet = wallets[0];
-  const currentChainId = connectedWallet?.chainId.split(":")[1] ? parseInt(connectedWallet.chainId.split(":")[1]) : null;
+
+  // Check current chain
+  useEffect(() => {
+    const checkChain = async () => {
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const network = await provider.getNetwork();
+        setCurrentChainId(network.chainId);
+      }
+    };
+
+    if (window.ethereum) {
+      checkChain();
+      (window.ethereum as any).on("chainChanged", (chainId: string) => {
+        setCurrentChainId(parseInt(chainId, 16));
+      });
+    }
+
+    return () => {
+      if (window.ethereum) {
+        (window.ethereum as any).removeListener("chainChanged", () => {});
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const autoSwitchChain = async () => {
+      if (depositAddress && selectedChain) {
+        const targetChain = SUPPORTED_CHAINS.find(c => c.name === selectedChain);
+        if (targetChain && currentChainId !== targetChain.id) {
+          try {
+            await switchChain(targetChain.id);
+          } catch (error) {
+            console.error("Auto-switch failed:", error);
+            // Don't show error toast here as we'll show the warning UI instead
+          }
+        }
+      }
+    };
+
+    autoSwitchChain();
+  }, [depositAddress, selectedChain, currentChainId]);
 
   const switchChain = async (targetChainId: number) => {
     try {
@@ -88,19 +193,51 @@ export default function OffRampPayment({
         throw new Error("No wallet connected");
       }
 
-      const targetChain = SUPPORTED_CHAINS.find(c => c.id === targetChainId);
+      const targetChain = SUPPORTED_CHAINS.find((c) => c.id === targetChainId);
       if (!targetChain) {
         throw new Error("Unsupported chain");
       }
 
-      await connectedWallet.switchChain(targetChainId);
+      console.log("Switching to chain:", targetChain.id);
+
+      await connectedWallet.switchChain(targetChain.id);
+      
+      // Update current chain ID immediately after successful switch
+      // const provider = connectedWallet.getEthereumProvider();
+      // const chainId = connectedWallet.chainId;
+      setCurrentChainId(targetChain.id);
+      
       return true;
     } catch (switchError: any) {
-      console.error('Error switching chain:', switchError);
-      setError(`Failed to switch to ${SUPPORTED_CHAINS.find(c => c.id === targetChainId)?.name || 'target'} network`);
+      console.error("Error switching chain:", switchError);
+      // Don't set error state here to avoid blocking UI
       return false;
     }
   };
+
+  // const switchChain = async (targetChainId: number) => {
+  //   try {
+  //     if (!connectedWallet) {
+  //       throw new Error("No wallet connected");
+  //     }
+
+  //     const targetChain = SUPPORTED_CHAINS.find((c) => c.id === targetChainId);
+  //     if (!targetChain) {
+  //       throw new Error("Unsupported chain");
+  //     }
+
+  //     console.log("Switching to chain:", targetChain.id);
+
+  //     await connectedWallet.switchChain(targetChain.id);
+  //     return true;
+  //   } catch (switchError: any) {
+  //     console.error("Error switching chain:", switchError);
+  //     setError(
+  //       `Failed to switch to ${SUPPORTED_CHAINS.find((c) => c.id === targetChainId)?.name || "target"} network`
+  //     );
+  //     return false;
+  //   }
+  // };
 
   // Handle chain selection change
   const handleChainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -110,7 +247,7 @@ export default function OffRampPayment({
     // Reset token if not supported by new chain
     if (selectedToken) {
       const chainSupports =
-        SUPPORTED_CHAINS.find((c) => c.name === chain)?.tokens || [];
+        SUPPORTED_CHAINS.find((c) => c.name === chain)?.supports || [];
       if (!chainSupports.includes(selectedToken)) {
         setSelectedToken("");
       }
@@ -123,7 +260,9 @@ export default function OffRampPayment({
   };
 
   // Handle wallet address change
-  const handleWalletAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleWalletAddressChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setWalletAddress(e.target.value);
   };
 
@@ -135,10 +274,10 @@ export default function OffRampPayment({
   // Calculate token amount based on fiat amount and rate
   const calculateTokenAmount = () => {
     if (!rate || !fiatAmount) return "0";
-    
+
     try {
       const parsedAmount = parseFloat(fiatAmount);
-      const tokenAmount = (parsedAmount + (parsedAmount * 0.05)) / rate;
+      const tokenAmount = (parsedAmount + parsedAmount * 0.05) / rate;
       const formattedAmount = tokenAmount.toFixed(6);
       setCryptoAmount(formattedAmount);
       return formattedAmount;
@@ -188,149 +327,6 @@ export default function OffRampPayment({
     }
   };
 
-  // Save transaction to database
-  const saveTransactionToDB = async (
-    merchantId: string,
-    wallet: string,
-    amount: string,
-    currency: string,
-    description: string | undefined,
-    status: "Pending" | "Completed",
-    txHash: string,
-    chainId: number
-  ) => {
-    try {
-      const response = await fetch("/api/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          merchantId,
-          wallet: wallet,
-          amount,
-          currency,
-          description: description || undefined,
-          status,
-          txHash,
-          chainId
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Failed to save transaction:", errorData);
-        return false;
-      }
-      return true;
-    } catch (dbError) {
-      console.error("Error saving transaction to database:", dbError);
-      return false;
-    }
-  };
-
-  // Update transaction status
-  const updateTransactionStatus = async (
-    txHash: string,
-    merchantId: string,
-    walletAddress: string,
-    amount: string,
-    currency: string,
-    description: string | undefined,
-    chainId: number
-  ) => {
-    try {
-      const response = await fetch(`/api/transactions?txHash=${txHash}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          merchantId,
-          wallet: walletAddress,
-          amount,
-          currency,
-          description: description || undefined,
-          status: "Completed",
-          chainId
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Failed to update transaction:", errorData);
-        return false;
-      }
-      return true;
-    } catch (dbError) {
-      console.error("Error updating transaction in database:", dbError);
-      return false;
-    }
-  };
-
-  // Create notification
-  const createNotification = async (
-    transactionId: string,
-    merchantId: string,
-    amount: string,
-    currency: string,
-    description: string | undefined
-  ) => {
-    try {
-      const message = description
-        ? `Payment received: ${amount} ${currency} for ${description}`
-        : `Payment received: ${amount} ${currency}`;
-
-      const response = await fetch("/api/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message,
-          recipient: merchantId,
-          type: "payment_received",
-          status: "unseen",
-          relatedTransactionId: transactionId,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return false;
-      }
-      return true;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  // Update invoice to paid
-  const updateInvoiceToPaid = async (linkId: string) => {
-    try {
-      const response = await fetch(`/api/send-invoice/invoices/`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          linkId,
-          paidAt: new Date().toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Failed to update invoice:", errorData);
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.error("Error updating invoice:", error);
-      return false;
-    }
-  };
-
   // Initiate payment order
   const createOffRampOrder = async () => {
     try {
@@ -347,7 +343,7 @@ export default function OffRampPayment({
       }
 
       const order = await axios.post("/api/paycrest/orders", {
-        amount: parseFloat(tokenAmount),
+        amount: tokenAmount,
         rate,
         token: selectedToken,
         network: selectedChain,
@@ -368,7 +364,7 @@ export default function OffRampPayment({
         transactionFee,
         validUntil,
       } = order.data.data;
-    
+
       setDepositAddress(receiveAddress);
       setShowPaymentModal(false);
       toast.success("Deposit address generated!");
@@ -382,139 +378,10 @@ export default function OffRampPayment({
     }
   };
 
-  // Execute token transfer
-  const executeNormalTransaction = async () => {
-    if (!depositAddress || !cryptoAmount || !selectedToken || !selectedChain) {
-      toast.error("Missing required payment details");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      setTxStatus("preparing");
-
-      if (!connectedWallet) {
-        throw new Error("Please connect a wallet first!");
-      }
-
-      // Find chain configuration
-      const chain = SUPPORTED_CHAINS.find((c) => c.name === selectedChain);
-      if (!chain) throw new Error("Unsupported chain");
-
-      // Switch chain if needed
-      if (currentChainId !== chain.id) {
-        await switchChain(chain.id);
-      }
-
-      // Get token address
-      const tokenAddress = (TOKEN_ADDRESSES as any)[selectedToken]?.[chain.id];
-      if (!tokenAddress) {
-        throw new Error("Token not supported on selected chain");
-      }
-
-      // Get wallet address
-      const walletAddress = await connectedWallet.address;
-
-      // Convert amount to wei
-      const tokenContract = new ethers.Contract(tokenAddress, TOKEN_ABI, new ethers.providers.JsonRpcProvider(chain.rpcUrls[0]));
-      let decimals = 6; // Default for USDC/USDT
-      
-      try {
-        decimals = await tokenContract.decimals();
-      } catch (error) {
-        console.warn("Failed to get token decimals, using default 6");
-      }
-      
-      const amountInWei = ethers.utils.parseUnits(cryptoAmount, decimals);
-
-      // Check balance
-      const balance = await tokenContract.balanceOf(walletAddress);
-      
-      if (balance.lt(amountInWei)) {
-        throw new Error("Insufficient token balance");
-      }
-
-      setTxStatus("submitting");
-      
-      // Prepare ERC-20 transfer data
-      const erc20Interface = new ethers.utils.Interface([
-        "function transfer(address to, uint256 amount) public returns (bool)",
-      ]);
-      
-      const data = erc20Interface.encodeFunctionData("transfer", [depositAddress, amountInWei]);
-
-      // Execute transfer using Privy
-      const { hash } = await sendTransaction({
-        to: tokenAddress,
-        value: "0",
-        data,
-      });
-      
-      setTxHash(hash);
-      setTxStatus("pending");
-      
-      // Save transaction to DB
-      const saved = await saveTransactionToDB(
-        depositAddress,
-        walletAddress,
-        cryptoAmount,
-        selectedToken,
-        description,
-        "Pending",
-        hash,
-        chain.id
-      );
-      
-      if (!saved) {
-        throw new Error("Failed to record transaction");
-      }
-
-      toast.success("Transaction submitted!");
-
-      // Wait for confirmation
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      setTxStatus("confirmed");
-      
-      // Update transaction status
-      await updateTransactionStatus(
-        hash,
-        depositAddress,
-        walletAddress,
-        cryptoAmount,
-        selectedToken,
-        description,
-        chain.id
-      );
-      
-      // Create notification
-      await createNotification(
-        hash,
-        depositAddress,
-        cryptoAmount,
-        selectedToken,
-        description
-      );
-      
-      // Update invoice
-      await updateInvoiceToPaid(linkId);
-      
-      toast.success("Transaction confirmed!");
-      
-      return hash;
-    } catch (error: any) {
-      console.error("Transaction error:", error);
-      setTxStatus("failed");
-      setError(error.message || "Transaction failed");
-      toast.error(error.message || "Transaction failed");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Get explorer URL for transaction
   const getExplorerUrl = () => {
-    const chain = SUPPORTED_CHAINS.find(c => c.name === selectedChain);
+    const chain = SUPPORTED_CHAINS.find((c) => c.name === selectedChain);
     if (!chain || !txHash) return "#";
     return `${chain.explorerUrl}/tx/${txHash}`;
   };
@@ -579,9 +446,11 @@ export default function OffRampPayment({
   const { message: statusMessage, color: statusColor } = statusInfo();
 
   // Check if we need to show chain switch warning
-  const showChainWarning = !!selectedChain && currentChainId !== 
-    SUPPORTED_CHAINS.find(c => c.name === selectedChain)?.id;
-  const targetChain = SUPPORTED_CHAINS.find(c => c.name === selectedChain);
+  const showChainWarning =
+    !!selectedChain &&
+    currentChainId !==
+      SUPPORTED_CHAINS.find((c) => c.name === selectedChain)?.id;
+  const targetChain = SUPPORTED_CHAINS.find((c) => c.name === selectedChain);
 
   // Render loading state
   if (loading && !statusMessage) {
@@ -645,11 +514,13 @@ export default function OffRampPayment({
             d="M5 13l4 4L19 7"
           ></path>
         </svg>
-        <h3 className="text-xl font-bold mt-4 text-slate-700">Payment Successful!</h3>
+        <h3 className="text-xl font-bold mt-4 text-slate-700">
+          Payment Successful!
+        </h3>
         <p className="mt-2">
           {cryptoAmount} {selectedToken} sent
         </p>
-        
+
         {statusMessage && (
           <div className={`mt-2 ${statusColor} text-sm font-medium`}>
             {statusMessage}
@@ -670,7 +541,6 @@ export default function OffRampPayment({
           <button
             onClick={downloadReceipt}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-            disabled={!connectedWallet}
           >
             Download Receipt
           </button>
@@ -752,15 +622,20 @@ export default function OffRampPayment({
         {showChainWarning && (
           <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-yellow-800">
-              Please switch to <strong>{targetChain?.name}</strong> network to complete this payment
+              Please switch to <strong>{targetChain?.name}</strong> network to
+              complete this payment
             </p>
           </div>
         )}
 
         <div className="mb-4 p-4 bg-blue-50 rounded-xl">
-          <p className="text-sm !text-gray-600 mb-2">Send to deposit address:</p>
-          <p className="font-mono text-sm break-all mb-4">{depositAddress}</p>
-          <p className="text-lg font-bold">
+          <p className="text-sm !text-gray-600 mb-2">
+            Send to deposit address:
+          </p>
+          <p className="font-mono text-sm break-all mb-4 text-slate-800">
+            {depositAddress}
+          </p>
+          <p className="text-lg font-bold text-slate-800">
             {cryptoAmount} {selectedToken}
           </p>
           <p className="text-sm !text-gray-600 mt-2">
@@ -771,39 +646,15 @@ export default function OffRampPayment({
           </p>
         </div>
 
-        <button
-          onClick={executeNormalTransaction}
-          disabled={loading || showChainWarning || !connectedWallet}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-60"
-        >
-          {loading ? (
-            <span className="flex items-center justify-center">
-              <svg
-                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              {statusMessage || "Send Tokens"}
-            </span>
-          ) : (
-            "Send Tokens"
-          )}
-        </button>
+        <WalletConnectButton
+              to={to}
+              amount={amount}
+              currency={currency}
+              description={description || ""}
+              chainId={
+                SUPPORTED_CHAINS.find((c) => c.name === selectedChain)?.id
+              }
+            />
 
         {statusMessage && !loading && (
           <div className={`mt-2 ${statusColor} text-sm font-medium`}>
@@ -873,7 +724,7 @@ export default function OffRampPayment({
                 const chain = SUPPORTED_CHAINS.find(
                   (c) => c.name === selectedChain
                 );
-                return chain?.tokens.includes(token);
+                return chain?.supports.includes(token);
               }).map((token) => (
                 <option key={token} value={token}>
                   {token}
@@ -890,14 +741,14 @@ export default function OffRampPayment({
             setError("Please enter a valid wallet address");
             return;
           }
-          
+
           setLoading(true);
           try {
             const [currentRate, verification] = await Promise.all([
               fetchRate(),
-              verifyRecipient()
+              verifyRecipient(),
             ]);
-            
+
             if (currentRate && verification) {
               setRate(currentRate);
               setVerificationStatus(verification);
@@ -911,19 +762,52 @@ export default function OffRampPayment({
           }
         }}
         className={`mt-6 w-full px-4 py-2 rounded-lg font-medium ${
-          selectedToken && selectedChain && walletAddress && isValidAddress(walletAddress)
+          selectedToken &&
+          selectedChain &&
+          walletAddress &&
+          isValidAddress(walletAddress)
             ? "bg-blue-600 text-white hover:bg-blue-700"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
         }`}
-        disabled={!selectedToken || !selectedChain || !walletAddress || !isValidAddress(walletAddress) || loading}
+        disabled={
+          !selectedToken ||
+          !selectedChain ||
+          !walletAddress ||
+          !isValidAddress(walletAddress) ||
+          loading
+        }
       >
         {loading ? "Loading..." : "Proceed to Payment"}
       </button>
 
-      {!connectedWallet && (
+      {/* Mobile wallet options */}
+      {!window.ethereum && isMobile() && (
         <div className="mt-4 text-center">
           <div className="mb-2 text-sm text-red-600">
-            Please connect your wallet first
+            No wallet detected. Open in your wallet app:
+          </div>
+          <div className="flex flex-col gap-2 items-center">
+            <a
+              href={`metamask://dapp/${typeof window !== "undefined" ? window.location.host + window.location.pathname + window.location.search : ""}`}
+              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition"
+            >
+              Open in MetaMask
+            </a>
+            <a
+              href={`cbwallet://dapp?url=${typeof window !== "undefined" ? encodeURIComponent(window.location.href) : ""}`}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+            >
+              Open in Coinbase Wallet
+            </a>
+            <WalletConnectButton
+              to={to}
+              amount={amount}
+              currency={currency}
+              description={description || ""}
+              chainId={
+                SUPPORTED_CHAINS.find((c) => c.name === selectedChain)?.id
+              }
+            />
           </div>
         </div>
       )}
