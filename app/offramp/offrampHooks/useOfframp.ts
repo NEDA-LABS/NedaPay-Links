@@ -29,6 +29,21 @@ import { TOKEN_ADDRESSES, TOKEN_ABI, GAS_FEES } from './tokenConfig';
 
 type SupportedToken = keyof typeof TOKEN_ADDRESSES;
 
+// Calculate fiat balance
+export const fiatBalance = async (balance: string, token: SupportedToken, fiat: string, chain: ChainConfig) => {
+  // if (!rate || !fiatAmount) return "0";
+  const rate = await fetchTokenRate(token, 1, fiat, chain.name);
+  try {
+    const fiatBalance = balance && parseFloat(rate) > 0 && parseFloat(balance) > 0
+  ? (parseFloat(balance) * parseFloat(rate)).toFixed(2)
+  : null;
+    return fiatBalance?.toString();
+  } catch (error) {
+    console.error("Balance calculation error:", error);
+    return ("balance error");
+  }
+};
+
 const useOffRamp = (chain: ChainConfig, token: SupportedToken) => {
   // Validate token parameter
   if (!TOKEN_ADDRESSES[token]) {

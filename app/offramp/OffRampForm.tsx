@@ -9,6 +9,7 @@ import useOffRamp from './offrampHooks/useOfframp';
 import { ChainConfig } from './offrampHooks/constants';
 import { TOKEN_ADDRESSES, TOKEN_ABI, GAS_FEES } from './offrampHooks/tokenConfig';
 import { fetchTokenRate } from '@/utils/paycrest';
+import { fiatBalance as calculateFiatBalance } from './offrampHooks/useOfframp';
 
 type SupportedToken = keyof typeof TOKEN_ADDRESSES;
 
@@ -25,6 +26,8 @@ const OffRampForm: React.FC<{
   const [fiatInput, setFiatInput] = useState('');
   const [isRateFetching, setIsRateFetching] = useState(false);
   const [rateError, setRateError] = useState<string | null>(null);
+  const [fiatBalance, setFiatBalance] = useState<string | null>(null);
+  const [minimumAmount, setMinimumAmount] = useState<string | null>(null);
   
   const {
     amount,
@@ -170,9 +173,23 @@ const OffRampForm: React.FC<{
       : '0.00';
 
   // Calculate fiat balance
-  const fiatBalance = balance && rate && parseFloat(rate) > 0 && parseFloat(balance) > 0
-    ? (parseFloat(balance) * parseFloat(rate)).toFixed(2)
-    : null;
+  useEffect(() => {
+    const fetchFiatBalance = async () => {
+      const fiatBalance = await calculateFiatBalance(balance, "USDC", fiat, chain);
+      setFiatBalance(fiatBalance || null);
+    };
+    fetchFiatBalance();
+  }, [balance, fiat, chain]);
+
+  // Calculate minimum amount
+  useEffect(() => {
+    const fetchFiatBalance = async () => {
+      const minimumAmount = await calculateFiatBalance("1", "USDC", fiat, chain);
+      setMinimumAmount(minimumAmount || null);
+    };
+    fetchFiatBalance();
+  }, [balance, fiat, chain]);
+  
 
   // Calculate available based on mode
   const available = inputMode === 'crypto'
@@ -234,7 +251,7 @@ const OffRampForm: React.FC<{
     <div className="bg-gray-900/90 backdrop-blur-sm rounded-3xl p-4 shadow-2xl border border-gray-700 mb-8">
       {/* Confirmation Modal */}
       {showConfirmation && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex md:items-center items-end justify-center p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex  items-end justify-center p-4">
           <div className="bg-gray-800 rounded-2xl border border-gray-700 max-w-md w-full p-6 relative">
             <button
               onClick={() => setShowConfirmation(false)}
@@ -457,7 +474,7 @@ const OffRampForm: React.FC<{
                       }
                     }}
                     className="w-full px-4 py-3 text-base text-gray-900 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all bg-gray-100 placeholder:text-gray-500"
-                    placeholder={`Minimum 1 ${token.toUpperCase()}`}
+                    placeholder={`Minimum ${inputMode === 'crypto' ? 1 : minimumAmount} ${inputMode === 'crypto' ? token.toUpperCase() : fiat}`}
                     min="0.01"
                     step="0.01"
                     required
@@ -478,18 +495,18 @@ const OffRampForm: React.FC<{
           )}
           
           {/* Exchange Rate Display */}
-          {fiat && (
+          {amount && (
             <div>
               <div className="flex items-center justify-between mb-3">
                 <label className="text-sm font-semibold text-gray-100">
                   Exchange Rate
                 </label>
-                {(isRateFetching || (!rate && !rateError)) && (
+                {/* {(isRateFetching || (!rate && !rateError)) && (
                   <span className="text-xs text-blue-400 flex items-center">
                     <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                    Fetching rate...
+                    Enter Amount to get rate
                   </span>
-                )}
+                )} */}
               </div>
               
               <div className={`p-4 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
