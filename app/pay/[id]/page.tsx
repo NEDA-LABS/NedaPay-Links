@@ -249,8 +249,10 @@ export default function PayPage({ params }: { params: { id: string } }) {
     <>
     <Header />
     <div className="min-h-screen bg-gray-800 flex items-center justify-center p-2">
+      
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-2">
         <div className="text-center space-y-3">
+        <Image src="/symbolnlogo.jpeg" alt="Logo" width={100} height={50} className="z-50 mx-auto rounded-lg"/>
           <h1 className="text-xl font-bold text-gray-900">
             {linkType === 'OFF_RAMP' ? 'Payment Request' : 'Payment Request'}
           </h1>
@@ -259,24 +261,24 @@ export default function PayPage({ params }: { params: { id: string } }) {
           )}
         </div>
 
-        <div className="text-center bg-gray-50 p-2 rounded-xl">
-          <p className="text-sm text-gray-600 mb-1">Amount</p>
-          <p className="text-3xl font-bold text-gray-900">
+        <div className="flex flex-row items-center justify-between text-center bg-gray-50 p-2 rounded-xl w-[90%] mx-auto">
+          <p className="text-sm text-gray-700 mb-1">Amount:</p>
+          <p className="text-lg font-bold text-gray-900">
             {amount ? `${amount} ` : 'Any Amount '}
-            <span className="text-xl font-normal">
+            <span className="text-lg font-normal">
               {currency || (selectedToken && linkType === 'NORMAL' ? selectedToken : '')}
             </span>
           </p>
           {resolvedChain && (
-            <p className="text-sm text-gray-500 mt-1">
-              Network: {resolvedChain.name}
+            <p className="text-sm text-gray-700 mt-1">
+              {resolvedChain.name} Network
             </p>
           )}
         </div>
 
         {description && (
-          <div className="text-center bg-gray-50 p-2 rounded-xl">
-            <p className="text-sm text-gray-600 mb-1">Description</p>
+          <div className="flex flex-row items-center justify-between text-center bg-gray-50 p-2 rounded-xl w-[80%] mx-auto">
+            <p className="text-sm text-gray-700 mb-1">Description:</p>
             <p className="text-lg font-medium text-gray-900">
               {decodeURIComponent(description)}
             </p>
@@ -286,8 +288,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
         {linkType === 'OFF_RAMP' && offRampValue && offRampProvider && (
           <div className="text-center bg-blue-50 p-4 rounded-xl">
             <p className="text-sm text-gray-600 mb-1">Recipient</p>
-            <p className="text-lg font-medium text-gray-900">
-              {offRampValue} ({offRampProvider})
+            <p className="text-sm font-medium text-gray-900">
+            {accountName} | {offRampValue} | ({offRampProvider})
             </p>
             <p className="text-sm text-gray-500 mt-1">
               {offRampType === 'PHONE' ? 'Mobile Money' : 'Bank Account'}

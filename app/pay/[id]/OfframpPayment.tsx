@@ -781,7 +781,7 @@ export default function OffRampPayment({
       </button>
 
       {/* Mobile wallet options */}
-      {!window.ethereum && isMobile() && (
+      {/* {!window.ethereum && isMobile() && (
         <div className="mt-4 text-center">
           <div className="mb-2 text-sm text-red-600">
             No wallet detected. Open in your wallet app:
@@ -810,7 +810,7 @@ export default function OffRampPayment({
             />
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
