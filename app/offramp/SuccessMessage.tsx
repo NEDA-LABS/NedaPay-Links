@@ -37,7 +37,7 @@ const SuccessMessage: React.FC<SuccessMessageProps> = ({ success, onBack }) => {
           Make Another Transaction
 
         </button>
-        <p className='text-xs'>If withdraw fails, your tokens will be refunded</p>
+        <p className='text-xs text-gray-100'>If withdraw fails, your tokens will be refunded</p>
         <p className="text-sm text-gray-100 mt-4">
           You can track the status of your transaction in your account <a href="/all-notifications" className="text-blue-300 hover:underline">notification center</a> 
         </p>

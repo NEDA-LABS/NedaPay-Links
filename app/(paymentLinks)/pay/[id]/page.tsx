@@ -22,7 +22,7 @@ import Header from "@/components/Header";
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 
-const PaymentQRCode = dynamicImport(() => import("./QRCode"), { ssr: false });
+// const PaymentQRCode = dynamicImport(() => import("./QRCode"), { ssr: false });
 const PayWithWallet = dynamicImport(() => import("./PayWithWallet"), { ssr: false });
 const OffRampPayment = dynamicImport(() => import("./OfframpPayment"), { ssr: false });
 
@@ -229,8 +229,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
     );
   }
 
-  console.log("custom amount", customAmount); //debugging
-  console.log("amount", amount);
+  // console.log("custom amount", customAmount); //debugging
+  // console.log("amount", amount);
 
   if (!isValidLink) {
     return (
@@ -261,16 +261,16 @@ export default function PayPage({ params }: { params: { id: string } }) {
           )}
         </div>
 
-        <div className="flex flex-row items-center justify-between text-center bg-gray-50 p-2 rounded-xl w-[90%] mx-auto">
+        <div className="flex flex-row items-center justify-between text-center bg-gray-50 p-2 rounded-xl w-[80%] mx-auto">
           <p className="text-sm text-gray-700 mb-1">Amount:</p>
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-sm font-bold text-gray-900">
             {amount ? `${amount} ` : 'Any Amount '}
             <span className="text-lg font-normal">
               {currency || (selectedToken && linkType === 'NORMAL' ? selectedToken : '')}
             </span>
           </p>
           {resolvedChain && (
-            <p className="text-sm text-gray-700 mt-1">
+            <p className="text-xs text-gray-900 mt-1">
               {resolvedChain.name} Network
             </p>
           )}
@@ -339,7 +339,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
                 </button> */}
               </div>
             ) : (
-              <PaymentQRCode to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} />
+              <p className="text-red-600 dark:text-red-400 font-semibold">Internal server Error</p>
+              // <PaymentQRCode to={merchantAddress} amount={amount || ""} currency={currency || ""} description={description || ""} />
             )}
           </div>
         </div>

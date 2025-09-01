@@ -8,7 +8,7 @@ import {
   fetchTokenRate,
   verifyAccount,
   initiatePaymentOrder,
-} from "../../utils/paycrest";
+} from "@/utils/paycrest";
 import dynamic from "next/dynamic";
 import { usePrivy, useWallets, useSendTransaction } from "@privy-io/react-auth";
 

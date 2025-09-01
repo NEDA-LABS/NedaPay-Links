@@ -651,7 +651,7 @@ const OffRampForm: React.FC<{
               )}
             </button>
             
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-xs text-gray-100 text-center">
               Funds will be refunded to your wallet if the transaction fails
             </p>
           </div>

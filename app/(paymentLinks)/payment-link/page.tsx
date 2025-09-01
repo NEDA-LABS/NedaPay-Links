@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "../components/Header";
+import Header from "@/components/Header";
 import { usePrivy } from "@privy-io/react-auth";
-import { stablecoins } from "../data/stablecoins";
-import Footer from "../components/Footer";
+import { stablecoins } from "@/data/stablecoins";
+import Footer from "@/components/Footer";
 import { useTheme } from "next-themes";
 import {
   FaWhatsapp,
@@ -448,12 +448,12 @@ function PaymentLinkPage() {
         <div className="text-center mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-200/30 to-purple-200/30 blur-3xl rounded-4xl"></div>
           
-          <h1 className="text-lg md:text-6xl font-extrabold text-gray-900 mb-1 tracking-tight">
+          <h1 className="text-lg md:text-2xl font-extrabold text-gray-900 mb-1 tracking-tight">
             <span className="block bg-gradient-to-r from-indigo-100 to-purple-100 bg-clip-text text-transparent">
               Create Instant Payment Links
             </span>
           </h1>
-          <p className="text-base md:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed pb-2 px-2">
+          <p className="text-base text-gray-200 max-w-3xl mx-auto leading-relaxed pb-2 px-2">
             Generate payment links with as few clicks as possible.
           </p>
         </div>

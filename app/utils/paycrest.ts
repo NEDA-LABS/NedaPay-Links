@@ -40,6 +40,16 @@ interface FetchOrdersResponse {
     page: number;
     pageSize: number;
     orders: PaymentOrder[];
+    summary?: {
+      totalTransactions: number;
+      totalAmount: number;
+      totalAmountPaid: number;
+      totalFees: number;
+      byStatus: Record<string, number>;
+      byToken: Record<string, { count: number; totalAmount: number; totalPaid: number }>;
+      byNetwork: Record<string, number>;
+      recentActivity: Record<string, number>;
+    };
   };
 }
 
@@ -48,6 +58,9 @@ interface FetchOrdersParams {
   status?: string;
   token?: string;
   network?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
   page?: number;
   pageSize?: number;
 }
@@ -213,12 +226,33 @@ export async function fetchSupportedCurrencies(): Promise<Array<{ code: string; 
   return response.data.data;
 }
 
-export async function fetchAllOrders(): Promise<FetchOrdersResponse> {
+export async function fetchAllOrders(params: FetchOrdersParams = {}): Promise<FetchOrdersResponse> {
   try {
-    const response = await fetch(`${PAYCREST_API_URL}/v1/sender/orders/`, { headers });
+    const queryParams = new URLSearchParams();
+    
+    // Add pagination params if provided
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+    
+    // Add other filters if provided
+    if (params.status) queryParams.append('status', params.status);
+    if (params.token) queryParams.append('token', params.token);
+    if (params.network) queryParams.append('network', params.network);
+    if (params.ordering) queryParams.append('ordering', params.ordering);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+    
+    const queryString = queryParams.toString();
+    const url = `${PAYCREST_API_URL}/v1/sender/orders${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json(); 
   } catch (error) {
     console.error('Error fetching orders:', error);
-    throw new Error('Failed to fetch orders: An unexpected error occurred');
+    throw new Error('Failed to fetch orders: ' + (error instanceof Error ? error.message : 'An unexpected error occurred'));
   }
 }
