@@ -36,7 +36,7 @@ const CurrencyTicker = () => {
         // console.log("currencies", currencies);
 
         // 2. keep only the ones in the screenshot
-        const whitelist = ['KES', 'NGN', 'TZS', 'UGX', 'ZAR', 'GHS'];
+        const whitelist = ['KES', 'NGN', 'TZS', 'UGX', 'ZAR'];
         const filtered = currencies.filter((c) => whitelist.includes(c.code));
         // console.log("filtered", filtered);
 
