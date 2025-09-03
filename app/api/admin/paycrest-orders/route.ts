@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
         .filter(order => order.status.toLowerCase() === 'settled')
         .reduce((sum, order) => sum + parseFloat(order.amountPaid), 0),
       totalFees: orders
+        .filter(order => order.status.toLowerCase() === 'settled')
         .reduce((sum, order) => sum + parseFloat(order.senderFee) + parseFloat(order.transactionFee), 0),
       
       // By status
