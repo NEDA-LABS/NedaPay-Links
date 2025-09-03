@@ -58,9 +58,11 @@ export async function GET(request: NextRequest) {
     const summary = {
       totalTransactions: total, // Use the total count from the API
       totalAmount: orders.reduce((sum, order) => sum + parseFloat(order.amount), 0),
-      totalAmountPaid: orders.reduce((sum, order) => sum + parseFloat(order.amountPaid), 0),
-      totalFees: orders
+      totalAmountPaid: orders
         .filter(order => order.status.toLowerCase() === 'settled')
+        .reduce((sum, order) => sum + parseFloat(order.amountPaid), 0),
+      totalFees: orders
+        .filter(order => order.status.toLowerCase() === 'settled' || order.status.toLowerCase() === 'refunded')
         .reduce((sum, order) => sum + parseFloat(order.senderFee) + parseFloat(order.transactionFee), 0),
       
       // By status
@@ -68,6 +70,7 @@ export async function GET(request: NextRequest) {
         pending: orders.filter(o => o.status.toLowerCase() === 'pending').length,
         settled: orders.filter(o => o.status.toLowerCase() === 'settled').length,
         expired: orders.filter(o => o.status.toLowerCase() === 'expired').length,
+        refunded: orders.filter(o => o.status.toLowerCase() === 'refunded').length,
       },
       
       // By token

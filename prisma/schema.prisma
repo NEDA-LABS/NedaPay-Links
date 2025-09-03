@@ -165,7 +165,7 @@ model OffRampTransaction {
   institution  String        @default("...")
 }
 
-// prisma/schema.prisma - Notification Model
+// broadcast notification
 model BroadcastNotification {
   id        String   @id @default(cuid())
   title     String

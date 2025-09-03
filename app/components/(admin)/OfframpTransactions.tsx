@@ -335,7 +335,7 @@ export default function OfframpTransactions() {
               </div>
             </div>
 
-            <div className="bg-slate-900/50 backdrop-blur border border-slate-700 rounded-xl p-6">
+            {/* <div className="bg-slate-900/50 backdrop-blur border border-slate-700 rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-sm">Total Amount</p>
@@ -343,7 +343,7 @@ export default function OfframpTransactions() {
                 </div>
                 <DollarSign className="w-8 h-8 text-green-400" />
               </div>
-            </div>
+            </div> */}
 
             <div className="bg-slate-900/50 backdrop-blur border border-slate-700 rounded-xl p-6">
               <div className="flex items-center justify-between">
