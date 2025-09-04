@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import dynamicImport from "next/dynamic";
 import { utils } from "ethers";
 import { useAccount } from "wagmi";
+import { ChevronDown } from "lucide-react";
 import {
   ClipboardCopy,
   CheckCircle,
@@ -63,6 +64,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
   const [selectedToken, setSelectedToken] = useState("");
   const [selectedChain, setSelectedChain] = useState<number | null>(null);
   const [availableTokens, setAvailableTokens] = useState<any[]>([]);
+  const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false);
 
   const merchantAddress = to && utils.isAddress(to) ? to : connectedAddress || "";
   const shortAddress = merchantAddress ? `${merchantAddress.slice(0, 6)}...${merchantAddress.slice(-4)}` : "";
@@ -143,6 +145,35 @@ export default function PayPage({ params }: { params: { id: string } }) {
       }
     }
   }, [selectedChain, linkType]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isTokenDropdownOpen && !target.closest('.token-dropdown-container')) {
+        setIsTokenDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isTokenDropdownOpen]);
+
+  // Close dropdown when pressing Escape key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isTokenDropdownOpen) {
+        setIsTokenDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isTokenDropdownOpen]);
 
   const handleCopy = () => {
     if (merchantAddress) {
@@ -263,12 +294,27 @@ export default function PayPage({ params }: { params: { id: string } }) {
 
         <div className="flex flex-row items-center justify-between text-center bg-gray-50 p-2 rounded-xl w-[80%] mx-auto">
           <p className="text-sm text-gray-700 mb-1">Amount:</p>
-          <p className="text-sm font-bold text-gray-900">
-            {amount ? `${amount} ` : 'Any Amount '}
-            <span className="text-lg font-normal">
-              {currency || (selectedToken && linkType === 'NORMAL' ? selectedToken : '')}
-            </span>
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
+            {linkType === 'NORMAL' && (currency || selectedToken) && (
+                <span className="inline-flex items-center gap-1">
+                  <Image 
+                    src={stablecoins.find(t => t.baseToken === (currency || selectedToken))?.flag || ''} 
+                    alt={`${currency || selectedToken} icon`} 
+                    width={16} 
+                    height={16} 
+                    className="w-4 h-4 rounded-full object-cover inline-block"
+                  />
+                </span>
+              )}
+              {amount ? `${amount} ` : 'Any Amount '}
+              {linkType === 'NORMAL' && (currency || selectedToken) && (
+                <span className="inline-flex items-center gap-1">
+                  <span className="text-sm">{currency || selectedToken}</span>
+                </span>
+              )}
+            </p>
+          </div>
           {resolvedChain && (
             <p className="text-xs text-gray-900 mt-1">
               {resolvedChain.name} Network
@@ -375,17 +421,53 @@ export default function PayPage({ params }: { params: { id: string } }) {
                   Select Token
                 </label>
                 <div className="relative">
-                  <select
-                    value={selectedToken}
-                    onChange={(e) => setSelectedToken(e.target.value)}
-                    className="w-full text-slate-800 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  <button
+                    type="button"
+                    onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
+                    className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white flex items-center justify-between"
                   >
-                    {availableTokens.map(token => (
-                      <option key={token.baseToken} value={token.baseToken}>
-                        {token.baseToken} - {token.name}
-                      </option>
-                    ))}
-                  </select>
+                    <div className="flex items-center gap-2">
+                      {selectedToken ? (
+                        <>
+                          <Image 
+                            src={availableTokens.find(t => t.baseToken === selectedToken)?.flag || ''} 
+                            alt={`${selectedToken} icon`} 
+                            width={20} 
+                            height={20} 
+                            className="w-5 h-5 rounded-full object-cover"
+                          />
+                          <span>{selectedToken} - {availableTokens.find(t => t.baseToken === selectedToken)?.name}</span>
+                        </>
+                      ) : (
+                        <span>Select a token</span>
+                      )}
+                    </div>
+                    <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isTokenDropdownOpen ? 'transform rotate-180' : ''}`} />
+                  </button>
+                  
+                  {isTokenDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 max-h-60 overflow-auto">
+                      {availableTokens.map(token => (
+                        <div
+                          key={token.baseToken}
+                          onClick={() => {
+                            setSelectedToken(token.baseToken);
+                            setIsTokenDropdownOpen(false);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          <Image 
+                            src={token.flag} 
+                            alt={`${token.baseToken} icon`} 
+                            width={20} 
+                            height={20} 
+                            className="w-5 h-5 rounded-full object-cover"
+                          />
+                          <span className="flex-1">{token.baseToken} - {token.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
