@@ -5,7 +5,7 @@ import { Send, Wallet } from "lucide-react";
 import { useWallets } from "@privy-io/react-auth";
 import SwapModal from "@/components/SwapModal";
 import { useState } from "react";
-import WalletModal from "@/components/WalletEmbedded";
+import WalletModal from "@/components/(wallet)/WalletEmbedded";
 
 interface WalletKitProps {
   buttonName: string;

@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { resolveName, toHexAddress } from '../utils/ensUtils';
+
 
 interface AuthenticationModalProps {
   isOpen: boolean;
@@ -14,12 +16,31 @@ interface AuthenticationModalProps {
 export default function AuthenticationModal({ 
   isOpen, 
   onClose, 
-  address 
+  address,
 }: AuthenticationModalProps) {
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
   const [isAnimated, setIsAnimated] = useState(false);
   const { theme } = useTheme();
+  const [basename, setBasename] = useState<string | null>(null);
+
+  // Resolve ENS name
+  useEffect(() => {
+    const resolveEnsName = async () => {
+      if (!address) return;
+      
+      try {
+        const name = await resolveName({ address: address as `0x${string}` });
+        console.log("Resolved ENS name:", name); //debugg
+        setBasename(name);
+      } catch (error) {
+        console.error("Error resolving ENS name:", error); //debugg
+        setBasename(null);
+      }
+    };
+
+    resolveEnsName();
+  }, [address]);
 
   useEffect(() => {
     if (isOpen) {
@@ -114,7 +135,7 @@ export default function AuthenticationModal({
                   fontSize: '14px'
                 }}
               >
-                Welcome, {address?.slice(0, 6)}...{address?.slice(-4)}
+                Welcome, {basename || `${address?.slice(0, 6)}...${address?.slice(-4)}`}
               </motion.p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

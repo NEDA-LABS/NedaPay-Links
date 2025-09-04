@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useAccount, useBalance, useSwitchChain, useChainId, usePublicClient, useEnsName, useEnsAddress } from 'wagmi';
+import { useAccount, useBalance, useSwitchChain, useChainId, usePublicClient } from 'wagmi';
 import { useFundWallet, useSendTransaction, useWallets, usePrivy } from '@privy-io/react-auth';
 import { formatUnits, parseEther, parseUnits, isAddress, encodeFunctionData } from 'viem';
 import { base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet } from 'viem/chains';
 import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalLink, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { stablecoins } from '@/data/stablecoins';
-import { resolveName } from '../utils/ensUtils'
-import { normalize } from 'viem/ens'
+import { resolveName } from '@/utils/ensUtils'; // keep your existing self-ENS display if you want
+import EnsAddressInput from '@/components/(wallet)/EnsAddressInput';
 
 const ERC20_ABI = [
   {
@@ -63,15 +63,14 @@ interface WalletModalProps {
 // Mock prices for native tokens (in a real app, use an API)
 const NATIVE_TOKEN_PRICES: Record<number, number> = {
   [mainnet.id]: 2000, // ETH
-  [base.id]: 0.0005, // BASE
+  [base.id]: 0.0005, // BASE (example)
   [bsc.id]: 300, // BNB
-  [scroll.id]: 0.0004, // ETH
+  [scroll.id]: 0.0004, // ETH (example)
   [celo.id]: 0.5, // CELO
-  [arbitrum.id]: 0.001, // ETH
+  [arbitrum.id]: 0.001, // ETH (example)
   [polygon.id]: 0.7, // MATIC
-  [optimism.id]: 0.0006, // ETH
+  [optimism.id]: 0.0006, // ETH (example)
 };
-
 
 export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }: WalletModalProps) {
   const { wallets } = useWallets();
@@ -88,17 +87,17 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchingChain, setIsSwitchingChain] = useState(false);
-  
+
   // Fund states
   const [fundAmount, setFundAmount] = useState('');
   const [fundAsset, setFundAsset] = useState<'native-currency' | 'USDC'>('USDC');
-  
-  // Send states
-  const [sendTo, setSendTo] = useState('');
+
+  // Send states (updated to support ENS)
+  const [sendToRaw, setSendToRaw] = useState(''); // user input (ENS or address)
+  const [sendToResolved, setSendToResolved] = useState<`0x${string}` | null>(null); // validated address
   const [sendAmount, setSendAmount] = useState('');
   const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null);
-  const [isValidAddress, setIsValidAddress] = useState(false);
-  
+
   // Export states
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [privateKey, setPrivateKey] = useState('');
@@ -107,106 +106,72 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const isPrivyEmbedded = wallets?.[0]?.walletClientType.toLowerCase() === 'privy';
   const SUPPORTED = [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
 
-   // State for ENS name
-    const [ensName, setEnsName] = useState<string | null>(null);
-
-  //ens
+  // ENS display for your own address (unchanged)
+  const [ensName, setEnsName] = useState<string | null>(null);
   useEffect(() => {
-      const resolveEnsName = async () => {
-        if (!address) return;
-        
-        try {
-          const name = await resolveName({ address: address as `0x${string}` });
-          console.log("Resolved ENS name:", name); //debugg
-          setEnsName(name);
-        } catch (error) {
-          console.error("Error resolving ENS name:", error); //debugg
-          setEnsName(null);
-        }
-      };
-  
-      resolveEnsName();
-    }, [address]);
+    const resolveEnsName = async () => {
+      if (!address) return;
+      try {
+        const name = await resolveName({ address: address as `0x${string}` });
+        setEnsName(name);
+      } catch {
+        setEnsName(null);
+      }
+    };
+    resolveEnsName();
+  }, [address]);
 
-  // Use Wagmi's useBalance for native token
+  // native token balance
   const { data: nativeBalance, refetch: refetchNativeBalance } = useBalance({
     address,
     chainId: activeChain.id,
   });
 
-  // Set active chain when chainId changes
   useEffect(() => {
     if (chainId) {
-      const chain = SUPPORTED.find(c => c.id === chainId);
-      if (chain) {
-        setActiveChain(chain);
-      } else {
-        console.warn(`Chain with ID ${chainId} not found in supported chains`);
-        setActiveChain(base);
-      }
+      const chain = SUPPORTED.find((c) => c.id === chainId);
+      if (chain) setActiveChain(chain);
+      else setActiveChain(base);
     }
-  }, [chainId, SUPPORTED]);
+  }, [chainId]);
 
-  // Reset tab when modal opens
   useEffect(() => {
-    if (isOpen) {
-      setActiveTab(defaultTab);
-    }
+    if (isOpen) setActiveTab(defaultTab);
   }, [isOpen, defaultTab]);
 
-  // Close modal on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
+      if (e.key === 'Escape' && isOpen) onClose();
     };
-
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  // Prevent background scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
+    if (isOpen) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = 'unset';
+    return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
 
-  // Validate recipient address
-  useEffect(() => {
-    setIsValidAddress(sendTo ? isAddress(sendTo) : false);
-  }, [sendTo]);
-
-  // Initialize selected token when balances load
+  // when balances first load, pick a default token
   useEffect(() => {
     if (balances.length > 0 && !selectedToken) {
-      const nativeToken = balances.find(b => b.isNative);
+      const nativeToken = balances.find((b) => b.isNative);
       setSelectedToken(nativeToken || balances[0]);
     }
   }, [balances, selectedToken]);
 
-  // Get relevant stablecoins for active chain
   const relevantTokens = useMemo(() => {
     return stablecoins.filter(
-      sc => sc.chainIds.includes(activeChain.id) && sc.addresses[activeChain.id as keyof typeof sc.addresses]
+      (sc) => sc.chainIds.includes(activeChain.id) && sc.addresses[activeChain.id as keyof typeof sc.addresses]
     );
   }, [activeChain.id]);
 
-  // Load token balances
   const loadTokenBalances = async () => {
     if (!address || !isOpen) return;
-    
     try {
       const tokenBalances: TokenBalance[] = [];
-      
-      // Add native token balance
+
       if (nativeBalance) {
         const formatted = parseFloat(formatUnits(nativeBalance.value, nativeBalance.decimals));
         const price = NATIVE_TOKEN_PRICES[activeChain.id] || 1;
@@ -219,20 +184,20 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
         });
       }
 
-      // Add stablecoin balances
       for (const token of relevantTokens) {
         try {
-          const decimals = typeof token.decimals === 'object' 
-            ? (token.decimals as any)[activeChain.id] ?? 6 
-            : token.decimals;
-          
+          const decimals =
+            typeof token.decimals === 'object'
+              ? (token.decimals as any)[activeChain.id] ?? 6
+              : token.decimals;
+
           const balance = await publicClient?.readContract({
             address: token.addresses[activeChain.id as keyof typeof token.addresses] as `0x${string}`,
             abi: ERC20_ABI,
             functionName: 'balanceOf',
             args: [address as `0x${string}`],
           });
-          
+
           if (balance) {
             const formatted = parseFloat(formatUnits(balance as bigint, decimals));
             if (formatted > 0) {
@@ -250,7 +215,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
           console.error(`Error loading ${token.baseToken} balance:`, error);
         }
       }
-      
+
       setBalances(tokenBalances);
     } catch (error) {
       console.error('Error loading balances:', error);
@@ -258,32 +223,23 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     }
   };
 
-  // Load balances when relevant data changes
   useEffect(() => {
     if (!isOpen || !address) return;
-    
     setIsLoading(true);
-    loadTokenBalances()
-      .finally(() => setIsLoading(false));
+    loadTokenBalances().finally(() => setIsLoading(false));
   }, [isOpen, address, activeChain, nativeBalance, relevantTokens]);
 
-  // Refetch native balance when chain changes
   useEffect(() => {
-    if (isOpen && address) {
-      refetchNativeBalance();
-    }
+    if (isOpen && address) refetchNativeBalance();
   }, [activeChain, isOpen, address, refetchNativeBalance]);
 
-  /* ---------- Switch Chain ---------- */
   const switchChain = async (chain: any) => {
     try {
       setIsSwitchingChain(true);
       setIsLoading(true);
-      if (switchChainAsync) {
-        await switchChainAsync({ chainId: chain.id });
-      }
+      if (switchChainAsync) await switchChainAsync({ chainId: chain.id });
       setActiveChain(chain);
-      setBalances([]); // Clear balances while loading new ones
+      setBalances([]);
       toast.success(`Switched to ${chain.name}`);
     } catch (e: any) {
       toast.error(e.message || 'Failed to switch chain');
@@ -293,14 +249,11 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     }
   };
 
-  /* ---------- Export Private Key ---------- */
   const handleExportWallet = async () => {
     if (!address) return toast.error('No wallet connected');
-    
     try {
       setIsExporting(true);
-      const exported = await exportWallet({ address });
-      // setPrivateKey(exported || '');
+      await exportWallet({ address });
       toast.success('Private key exported successfully');
     } catch (e: any) {
       toast.error(e.message || 'Failed to export wallet');
@@ -309,7 +262,6 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     }
   };
 
-  /* ---------- Copy to Clipboard ---------- */
   const copyToClipboard = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -319,16 +271,14 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     }
   };
 
-  /* ---------- Fund Wallet ---------- */
   const handleFund = async () => {
     if (!address || !fundAmount) return toast.error('Missing amount');
-    
     try {
       setIsLoading(true);
-      await fundWallet(address, { 
-        chain: activeChain, 
-        amount: fundAmount, 
-        asset: fundAsset 
+      await fundWallet(address, {
+        chain: activeChain,
+        amount: fundAmount,
+        asset: fundAsset
       });
       toast.success('Funding flow opened');
       setFundAmount('');
@@ -339,40 +289,41 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     }
   };
 
-  /* ---------- Send Transaction ---------- */
+  // --- SEND (updated to use resolved address) ---
+  const isValidRecipient = !!sendToResolved && isAddress(sendToResolved);
+
   const handleSend = async () => {
-    if (!sendTo || !sendAmount || !isValidAddress || !selectedToken) {
+    if (!isValidRecipient || !sendAmount || !selectedToken) {
       return toast.error('Please fill all fields correctly');
     }
 
     try {
       setIsLoading(true);
-      
+      const to = sendToResolved as `0x${string}`;
+
       if (selectedToken.isNative) {
-        // Send native token
-        const { hash } = await sendTransaction({ 
-          to: sendTo as `0x${string}`, 
-          value: parseEther(sendAmount) 
+        const { hash } = await sendTransaction({
+          to,
+          value: parseEther(sendAmount)
         });
         toast.success(`Transaction sent: ${hash.slice(0, 10)}...`);
       } else {
-        // Send ERC20 token
         const amount = parseUnits(sendAmount, selectedToken.decimals);
         const data = encodeFunctionData({
           abi: ERC20_ABI,
           functionName: 'transfer',
-          args: [sendTo as `0x${string}`, amount]
+          args: [to, amount]
         });
-        
+
         const { hash } = await sendTransaction({
           to: selectedToken.address as `0x${string}`,
           data,
         });
         toast.success(`Token transfer sent: ${hash.slice(0, 10)}...`);
       }
-      
-      // Reset form
-      setSendTo('');
+
+      setSendToRaw('');
+      setSendToResolved(null);
       setSendAmount('');
     } catch (e: any) {
       toast.error(e.message || 'Transaction failed');
@@ -388,12 +339,12 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 bg-opacity-50 z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
         {/* Modal */}
-        <div 
+        <div
           className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-auto"
           onClick={(e) => e.stopPropagation()}
         >
@@ -418,7 +369,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                 </button>
               </div>
             </div>
-            
+
             {/* Chain Switcher */}
             <div className="flex flex-wrap gap-2 mt-4">
               {SUPPORTED.map((c) => (
@@ -441,7 +392,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             </div>
           </div>
 
-          {/* Tab Navigation */}
+          {/* Tabs */}
           <div className="flex border-b dark:border-gray-700">
             {[
               { id: 'overview', label: 'Overview', icon: Wallet },
@@ -464,7 +415,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             ))}
           </div>
 
-          {/* Tab Content */}
+          {/* Content */}
           <div className="p-6 min-h-[400px] max-h-[500px] overflow-y-auto">
             {activeTab === 'overview' && (
               <div className="space-y-2 md:space-y-6">
@@ -481,7 +432,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                   ) : balances.length > 0 ? (
                     <div className="space-y-3">
                       {balances.map((balance, index) => (
-                        <div key={`${balance.symbol}-${index}`} 
+                        <div key={`${balance.symbol}-${index}`}
                              className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/70 transition">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -532,7 +483,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             {activeTab === 'send' && (
               <div className="space-y-2 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Send Tokens</h3>
-                
+
                 {/* Token Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Token</label>
@@ -554,24 +505,14 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                   </select>
                 </div>
 
-                {/* Recipient */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recipient Address</label>
-                  <input
-                    type="text"
-                    value={sendTo}
-                    onChange={(e) => setSendTo(e.target.value)}
-                    placeholder="0x..."
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800 ${
-                      sendTo && !isValidAddress 
-                        ? 'border-red-300 bg-red-50 dark:border-red-500 dark:bg-red-900/20' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                  />
-                  {sendTo && !isValidAddress && (
-                    <p className="text-red-500 text-sm mt-1">Invalid address format</p>
-                  )}
-                </div>
+                {/* Recipient (ENS or Address) */}
+                <EnsAddressInput
+                  value={sendToRaw}
+                  onChange={setSendToRaw}
+                  onResolved={setSendToResolved}
+                  label="Recipient (ENS or Address)"
+                  placeholder="vitalik.eth or 0x..."
+                />
 
                 {/* Amount */}
                 <div>
@@ -600,7 +541,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                 {/* Send Button */}
                 <button
                   onClick={handleSend}
-                  disabled={!sendTo || !sendAmount || !isValidAddress || !selectedToken || isLoading}
+                  disabled={!isValidRecipient || !sendAmount || !selectedToken || isLoading}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
@@ -621,7 +562,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             {activeTab === 'receive' && (
               <div className="space-y-2 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Receive Tokens</h3>
-                
+
                 {/* Address Display */}
                 <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-xl">
                   <div className="text-center">
@@ -684,12 +625,12 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
             {activeTab === 'settings' && (
               <div className="space-y-1 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Wallet Settings</h3>
-                
-                {/* Privy Dashboard Info */}
+
+                {/* Privy dashboard */}
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700">
                   <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Advanced Wallet Management</h4>
                   <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">
-                    For more advanced wallet features, transaction history, and additional tokens, 
+                    For more advanced wallet features, transaction history, and additional tokens,
                     visit your Privy dashboard.
                   </p>
                   <a
@@ -701,13 +642,13 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                     Open Privy Dashboard
                     <ExternalLink className="h-3 w-3" />
                   </a>
-                  {user && user.email && (
+                  {user && (user as any).email && (
                     <p className="text-blue-600 dark:text-blue-400 text-xs mt-2">
-                      Login with: {user.email.address}
+                      Login with: {(user as any).email.address}
                     </p>
                   )}
                 </div>
-                
+
                 {/* Export Private Key */}
                 <div className="border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded-xl">
                   <div className="flex items-start gap-3">
@@ -717,7 +658,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                       <p className="text-yellow-700 dark:text-yellow-400 text-sm mb-4">
                         Your private key gives full access to your wallet. Never share it with anyone and store it securely.
                       </p>
-                      
+
                       {!privateKey ? (
                         <button
                           onClick={handleExportWallet}

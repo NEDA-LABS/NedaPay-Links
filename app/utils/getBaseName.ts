@@ -18,7 +18,7 @@ export const BASENAME_L2_RESOLVER_ADDRESS = '0xC6d566A56A1aFf6508b41f6c90ff13161
 
 const baseClient = createPublicClient({
   chain: base,
-  transport: http("https://mainnet.base.org"),
+  transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL as string),
 });
 
 /**
