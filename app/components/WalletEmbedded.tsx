@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useAccount, useBalance, useSwitchChain, useChainId, usePublicClient } from 'wagmi';
+import { useAccount, useBalance, useSwitchChain, useChainId, usePublicClient, useEnsName, useEnsAddress } from 'wagmi';
 import { useFundWallet, useSendTransaction, useWallets, usePrivy } from '@privy-io/react-auth';
 import { formatUnits, parseEther, parseUnits, isAddress, encodeFunctionData } from 'viem';
 import { base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet } from 'viem/chains';
 import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalLink, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { stablecoins } from '@/data/stablecoins';
+import { resolveName } from '../utils/ensUtils'
+import { normalize } from 'viem/ens'
 
 const ERC20_ABI = [
   {
@@ -70,6 +72,7 @@ const NATIVE_TOKEN_PRICES: Record<number, number> = {
   [optimism.id]: 0.0006, // ETH
 };
 
+
 export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }: WalletModalProps) {
   const { wallets } = useWallets();
   const { address, isConnected } = useAccount();
@@ -103,6 +106,27 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
 
   const isPrivyEmbedded = wallets?.[0]?.walletClientType.toLowerCase() === 'privy';
   const SUPPORTED = [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
+
+   // State for ENS name
+    const [ensName, setEnsName] = useState<string | null>(null);
+
+  //ens
+  useEffect(() => {
+      const resolveEnsName = async () => {
+        if (!address) return;
+        
+        try {
+          const name = await resolveName({ address: address as `0x${string}` });
+          console.log("Resolved ENS name:", name); //debugg
+          setEnsName(name);
+        } catch (error) {
+          console.error("Error resolving ENS name:", error); //debugg
+          setEnsName(null);
+        }
+      };
+  
+      resolveEnsName();
+    }, [address]);
 
   // Use Wagmi's useBalance for native token
   const { data: nativeBalance, refetch: refetchNativeBalance } = useBalance({
@@ -383,7 +407,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
               <div className="flex items-center gap-4">
                 {address && (
                   <div className="text-sm opacity-90">
-                    {formatAddress(address)}
+                    {ensName || formatAddress(address)}
                   </div>
                 )}
                 <button

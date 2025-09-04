@@ -38,6 +38,7 @@ import {
 import DailyRevenueChart from "./DailyRevenueChart";
 import Footer from "@/components/Footer";
 import WalletKit from "./WalletKit";
+import { resolveName, toHexAddress } from '../utils/ensUtils';
 
 // import {
 //   SidebarProvider,
@@ -121,6 +122,29 @@ export default function DashboardContent() {
     () => new ethers.Contract(MULTICALL3_ADDRESS, MULTICALL3_ABI, provider),
     [provider]
   );
+
+  // State for ENS name
+  const [ensName, setEnsName] = useState<string | null>(null);
+
+  // Resolve ENS name
+  useEffect(() => {
+    const resolveEnsName = async () => {
+      if (!walletAddress) return;
+      
+      try {
+        const name = await resolveName({ address: walletAddress as `0x${string}` });
+        console.log("Resolved ENS name:", name); //debugg
+        setEnsName(name);
+      } catch (error) {
+        console.error("Error resolving ENS name:", error); //debugg
+        setEnsName(null);
+      }
+    };
+
+    resolveEnsName();
+  }, [walletAddress]);
+
+
 
   // Fetch balances when walletAddress changes
   useEffect(() => {
@@ -352,8 +376,8 @@ export default function DashboardContent() {
                         <div className="flex flex-row flex-wrap items-center gap-2 items-center my-auto">
                           <div className="flex flex-row items-center gap-2">
                             <p className="text-white font-mono text-base">
-                              {walletAddress?.slice(0, 5)}...
-                              {walletAddress?.slice(-4)}
+                              {ensName || `${walletAddress?.slice(0, 5)}...${walletAddress?.slice(-4)}`}
+                              
                             </p>
                             <Button
                               size="sm"

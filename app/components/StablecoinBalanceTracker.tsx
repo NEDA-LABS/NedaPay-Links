@@ -445,7 +445,7 @@ export const StablecoinBalanceButton = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <h3 className="text-slate-300 text-sm md:text-lg font-medium tracking-wide">Total Stablecoins Balance</h3>
+            <h3 className="text-slate-300 text-sm md:text-lg font-medium tracking-wide">Stablecoins Balance</h3>
           </div>
           <ChainSwitcher />
         </div>
