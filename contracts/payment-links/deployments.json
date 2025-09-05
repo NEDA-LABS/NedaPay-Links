@@ -1,0 +1,8 @@
+{
+  "network": "scroll",
+  "chainId": 534352,
+  "proxyAddress": "0x2135439098B4a1880181f22cf9d4b25b8967f7B2",
+  "implementationAddress": "0xb7a78a478dA570cCB067EbBCcFD63604A10909EB",
+  "deployedAt": "2025-09-05T10:09:32.374Z",
+  "version": "1.0.0"
+}
