@@ -1,10 +1,15 @@
-import { ethers, upgrades } from 'hardhat';
+import pkg from 'hardhat';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+// 0x7f18A3719Ad0CD59C48A8dBC0C57Dd7eCa07A0Dd
+const { ethers, upgrades } = pkg;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function main() {
   // Read existing deployment info
-  const deploymentPath = join(__dirname, 'deployment-upgradeable.json');
+  const deploymentPath = join(__dirname, "..",'deployments.json');
   
   if (!existsSync(deploymentPath)) {
     throw new Error('❌ No deployment info found. Deploy the contract first.');
@@ -17,7 +22,7 @@ async function main() {
   console.log('📍 Proxy Address:', proxyAddress);
   
   // Get the new contract factory
-  const NedaPayProtocolV2 = await ethers.getContractFactory('NedaPayProtocolUpgradeable');
+  const NedaPayProtocolV2 = await ethers.getContractFactory('NedaPayProtocolUpgradeableScroll');
   
   console.log('📦 Deploying new implementation...');
   
@@ -34,7 +39,7 @@ async function main() {
   console.log('');
   console.log('🔍 Verifying upgrade...');
   
-  const contract = await ethers.getContractAt('NedaPayProtocolUpgradeable', proxyAddress);
+  const contract = await ethers.getContractAt('NedaPayProtocolUpgradeableScroll', proxyAddress);
   
   // Check version (if implemented)
   try {
@@ -53,12 +58,12 @@ async function main() {
   console.log('📊 Fee Tiers Count:', tiersLength.toString());
   
   // Test a fee calculation
-  const testAmount = ethers.utils.parseUnits('1000', 6); // $1000
+  const testAmount = ethers.parseUnits('1000', 6); // $1000
   const fee = await contract.calculateFee(
     '0x06efdbff2a14a7c8e15944d1f4a48f9f95f663a4', // USDC
     testAmount
   );
-  const feeUSD = ethers.utils.formatUnits(fee, 6);
+  const feeUSD = ethers.formatUnits(fee, 6);
   console.log('🧮 Test Fee Calculation: $1000 → $' + feeUSD + ' fee');
   
   // Update deployment info
@@ -84,13 +89,12 @@ async function main() {
 }
 
 // Handle both direct execution and module export
-if (require.main === module) {
   main()
     .then(() => process.exit(0))
     .catch((error) => {
       console.error('❌ Upgrade failed:', error);
       process.exit(1);
     });
-}
+
 
 export default main;

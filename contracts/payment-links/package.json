@@ -1,5 +1,6 @@
 {
   "name": "nedapay-contracts",
+  "type": "module",
   "version": "1.0.0",
   "description": "NedaPay Protocol Smart Contracts",
   "private": true,
