@@ -20,6 +20,8 @@ export interface ResolveNameOptions {
 export async function resolveName(options: ResolveNameOptions): Promise<string | null> {
   const { address, chain = base, refresh = false } = options;
 
+
+
   // Check cache first (unless refresh is requested)
   if (!refresh && nameCache.has(address.toLowerCase())) {
     return nameCache.get(address.toLowerCase()) || null;

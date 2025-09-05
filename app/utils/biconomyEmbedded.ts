@@ -88,8 +88,6 @@ export const initializeBiconomyEmbedded = async (
     throw new Error('Ethereum provider not available');
   }
   
-  // const signer = (await wallet.getEthereumProvider()).getSigner();
-  // const nonce = await signer.getTransactionCount(wallet.address);
   const nexus120Singleton = '0x000000004F43C49e93C970E84001853a70923B03';
 
   const authorization = await signAuthorization({
@@ -103,15 +101,7 @@ export const initializeBiconomyEmbedded = async (
     nonce: 0   
   });
 
-  // Create wallet client
-  // const walletClient = createWalletClient({
-  //   chain,
-  //   transport: custom(provider),
-  //   account: wallet.address as `0x${string}`
-  // });
 
-  // console.log("walletClient", walletClient);
-  // console.log("wallet.address", wallet.address);
   
   // Create Nexus smart account
   const smartAccount = await toMultichainNexusAccount({

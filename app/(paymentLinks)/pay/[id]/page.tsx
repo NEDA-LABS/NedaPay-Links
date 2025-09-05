@@ -20,7 +20,7 @@ import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
 import { stablecoins } from "@/data/stablecoins";
 import { mainnet, base, polygon, arbitrum, celo, scroll, bsc } from "viem/chains";
 import Header from "@/components/Header";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import Image from "next/image";
 
 // const PaymentQRCode = dynamicImport(() => import("./QRCode"), { ssr: false });

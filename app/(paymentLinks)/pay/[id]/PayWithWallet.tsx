@@ -7,6 +7,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import { SUPPORTED_CHAINS_NORMAL as SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
 import { usePrivy, useWallets, useSendTransaction } from "@privy-io/react-auth";
 import { stablecoins } from "@/data/stablecoins";
+import { processPaymentWithFee } from "@/utils/nedapayProtocol";
 
 export default function PayWithWallet({
   to,
@@ -300,7 +301,7 @@ export default function PayWithWallet({
     setLoading(true);
     setTxHash(null);
     setTxStatus("preparing");
-
+  
     try {
       // Validate recipient address
       let isValidAddress = false;
@@ -327,9 +328,10 @@ export default function PayWithWallet({
         setTxStatus("failed");
         return;
       }
-
+  
       console.log("Current chain ID:", currentChainId);
       console.log("Target chain ID:", chainId);
+  
       // Switch chain if needed
       if (chainId && currentChainId !== chainId) {
         try {
@@ -341,118 +343,203 @@ export default function PayWithWallet({
           return;
         }
       }
-
+  
       const walletAddress = await connectedWallet.address;
-
+  
       // Find token info from stablecoins
       const token = stablecoins.find(
         (sc) =>
           sc.baseToken.toLowerCase() === currency?.toLowerCase() ||
           sc.currency.toLowerCase() === currency?.toLowerCase()
       );
-
+  
       setTxStatus("submitting");
-
+  
+      // ---------- ERC-20 path ----------
       if (
         token &&
         token.addresses &&
-        token.addresses[(chainId || 8453) as keyof typeof token.addresses] && // Default to Base if chainId not specified
-        token.addresses[(chainId || 8453) as keyof typeof token.addresses] !== "0x0000000000000000000000000000000000000000"
+        token.addresses[(chainId || 8453) as keyof typeof token.addresses] &&
+        token.addresses[(chainId || 8453) as keyof typeof token.addresses] !==
+          "0x0000000000000000000000000000000000000000"
       ) {
-        // ERC-20 transfer
-        const tokenAddress = token.addresses[(chainId || 8453) as keyof typeof token.addresses];
+        const activeChainId = (chainId || 8453) as keyof typeof token.addresses;
+        const tokenAddress = token.addresses[activeChainId] as string;
         let decimals = token.decimals[(chainId || 8453) as keyof typeof token.decimals] || 18;
+  
         console.log("tokenAddress", tokenAddress);
         console.log("decimals", decimals);
-        
-        let value;
+  
+        let valueBN: ethers.BigNumber;
         try {
-          value = utils.parseUnits(amount, decimals as number);
+          valueBN = utils.parseUnits(amount, decimals);
         } catch {
           setError("Invalid amount format.");
           setLoading(false);
           setTxStatus("failed");
           return;
         }
-
-        // Prepare ERC-20 transfer data
-        const erc20Interface = new utils.Interface([
-          "function transfer(address to, uint256 amount) public returns (bool)",
-        ]);
-        
-        const data = erc20Interface.encodeFunctionData("transfer", [to, value]);
-
-        // Send transaction using Privy
-        const { hash } = await sendTransaction({
-          to: tokenAddress as string,
-          value: "0",
-          data,
-        });
-
-        setTxHash(hash);
-        setTxStatus("pending");
-
-        // Save transaction as Pending initially
-        const saved = await saveTransactionToDB(
-          to,
-          walletAddress,
-          amount,
-          currency,
-          description,
-          "Pending",
-          hash,
-          chainId || 8453 // Default to Base if chainId not specified
-        );
-        
-        if (!saved) {
-          setError(
-            "Transaction sent, but failed to record in database. Please contact support."
-          );
-        } else {
-          const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
-          const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
-          const toastMessage = description
-            ? `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
-            : `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`;
-          toast.success(toastMessage, {
-            duration: 3000,
-          });
-          window.dispatchEvent(new CustomEvent('neda-notification', {
-            detail: {
-              message: toastMessage
+  
+        // ===== Special route for chainId 534352 (fee-collecting flow) =====
+        if (chainId === 534352) {
+          try {
+            // Get signer (Privy-compatible pattern)
+            const provider = new ethers.providers.Web3Provider(
+              await connectedWallet.getEthereumProvider()
+            );
+            const signer = provider.getSigner();
+            console.log("signer debugg", signer);
+  
+            // Process via protocol (includes approve + processPayment)
+            const txHash = await processPaymentWithFee(
+              signer,
+              tokenAddress,
+              to,
+              valueBN.toString(), // pass base units as string
+              "payment" // or 'invoice' | 'swap' if you prefer
+            );
+  
+            setTxHash(txHash);
+            setTxStatus("pending");
+  
+            const saved = await saveTransactionToDB(
+              to,
+              walletAddress,
+              amount,
+              currency,
+              description,
+              "Pending",
+              txHash,
+              chainId || 8453
+            );
+  
+            if (!saved) {
+              setError(
+                "Transaction sent, but failed to record in database. Please contact support."
+              );
+            } else {
+              const shortSender =
+                walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
+              const shortMerchant = to.slice(0, 6) + "..." + to.slice(-4);
+              const toastMessage = description
+                ? `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
+                : `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`;
+              toast.success(toastMessage, { duration: 3000 });
+              window.dispatchEvent(
+                new CustomEvent("neda-notification", {
+                  detail: { message: toastMessage },
+                })
+              );
             }
-          }));
+  
+            // Check transaction status
+            const confirmed = await checkTransactionStatus(
+              txHash,
+              to,
+              walletAddress,
+              amount,
+              currency,
+              description,
+              chainId || 8453
+            );
+  
+            if (!confirmed) {
+              setTimeout(
+                () =>
+                  checkTransactionStatus(
+                    txHash,
+                    to,
+                    walletAddress,
+                    amount,
+                    currency,
+                    description,
+                    chainId || 8453
+                  ),
+                30000
+              );
+            }
+          } catch (e: any) {
+            console.error("Payment (with fee) error:", e);
+            setError(e?.message || "Payment with fee failed");
+            setTxStatus("failed");
+            setLoading(false);
+            return;
+          }
+        } else {
+          // ===== Default ERC-20 transfer path (all other chains) =====
+          const erc20Interface = new utils.Interface([
+            "function transfer(address to, uint256 amount) public returns (bool)",
+          ]);
+          const data = erc20Interface.encodeFunctionData("transfer", [to, valueBN]);
+  
+          const { hash } = await sendTransaction({
+            to: tokenAddress,
+            value: "0",
+            data,
+          });
+  
+          setTxHash(hash);
+          setTxStatus("pending");
+  
+          const saved = await saveTransactionToDB(
+            to,
+            walletAddress,
+            amount,
+            currency,
+            description,
+            "Pending",
+            hash,
+            chainId || 8453
+          );
+  
+          if (!saved) {
+            setError(
+              "Transaction sent, but failed to record in database. Please contact support."
+            );
+          } else {
+            const shortSender =
+              walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
+            const shortMerchant = to.slice(0, 6) + "..." + to.slice(-4);
+            const toastMessage = description
+              ? `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
+              : `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`;
+            toast.success(toastMessage, { duration: 3000 });
+            window.dispatchEvent(
+              new CustomEvent("neda-notification", {
+                detail: { message: toastMessage },
+              })
+            );
+          }
+  
+          const confirmed = await checkTransactionStatus(
+            hash,
+            to,
+            walletAddress,
+            amount,
+            currency,
+            description,
+            chainId || 8453
+          );
+  
+          if (!confirmed) {
+            setTimeout(
+              () =>
+                checkTransactionStatus(
+                  hash,
+                  to,
+                  walletAddress,
+                  amount,
+                  currency,
+                  description,
+                  chainId || 8453
+                ),
+              30000
+            );
+          }
         }
-
-        // Check transaction status
-        const confirmed = await checkTransactionStatus(
-          hash,
-          to,
-          walletAddress,
-          amount,
-          currency,
-          description,
-          chainId || 8453 // Default to Base if chainId not specified
-        );
-
-        if (!confirmed) {
-          // Schedule a retry in the background
-          setTimeout(
-            () =>
-              checkTransactionStatus(
-                hash,
-                to,
-                walletAddress,
-                amount,
-                currency,
-                description,
-                chainId || 8453
-              ),
-            30000
-          ); // Retry after 30 seconds
-        }
+  
+        // ---------- Native token path ----------
       } else {
-        // Native token transfer
         let value;
         try {
           value = utils.parseEther(amount);
@@ -462,17 +549,15 @@ export default function PayWithWallet({
           setTxStatus("failed");
           return;
         }
-
-        // Send transaction using Privy
+  
         const { hash } = await sendTransaction({
           to,
           value: value.toString(),
         });
-
+  
         setTxHash(hash);
         setTxStatus("pending");
-
-        // Save transaction as Pending initially
+  
         const saved = await saveTransactionToDB(
           to,
           walletAddress,
@@ -481,30 +566,28 @@ export default function PayWithWallet({
           description,
           "Pending",
           hash,
-          chainId || 8453 // Default to Base if chainId not specified
+          chainId || 8453
         );
-        
+  
         if (!saved) {
           setError(
             "Transaction sent, but failed to record in database. Please contact support."
           );
         } else {
-          const shortSender = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
-          const shortMerchant = to.slice(0, 6) + '...' + to.slice(-4);
+          const shortSender =
+            walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
+          const shortMerchant = to.slice(0, 6) + "..." + to.slice(-4);
           const toastMessage = description
             ? `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant} for ${description}`
             : `Payment sent: ${amount} ${currency} from ${shortSender} to ${shortMerchant}`;
-          toast.success(toastMessage, {
-            duration: 3000,
-          });
-          window.dispatchEvent(new CustomEvent('neda-notification', {
-            detail: {
-              message: toastMessage
-            }
-          }));
+          toast.success(toastMessage, { duration: 3000 });
+          window.dispatchEvent(
+            new CustomEvent("neda-notification", {
+              detail: { message: toastMessage },
+            })
+          );
         }
-
-        // Check transaction status
+  
         const confirmed = await checkTransactionStatus(
           hash,
           to,
@@ -512,11 +595,10 @@ export default function PayWithWallet({
           amount,
           currency,
           description,
-          chainId || 8453 // Default to Base if chainId not specified
+          chainId || 8453
         );
-
+  
         if (!confirmed) {
-          // Schedule a retry in the background
           setTimeout(
             () =>
               checkTransactionStatus(
@@ -529,7 +611,7 @@ export default function PayWithWallet({
                 chainId || 8453
               ),
             30000
-          ); // Retry after 30 seconds
+          );
         }
       }
     } catch (e: any) {
@@ -537,7 +619,7 @@ export default function PayWithWallet({
       setError(e.message || "Transaction failed");
       setTxStatus("failed");
     }
-
+  
     setLoading(false);
   };
 

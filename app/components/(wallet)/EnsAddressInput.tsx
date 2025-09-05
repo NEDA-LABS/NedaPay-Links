@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect } from 'react';
 import { Check, Loader2, XCircle } from 'lucide-react';
 import { useEnsResolve } from '@/hooks/useEnsResolve';
 
+
 type Props = {
   value: string;                               // raw input (ens or address)
   onChange: (v: string) => void;

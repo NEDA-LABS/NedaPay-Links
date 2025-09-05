@@ -1,7 +1,10 @@
 import { normalize } from 'viem/ens';
 
-export const isPotentialEnsName = (input: string) =>
-  /\.eth$/i.test(input.trim());
+export const isPotentialEnsName = (input: string, chainId?: number) => {
+  const trimmed = input.trim();
+  return /\.eth$/i.test(trimmed) || 
+    (chainId === 8453 && /\.base\.eth$/i.test(trimmed));
+};
 
 export type EnsClientResult = {
   name: string | null;
