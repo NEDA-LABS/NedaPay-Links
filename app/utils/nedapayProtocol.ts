@@ -1,16 +1,15 @@
 import { ethers } from 'ethers';
 
 // Contract ABI (essential functions only)
-export const NEDAPAY_PROTOCOL_ABI = [
-  'function processPayment(address token, address recipient, uint256 amount, string memory paymentType) external',
-  'function calculateFee(address token, uint256 amount) external view returns (uint256)',
-  'function calculateDynamicFeeRate(uint256 usdAmount) external view returns (uint256)',
-  'function getNetAmount(address token, uint256 amount) external view returns (uint256)',
-  'function isTokenSupported(address token) external view returns (bool)',
-  'function getTotalFeesCollected(address token) external view returns (uint256)',
-  'function getUserFeeContribution(address user, address token) external view returns (uint256)',
-  'event PaymentProcessed(address indexed user, address indexed token, uint256 amount, uint256 fee, string paymentType)'
-];
+const NEDAPAY_PROTOCOL_ABI: string[] = [
+    'function processPayment(address token, address recipient, uint256 amount, string memory paymentType) external',
+    'function calculateFee(address token, uint256 amount) external view returns (uint256)',
+    'function getNetAmount(address token, uint256 amount) external view returns (uint256)',
+    'function isTokenSupported(address token) external view returns (bool)',
+    'function getTotalFeesCollected(address token) external view returns (uint256)',
+    'function getUserFeeContribution(address user, address token) external view returns (uint256)',
+    'event PaymentProcessed(address indexed user, address indexed token, uint256 amount, uint256 fee, string paymentType)'
+  ];
 
 // Contract addresses (will be updated after deployment) --updated
 export const NEDAPAY_PROTOCOL_ADDRESS = '0x2135439098B4a1880181f22cf9d4b25b8967f7B2'; 

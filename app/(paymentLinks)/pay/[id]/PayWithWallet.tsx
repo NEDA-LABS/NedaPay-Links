@@ -467,17 +467,21 @@ export default function PayWithWallet({
           }
         } else {
           // ===== Default ERC-20 transfer path (all other chains) =====
-          const erc20Interface = new utils.Interface([
-            "function transfer(address to, uint256 amount) public returns (bool)",
-          ]);
-          const data = erc20Interface.encodeFunctionData("transfer", [to, valueBN]);
-  
-          const { hash } = await sendTransaction({
-            to: tokenAddress,
-            value: "0",
-            data,
-          });
-  
+          const provider = new ethers.providers.Web3Provider(
+            await connectedWallet.getEthereumProvider(),
+            "any" // helps across chain switches
+          );
+          const signer = provider.getSigner();
+          
+          // --- ERC-20 transfer (default path) ---
+          const erc20 = new ethers.Contract(
+            tokenAddress,
+            ["function transfer(address to, uint256 amount) returns (bool)"],
+            signer
+          );
+          
+          const tx = await erc20.transfer(to, valueBN);
+          const hash = tx.hash;
           setTxHash(hash);
           setTxStatus("pending");
   
