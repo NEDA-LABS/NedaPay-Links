@@ -32,4 +32,17 @@ export default {
         chainId: 84532,
       },
     },
+    etherscan: {
+      apiKey: process.env.ETHERSCAN_API_KEY,
+      customChains: [
+        {
+          network: "scroll",
+          chainId: 534352,
+          urls: {
+            apiURL: "https://api.scrollscan.com/api",
+            browserURL: "https://scrollscan.com"
+          }
+        }
+      ]
+    }
   };
