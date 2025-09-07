@@ -5,10 +5,10 @@ import { useAccount, useBalance, useSwitchChain, useChainId, usePublicClient } f
 import { useFundWallet, useSendTransaction, useWallets, usePrivy } from '@privy-io/react-auth';
 import { formatUnits, parseEther, parseUnits, isAddress, encodeFunctionData } from 'viem';
 import { base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet } from 'viem/chains';
-import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalLink, X } from 'lucide-react';
+import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalLink, X, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { stablecoins } from '@/data/stablecoins';
-import { resolveName } from '@/utils/ensUtils'; // keep your existing self-ENS display if you want
+import { resolveName } from '@/utils/ensUtils';
 import EnsAddressInput from '@/components/(wallet)/EnsAddressInput';
 
 const ERC20_ABI = [
@@ -72,6 +72,18 @@ const NATIVE_TOKEN_PRICES: Record<number, number> = {
   [optimism.id]: 0.0006, // ETH (example)
 };
 
+// Chain data with future icon support
+const CHAIN_DATA = {
+  [mainnet.id]: { ...mainnet, icon: null },
+  [base.id]: { ...base, icon: null },
+  [bsc.id]: { ...bsc, icon: null },
+  [scroll.id]: { ...scroll, icon: null },
+  [celo.id]: { ...celo, icon: null },
+  [arbitrum.id]: { ...arbitrum, icon: null },
+  [polygon.id]: { ...polygon, icon: null },
+  [optimism.id]: { ...optimism, icon: null },
+};
+
 export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }: WalletModalProps) {
   const { wallets } = useWallets();
   const { address, isConnected } = useAccount();
@@ -87,6 +99,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchingChain, setIsSwitchingChain] = useState(false);
+  const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false);
 
   // Fund states
   const [fundAmount, setFundAmount] = useState('');
@@ -104,7 +117,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const [isExporting, setIsExporting] = useState(false);
 
   const isPrivyEmbedded = wallets?.[0]?.walletClientType.toLowerCase() === 'privy';
-  const SUPPORTED = [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
+  const SUPPORTED_CHAINS = [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
 
   // ENS display for your own address (unchanged)
   const [ensName, setEnsName] = useState<string | null>(null);
@@ -129,7 +142,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
 
   useEffect(() => {
     if (chainId) {
-      const chain = SUPPORTED.find((c) => c.id === chainId);
+      const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
       if (chain) setActiveChain(chain);
       else setActiveChain(base);
     }
@@ -237,6 +250,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     try {
       setIsSwitchingChain(true);
       setIsLoading(true);
+      setIsChainDropdownOpen(false);
       if (switchChainAsync) await switchChainAsync({ chainId: chain.id });
       setActiveChain(chain);
       setBalances([]);
@@ -370,25 +384,55 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
               </div>
             </div>
 
-            {/* Chain Switcher */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              {SUPPORTED.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => switchChain(c)}
-                  disabled={isSwitchingChain || isLoading}
-                  className={`px-1 py-1 text-sm rounded-lg transition font-medium ${
-                    activeChain.id === c.id
-                      ? 'bg-white text-blue-600 shadow-lg dark:bg-gray-800 dark:text-blue-400'
-                      : 'bg-white/20 text-white hover:bg-white/30 dark:bg-gray-700/50 dark:hover:bg-gray-700'
-                  } disabled:opacity-50 flex items-center justify-center min-w-[60px]`}
-                >
-                  {isSwitchingChain && activeChain.id === c.id ? (
+            {/* Chain Switcher - Professional Dropdown */}
+            <div className="mt-4 relative">
+              <button
+                onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
+                disabled={isSwitchingChain || isLoading}
+                className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-4 py-2 flex items-center justify-between transition-all duration-200 disabled:opacity-50"
+              >
+                <div className="flex items-center gap-2">
+                  {isSwitchingChain ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1" />
-                  ) : null}
-                  {c.name}
-                </button>
-              ))}
+                  ) : (
+                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">
+                      {activeChain.name[0]}
+                    </div>
+                  )}
+                  <span className="font-medium">
+                    {isSwitchingChain ? 'Switching...' : activeChain.name}
+                  </span>
+                </div>
+                <ChevronDown 
+                  className={`h-4 w-4 transition-transform ${isChainDropdownOpen ? 'rotate-180' : ''}`} 
+                />
+              </button>
+
+              {isChainDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {SUPPORTED_CHAINS.map((chain) => (
+                    <button
+                      key={chain.id}
+                      onClick={() => switchChain(chain)}
+                      className={`w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition ${
+                        activeChain.id === chain.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {/* Placeholder for chain icons - you can add them later */}
+                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold">
+                        {chain.name[0]}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{chain.name}</div>
+                        <div className="text-xs opacity-70">Chain ID: {chain.id}</div>
+                      </div>
+                      {activeChain.id === chain.id && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -484,25 +528,30 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
               <div className="space-y-2 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Send Tokens</h3>
 
-                {/* Token Selection */}
+                {/* Token Selection - Dropdown */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Token</label>
-                  <select
-                    value={selectedToken ? `${selectedToken.symbol}-${selectedToken.isNative}` : ''}
-                    onChange={(e) => {
-                      const [symbol, isNative] = e.target.value.split('-');
-                      const token = balances.find(b => b.symbol === symbol && b.isNative === (isNative === 'true'));
-                      setSelectedToken(token || null);
-                    }}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800"
-                  >
-                    <option value="">Select a token</option>
-                    {balances.map((balance, index) => (
-                      <option key={`${balance.symbol}-${index}`} value={`${balance.symbol}-${balance.isNative}`}>
-                        {balance.symbol} ({balance.balance} available)
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={selectedToken ? `${selectedToken.symbol}-${selectedToken.isNative}` : ''}
+                      onChange={(e) => {
+                        const [symbol, isNative] = e.target.value.split('-');
+                        const token = balances.find(b => b.symbol === symbol && b.isNative === (isNative === 'true'));
+                        setSelectedToken(token || null);
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800 appearance-none"
+                    >
+                      <option value="">Select a token</option>
+                      {balances.map((balance, index) => (
+                        <option key={`${balance.symbol}-${index}`} value={`${balance.symbol}-${balance.isNative}`}>
+                          {balance.symbol} ({balance.balance} available)
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Recipient (ENS or Address) */}
@@ -592,14 +641,22 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                       step="any"
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800"
                     />
-                    <select
-                      value={fundAsset}
-                      onChange={(e) => setFundAsset(e.target.value as any)}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800"
-                    >
-                      <option value="native-currency">{activeChain.nativeCurrency.symbol}</option>
-                      <option value="USDC">USDC</option>
-                    </select>
+                    
+                    {/* Asset Selection Dropdown */}
+                    <div className="relative">
+                      <select
+                        value={fundAsset}
+                        onChange={(e) => setFundAsset(e.target.value as any)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800 appearance-none"
+                      >
+                        <option value="native-currency">{activeChain.nativeCurrency.symbol}</option>
+                        <option value="USDC">USDC</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                    
                     <button
                       onClick={handleFund}
                       disabled={!fundAmount || isLoading}
