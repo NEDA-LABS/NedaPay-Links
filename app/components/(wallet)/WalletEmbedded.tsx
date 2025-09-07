@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { stablecoins } from '@/data/stablecoins';
 import { resolveName } from '@/utils/ensUtils';
 import EnsAddressInput from '@/components/(wallet)/EnsAddressInput';
+import Image from 'next/image';
 
 const ERC20_ABI = [
   {
@@ -118,6 +119,16 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
 
   const isPrivyEmbedded = wallets?.[0]?.walletClientType.toLowerCase() === 'privy';
   const SUPPORTED_CHAINS = [base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet];
+  const CHAINS_ICONS = {
+    [base.id]: '/base.svg',
+    [bsc.id]: '/bnb.svg',
+    [scroll.id]: '/scroll.svg',
+    [celo.id]: '/celo.svg',
+    [arbitrum.id]: '/arbitrum.svg',
+    [polygon.id]: '/polygon.svg',
+    [optimism.id]: '/optimism.svg',
+    [mainnet.id]: '/eth-logo.svg',
+  }
 
   // ENS display for your own address (unchanged)
   const [ensName, setEnsName] = useState<string | null>(null);
@@ -396,7 +407,13 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1" />
                   ) : (
                     <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">
-                      {activeChain.name[0]}
+                       <Image
+                          src={CHAINS_ICONS[activeChain.id as keyof typeof CHAINS_ICONS]}
+                          alt={activeChain.name}
+                          width={20}
+                          height={20}
+                          className="rounded-full"
+                        />
                     </div>
                   )}
                   <span className="font-medium">
@@ -420,7 +437,14 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                     >
                       {/* Placeholder for chain icons - you can add them later */}
                       <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold">
-                        {chain.name[0]}
+                        <Image
+                          src={CHAINS_ICONS[chain.id]}
+                          alt={chain.name}
+                          width={20}
+                          height={20}
+                          className="rounded-full"
+                        />
+                        {/* {chain.name[0]} */}
                       </div>
                       <div className="flex-1">
                         <div className="font-medium">{chain.name}</div>
@@ -491,7 +515,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                           </div>
                           <div className="text-right">
                             <div className="font-semibold text-gray-900 dark:text-white">{balance.balance}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">≈ ${balance.usd}</div>
+                            {/* <div className="text-sm text-gray-500 dark:text-gray-400">≈ ${balance.usd}</div> */}
                           </div>
                         </div>
                       ))}
