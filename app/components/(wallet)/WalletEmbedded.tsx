@@ -11,6 +11,7 @@ import { stablecoins } from '@/data/stablecoins';
 import { resolveName } from '@/utils/ensUtils';
 import EnsAddressInput from '@/components/(wallet)/EnsAddressInput';
 import Image from 'next/image';
+import { getTokenIcon, getNativeTokenIcon } from '@/utils/tokenIcons';
 
 const ERC20_ABI = [
   {
@@ -101,6 +102,8 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchingChain, setIsSwitchingChain] = useState(false);
   const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false);
+  const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false);
+  const [isFundAssetDropdownOpen, setIsFundAssetDropdownOpen] = useState(false);
 
   // Fund states
   const [fundAmount, setFundAmount] = useState('');
@@ -407,13 +410,13 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1" />
                   ) : (
                     <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">
-                       <Image
-                          src={CHAINS_ICONS[activeChain.id as keyof typeof CHAINS_ICONS]}
-                          alt={activeChain.name}
-                          width={20}
-                          height={20}
-                          className="rounded-full"
-                        />
+                      <Image
+                        src={getNativeTokenIcon(activeChain.id)}
+                        alt={activeChain.name}
+                        width={20}
+                        height={20}
+                        className="rounded-full"
+                      />
                     </div>
                   )}
                   <span className="font-medium">
@@ -435,16 +438,14 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                         activeChain.id === chain.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
                       }`}
                     >
-                      {/* Placeholder for chain icons - you can add them later */}
                       <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold">
                         <Image
-                          src={CHAINS_ICONS[chain.id]}
+                          src={getNativeTokenIcon(chain.id)}
                           alt={chain.name}
                           width={20}
                           height={20}
                           className="rounded-full"
                         />
-                        {/* {chain.name[0]} */}
                       </div>
                       <div className="flex-1">
                         <div className="font-medium">{chain.name}</div>
@@ -503,12 +504,18 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                         <div key={`${balance.symbol}-${index}`}
                              className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/70 transition">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                              {balance.symbol[0]}
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                              <Image
+                                src={getTokenIcon(balance.symbol, activeChain.id)}
+                                alt={balance.symbol}
+                                width={20}
+                                height={20}
+                                className="rounded-full"
+                              />
                             </div>
                             <div>
-                              <div className="font-semibold text-gray-900 dark:text-white">{balance.symbol}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                              <div className="text-sm font-semibold text-gray-900 dark:text-white">{balance.symbol}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
                                 {balance.isNative ? 'Native Token' : 'ERC-20'}
                               </div>
                             </div>
@@ -552,29 +559,57 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
               <div className="space-y-2 md:space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Send Tokens</h3>
 
-                {/* Token Selection - Dropdown */}
+                {/* Token Selection - Custom Dropdown */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Token</label>
                   <div className="relative">
-                    <select
-                      value={selectedToken ? `${selectedToken.symbol}-${selectedToken.isNative}` : ''}
-                      onChange={(e) => {
-                        const [symbol, isNative] = e.target.value.split('-');
-                        const token = balances.find(b => b.symbol === symbol && b.isNative === (isNative === 'true'));
-                        setSelectedToken(token || null);
-                      }}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800 appearance-none"
+                    <button
+                      onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-between text-left"
                     >
-                      <option value="">Select a token</option>
-                      {balances.map((balance, index) => (
-                        <option key={`${balance.symbol}-${index}`} value={`${balance.symbol}-${balance.isNative}`}>
-                          {balance.symbol} ({balance.balance} available)
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                      <div className="flex items-center gap-3">
+                        {selectedToken && (
+                          <Image
+                            src={getTokenIcon(selectedToken.symbol, activeChain.id)}
+                            alt={selectedToken.symbol}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
+                        )}
+                        <span>
+                          {selectedToken ? `${selectedToken.symbol} [${selectedToken.balance}]` : 'Select a token'}
+                        </span>
+                      </div>
                       <ChevronDown className="h-4 w-4 text-gray-400" />
-                    </div>
+                    </button>
+
+                    {isTokenDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                        {balances.map((balance, index) => (
+                          <button
+                            key={`${balance.symbol}-${index}`}
+                            onClick={() => {
+                              setSelectedToken(balance);
+                              setIsTokenDropdownOpen(false);
+                            }}
+                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
+                          >
+                            <Image
+                              src={getTokenIcon(balance.symbol, activeChain.id)}
+                              alt={balance.symbol}
+                              width={24}
+                              height={24}
+                              className="rounded-full"
+                            />
+                            <div>
+                              <div className="font-medium">{balance.symbol}</div>
+                              <div className="text-sm text-gray-500">{balance.balance} available</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -668,17 +703,68 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
                     
                     {/* Asset Selection Dropdown */}
                     <div className="relative">
-                      <select
-                        value={fundAsset}
-                        onChange={(e) => setFundAsset(e.target.value as any)}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800 appearance-none"
+                      <button
+                        onClick={() => setIsFundAssetDropdownOpen(!isFundAssetDropdownOpen)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-between text-left"
                       >
-                        <option value="native-currency">{activeChain.nativeCurrency.symbol}</option>
-                        <option value="USDC">USDC</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src={getTokenIcon(
+                              fundAsset === 'native-currency' 
+                                ? activeChain.nativeCurrency.symbol 
+                                : fundAsset,
+                              activeChain.id
+                            )}
+                            alt={fundAsset}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
+                          <span>
+                            {fundAsset === 'native-currency' 
+                              ? activeChain.nativeCurrency.symbol 
+                              : fundAsset}
+                          </span>
+                        </div>
                         <ChevronDown className="h-4 w-4 text-gray-400" />
-                      </div>
+                      </button>
+
+                      {isFundAssetDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10">
+                          <button
+                            onClick={() => {
+                              setFundAsset('native-currency');
+                              setIsFundAssetDropdownOpen(false);
+                            }}
+                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
+                          >
+                            <Image
+                              src={getNativeTokenIcon(activeChain.id)}
+                              alt={activeChain.nativeCurrency.symbol}
+                              width={24}
+                              height={24}
+                              className="rounded-full"
+                            />
+                            <span>{activeChain.nativeCurrency.symbol}</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setFundAsset('USDC');
+                              setIsFundAssetDropdownOpen(false);
+                            }}
+                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
+                          >
+                            <Image
+                              src={getTokenIcon('USDC', activeChain.id)}
+                              alt="USDC"
+                              width={24}
+                              height={24}
+                              className="rounded-full"
+                            />
+                            <span>USDC</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                     
                     <button
