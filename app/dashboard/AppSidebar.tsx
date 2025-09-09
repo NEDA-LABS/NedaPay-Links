@@ -59,7 +59,7 @@ function AppSidebarContent() {
     : (overviewItems = [
         // { title: "Home", url: "/", icon: Home },
         { title: "Home", url: "/dashboard", icon: Home },
-        { title: "KYC", url: "/verification", icon: IdCard },
+        // { title: "KYC", url: "/verification", icon: IdCard },
         { title: "Notification Center", url: "/all-notifications", icon: Bell },
       ]);
 

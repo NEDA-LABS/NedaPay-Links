@@ -308,7 +308,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                       {tab === 'security' && 'Security'}
                       {tab === 'notifications' && 'Notifications'}
                       {tab === 'api' && 'API Keys'}
-                      {tab === 'kyc' && 'KYC Verification'}
+                      {/* {tab === 'kyc' && 'KYC Verification'} */}
                     </button>
                   ))}
                 </nav>
@@ -764,7 +764,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                 </>
               )}
   
-              {activeTab === 'kyc' && (
+              {/* {activeTab === 'kyc' && (
                 <>
                   <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-slate-200">KYC Verification</h2>
@@ -821,7 +821,7 @@ const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
                     </div>
                   </div>
                 </>
-              )}
+              )} */}
             </div>
           </div>
         )}
