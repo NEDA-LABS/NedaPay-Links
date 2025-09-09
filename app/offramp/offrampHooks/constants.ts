@@ -26,7 +26,7 @@ export const BASE_CHAIN: ChainConfig = {
   rpcUrl: 'https://mainnet.base.org',
   explorerUrl: 'https://basescan.org',
   icon: '/base.svg',
-  tokens: ['USDC'],
+  tokens: ['USDC', 'CNGN'],
   chainIdHex: '0x2105',
   rpcUrls: ['https://mainnet.base.org'],
   blockExplorerUrls: ['https://basescan.org']
@@ -52,7 +52,7 @@ export const POLYGON_CHAIN: ChainConfig = {
   rpcUrl: 'https://polygon-rpc.com',
   explorerUrl: 'https://polygonscan.com',
   icon: '/polygon.svg',
-  tokens: ['USDC', 'USDT'],
+  tokens: ['USDC', 'USDT', 'CNGN'],
   chainIdHex: '0x89',
   rpcUrls: ['https://polygon-rpc.com'],
   blockExplorerUrls: ['https://polygonscan.com']
@@ -78,7 +78,7 @@ export const BNB_CHAIN: ChainConfig = {
   rpcUrl: 'https://bsc-dataseed1.bnbchain.org',
   explorerUrl: 'https://bscscan.com',
   icon: '/bnb.svg',
-  tokens: ['USDC', 'USDT'],
+  tokens: ['USDC', 'USDT', 'CNGN'],
   chainIdHex: '0x38',
   rpcUrls: ['https://bsc-dataseed1.bnbchain.org'],
   blockExplorerUrls: ['https://bscscan.com']
@@ -97,6 +97,6 @@ export const SCROLL_CHAIN: ChainConfig = {
   blockExplorerUrls: ['https://scrollscan.com']
 };
 
-export const SUPPORTED_CHAINS = [BASE_CHAIN, BNB_CHAIN, ARBITRUM_CHAIN, POLYGON_CHAIN, CELO_CHAIN];
+export const SUPPORTED_CHAINS = [BASE_CHAIN, BNB_CHAIN, ARBITRUM_CHAIN, POLYGON_CHAIN, CELO_CHAIN, SCROLL_CHAIN];
 export const SUPPORTED_CHAINS_NORMAL = [BASE_CHAIN, BNB_CHAIN, ARBITRUM_CHAIN, POLYGON_CHAIN, CELO_CHAIN, SCROLL_CHAIN];
 export const DEFAULT_CHAIN = BASE_CHAIN;
