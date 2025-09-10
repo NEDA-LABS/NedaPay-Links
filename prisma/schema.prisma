@@ -20,6 +20,49 @@ model User {
   apiKeys          ApiKey[]
   merchantSettings MerchantSettings?
   sumsubApplications SumsubApplication[]
+  referrals        Referral[]
+
+  // referrals
+  influencerProfile    InfluencerProfile?
+}
+
+model Referral {
+  id                String   @id @default(uuid())
+  privyUserId       String   @unique
+  user              User     @relation(fields: [privyUserId], references: [privyUserId], onDelete: Cascade)
+  influencerCode    String   // customCode from InfluencerProfile
+  influencerName    String   // displayName snapshot
+  bonusSnapshot     String?  // whatever you promised the invitee
+  createdAt         DateTime @default(now())
+
+  @@index([influencerCode])
+}
+
+model Counter {
+  shard    String   @id // single char A-Z, 2-9
+  nextVal  Int      @default(0)
+  @@map("referral_counter")
+}
+
+model InfluencerProfile {
+  id                   String                @id @default(uuid())
+  userId               String                @unique
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Influencer details
+  displayName          String
+  description          String?
+  socialLinks          Json?                 // {twitter: "...", instagram: "..."}
+  isActive             Boolean               @default(true)
+  
+  // Referral settings
+  customCode           String                @unique // Custom referral code
+  
+  // Tracking
+  totalReferrals       Int                   @default(0)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  
 }
 
 model MerchantSettings {
