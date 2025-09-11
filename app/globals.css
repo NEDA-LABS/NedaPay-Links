@@ -21,9 +21,9 @@
   --card-text: #000000; /* Black */
   --scrollbar-track: #f1f5f9; /* Light gray */
 
-/*kyc*/
+  /*kyc*/
 
-/* --card: 0 0% 100%;
+  /* --card: 0 0% 100%;
 --card-foreground: 222.2 84% 4.9%;
 
 --popover: 0 0% 100%;
@@ -85,6 +85,14 @@
     --card-bg: #121212; /* Very dark gray */
     --card-text: #ffffff; /* White */
     --scrollbar-track: #1e1e1e; /* Dark gray */
+    --bg: #0b1020; /* near-black navy */
+    --bg-card: #111633; /* indigo 950-ish */
+    --bg-elev: #171c3f; /* indigo 900 */
+    --text: #e8eaff; /* soft indigo-50 */
+    --muted: #b6b9e6; /* indigo-200 */
+    --accent: #7c6df0; /* indigo-500 */
+    --accent-2: #a855f7; /* purple-500 */
+    --accent-3: #2563eb; /* blue-600 */
   }
 }
 
@@ -92,9 +100,22 @@ body {
   /* color: var(--foreground); */
   background-color: white;
   /* color: black ; */
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family:
+    "Poppins",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
   letter-spacing: 0.01em;
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
 }
 
 /* Fix for heading font sizes being reset */
@@ -102,10 +123,6 @@ body {
   font-size: revert;
   font-weight: revert;
 } */
-
-
-
-
 
 .dark html {
   /* background-color: #1e293b; */
@@ -117,7 +134,8 @@ html {
   height: 100%;
 }
 
-html, body {
+html,
+body {
   overflow-x: hidden;
 }
 
@@ -126,7 +144,6 @@ html, body {
   font-size: revert !important;
   font-weight: revert !important;
 } */
-
 
 /* Futuristic Glassmorphism Cards */
 /* @media (max-width: 640px) {
@@ -150,7 +167,6 @@ html, body {
 .glass-card:hover, .card:hover, .dashboard-card:hover {
   box-shadow: 0 0 16px 4px var(--primary), 0 4px 32px 0 var(--accent);
 } */
-
 
 /* Neon Buttons */
 /* .btn, .button, .global button {
@@ -186,15 +202,15 @@ header .hbutton:hover {
   transform: translateY(-1px) scale(1.01);
 } */
 
-.options:hover{
+.options:hover {
   background-color: var(--primary);
   transition: all 0.2s ease-in-out;
   padding: 0.3rem;
   margin: 0.3rem;
   border-radius: 0.75rem;
-  background-color: '#3b82f6';
-  color: '#ffffff';
-  box-shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+  background-color: "#3b82f6";
+  color: "#ffffff";
+  box-shadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)";
 }
 
 /* Futuristic Inputs */
@@ -229,7 +245,7 @@ header .hbutton:hover {
 
 /* Fix for autofill background in Chrome */
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
+input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--input-text);
   -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset;
@@ -251,7 +267,9 @@ input:-webkit-autofill:focus {
 
 /* Neon Glow Text */
 .glow-text {
-  text-shadow: 0 0 5px var(--primary), 0 0 15px var(--accent-light);
+  text-shadow:
+    0 0 5px var(--primary),
+    0 0 15px var(--accent-light);
 }
 
 /* Ensure text visibility in both modes */
@@ -347,7 +365,11 @@ input:-webkit-autofill:focus {
 
 /* Gradient Text */
 .gradient-text {
-  background-image: linear-gradient(to right, var(--primary-dark), var(--primary));
+  background-image: linear-gradient(
+    to right,
+    var(--primary-dark),
+    var(--primary)
+  );
   background-clip: text;
   color: transparent;
 }
@@ -364,8 +386,6 @@ input:-webkit-autofill:focus {
   background: rgba(15, 23, 42, 0.3);
   border: 1px solid rgba(59, 130, 246, 0.2);
 } */
-
-
 
 /* Animation keyframes */
 
@@ -390,11 +410,6 @@ input:-webkit-autofill:focus {
   color: #111827 ;
 } */
 
-
-
-
-
-
 /* Dark mode overrides */
 /* .dark .bg-white h1, .dark .bg-white h2, .dark .bg-white h3, .dark .bg-white h4, .dark .bg-white h5, .dark .bg-white h6,
 .dark .bg-white p, .dark .bg-white span, .dark .bg-white div,
@@ -402,4 +417,3 @@ input:-webkit-autofill:focus {
 .dark .bg-gray-800 p, .dark .bg-gray-800 span, .dark .bg-gray-800 div {
   color: #f3f4f6 ;
 } */
-

@@ -8,16 +8,29 @@ export default function ReferralTab() {
   const { user, getAccessToken } = usePrivy();
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [copyText, setCopyText] = useState('Copy');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const tk = await getAccessToken();
-      const res = await fetch('/api/referral/code', {
-        headers: { Authorization: `Bearer ${tk}` },
-      });
-      if (res.ok) setStats(await res.json());
-    })();
+    
+    const fetchStats = async () => {
+      setLoading(true);
+      try {
+        const tk = await getAccessToken();
+        const res = await fetch('/api/referral/code', {
+          headers: { Authorization: `Bearer ${tk}` },
+        });
+        if (res.ok) {
+          setStats(await res.json());
+        }
+      } catch (error) {
+        console.error('Error fetching referral stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, [user, getAccessToken]);
 
   const generateCode = async () => {
@@ -40,7 +53,12 @@ export default function ReferralTab() {
         <p className="text-gray-100 text-sm mt-1">Generate your invite link and track referrals</p>
       </div>
       <div className="p-6">
-        {!stats ? (
+        {loading ? (
+          <div className="text-center py-10">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <p className="mt-2 text-gray-100">Loading referral information...</p>
+          </div>
+        ) : !stats ? (
           <div className="text-center py-10">
             <button
               className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow hover:bg-blue-700 transition-all"
@@ -58,16 +76,17 @@ export default function ReferralTab() {
                   <p className="text-sm text-blue-600 break-all">{stats.inviteLink}</p>
                 </div>
                 <button
-                  className="ml-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all"
+                  className="ml-4 mb-8 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all"
                   onClick={copyLink}
                 >
                   {copyText}
                 </button>
               </div>
+              <a href="/dashboard/referrals" className="mt-8 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all text-sm">Click to view your Analytics</a>
             </div>
 
             <div>
-              <h3 className="text-gray-800 font-semibold mb-3">People You Invited</h3>
+              {/* <h3 className="text-gray-800 font-semibold mb-3">People You Invited</h3> */}
               {/* {stats.invitees.length === 0 ? (
                 <p className="text-gray-500 text-sm">No invites yet.</p>
               ) : (

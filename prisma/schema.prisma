@@ -119,6 +119,10 @@ model Transaction {
   createdAt    DateTime      @default(now())
   invoiceId    String?       @unique
   Notification Notification? @relation("TransactionNotification")
+
+  @@index([wallet])
+  @@index([currency])
+  @@index([createdAt])
 }
 
 model PaymentLink {
@@ -206,6 +210,10 @@ model OffRampTransaction {
   accountName  String        @default("...")
   accountNumber String       @default("...")
   institution  String        @default("...")
+
+  @@index([merchantId])
+  @@index([currency])
+  @@index([createdAt])
 }
 
 // broadcast notification

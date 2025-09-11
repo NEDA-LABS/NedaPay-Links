@@ -75,7 +75,7 @@ export default function ProfessionalFaqSection() {
             <circle fill="#ffffff" cx="12" cy="12" r="12" />
           </pattern>
           <rect width="100%" height="100%" fill="url(#a)" />
-          <rect width="100%" height="100%" fill="url(#b)" fill-opacity="0.05" />
+          <rect width="100%" height="100%" fill="url(#b)" fillOpacity="0.05" />
         </svg>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
