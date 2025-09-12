@@ -7,7 +7,7 @@ export const tabLabel = (t: TabId): string => {
     // security: 'Security',
     // notifications: 'Notifications',
     // api: 'API Keys',
-    referrals: 'Referral',
+    referrals: 'Referrals',
     // kyc: 'KYC',
   };
   return map[t];

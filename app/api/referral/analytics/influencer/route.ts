@@ -1,11 +1,11 @@
-// /app/api/analytics/influencer/route.ts
+// /app/api/referral/analytics/influencer/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getUserIdFromRequest } from "@/utils/privyUserIdFromRequest";
 
 const prisma = new PrismaClient();
 
-// Helper: convert string amounts to number safely
+// safe number from optional string
 const toNum = (s: string | null | undefined) => {
   if (!s) return 0;
   const n = parseFloat(s);
@@ -15,14 +15,16 @@ const toNum = (s: string | null | undefined) => {
 export async function GET(req: NextRequest) {
   try {
     const privyUserId = await getUserIdFromRequest(req);
-    if (!privyUserId)
+    if (!privyUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const platformUser = await prisma.user.findUnique({
       where: { privyUserId },
+      select: { id: true },
     });
 
-    // Find influencer profile for this user
+    // Influencer profile for current user
     const influencer = await prisma.influencerProfile.findUnique({
       where: { userId: platformUser?.id },
       select: { id: true, customCode: true, displayName: true, isActive: true },
@@ -33,17 +35,19 @@ export async function GET(req: NextRequest) {
         influencer: null,
         referralsCount: 0,
         referredUsers: [],
-        transactions: [],
+        earningsByCurrency: [] as { currency: string; total: number }[],
         totals: {
           txCount: 0,
           txVolumeByCurrency: [] as { currency: string; total: number }[],
+          statusBreakdown: [] as { name: string; value: number }[],
         },
       });
     }
 
-    // Count referrals by influencerCode (source of truth)
+    // All referrals for this influencer (source of truth via code)
     const referrals = await prisma.referral.findMany({
       where: { influencerCode: influencer.customCode },
+      orderBy: { createdAt: "asc" },
       select: {
         id: true,
         createdAt: true,
@@ -51,56 +55,117 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const referredWallets = referrals
-      .map((r) => r.user?.wallet)
-      .filter((w): w is string => Boolean(w));
+    const referred = referrals
+      .map((r) => ({
+        referralId: r.id,
+        referredAt: r.createdAt,
+        wallet: r.user?.wallet ?? null,
+        email: r.user?.email ?? null,
+      }))
+      .filter((x) => x.wallet) as { referralId: string; referredAt: Date; wallet: string; email: string | null }[];
 
-    // Sum transactions whose wallet belongs to any referred user
-    const transactions = await prisma.transaction.findMany({
-      where: { wallet: { in: referredWallets } },
-      select: {
-        id: true,
-        createdAt: true,
-        amount: true,
-        currency: true,
-        status: true,
-      },
-    });
+    const wallets = referred.map((r) => r.wallet);
 
-    // Aggregate by currency
-    const volumeMap = new Map<string, number>();
-    for (const t of transactions) {
-      const curr = t.currency || "UNK";
-      volumeMap.set(curr, (volumeMap.get(curr) ?? 0) + (t.amount ?? 0));
+    // All OFF-RAMP transactions belonging to referred users (by wallet)
+    const txs = wallets.length
+      ? await prisma.offRampTransaction.findMany({
+          where: { merchantId: { in: wallets } }, // merchantId == user.wallet
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            merchantId: true,
+            amount: true,   // string
+            currency: true, // string
+            status: true,   // string
+            createdAt: true,
+          },
+        })
+      : [];
+
+    // Build aggregates
+    // Volume by currency (all off-ramps, regardless of status)
+    const volByCcy: Record<string, number> = {};
+    // Status breakdown
+    const statusCount: Record<string, number> = {};
+
+    for (const t of txs) {
+      const c = t.currency || "UNK";
+      volByCcy[c] = (volByCcy[c] ?? 0) + toNum(t.amount);
+
+      const s = (t.status || "UNKNOWN");
+      statusCount[s] = (statusCount[s] ?? 0) + 1;
     }
 
-    const txVolumeByCurrency = Array.from(volumeMap.entries()).map(
-      ([currency, total]) => ({ currency, total })
-    );
+    // For each referral wallet, find FIRST settled off-ramp
+    const byWallet = new Map<string, typeof txs>();
+    for (const t of txs) {
+      const w = t.merchantId;
+      const arr = byWallet.get(w) ?? [];
+      arr.push(t);
+      byWallet.set(w, arr);
+    }
 
-    // Status breakdown
-    const statusMap = new Map<string, number>();
-    for (const t of transactions) {
-      const s = t.status || "UNKNOWN";
-      statusMap.set(s, (statusMap.get(s) ?? 0) + 1);
+    const perReferral = referred.map((r) => {
+      const list = byWallet.get(r.wallet) ?? [];
+      const firstSettled = list.find(
+        (t) => (t.status || "").toLowerCase() === "settled"
+      );
+      const earning = firstSettled ? 0.1 * toNum(firstSettled.amount) : 0;
+      const earningCurrency = firstSettled?.currency ?? null;
+
+      return {
+        referralId: r.referralId,
+        email: r.email,
+        wallet: r.wallet,
+        referredAt: r.referredAt,
+        firstSettledTx: firstSettled
+          ? {
+              id: firstSettled.id,
+              amount: toNum(firstSettled.amount),
+              currency: firstSettled.currency,
+              createdAt: firstSettled.createdAt,
+              status: firstSettled.status,
+            }
+          : null,
+        earning: firstSettled
+          ? { amount: Number(earning.toFixed(8)), currency: earningCurrency }
+          : null,
+        txCount: list.length,
+      };
+    });
+
+    // Sum earnings by currency
+    const earningsByCurrency: Record<string, number> = {};
+    for (const row of perReferral) {
+      if (row.earning?.currency) {
+        earningsByCurrency[row.earning.currency] =
+          (earningsByCurrency[row.earning.currency] ?? 0) + (row.earning.amount ?? 0);
+      }
     }
 
     return NextResponse.json({
       influencer,
       referralsCount: referrals.length,
-      referredUsers: referrals.map((r) => ({
-        id: r.id,
-        userId: r.user?.id,
-        wallet: r.user?.wallet,
-        createdAt: r.createdAt,
+      referredUsers: perReferral
+        .map((r) => ({
+          referralId: r.referralId,
+          wallet: r.wallet,
+          email: r.email,
+          createdAt: r.referredAt,
+          firstSettledTx: r.firstSettledTx, // nullable
+          earning: r.earning,               // nullable
+          txCount: r.txCount,
+        }))
+        // stable sort by referred date asc
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+      earningsByCurrency: Object.entries(earningsByCurrency).map(([currency, total]) => ({
+        currency,
+        total,
       })),
-      transactions,
       totals: {
-        txCount: transactions.length,
-        txVolumeByCurrency,
-        statusBreakdown: Array.from(statusMap.entries()).map(
-          ([name, value]) => ({ name, value })
-        ),
+        txCount: txs.length,
+        txVolumeByCurrency: Object.entries(volByCcy).map(([currency, total]) => ({ currency, total })),
+        statusBreakdown: Object.entries(statusCount).map(([name, value]) => ({ name, value })),
       },
     });
   } catch (e) {

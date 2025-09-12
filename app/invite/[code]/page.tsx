@@ -17,6 +17,7 @@ export default async function InvitePage({ params }: { params: { code: string } 
       influencer={{
         code: profile.customCode,
         name: profile.displayName,
+        email: profile.user.email || '',
         bonus: `10 tokens`, // or any dynamic value you store in DB later
       }}
     />

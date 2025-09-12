@@ -1,21 +1,8 @@
-// /app/api/analytics/admin/route.ts
-import { NextRequest, NextResponse } from "next/server";
+// app/api/referral/analytics/all/route.ts
+import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getUserIdFromRequest } from "@/utils/privyUserIdFromRequest";
 
-const prisma = new PrismaClient()
-
-// Replace with your own admin check.
-async function assertAdmin(req: NextRequest) {
-  const privyUserId = await getUserIdFromRequest(req);
-  if (!privyUserId) return null;
-  // Example: merchant settings existence or a special table/role
-  const settings = await prisma.merchantSettings.findUnique({
-    where: { userId: privyUserId },
-  });
-  // TODO: Plug your real admin logic. For now, treat presence as privileged.
-  return settings ? privyUserId : null;
-}
+const prisma = new PrismaClient();
 
 const toNum = (s: string | null | undefined) => {
   if (!s) return 0;
@@ -25,11 +12,7 @@ const toNum = (s: string | null | undefined) => {
 
 export async function GET() {
   try {
-    // const privyUserId = await assertAdmin(req);
-    // if (!privyUserId)
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    // Get all influencers and their referral codes
+    // 1) Get all influencers (and their wallets/emails)
     const influencers = await prisma.influencerProfile.findMany({
       select: {
         id: true,
@@ -41,7 +24,7 @@ export async function GET() {
       },
     });
 
-    // Preload referrals per influencer
+    // 2) All referrals grouped by code
     const codes = influencers.map((i) => i.customCode);
     const referralsByCode = await prisma.referral.groupBy({
       by: ["influencerCode"],
@@ -53,12 +36,31 @@ export async function GET() {
       referralsByCode.map((r) => [r.influencerCode, r._count._all])
     );
 
-    // OffRamp transactions volume grouped by influencer (assuming merchantId is influencer.userId)
+    // 3) We need to attribute off-ramps to the *referred users*.
+    //    Strategy:
+    //    - Pull referred users (their wallets)
+    //    - Map wallet -> influencerCode via Referral
+    const referrals = await prisma.referral.findMany({
+      where: { influencerCode: { in: codes } },
+      select: {
+        influencerCode: true,
+        user: { select: { wallet: true } },
+      },
+    });
+
+    const walletToCode = new Map<string, string>();
+    for (const r of referrals) {
+      const w = r.user?.wallet;
+      if (w) walletToCode.set(w, r.influencerCode);
+    }
+
+    // 4) Fetch all off-ramp transactions
     const offramps = await prisma.offRampTransaction.findMany({
       select: { merchantId: true, currency: true, amount: true, status: true },
     });
 
-    const byInfluencer: Record<
+    // 5) Attribute off-ramps to influencer via (merchantId == user.wallet) -> referral.influencerCode
+    const byInfluencerCode: Record<
       string,
       {
         volumeByCurrency: Record<string, number>;
@@ -68,19 +70,29 @@ export async function GET() {
     > = {};
 
     for (const tx of offramps) {
-      const key = tx.merchantId;
-      if (!byInfluencer[key])
-        byInfluencer[key] = { volumeByCurrency: {}, count: 0, status: {} };
+      const wallet = tx.merchantId; // equals User.wallet
+      if (!wallet) continue;
+
+      const code = walletToCode.get(wallet);
+      if (!code) continue; // off-ramp not from a referred user
+
+      if (!byInfluencerCode[code]) {
+        byInfluencerCode[code] = {
+          volumeByCurrency: {},
+          count: 0,
+          status: {},
+        };
+      }
       const curr = tx.currency || "UNK";
-      byInfluencer[key].volumeByCurrency[curr] =
-        (byInfluencer[key].volumeByCurrency[curr] ?? 0) + toNum(tx.amount);
-      byInfluencer[key].count += 1;
+      byInfluencerCode[code].volumeByCurrency[curr] =
+        (byInfluencerCode[code].volumeByCurrency[curr] ?? 0) + toNum(tx.amount);
+      byInfluencerCode[code].count += 1;
       const s = tx.status || "UNKNOWN";
-      byInfluencer[key].status[s] = (byInfluencer[key].status[s] ?? 0) + 1;
+      byInfluencerCode[code].status[s] = (byInfluencerCode[code].status[s] ?? 0) + 1;
     }
 
     const rows = influencers.map((inf) => {
-      const agg = byInfluencer[inf.userId] ?? {
+      const agg = byInfluencerCode[inf.customCode] ?? {
         volumeByCurrency: {},
         count: 0,
         status: {},
@@ -88,6 +100,7 @@ export async function GET() {
       const volume = Object.entries(agg.volumeByCurrency).map(
         ([currency, total]) => ({ currency, total })
       );
+
       return {
         influencer: inf.displayName,
         code: inf.customCode,
@@ -99,23 +112,20 @@ export async function GET() {
       };
     });
 
-    // Totals across platform
+    // 6) Totals across platform
     const totals = {
       influencers: influencers.length,
-      totalReferrals: referralsByCode.reduce(
-        (acc, r) => acc + r._count._all,
+      totalReferrals: referralsByCode.reduce((acc, r) => acc + r._count._all, 0),
+      offrampTxCount: Object.values(byInfluencerCode).reduce(
+        (acc, v) => acc + v.count,
         0
       ),
-      offrampTxCount: offramps.length,
       offrampVolumeByCurrency: Object.entries(
-        Object.values(byInfluencer).reduce(
-          (acc, v) => {
-            for (const [c, t] of Object.entries(v.volumeByCurrency))
-              acc[c] = (acc[c] ?? 0) + t;
-            return acc;
-          },
-          {} as Record<string, number>
-        )
+        Object.values(byInfluencerCode).reduce((acc, v) => {
+          for (const [c, t] of Object.entries(v.volumeByCurrency))
+            acc[c] = (acc[c] ?? 0) + t;
+          return acc;
+        }, {} as Record<string, number>)
       ).map(([currency, total]) => ({ currency, total })),
     };
 
