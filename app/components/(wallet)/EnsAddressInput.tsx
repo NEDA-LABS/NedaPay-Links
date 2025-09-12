@@ -78,7 +78,7 @@ export default function EnsAddressInput({
           )}
           {!isResolving && isValid && result?.name && (
             <span className="text-green-700 dark:text-green-400">
-              {result.name}.eth → {resolvedAddress?.slice(0, 6)}…{resolvedAddress?.slice(-4)}
+              {result.name} → {resolvedAddress?.slice(0, 6)}…{resolvedAddress?.slice(-4)}
             </span>
           )}
           {!isResolving && error && (
