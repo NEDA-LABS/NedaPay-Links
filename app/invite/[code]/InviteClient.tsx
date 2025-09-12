@@ -44,7 +44,10 @@ export default function InviteClient({
         }),
       });
       if (res.ok) setDone(true);
-      else console.error('Claim failed');
+      else {
+        router.push('/');
+        console.error('Claim failed')
+      };
       setClaiming(false);
     })();
   }, [ready, authenticated, user, influencer, user?.wallet?.address, wallets]);
