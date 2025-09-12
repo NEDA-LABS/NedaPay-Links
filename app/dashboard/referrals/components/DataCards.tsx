@@ -10,7 +10,7 @@ type StatCardProps = { label: string; value: number | string; hint?: string }
 
 
 export function StatGrid({ children }: { children: React.ReactNode }) {
-return <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">{children}</div>
+return <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{children}</div>
 }
 
 

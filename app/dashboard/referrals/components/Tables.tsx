@@ -10,12 +10,13 @@ export function SimpleTable({
   columns: { key: string; header: string }[];
 }) {
   return (
-    <div className="card p-4 overflow-x-auto bg-[#111633] rounded-2xl shadow-lg border border-indigo-900/30">
-      <table className="min-w-full text-sm">
+    <div className="card p-4 bg-[#111633] rounded-2xl shadow-lg border border-indigo-900/30 w-[300px] md:w-full">
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <table className="min-w-full text-sm w-full table-auto">
         <thead className="text-left text-[color:var(--muted)]">
           <tr>
             {columns.map((c) => (
-              <th key={c.key} className="py-2 pr-6 font-medium">
+              <th key={c.key} className="py-2 px-4 sm:pr-6 font-medium whitespace-nowrap">
                 {c.header}
               </th>
             ))}
@@ -25,7 +26,7 @@ export function SimpleTable({
           {rows.map((r, i) => (
             <tr key={i} className="border-t border-indigo-900/30 text-white">
               {columns.map((c) => (
-                <td key={c.key} className="py-2 pr-6">
+                <td key={c.key} className="py-2 px-4 sm:pr-6 whitespace-nowrap text-xs">
                   {Array.isArray(r[c.key]) ? (
                     <div className="flex flex-wrap gap-2 text-white">
                       {r[c.key].map((x: any, idx: number) => (
@@ -45,6 +46,7 @@ export function SimpleTable({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

@@ -35,8 +35,9 @@ export default function Page() {
   const statusBreakdown = data?.totals?.statusBreakdown ?? [];
 
   return (
-    <Shell title="Referrals Analytics">
-      {error && <div className="card p-4 text-red-400">{String(error)}</div>}
+    <div className=" rounded-2xl">
+      <Shell title="Referrals Analytics">
+      {error && <div className="card p-4 text-red-400 overflow-x-auto">{String(error)}</div>}
       {isLoading && <div className="card p-4">Loading…</div>}
       {data && (
         <>
@@ -44,12 +45,10 @@ export default function Page() {
             <StatCard
               label="Referrals"
               value={referralsCount}
-              hint="Counted by your referral code"
             />
             <StatCard
               label="Total Transactions"
               value={txCount}
-              hint="Across all referred wallets"
             />
             <StatCard label="Currencies" value={txVolumeByCurrency.length} />
             <StatCard
@@ -67,7 +66,7 @@ export default function Page() {
 
           <SimpleTable
             columns={[
-              { key: "wallet", header: "Referred Wallet" },
+              { key: "wallet", header: "Referred Wallets" },
               { key: "createdAt", header: "Referred At" },
             ]}
             rows={data.referredUsers}
@@ -75,5 +74,7 @@ export default function Page() {
         </>
       )}
     </Shell>
+    </div>
+    
   );
 }
