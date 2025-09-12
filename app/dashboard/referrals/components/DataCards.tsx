@@ -18,7 +18,7 @@ export function StatCard({ label, value, hint }: StatCardProps) {
 return (
 <div className="card p-5 bg-[#111633] rounded-2xl shadow-lg border border-indigo-900/30">
 <p className="text-sm text-[color:var(--muted)]">{label}</p>
-<p className="mt-2 text-2xl">{typeof value === 'number' ? fmt.format(value) : value}</p>
+<p className="mt-2 text-2xl text-white">{typeof value === 'number' ? fmt.format(value) : value}</p>
 {hint && <p className="mt-1 text-xs text-[color:var(--muted)]">{hint}</p>}
 </div>
 )

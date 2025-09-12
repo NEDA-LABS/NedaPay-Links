@@ -23,11 +23,11 @@ export function SimpleTable({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-t border-indigo-900/30">
+            <tr key={i} className="border-t border-indigo-900/30 text-white">
               {columns.map((c) => (
                 <td key={c.key} className="py-2 pr-6">
                   {Array.isArray(r[c.key]) ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 text-white">
                       {r[c.key].map((x: any, idx: number) => (
                         <VolumePill
                           key={idx}
