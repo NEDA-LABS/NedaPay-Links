@@ -206,6 +206,7 @@ model OffRampTransaction {
   merchantId   String
   status       String
   amount       String        @default("...")
+  rate         String        @default("2460")
   currency     String        @default("...")
   accountName  String        @default("...")
   accountNumber String       @default("...")

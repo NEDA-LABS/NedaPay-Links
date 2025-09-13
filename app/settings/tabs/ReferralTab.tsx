@@ -50,7 +50,7 @@ export default function ReferralTab() {
     <>
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-gray-100">Referrals</h2>
-        <p className="text-gray-100 text-sm mt-1">Generate your invite link and track referrals</p>
+        <p className="text-gray-100 text-sm mt-1">Generate your invite link and earn 10% from first transaction of referred users</p>
       </div>
       <div className="p-6">
         {loading ? (

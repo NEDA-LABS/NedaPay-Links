@@ -6,6 +6,38 @@ import { createNotification } from '@/utils/createNotification';
 const prisma = new PrismaClient();
 const CLIENT_SECRET = process.env.PAYCREST_CLIENT_SECRET!;
 
+interface WebhookStructure
+  {
+    "event": "payment_order.settled",
+    "data": {
+      "id": "uuid-string",
+      "amount": "100.00",
+      "amountPaid": "80.00",
+      "amountReturned": "0.00",
+      "percentSettled": "90.00",
+      "senderFee": "0.50",
+      "networkFee": "0.05",
+      "rate": "1500",
+      "network": "polygon",
+      "gatewayId": "gw-123",
+      "reference": "unique-reference",
+      "senderId": "uuid-string",
+      "recipient": {
+        "currency": "NGN",
+        "institution": "FBNINGLA",
+        "accountIdentifier": "123456789",
+        "accountName": "John Doe",
+        "memo": "Payment from John Doe"
+      },
+      "fromAddress": "0x123...",
+      "returnAddress": "0x123...",
+      "updatedAt": "2024-06-26T12:34:56Z",
+      "createdAt": "2024-06-26T12:34:56Z",
+      "txHash": "abc123",
+      "status": "settled"
+    }
+}
+
 function verifyPaycrestSignature(requestBody: string, signatureHeader: string): boolean {
   const calculatedSignature = crypto
     .createHmac('sha256', Buffer.from(CLIENT_SECRET))
@@ -36,6 +68,7 @@ export async function POST(request: NextRequest) {
             merchantId: data.fromAddress,
             status: 'pending',
             amount: data.amount,
+            rate: data.rate,
             currency: data.recipient?.currency,
             accountName: data.recipient?.accountName,
             accountNumber: data.recipient?.accountIdentifier,
@@ -56,6 +89,7 @@ export async function POST(request: NextRequest) {
             status: 'settled',
             merchantId: data.fromAddress,
             amount: data.amount,
+            rate: data.rate,
             currency: data.recipient?.currency,
             accountName: data.recipient?.accountName,
             accountNumber: data.recipient?.accountIdentifier,
@@ -66,6 +100,7 @@ export async function POST(request: NextRequest) {
             merchantId: data.fromAddress,
             status: 'settled',
             amount: data.amount,
+            rate: data.rate,
             currency: data.recipient?.currency,
             accountName: data.recipient?.accountName,
             accountNumber: data.recipient?.accountIdentifier,
@@ -83,6 +118,7 @@ export async function POST(request: NextRequest) {
             status: 'expired',
             merchantId: data.fromAddress,
             amount: data.amount,
+            rate: data.rate,
             currency: data.recipient?.currency,
             accountName: data.recipient?.accountName,
             accountNumber: data.recipient?.accountIdentifier,
@@ -93,6 +129,7 @@ export async function POST(request: NextRequest) {
             merchantId: data.fromAddress,
             status: 'expired',
             amount: data.amount,
+            rate: data.rate,
             currency: data.recipient?.currency,
             accountName: data.recipient?.accountName,
             accountNumber: data.recipient?.accountIdentifier,
@@ -110,6 +147,7 @@ export async function POST(request: NextRequest) {
             status: 'refunded',
             merchantId: data.fromAddress,
             amount: data.amount,
+            rate: data.rate,
             currency: data.recipient?.currency,
             accountName: data.recipient?.accountName,
             accountNumber: data.recipient?.accountIdentifier,
@@ -120,6 +158,7 @@ export async function POST(request: NextRequest) {
             merchantId: data.fromAddress,
             status: 'refunded',
             amount: data.amount,
+            rate: data.rate,
             currency: data.recipient?.currency,
             accountName: data.recipient?.accountName,
             accountNumber: data.recipient?.accountIdentifier,

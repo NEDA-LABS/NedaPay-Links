@@ -75,6 +75,7 @@ export async function GET(req: NextRequest) {
             id: true,
             merchantId: true,
             amount: true,   // string
+            rate: true,     // string
             currency: true, // string
             status: true,   // string
             createdAt: true,
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
 
     for (const t of txs) {
       const c = t.currency || "UNK";
-      volByCcy[c] = (volByCcy[c] ?? 0) + toNum(t.amount);
+      volByCcy[c] = (volByCcy[c] ?? 0) + toNum(t.amount) * toNum(t.rate);
 
       const s = (t.status || "UNKNOWN");
       statusCount[s] = (statusCount[s] ?? 0) + 1;
@@ -110,7 +111,7 @@ export async function GET(req: NextRequest) {
       const firstSettled = list.find(
         (t) => (t.status || "").toLowerCase() === "settled"
       );
-      const earning = firstSettled ? 0.1 * toNum(firstSettled.amount) : 0;
+      const earning = firstSettled ? 0.1 * toNum(firstSettled.amount) * toNum(firstSettled.rate) : 0;
       const earningCurrency = firstSettled?.currency ?? null;
 
       return {
@@ -121,7 +122,7 @@ export async function GET(req: NextRequest) {
         firstSettledTx: firstSettled
           ? {
               id: firstSettled.id,
-              amount: toNum(firstSettled.amount),
+              amount: toNum(firstSettled.amount) * toNum(firstSettled.rate),
               currency: firstSettled.currency,
               createdAt: firstSettled.createdAt,
               status: firstSettled.status,

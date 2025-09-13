@@ -54,6 +54,7 @@ export async function GET(
             id: true,
             merchantId: true, // user.wallet of the referred user
             amount: true,
+            rate: true,
             currency: true,
             status: true,
             createdAt: true,
@@ -68,6 +69,7 @@ export async function GET(
         id: string;
         merchantId: string;
         amount: string;
+        rate: string;
         currency: string;
         status: string;
         createdAt: Date;
@@ -92,7 +94,7 @@ export async function GET(
 
       const earning = firstSettled
         ? {
-            amount: Number((0.1 * toNum(firstSettled.amount)).toFixed(8)),
+            amount: Number((0.1 * toNum(firstSettled.amount) * toNum(firstSettled.rate)).toFixed(8)),
             currency: firstSettled.currency,
             sourceTxId: firstSettled.id,
           }
@@ -108,7 +110,7 @@ export async function GET(
         },
         transactions: allTx.map((t) => ({
           id: t.id,
-          amount: toNum(t.amount),
+          amount: toNum(t.amount) * toNum(t.rate),
           currency: t.currency,
           status: t.status,
           createdAt: t.createdAt,
@@ -117,7 +119,7 @@ export async function GET(
           firstSettled
             ? {
                 id: firstSettled.id,
-                amount: toNum(firstSettled.amount),
+                amount: toNum(firstSettled.amount) * toNum(firstSettled.rate),
                 currency: firstSettled.currency,
                 createdAt: firstSettled.createdAt,
               }
