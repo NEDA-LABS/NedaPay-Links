@@ -41,6 +41,7 @@ export async function GET(request: Request) {
         status: true,
         merchantId: true,
         amount: true,
+        rate: true,
         currency: true,
         accountName: true,
         accountNumber: true,

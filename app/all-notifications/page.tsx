@@ -43,6 +43,7 @@ interface OffRampTransaction {
   merchantId: string;
   status: string;
   amount: string;
+  rate: string;
   currency: string;
   accountName: string;
   accountNumber: string;
@@ -105,12 +106,11 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const formatAmount = async (amount: string, currency: string): Promise<string> => {
+const formatAmount = async (amount: string, currency: string, rate: string): Promise<string> => {
   const numAmount = parseFloat(amount);
   if (isNaN(numAmount)) return `${currency} ${amount}`;
   
   try {
-    const rate = await fetchTokenRate('USDC', 1, currency, 'base');
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD',
@@ -241,7 +241,7 @@ const MasterNotificationCenter: React.FC = () => {
       const amounts: Record<string, string> = {};
       for (const tx of offrampTransactions) {
         try {
-          const formatted = await formatAmount(tx.amount, tx.currency);
+          const formatted = await formatAmount(tx.amount, tx.currency, tx.rate);
           amounts[tx.id] = formatted;
         } catch (error) {
           console.error(`Error formatting amount for transaction ${tx.id}:`, error);
