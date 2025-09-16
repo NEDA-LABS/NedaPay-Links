@@ -261,7 +261,7 @@ const OffRampForm: React.FC<{
             </button>
             
             <h3 className="text-lg font-bold text-white mb-6 text-center">
-              Confirm Payment Details
+              Confirm Payment Details, Ensure Account number is Correct!
             </h3>
             
             <div className="space-y-5 mb-8">

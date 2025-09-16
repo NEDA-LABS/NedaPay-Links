@@ -37,7 +37,8 @@ export const TOKEN_ADDRESSES = {
   export const GAS_FEES = {
     ABSTRACTED: {
       USDC: 0.023,
-      USDT: 0.025
+      USDT: 0.025,
+      CNGN: 0.025
     },
     NORMAL: {
       BASE: 0.0005,
