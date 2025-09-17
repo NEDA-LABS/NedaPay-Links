@@ -44,18 +44,18 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
   });
 
   // Fetch bank codes
-  const { data: bankCodes, isLoading: isLoadingBanks } = useQuery({
-    queryKey: ['bank-codes'],
+  const { data: bankAccounts, isLoading: isLoadingBanks } = useQuery({
+    queryKey: ['bank-accounts'],
     queryFn: async () => {
-      const response = await fetch('/api/idrx/bank-codes');
-      if (!response.ok) throw new Error('Failed to fetch bank codes');
+      const response = await fetch('/api/idrxco/bank-accounts');
+      if (!response.ok) throw new Error('Failed to fetch bank accounts');
       return response.json();
     },
   });
 
   const addBankMutation = useMutation({
     mutationFn: async (data: BankAccountFormData) => {
-      const response = await fetch('/api/idrx/banks', {
+      const response = await fetch('/api/idrxco/bank-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

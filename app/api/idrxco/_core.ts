@@ -7,7 +7,7 @@ const sig = createSignature(method, url, body ?? "", timestamp, process.env.IDRX
 return {
 timestamp,
 headers: {
-"idrx-api-key": process.env.IDRX_API_KEY!,
+"idrx-api-key": process.env.IDRXCO_API_KEY!,
 "idrx-api-sig": sig,
 "idrx-api-ts": timestamp,
 },
