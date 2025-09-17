@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import type { BankMethod } from '../utils/types';
 
 const bankAccountSchema = z.object({
   bankAccountNumber: z.string().min(8, 'Bank account number must be at least 8 characters'),
@@ -43,22 +44,25 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
     resolver: zodResolver(bankAccountSchema),
   });
 
-  // Fetch bank codes
-  const { data: bankAccounts, isLoading: isLoadingBanks } = useQuery({
-    queryKey: ['bank-accounts'],
+  // Fetch available bank methods (bankCode/bankName)
+  const { data: methods, isLoading: isLoadingMethods } = useQuery({
+    queryKey: ['idrxco-methods'],
     queryFn: async () => {
-      const response = await fetch('/api/idrxco/bank-accounts');
-      if (!response.ok) throw new Error('Failed to fetch bank accounts');
+      const response = await fetch('/api/idrxco/methods');
+      if (!response.ok) throw new Error('Failed to fetch bank methods');
       return response.json();
     },
   });
 
   const addBankMutation = useMutation({
     mutationFn: async (data: BankAccountFormData) => {
+      // API route expects multipart/form-data (uses req.formData()).
+      const form = new FormData();
+      form.append('bankAccountNumber', data.bankAccountNumber);
+      form.append('bankCode', data.bankCode);
       const response = await fetch('/api/idrxco/bank-accounts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: form,
       });
 
       if (!response.ok) {
@@ -115,9 +119,19 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
                   <SelectValue placeholder="Select a bank" />
                 </SelectTrigger>
                 <SelectContent>
-                  {bankCodes?.data?.map((bank: BankCode) => (
-                    <SelectItem key={bank.code} value={bank.code}>
-                      {bank.name}
+                  {isLoadingMethods && (
+                    <SelectItem disabled value="loading">
+                      Loading banks…
+                    </SelectItem>
+                  )}
+                  {!isLoadingMethods && (!methods?.data || methods.data.length === 0) && (
+                    <SelectItem disabled value="empty">
+                      No banks available
+                    </SelectItem>
+                  )}
+                  {!isLoadingMethods && methods?.data?.map((bank: BankMethod) => (
+                    <SelectItem key={bank.bankCode} value={bank.bankCode}>
+                      {bank.bankName} · Max Rp {Number(bank.maxAmountTransfer).toLocaleString('id-ID')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -143,7 +157,7 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
           <Button
             type="submit"
             className="w-full"
-            disabled={isSubmitting || addBankMutation.isPending || isLoadingBanks}
+            disabled={isSubmitting || addBankMutation.isPending || isLoadingMethods}
           >
             {isSubmitting ? 'Adding...' : 'Add Bank Account'}
           </Button>

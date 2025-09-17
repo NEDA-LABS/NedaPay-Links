@@ -15,10 +15,11 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
+import { useHasSavedConsent } from "@/hooks/useHasSavedConsent";
 
 const CONSENT_COOKIE = "nedapay.cookieConsent.v1";
 
-type Prefs = { necessary: boolean; analytics: boolean; marketing: boolean };
+type Prefs = { necessary: boolean; analytics: boolean; };
 
 function readConsent(): Prefs | null {
   if (typeof document === "undefined") return null;
@@ -32,7 +33,6 @@ function readConsent(): Prefs | null {
     return {
       necessary: Boolean(parsed.necessary),
       analytics: Boolean(parsed.analytics),
-      marketing: Boolean(parsed.marketing),
     };
   } catch {
     return null;
@@ -46,17 +46,16 @@ export function CookieConsentModal() {
   const [prefs, setPrefs] = useState<Prefs>({
     necessary: true,
     analytics: false,
-    marketing: false,
   });
+  const { loading, hasConsent } = useHasSavedConsent();
 
   // Show the modal if no consent cookie is present (except on /legal pages)
   const suppress = useMemo(() => pathname?.startsWith("/legal"), [pathname]);
 
   useEffect(() => {
-    if (suppress) return; // don't show in legal section
-    const existing = readConsent();
-    if (!existing) setOpen(true);
-  }, [suppress]);
+    if (suppress) return;
+    if (!loading) setOpen(!hasConsent); // open only if nothing saved
+  }, [suppress, loading, hasConsent]);
 
   async function save(preferences: Prefs) {
     // optimistic local write to avoid flicker
@@ -79,9 +78,9 @@ export function CookieConsentModal() {
   }
 
   const acceptAll = () =>
-    save({ necessary: true, analytics: true, marketing: true });
+    save({ necessary: true, analytics: true });
   const rejectNonEssential = () =>
-    save({ necessary: true, analytics: false, marketing: false });
+    save({ necessary: true, analytics: false });
   const saveChoices = () => save(prefs);
 
   return (
@@ -92,9 +91,8 @@ export function CookieConsentModal() {
             Cookies & Privacy
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            We use necessary cookies to make NedaPay work. With your consent,
-            we’d also use analytics and marketing cookies to improve your
-            experience.
+            We use necessary cookies to make NedaPay work. With your consent, we
+            will also use analytics to improve your experience.
           </DialogDescription>
         </DialogHeader>
 
@@ -124,7 +122,7 @@ export function CookieConsentModal() {
             />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 p-3">
+          {/* <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 p-3">
             <div>
               <p className="font-medium text-slate-100">Marketing</p>
               <p className="text-sm text-slate-400">
@@ -137,15 +135,15 @@ export function CookieConsentModal() {
                 setPrefs((p) => ({ ...p, marketing: Boolean(v) }))
               }
             />
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-4 text-sm text-slate-400">
           Read more in our{" "}
-          <Link href="/legal/cookies" className="underline underline-offset-4">
+          {/* <Link href="/legal/cookies" className="underline underline-offset-4">
             Cookie Policy
           </Link>{" "}
-          and{" "}
+          and{" "} */}
           <Link href="/legal/privacy" className="underline underline-offset-4">
             Privacy Policy
           </Link>

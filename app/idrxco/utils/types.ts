@@ -57,3 +57,10 @@ export interface User {
     code: string;
     name: string;
   }
+
+  // Methods returned by GET https://idrx.co/api/transaction/method
+  export interface BankMethod {
+    bankCode: string;
+    bankName: string;
+    maxAmountTransfer: string;
+  }

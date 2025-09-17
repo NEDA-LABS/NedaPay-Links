@@ -1,13 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { PrismaClient } from "@prisma/client"; 
-import { getUserIdFromRequest } from "@/utils/privyUserIdFromRequest"; 
+import { PrismaClient } from "@prisma/client";
+import { getUserIdFromRequest } from "@/utils/privyUserIdFromRequest";
 
 const prisma = new PrismaClient();
 
-export const runtime = "nodejs"; // for Prisma
+// export const runtime = "nodejs";
 
 const CONSENT_COOKIE = "nedapay.cookieConsent.v1";
+
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getUserIdFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ preferences: null });
+    }
+    const record = await prisma.cookieConsent.findUnique({
+      where: { privyUserId: user },
+    });
+    if (!record) {
+      return NextResponse.json({ preferences: null });
+    }
+    return NextResponse.json({ preferences: record.preferences });
+  } catch (err) {
+    console.error("cookie-consent check error", err);
+    return NextResponse.json({ preferences: null });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +35,6 @@ export async function POST(req: NextRequest) {
       preferences: {
         necessary: boolean;
         analytics: boolean;
-        marketing: boolean;
       };
       region?: string | null;
     };
@@ -29,9 +47,10 @@ export async function POST(req: NextRequest) {
     const sixMonths = 60 * 60 * 24 * 30 * 6;
 
     // Set public cookie for SSR gating and client checks
-    (await
-          // Set public cookie for SSR gating and client checks
-          cookies()).set({
+    (
+      await // Set public cookie for SSR gating and client checks
+      cookies()
+    ).set({
       name: CONSENT_COOKIE,
       value: JSON.stringify({ ...preferences, v: "v1" }),
       httpOnly: false, // readable by client to conditionally load scripts

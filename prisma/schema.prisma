@@ -346,3 +346,4 @@ user User? @relation(fields: [privyUserId], references: [privyUserId], onDelete:
 
 @@index([privyUserId])
 }
+

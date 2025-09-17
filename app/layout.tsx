@@ -6,6 +6,7 @@ import './components/name-fallback.css';
 import { Providers } from './providers';
 import AppToaster from './components/Toaster';
 import {Analytics} from '@vercel/analytics/next';
+import { CookieConsentModal } from './components/(cookies)/cookiesConsent';
 
 export const metadata: Metadata = {
   title: 'NedaPay',
@@ -43,6 +44,7 @@ export default function RootLayout({
           <Providers>
             <AppToaster />
             <main className="flex-grow">{children}</main>
+            <CookieConsentModal />
           </Providers>
         </div>
         <Analytics />
