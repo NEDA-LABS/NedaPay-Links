@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchSupportedCurrencies, fetchTokenRate } from '../utils/paycrest';
+import { fetchSupportedCurrencies, fetchTokenRate } from '@/utils/paycrest';
 
 // ------------ SAME HELPER AS IN YOUR ORIGINAL FILE ------------
 const getCountryFlag = (currencyCode: string): string => {

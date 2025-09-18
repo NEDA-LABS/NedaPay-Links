@@ -115,11 +115,13 @@ export const stablecoins = [
     decimals: 2,
     addresses: {
       8453: '0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22', // Base Mainnet
+      137: '0x649a2DA7B28E0D54c13D5eFf95d3A660652742cC', // Polygon Mainnet
+      56: '0x649a2DA7B28E0D54c13D5eFf95d3A660652742cC' // BNB Smart Chain
     },
     issuer: 'IDRX.co',
     description: 'Stablecoin pegged 1:1 to the Indonesian Rupiah (IDR)',
     website: 'https://stablecoins.earth',
-    chainIds: [8453],
+    chainIds: [8453, 137, 56],
   },
   {
     region: 'Europe',

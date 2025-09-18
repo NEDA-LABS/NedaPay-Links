@@ -99,10 +99,10 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto bg-slate-800">
+    <Card className="w-full max-w-2xl mx-auto bg-slate-800 border border-slate-700">
       <CardHeader>
-        <CardTitle>Add Bank Account</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-slate-100">Add Bank Account</CardTitle>
+        <CardDescription className="text-slate-300">
           Add your Indonesian bank account to receive IDR transfers.
         </CardDescription>
       </CardHeader>
@@ -110,15 +110,15 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="bankCode">Bank</Label>
+              <Label htmlFor="bankCode" className="text-sm font-medium text-slate-300">Bank</Label>
               <Select
                 onValueChange={(value) => setValue('bankCode', value)}
                 value={watch('bankCode')}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full py-6 rounded-lg bg-slate-200 border border-indigo-700 text-slate-800">
                   <SelectValue placeholder="Select a bank" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800">
+                <SelectContent className="bg-slate-200 text-slate-800 border border-indigo-700">
                   {isLoadingMethods && (
                     <SelectItem disabled value="loading">
                       Loading banks…
@@ -137,26 +137,27 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
                 </SelectContent>
               </Select>
               {errors.bankCode && (
-                <p className="text-sm text-red-600">{errors.bankCode.message}</p>
+                <p className="text-sm text-red-400">{errors.bankCode.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
+              <Label htmlFor="bankAccountNumber" className="text-sm font-medium text-slate-300">Bank Account Number</Label>
               <Input
                 id="bankAccountNumber"
                 placeholder="1234567890"
+                className="w-full py-6 rounded-lg bg-slate-100 border border-slate-300 text-black placeholder:text-slate-500 focus:ring-indigo-500 focus:border-indigo-500"
                 {...register('bankAccountNumber')}
               />
               {errors.bankAccountNumber && (
-                <p className="text-sm text-red-600">{errors.bankAccountNumber.message}</p>
+                <p className="text-sm text-red-400">{errors.bankAccountNumber.message}</p>
               )}
             </div>
           </div>
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full flex items-center justify-center bg-blue-600 hover:from-indigo-500 hover:via-purple-500 hover:to-blue-500 text-white font-semibold py-3 rounded-lg disabled:opacity-50"
             disabled={isSubmitting || addBankMutation.isPending || isLoadingMethods}
           >
             {isSubmitting ? 'Adding...' : 'Add Bank Account'}

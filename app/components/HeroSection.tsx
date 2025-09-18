@@ -8,7 +8,7 @@ import WalletSelector from "./WalletSelector";
 import Image from "next/image";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import ShinyText from "./ShinyText";
-import CurrencyTicker from "@/offramp/RatesComponents";
+import CurrencyTicker from "@/ramps/payramp/RatesComponents";
 
 const HeroSection = () => {
   const [mounted, setMounted] = useState(false);

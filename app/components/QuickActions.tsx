@@ -23,7 +23,7 @@ export default function QuickActions() {
       title: "Withdraw",
       description: "Transfer to bank",
       icon: DollarSign,
-      onClick: () => router.push("/offramp"),
+      onClick: () => router.push("/ramps"),
       color: "purple",
     },
     {

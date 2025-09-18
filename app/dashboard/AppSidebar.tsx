@@ -67,7 +67,7 @@ function AppSidebarContent() {
     { title: "Payment Link", url: "/payment-link", icon: Send },
     { title: "Generate Invoice", url: "/invoice", icon: FileIcon },
     // { title: "Swap Coins", url: "/swap-coins", icon: Activity },
-    { title: "Transfer to Fiat", url: "/offramp", icon: CreditCard },
+    { title: "Transfer to Fiat", url: "/ramps", icon: CreditCard },
     // { title: "Customize Dashboard", url: "/settings", icon: Sparkles },
     { title: "Cross-Chain Swap", url: "/accross-bridge", icon: ArrowRightLeft },
     { title: "Analytics", url: "/analytics", icon: BarChart3 },
