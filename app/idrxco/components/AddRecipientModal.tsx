@@ -24,7 +24,7 @@ export function AddRecipientModal({ onSuccess }: AddRecipientModalProps) {
           Add new recipient
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-slate-800">
         <DialogHeader>
           <DialogTitle>Add New Bank Account</DialogTitle>
         </DialogHeader>

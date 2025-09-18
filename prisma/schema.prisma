@@ -27,6 +27,9 @@ model User {
 
   //cookies
   cookieConsent      CookieConsent?
+
+  // IDRX onboarding (one-to-one)
+  idrxOnboarded     IdrxOnboarded?
 }
 
 model Referral {
@@ -230,6 +233,24 @@ model BroadcastNotification {
   notifications Notification[]
 }
 
+// Store credentials returned from IDRX onboarding securely
+model IdrxOnboarded {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  idrxId        Int
+  provider      String   @default("IDRXCO")
+
+  // Encrypted fields (AES-GCM encoded payload)
+  apiKeyEnc     String
+  apiSecretEnc  String
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([idrxId])
+}
 
 //SUMSUB----------------------------------------------------------------------------------------
 // Add these enums to your existing schema

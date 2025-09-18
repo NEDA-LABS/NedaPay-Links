@@ -21,7 +21,8 @@ export function useHasSavedConsent() {
         });
         const json = await res.json();
         if (!active) return;
-        setHasConsent(Boolean(json?.hasCookie || json?.hasDb));
+        // console.log("analytics",json.preferences?.analytics); //debug
+        setHasConsent(Boolean(json?.preferences?.analytics || json?.preferences?.necessary));
       } catch {
         // fallback to cookie-only check
         try {

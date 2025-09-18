@@ -7,13 +7,17 @@ import {
   Shield, Menu, X, Bell, ArrowRightLeft, UserPlus, Share2,
 } from 'lucide-react';
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { OnboardingForm } from '@/idrxco/components/OnboardingForm';
+import OnboardingStatus from './components/OnboardingStatus';
+
 // IMPORT THE TAB COMPONENTS
 import OfframpTransactions from './components/OfframpTransactions';
 import BroadcastNotifications from './components/PushNotifications';
 // import UserOnboarding from './components/UserOnboarding';
 import Referrals from './components/Referrals';
 
-type AdminLayoutProps = { children: React.ReactNode };
+type AdminLayoutProps = { children?: React.ReactNode };
 
 const navigationItems = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -34,7 +38,16 @@ const tabItems = [
 const TabComponents: Record<string, React.ComponentType> = {
   offramp: OfframpTransactions,
   notifications: BroadcastNotifications,
-  // onboarding: UserOnboarding,
+  onboarding: () => (
+    <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="max-w-3xl w-full mx-auto xl:mx-0">
+        <OnboardingForm />
+      </div>
+      <div className="w-full">
+        <OnboardingStatus />
+      </div>
+    </div>
+  ),
   referrals: Referrals,
 };
 
@@ -89,54 +102,57 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* Tabs (Radix) */}
       {showTabs && (
-        <div className="fixed top-16 left-0 right-0 z-20 bg-slate-900/50 backdrop-blur border-b border-slate-700">
-          <div className="px-4 sm:px-6">
-            <nav className="flex gap-2 overflow-x-auto py-2">
-              {tabItems.map((tab) => {
-                const Icon = tab.icon;
-                const active = activeTab === tab.key;
-                return (
-                  <button
-                    key={tab.name}
-                    onClick={() => setActiveTab(tab.key)}
-                    aria-current={active ? 'page' : undefined}
-                    className={[
-                      'inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors border',
-                      active
-                        ? 'bg-indigo-600/90 text-white border-indigo-500 shadow-sm'
-                        : 'bg-slate-800/60 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white',
-                    ].join(' ')}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="truncate">{tab.name}</span>
-                  </button>
-                );
-              })}
-            </nav>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)}>
+          <div className="fixed top-16 left-0 right-0 z-20 bg-slate-900/50 backdrop-blur border-b border-slate-700">
+            <div className="px-4 sm:px-6 py-2 overflow-x-auto">
+              <TabsList className="bg-transparent p-0 gap-2">
+                {tabItems.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <TabsTrigger
+                      key={tab.key}
+                      value={tab.key}
+                      className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm border transition-colors
+                        data-[state=active]:bg-indigo-600/90 data-[state=active]:text-white data-[state=active]:border-indigo-500 data-[state=active]:shadow-sm
+                        data-[state=inactive]:bg-slate-800/60 data-[state=inactive]:text-slate-300 data-[state=inactive]:border-slate-700 hover:data-[state=inactive]:bg-slate-800 hover:data-[state=inactive]:text-white"
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="truncate">{tab.name}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </div>
           </div>
-        </div>
+
+          {/* Content below tabs */}
+          <main style={{ paddingTop: contentTopPadding }}>
+            <div className="p-4 sm:p-6">
+              <div className="rounded-2xl border border-slate-700/60 bg-slate-900/40 backdrop-blur shadow-xl">
+                <section className="p-4 sm:p-6 space-y-8">
+                  {tabItems.map((tab) => (
+                    <TabsContent key={tab.key} value={tab.key} className="mt-0">
+                      {(() => {
+                        const Comp = TabComponents[tab.key];
+                        return Comp ? <Comp /> : null;
+                      })()}
+                    </TabsContent>
+                  ))}
+
+                  {/* Then render any page-specific children you pass into the layout */}
+                  {children}
+                </section>
+              </div>
+            </div>
+
+            <footer className="px-6 py-4 text-xs text-slate-500/80">
+              © {new Date().getFullYear()} Admin Console
+            </footer>
+          </main>
+        </Tabs>
       )}
-
-      {/* Content below tabs */}
-      <main style={{ paddingTop: contentTopPadding }}>
-        <div className="p-4 sm:p-6">
-          <div className="rounded-2xl border border-slate-700/60 bg-slate-900/40 backdrop-blur shadow-xl">
-            <section className="p-4 sm:p-6 space-y-8">
-              {/* Render the active tab component */}
-              {ActiveTabComponent && <ActiveTabComponent />}
-
-              {/* Then render any page-specific children you pass into the layout */}
-              {children}
-            </section>
-          </div>
-        </div>
-
-        <footer className="px-6 py-4 text-xs text-slate-500/80">
-          © {new Date().getFullYear()} Admin Console
-        </footer>
-      </main>
     </div>
   );
 }

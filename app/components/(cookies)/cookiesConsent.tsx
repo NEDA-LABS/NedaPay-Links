@@ -48,6 +48,7 @@ export function CookieConsentModal() {
     analytics: false,
   });
   const { loading, hasConsent } = useHasSavedConsent();
+  // console.log("hasConsent", hasConsent);  //debug
 
   // Show the modal if no consent cookie is present (except on /legal pages)
   const suppress = useMemo(() => pathname?.startsWith("/legal"), [pathname]);

@@ -99,7 +99,7 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto bg-slate-800">
       <CardHeader>
         <CardTitle>Add Bank Account</CardTitle>
         <CardDescription>
@@ -118,7 +118,7 @@ export function BankAccountForm({ onSuccess }: BankAccountFormProps) {
                 <SelectTrigger>
                   <SelectValue placeholder="Select a bank" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-slate-800">
                   {isLoadingMethods && (
                     <SelectItem disabled value="loading">
                       Loading banks…

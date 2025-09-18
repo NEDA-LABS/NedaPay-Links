@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { usePrivy } from '@privy-io/react-auth';
 
 const onboardingSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -25,7 +26,7 @@ type OnboardingFormData = z.infer<typeof onboardingSchema>;
 export function OnboardingForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { user, getAccessToken } = usePrivy();
   const {
     register,
     handleSubmit,
@@ -44,38 +45,49 @@ export function OnboardingForm() {
       formData.append('idNumber', data.idNumber);
       formData.append('idFile', data.idFile);
 
-      const response = await fetch('/api/idrx/onboarding', {
+      const tk = await getAccessToken();
+
+      const response = await fetch('/api/idrxco/onboarding', {
         method: 'POST',
         body: formData,
+        headers: { Authorization: `Bearer ${tk}` },
       });
 
+      const json = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error('Onboarding failed');
+        const msg = json?.message || 'Onboarding failed';
+        const code = json?.statusCode || response.status;
+        throw new Error(`${msg} (code ${code})`);
       }
 
-      return response.json();
+      return json as { statusCode: number; message: string; data?: { id: number; fullname: string; createdAt: string } };
     },
-    onSuccess: () => {
+    onSuccess: (payload) => {
+      const name = payload?.data?.fullname || 'User';
       toast({
-        title: 'Success!',
-        description: 'You have been successfully onboarded.',
+        title: 'Onboarding Complete',
+        description: `${name} has been successfully onboarded.`,
       });
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
+      // Optional: redirect after a short delay
+      setTimeout(() => {
+        try { window.location.href = '/dashboard'; } catch {}
+      }, 600);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
-        title: 'Error',
-        description: error.message || 'Something went wrong. Please try again.',
+        title: 'Onboarding Error',
+        description: error?.message || 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
     },
   });
 
   const onSubmit = (data: OnboardingFormData) => {
     setIsSubmitting(true);
     onboardingMutation.mutate(data);
-    setIsSubmitting(false);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,11 +98,11 @@ export function OnboardingForm() {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto bg-slate-900/50">
       <CardHeader>
-        <CardTitle>Complete Your Profile</CardTitle>
+        <CardTitle>Onboard User to IDRXCO</CardTitle>
         <CardDescription>
-          Please provide your information to complete the onboarding process.
+          Add all necessary user information
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -161,7 +173,8 @@ export function OnboardingForm() {
 
           <Button
             type="submit"
-            className="w-full"
+            variant={"default"}
+            className="w-full bg-green-900"
             disabled={isSubmitting || onboardingMutation.isPending}
           >
             {isSubmitting ? 'Submitting...' : 'Complete Onboarding'}

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Repeat, Send, Link as LinkIcon, FileText, Users, Key } from 'lucide-react';
 
 const navItems = [
-  { name: 'Dashboard', href: '/idrxco', icon: Home },
+  // { name: 'Dashboard', href: '/idrxco', icon: Home },
   { name: 'Redeem', href: '/idrxco/redeem', icon: Repeat },
   { name: 'Send', href: '#', icon: Send },
   { name: 'Bridge', href: '#', icon: LinkIcon },

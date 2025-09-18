@@ -15,7 +15,7 @@ export default function DashboardLayout({
         <div className="flex min-h-screen bg-gray-50">
           <Sidebar />
           <div className="flex-1">
-            <DashboardNav />
+            {/* <DashboardNav /> */}
             <main className="container mx-auto py-8 px-4">
               {children}
             </main>

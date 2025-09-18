@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     if (!record) {
       return NextResponse.json({ preferences: null });
     }
+    // console.log(record.preferences); //debug
     return NextResponse.json({ preferences: record.preferences });
   } catch (err) {
     console.error("cookie-consent check error", err);

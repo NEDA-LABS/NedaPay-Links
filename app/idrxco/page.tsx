@@ -11,10 +11,10 @@ export default function DashboardPage() {
         <p className="text-gray-600">Manage your IDRX offramping activities</p>
       </div>
 
-      <DashboardStats />
+      {/* <DashboardStats /> */}
       
       <div className="grid gap-8 md:grid-cols-2">
-        <QuickActions />
+        {/* <QuickActions /> */}
         <RecentTransactions />
       </div>
     </div>
