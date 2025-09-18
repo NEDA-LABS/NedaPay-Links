@@ -169,22 +169,36 @@ function RampsPage() {
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-0 bg-slate-200 border border-indigo-700">
-                    <Command className="bg-slate-200">
+                  <PopoverContent 
+                    className="w-full p-0 bg-slate-200 border border-indigo-700" 
+                    side="bottom" 
+                    align="start"
+                    sideOffset={4}
+                    avoidCollisions={true}
+                    collisionPadding={8}
+                    style={{
+                      maxHeight: 'min(60vh, 300px)',
+                      minHeight: '200px'
+                    }}
+                  >
+                    <Command className="bg-slate-200 h-full">
                       <CommandInput
                         placeholder="Search countries..."
-                        className="bg-slate-100 border-slate-300 text-slate-800"
+                        className="bg-slate-100 border-slate-300 text-slate-800 h-12 px-3 sticky top-0 z-10"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck="false"
                       />
-                      <CommandEmpty className="text-slate-600 p-4">
+                      <CommandEmpty className="text-slate-600 p-4 text-center">
                         No country found.
                       </CommandEmpty>
-                      <CommandGroup className="max-h-60 overflow-auto">
+                      <CommandGroup className="max-h-[calc(60vh-3rem)] sm:max-h-60 overflow-auto p-1 pb-2">
                         {countries.map((country) => (
                           <CommandItem
                             key={country.id}
                             value={`${country.name} ${country.currency} ${country.currencySymbol}`}
                             onSelect={() => handleCountrySelect(country.id)}
-                            className="cursor-pointer hover:bg-slate-300 text-slate-800"
+                            className="cursor-pointer hover:bg-slate-300 text-slate-800 p-3 rounded-md m-1 min-h-[3rem] touch-manipulation"
                           >
                             <div className="flex items-center gap-3 w-full">
                               <span className="text-lg">{country.flag}</span>

@@ -19,12 +19,17 @@ interface VerificationStepProps {
 
 // Country codes for supported African countries
 const COUNTRY_CODES = [
-  { code: '+255', country: 'Tanzania', flag: '🇹🇿' },
-  { code: '+254', country: 'Kenya', flag: '🇰🇪' },
-  { code: '+256', country: 'Uganda', flag: '🇺🇬' },
-  { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
-  { code: '+233', country: 'Ghana', flag: '🇬🇭' },
+  { code: '+255', country: 'Tanzania', flag: '🇹🇿', currency: 'TZS' },
+  { code: '+254', country: 'Kenya', flag: '🇰🇪', currency: 'KES' },
+  { code: '+256', country: 'Uganda', flag: '🇺🇬', currency: 'UGX' },
+  { code: '+234', country: 'Nigeria', flag: '🇳🇬', currency: 'NGN' },
+  { code: '+233', country: 'Ghana', flag: '🇬🇭', currency: 'GHS' },
 ];
+
+// Get country code based on currency
+const getCountryCodeByCurrency = (currency: string) => {
+  return COUNTRY_CODES.find(cc => cc.currency === currency)?.code || '+255';
+};
 
 const VerificationStep: React.FC<VerificationStepProps> = ({
   institution,
@@ -45,41 +50,99 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
 
   
   // Mobile number specific states
-  const [selectedCountryCode, setSelectedCountryCode] = useState('+255'); // Default to Tanzania
+  const [selectedCountryCode, setSelectedCountryCode] = useState(() => getCountryCodeByCurrency(fiat));
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [inputError, setInputError] = useState('');
 
-  // Format phone number as user types
-  const formatPhoneNumber = (value: string) => {
+  // Format phone number as user types with country-specific formatting
+  const formatPhoneNumber = (value: string, countryCode: string) => {
     // Remove all non-digits
     const digits = value.replace(/\D/g, '');
     
-    // Add spaces for better readability
-    if (digits.length > 3 && digits.length <= 6) {
-      return digits.replace(/(\d{3})(\d+)/, '$1 $2');
-    } else if (digits.length > 6) {
-      return digits.replace(/(\d{3})(\d{3})(\d+)/, '$1 $2 $3');
+    // Country-specific formatting
+    switch (countryCode) {
+      case '+254': // Kenya
+        if (digits.length > 3 && digits.length <= 6) {
+          return digits.replace(/(\d{3})(\d+)/, '$1 $2');
+        } else if (digits.length > 6) {
+          return digits.replace(/(\d{3})(\d{3})(\d+)/, '$1 $2 $3');
+        }
+        break;
+      case '+255': // Tanzania
+        if (digits.length > 3 && digits.length <= 6) {
+          return digits.replace(/(\d{3})(\d+)/, '$1 $2');
+        } else if (digits.length > 6) {
+          return digits.replace(/(\d{3})(\d{3})(\d+)/, '$1 $2 $3');
+        }
+        break;
+      case '+256': // Uganda
+        if (digits.length > 3 && digits.length <= 6) {
+          return digits.replace(/(\d{3})(\d+)/, '$1 $2');
+        } else if (digits.length > 6) {
+          return digits.replace(/(\d{3})(\d{3})(\d+)/, '$1 $2 $3');
+        }
+        break;
+      case '+234': // Nigeria
+        if (digits.length > 3 && digits.length <= 7) {
+          return digits.replace(/(\d{3})(\d+)/, '$1 $2');
+        } else if (digits.length > 7) {
+          return digits.replace(/(\d{3})(\d{4})(\d+)/, '$1 $2 $3');
+        }
+        break;
+      case '+233': // Ghana
+        if (digits.length > 2 && digits.length <= 5) {
+          return digits.replace(/(\d{2})(\d+)/, '$1 $2');
+        } else if (digits.length > 5) {
+          return digits.replace(/(\d{2})(\d{3})(\d+)/, '$1 $2 $3');
+        }
+        break;
+      default:
+        // Generic formatting
+        if (digits.length > 3 && digits.length <= 6) {
+          return digits.replace(/(\d{3})(\d+)/, '$1 $2');
+        } else if (digits.length > 6) {
+          return digits.replace(/(\d{3})(\d{3})(\d+)/, '$1 $2 $3');
+        }
     }
     return digits;
   };
 
+  // Validate phone number based on country
+  const validatePhoneNumber = (digits: string, countryCode: string) => {
+    const minLength = countryCode === '+233' ? 9 : 8; // Ghana has 9 digits, others 8+
+    const maxLength = countryCode === '+234' ? 11 : 10; // Nigeria can have 11, others max 10
+    
+    if (digits.length > 0 && digits.length < minLength) {
+      return 'Phone number is too short';
+    } else if (digits.length > maxLength) {
+      return 'Phone number is too long';
+    }
+    return '';
+  };
+
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const formatted = formatPhoneNumber(value);
+    
+    // Prevent input if it would exceed reasonable length
+    const digits = value.replace(/\D/g, '');
+    if (digits.length > 15) return;
+    
+    const formatted = formatPhoneNumber(value, selectedCountryCode);
     setPhoneNumber(formatted);
+    
+    // Clear previous errors
     setInputError('');
     
     // Update the parent component's accountIdentifier with full number
-    const fullNumber = selectedCountryCode + formatted.replace(/\D/g, '');
+    const cleanDigits = formatted.replace(/\D/g, '');
+    const fullNumber = selectedCountryCode + cleanDigits;
     setAccountIdentifier(fullNumber);
     
-    // Validate phone number length
-    const digits = formatted.replace(/\D/g, '');
-    if (digits.length > 0 && digits.length < 8) {
-      setInputError('Phone number seems too short');
-    } else if (digits.length > 15) {
-      setInputError('Phone number seems too long');
+    // Validate phone number
+    const validationError = validatePhoneNumber(cleanDigits, selectedCountryCode);
+    if (validationError) {
+      setInputError(validationError);
     }
   };
 
@@ -93,29 +156,63 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
     setSelectedCountryCode(newCode);
     setIsDropdownOpen(false);
     
-    // Update full number with new country code
+    // Reformat existing phone number with new country code
     if (phoneNumber) {
-      const fullNumber = newCode + phoneNumber.replace(/\D/g, '');
+      const digits = phoneNumber.replace(/\D/g, '');
+      const reformatted = formatPhoneNumber(digits, newCode);
+      setPhoneNumber(reformatted);
+      
+      const fullNumber = newCode + digits;
       setAccountIdentifier(fullNumber);
+      
+      // Revalidate with new country code
+      const validationError = validatePhoneNumber(digits, newCode);
+      setInputError(validationError);
     }
   };
 
-  // Parse existing accountIdentifier when switching to mobile network
+  // Auto-select country code based on currency when switching to mobile network
   useEffect(() => {
-    if (isMobileNetwork && accountIdentifier && accountIdentifier.startsWith('+')) {
-      // Try to extract country code and phone number
-      const countryCode = COUNTRY_CODES.find(cc => accountIdentifier.startsWith(cc.code));
-      if (countryCode) {
-        setSelectedCountryCode(countryCode.code);
-        const remainingNumber = accountIdentifier.slice(countryCode.code.length);
-        setPhoneNumber(formatPhoneNumber(remainingNumber));
+    if (isMobileNetwork) {
+      // Auto-select country code based on currency
+      const currencyBasedCode = getCountryCodeByCurrency(fiat);
+      setSelectedCountryCode(currencyBasedCode);
+      
+      // If there's an existing accountIdentifier, try to parse it
+      if (accountIdentifier && accountIdentifier.startsWith('+')) {
+        const countryCode = COUNTRY_CODES.find(cc => accountIdentifier.startsWith(cc.code));
+        if (countryCode) {
+          const remainingNumber = accountIdentifier.slice(countryCode.code.length);
+          setPhoneNumber(formatPhoneNumber(remainingNumber, countryCode.code));
+        }
       }
     } else if (!isMobileNetwork) {
       // Reset mobile-specific states when switching to bank
       setPhoneNumber('');
-      setSelectedCountryCode('+255');
+      setSelectedCountryCode(getCountryCodeByCurrency(fiat));
+      setInputError('');
     }
-  }, [isMobileNetwork, institution]);
+  }, [isMobileNetwork, institution, fiat]);
+
+  // Update country code when currency changes
+  useEffect(() => {
+    const currencyBasedCode = getCountryCodeByCurrency(fiat);
+    setSelectedCountryCode(currencyBasedCode);
+    
+    // If there's an existing phone number, reformat it with the new country code
+    if (phoneNumber && isMobileNetwork) {
+      const digits = phoneNumber.replace(/\D/g, '');
+      const reformatted = formatPhoneNumber(digits, currencyBasedCode);
+      setPhoneNumber(reformatted);
+      
+      const fullNumber = currencyBasedCode + digits;
+      setAccountIdentifier(fullNumber);
+      
+      // Revalidate with new country code
+      const validationError = validatePhoneNumber(digits, currencyBasedCode);
+      setInputError(validationError);
+    }
+  }, [fiat]);
 
   // Reset states when institution changes
   const handleInstitutionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -157,11 +254,24 @@ const VerificationStep: React.FC<VerificationStepProps> = ({
             disabled={isAccountVerified}
           >
             <option value="" className="bg-gray-100 text-gray-500">Select Institution</option>
-            {institutions.map((inst) => (
-              <option key={inst.code} value={inst.code} className="bg-gray-100 text-gray-900">
-                {inst.name} {inst.type === "mobile_money" ? "(Mobile Network)" : "(Bank)"}
-              </option>
-            ))}
+            {institutions
+              .sort((a, b) => {
+                // For Kenyan institutions, put MPESA first
+                if (fiat === "KES") {
+                  if (a.name.toLowerCase().includes('mpesa') || a.name.toLowerCase().includes('m-pesa')) return -1;
+                  if (b.name.toLowerCase().includes('mpesa') || b.name.toLowerCase().includes('m-pesa')) return 1;
+                }
+                // Then sort by type (mobile money first, then banks)
+                if (a.type === "mobile_money" && b.type !== "mobile_money") return -1;
+                if (b.type === "mobile_money" && a.type !== "mobile_money") return 1;
+                // Finally sort alphabetically
+                return a.name.localeCompare(b.name);
+              })
+              .map((inst) => (
+                <option key={inst.code} value={inst.code} className="bg-gray-100 text-gray-900">
+                  {inst.name} {inst.type === "mobile_money" ? "(Mobile Network)" : "(Bank)"}
+                </option>
+              ))}
           </select>
         </div>
         
