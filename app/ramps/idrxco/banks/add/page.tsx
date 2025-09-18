@@ -1,5 +1,5 @@
 // app/(dashboard)/dashboard/banks/add/page.tsx
-import { BankAccountForm } from '@/idrxco/components/BankAccountForm';
+import { BankAccountForm } from '@/ramps/idrxco/components/BankAccountForm';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';

@@ -1,5 +1,5 @@
 // app/(dashboard)/dashboard/redeem/page.tsx
-import { RedeemForm } from '@/idrxco/components/RedeemForm';
+import { RedeemForm } from '@/ramps/idrxco/components/RedeemForm';
 
 export default function RedeemPage() {
   return (

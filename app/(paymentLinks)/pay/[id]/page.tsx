@@ -16,7 +16,7 @@ import {
   LogIn,
 } from "lucide-react";
 import QRCode from "qrcode";
-import { SUPPORTED_CHAINS } from "@/offramp/offrampHooks/constants";
+import { SUPPORTED_CHAINS } from "@/ramps/payramp/offrampHooks/constants";
 import { stablecoins } from "@/data/stablecoins";
 import { mainnet, base, polygon, arbitrum, celo, scroll, bsc } from "viem/chains";
 import Header from "@/components/Header";

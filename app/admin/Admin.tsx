@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { OnboardingForm } from '@/idrxco/components/OnboardingForm';
+import { OnboardingForm } from '@/ramps/idrxco/components/OnboardingForm';
 import OnboardingStatus from './components/OnboardingStatus';
 
 // IMPORT THE TAB COMPONENTS
