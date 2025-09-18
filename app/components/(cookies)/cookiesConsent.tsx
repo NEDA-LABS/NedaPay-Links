@@ -86,32 +86,32 @@ export function CookieConsentModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg border-slate-700/60 bg-slate-950 text-slate-200">
-        <DialogHeader>
-          <DialogTitle className="bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent">
+      <DialogContent className="max-w-sm sm:max-w-md md:max-w-lg border-slate-700/60 bg-slate-950 text-slate-200 mx-4 max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="bg-gradient-to-r from-indigo-300 via-purple-300 to-blue-300 bg-clip-text text-transparent text-lg sm:text-xl">
             Cookies & Privacy
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-slate-400 text-sm leading-relaxed">
             We use necessary cookies to make NedaPay work. With your consent, we
             will also use analytics to improve your experience.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 space-y-4">
-          <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 p-3">
-            <div>
-              <p className="font-medium text-slate-100">Necessary</p>
-              <p className="text-sm text-slate-400">
-                Required for basic site functionality (cannot be turned off).
+        <div className="mt-3 sm:mt-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border border-slate-800 bg-slate-900/40 p-3 gap-2">
+            <div className="flex-1">
+              <p className="font-medium text-slate-100 text-sm">Necessary</p>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Required for basic site functionality.
               </p>
             </div>
-            <Switch checked disabled />
+            <Switch checked disabled className="self-start sm:self-center" />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 p-3">
-            <div>
-              <p className="font-medium text-slate-100">Analytics</p>
-              <p className="text-sm text-slate-400">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border border-slate-800 bg-slate-900/40 p-3 gap-2">
+            <div className="flex-1">
+              <p className="font-medium text-slate-100 text-sm">Analytics</p>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
                 Helps us understand usage to improve the product.
               </p>
             </div>
@@ -120,6 +120,7 @@ export function CookieConsentModal() {
               onCheckedChange={(v) =>
                 setPrefs((p) => ({ ...p, analytics: Boolean(v) }))
               }
+              className="self-start sm:self-center"
             />
           </div>
 
@@ -139,37 +140,37 @@ export function CookieConsentModal() {
           </div> */}
         </div>
 
-        <div className="mt-4 text-sm text-slate-400">
+        <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-slate-400">
           Read more in our{" "}
           {/* <Link href="/legal/cookies" className="underline underline-offset-4">
             Cookie Policy
           </Link>{" "}
           and{" "} */}
-          <Link href="/legal/privacy" className="underline underline-offset-4">
+          <Link href="/privacy" className="underline underline-offset-4">
             Privacy Policy
           </Link>
           .
         </div>
 
-        <Separator className="my-4 bg-slate-800" />
+        <Separator className="my-3 sm:my-4 bg-slate-800" />
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
           <Button
             variant="secondary"
-            className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800"
+            className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800 text-xs sm:text-sm py-2 px-3"
             onClick={rejectNonEssential}
           >
             Reject non‑essential
           </Button>
           <Button
             variant="outline"
-            className="border-indigo-700/60 bg-indigo-950/60 text-indigo-100 hover:bg-indigo-900/60"
+            className="border-indigo-700/60 bg-indigo-950/60 text-indigo-100 hover:bg-indigo-900/60 text-xs sm:text-sm py-2 px-3"
             onClick={saveChoices}
           >
             Save choices
           </Button>
           <Button
-            className="bg-gradient-to-r from-indigo-700 via-purple-700 to-blue-700 text-white hover:opacity-90"
+            className="bg-gradient-to-r from-indigo-700 via-purple-700 to-blue-700 text-white hover:opacity-90 text-xs sm:text-sm py-2 px-3"
             onClick={acceptAll}
           >
             Accept all
