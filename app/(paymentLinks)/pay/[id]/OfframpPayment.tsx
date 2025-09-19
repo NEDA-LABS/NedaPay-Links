@@ -498,6 +498,73 @@ export default function OffRampPayment({
   // -----------------------
   // Pay (inline version)
   // -----------------------
+  // Helper function to parse error messages
+  const parseTransactionError = (error: any): string => {
+    const errorMessage = error?.message || error?.toString() || "Unknown error";
+    
+    // Check for insufficient balance
+    if (errorMessage.includes("transfer amount exceeds balance") || 
+        errorMessage.includes("insufficient funds") ||
+        errorMessage.includes("ERC20: transfer amount exceeds balance")) {
+      return "Insufficient token balance. Please check your wallet balance and try again.";
+    }
+    
+    // Check for gas estimation errors
+    if (errorMessage.includes("cannot estimate gas") || 
+        errorMessage.includes("UNPREDICTABLE_GAS_LIMIT") ||
+        errorMessage.includes("EstimateGasExecutionError")) {
+      return "Transaction may fail due to insufficient balance or network issues. Please check your balance and try again.";
+    }
+    
+    // Check for insufficient gas
+    if (errorMessage.includes("insufficient funds for gas") ||
+        errorMessage.includes("insufficient funds for intrinsic transaction cost")) {
+      return "Insufficient native token balance to pay for gas fees. Please add more ETH/native tokens to your wallet.";
+    }
+    
+    // Check for user rejection
+    if (errorMessage.includes("user rejected") || 
+        errorMessage.includes("User denied") ||
+        errorMessage.includes("rejected")) {
+      return "Transaction was cancelled by user.";
+    }
+    
+    // Check for network errors
+    if (errorMessage.includes("network") || errorMessage.includes("RPC")) {
+      return "Network error. Please check your connection and try again.";
+    }
+    
+    // Check for allowance issues
+    if (errorMessage.includes("allowance") || errorMessage.includes("approve")) {
+      return "Token allowance error. Please try the transaction again.";
+    }
+    
+    return errorMessage.length > 100 ? 
+      "Transaction failed. Please check your wallet and try again." : 
+      errorMessage;
+  };
+
+  // Helper function to check token balance
+  const checkTokenBalance = async (tokenAddress: string, walletAddress: string, requiredAmount: ethers.BigNumber): Promise<boolean> => {
+    try {
+      const provider = new ethers.providers.Web3Provider(
+        await connectedWallet.getEthereumProvider()
+      );
+      
+      const erc20 = new ethers.Contract(
+        tokenAddress,
+        ["function balanceOf(address) view returns (uint256)"],
+        provider
+      );
+      
+      const balance = await erc20.balanceOf(walletAddress);
+      return balance.gte(requiredAmount);
+    } catch (error) {
+      console.warn("Balance check failed:", error);
+      return true; // Allow transaction to proceed if balance check fails
+    }
+  };
+
   const handlePay = async () => {
     setError(null);
     setLoading(true);
@@ -595,6 +662,15 @@ export default function OffRampPayment({
           return;
         }
 
+        // Check token balance before proceeding
+        const hasBalance = await checkTokenBalance(tokenAddress, walletAddr, valueBN);
+        if (!hasBalance) {
+          setError(`Insufficient ${selectedToken} balance. Please check your wallet and try again.`);
+          setLoading(false);
+          setTxStatus("failed");
+          return;
+        }
+
         // Use external provider from Privy wallet
         const provider = new ethers.providers.Web3Provider(
           await connectedWallet.getEthereumProvider(),
@@ -608,10 +684,20 @@ export default function OffRampPayment({
           signer
         );
 
-        const tx = await erc20.transfer(toSendAddress, valueBN);
-        const hash = tx.hash as string;
-        setTxHash(hash);
-        setTxStatus("pending");
+        let hash: string;
+        try {
+          const tx = await erc20.transfer(toSendAddress, valueBN);
+          hash = tx.hash as string;
+          setTxHash(hash);
+          setTxStatus("pending");
+        } catch (transferError: any) {
+          console.error("ERC-20 transfer error:", transferError);
+          const friendlyError = parseTransactionError(transferError);
+          setError(friendlyError);
+          setTxStatus("failed");
+          setLoading(false);
+          return;
+        }
 
         const saved = await saveTransactionToDB(
           toSendAddress,
@@ -679,23 +765,23 @@ export default function OffRampPayment({
           return;
         }
 
-        // OPTION A: use Privy's hook, **pass the address** so it knows which wallet
-        const { hash } = await sendTransaction(
-          { to: toSendAddress, value: value.toString() },
-          { address: connectedWallet.address }
-        );
-
-        // OPTION B (alternative): use signer directly
-        // const provider = new ethers.providers.Web3Provider(
-        //   await connectedWallet.getEthereumProvider(),
-        //   "any"
-        // );
-        // const signer = provider.getSigner();
-        // const tx = await signer.sendTransaction({ to, value });
-        // const hash = tx.hash as string;
-
-        setTxHash(hash);
-        setTxStatus("pending");
+        let hash: string;
+        try {
+          const result = await sendTransaction(
+            { to: toSendAddress, value: value.toString() },
+            { address: connectedWallet.address }
+          );
+          hash = result.hash;
+          setTxHash(hash);
+          setTxStatus("pending");
+        } catch (nativeError: any) {
+          console.error("Native token transfer error:", nativeError);
+          const friendlyError = parseTransactionError(nativeError);
+          setError(friendlyError);
+          setTxStatus("failed");
+          setLoading(false);
+          return;
+        }
 
         const saved = await saveTransactionToDB(
           toSendAddress,
@@ -753,7 +839,8 @@ export default function OffRampPayment({
       }
     } catch (e: any) {
       console.error("Payment error:", e);
-      setError(e?.message || "Transaction failed");
+      const friendlyError = parseTransactionError(e);
+      setError(friendlyError);
       setTxStatus("failed");
     }
 

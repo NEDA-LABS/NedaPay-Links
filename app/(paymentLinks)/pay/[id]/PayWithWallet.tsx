@@ -296,6 +296,73 @@ export default function PayWithWallet({
     }
   };
 
+  // Helper function to parse error messages
+  const parseTransactionError = (error: any): string => {
+    const errorMessage = error?.message || error?.toString() || "Unknown error";
+    
+    // Check for insufficient balance
+    if (errorMessage.includes("transfer amount exceeds balance") || 
+        errorMessage.includes("insufficient funds") ||
+        errorMessage.includes("ERC20: transfer amount exceeds balance")) {
+      return "Insufficient token balance. Please check your wallet balance and try again.";
+    }
+    
+    // Check for gas estimation errors
+    if (errorMessage.includes("cannot estimate gas") || 
+        errorMessage.includes("UNPREDICTABLE_GAS_LIMIT") ||
+        errorMessage.includes("EstimateGasExecutionError")) {
+      return "Transaction may fail due to insufficient balance or network issues. Please check your balance and try again.";
+    }
+    
+    // Check for insufficient gas
+    if (errorMessage.includes("insufficient funds for gas") ||
+        errorMessage.includes("insufficient funds for intrinsic transaction cost")) {
+      return "Insufficient native token balance to pay for gas fees. Please add more ETH/native tokens to your wallet.";
+    }
+    
+    // Check for user rejection
+    if (errorMessage.includes("user rejected") || 
+        errorMessage.includes("User denied") ||
+        errorMessage.includes("rejected")) {
+      return "Transaction was cancelled by user.";
+    }
+    
+    // Check for network errors
+    if (errorMessage.includes("network") || errorMessage.includes("RPC")) {
+      return "Network error. Please check your connection and try again.";
+    }
+    
+    // Check for allowance issues
+    if (errorMessage.includes("allowance") || errorMessage.includes("approve")) {
+      return "Token allowance error. Please try the transaction again.";
+    }
+    
+    return errorMessage.length > 100 ? 
+      "Transaction failed. Please check your wallet and try again." : 
+      errorMessage;
+  };
+
+  // Helper function to check token balance
+  const checkTokenBalance = async (tokenAddress: string, walletAddress: string, requiredAmount: ethers.BigNumber, decimals: number): Promise<boolean> => {
+    try {
+      const provider = new ethers.providers.Web3Provider(
+        await connectedWallet.getEthereumProvider()
+      );
+      
+      const erc20 = new ethers.Contract(
+        tokenAddress,
+        ["function balanceOf(address) view returns (uint256)"],
+        provider
+      );
+      
+      const balance = await erc20.balanceOf(walletAddress);
+      return balance.gte(requiredAmount);
+    } catch (error) {
+      console.warn("Balance check failed:", error);
+      return true; // Allow transaction to proceed if balance check fails
+    }
+  };
+
   const handlePay = async () => {
     setError(null);
     setLoading(true);
@@ -375,6 +442,15 @@ export default function PayWithWallet({
           valueBN = utils.parseUnits(amount, decimals);
         } catch {
           setError("Invalid amount format.");
+          setLoading(false);
+          setTxStatus("failed");
+          return;
+        }
+
+        // Check token balance before proceeding
+        const hasBalance = await checkTokenBalance(tokenAddress, walletAddress, valueBN, decimals);
+        if (!hasBalance) {
+          setError(`Insufficient ${currency} balance. Please check your wallet and try again.`);
           setLoading(false);
           setTxStatus("failed");
           return;
@@ -460,7 +536,8 @@ export default function PayWithWallet({
             }
           } catch (e: any) {
             console.error("Payment (with fee) error:", e);
-            setError(e?.message || "Payment with fee failed");
+            const friendlyError = parseTransactionError(e);
+            setError(friendlyError);
             setTxStatus("failed");
             setLoading(false);
             return;
@@ -480,10 +557,20 @@ export default function PayWithWallet({
             signer
           );
           
-          const tx = await erc20.transfer(to, valueBN);
-          const hash = tx.hash;
-          setTxHash(hash);
-          setTxStatus("pending");
+          let hash: string;
+          try {
+            const tx = await erc20.transfer(to, valueBN);
+            hash = tx.hash;
+            setTxHash(hash);
+            setTxStatus("pending");
+          } catch (transferError: any) {
+            console.error("ERC-20 transfer error:", transferError);
+            const friendlyError = parseTransactionError(transferError);
+            setError(friendlyError);
+            setTxStatus("failed");
+            setLoading(false);
+            return;
+          }
   
           const saved = await saveTransactionToDB(
             to,
@@ -554,13 +641,24 @@ export default function PayWithWallet({
           return;
         }
   
-        const { hash } = await sendTransaction({
-          to,
-          value: value.toString(),
-        });
-  
-        setTxHash(hash);
-        setTxStatus("pending");
+        let hash: string;
+        try {
+          const result = await sendTransaction({
+            to,
+            value: value.toString(),
+          });
+          hash = result.hash;
+    
+          setTxHash(hash);
+          setTxStatus("pending");
+        } catch (nativeError: any) {
+          console.error("Native token transfer error:", nativeError);
+          const friendlyError = parseTransactionError(nativeError);
+          setError(friendlyError);
+          setTxStatus("failed");
+          setLoading(false);
+          return;
+        }
   
         const saved = await saveTransactionToDB(
           to,
@@ -620,7 +718,8 @@ export default function PayWithWallet({
       }
     } catch (e: any) {
       console.error("Payment error:", e);
-      setError(e.message || "Transaction failed");
+      const friendlyError = parseTransactionError(e);
+      setError(friendlyError);
       setTxStatus("failed");
     }
   
