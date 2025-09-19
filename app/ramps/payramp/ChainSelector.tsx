@@ -3,6 +3,10 @@ import TokenBalanceCard from './TokenBalanceCard';
 import { ChainConfig } from './offrampHooks/constants';
 import { useBalances } from './offrampHooks/useBalance';
 import { useWallets } from '@privy-io/react-auth';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
+import { stablecoins } from '../../data/stablecoins';
 
 interface ChainSelectorProps {
   chains: ChainConfig[];
@@ -21,6 +25,12 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
     return chains.find(c => c.id === Number(activeChainId)) ?? chains[0];
   }, [activeChainId, chains]);
 
+  // Helper function to get token icon
+  const getTokenIcon = (token: string) => {
+    const stablecoin = stablecoins.find(s => s.baseToken === token);
+    return stablecoin?.flag || '/default-token-icon.png';
+  };
+
   const handleTokenSelect = async (chainId: string, token: string) => {
     setSelectedTokens(prev => ({ ...prev, [chainId]: token }));
 
@@ -38,7 +48,7 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-purple-900/30 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/10 overflow-hidden">
+    <div className="bg-slate-900 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/10 overflow-hidden">
       <div className="mb-6">
         <h2 className="text-lg font-bold text-white bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
           Select Token
@@ -46,31 +56,32 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
         <p className="text-gray-400 text-sm mt-2">Choose a chain, then tap a token to proceed to cash-out</p>
       </div>
 
-      {/* Dropdown with icons for all screen sizes */}
+      {/* Network Selection with shadcn Select */}
       <div>
-        <label htmlFor="chain-select" className="block text-xs text-gray-300 mb-2">Network</label>
-        <div className="relative">
-          <select
-            id="chain-select"
-            value={activeChainId}
-            onChange={(e) => setActiveChainId(e.target.value)}
-            className="w-full appearance-none rounded-xl bg-slate-800/70 border border-white/10 px-4 py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-          >
+        <label className="block text-xs text-gray-300 mb-2">Network</label>
+        <Select value={activeChainId} onValueChange={setActiveChainId}>
+          <SelectTrigger className="w-full rounded-xl bg-slate-800/70 border border-white/10 px-4 py-3 text-white focus:ring-2 focus:ring-purple-500/50 hover:bg-slate-800/80 transition-colors">
+            <SelectValue placeholder="Select a network" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-800 border border-white/10 rounded-xl">
             {chains.map((chain) => (
-              <option key={chain.id} value={chain.id.toString()}>
-                {chain.name}
-              </option>
+              <SelectItem 
+                key={chain.id} 
+                value={chain.id.toString()}
+                className="text-white hover:bg-slate-700/50 focus:bg-slate-700/50 cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <img src={chain.icon} alt={chain.name} className="w-4 h-4 rounded-full" />
+                  <span>{chain.name}</span>
+                </div>
+              </SelectItem>
             ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="opacity-70">
-              <path d="M6 9l6 6 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        </div>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Active chain card & its tokens */}
-        {activeChain && (
+      {/* Active chain card & its tokens */}
+      {activeChain && (
           <div
             key={activeChain.id}
             className="mt-5 border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-800/50 rounded-2xl p-5"
@@ -87,10 +98,11 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
               {activeChain.tokens.map((token) => {
                 const currentSelectedToken = selectedTokens[activeChain.id.toString()] || activeChain.tokens[0];
                 return (
-                  <button
+                  <Button
                     key={`${activeChain.id}-${token}`}
+                    variant="ghost"
                     onClick={() => handleTokenSelect(activeChain.id.toString(), token)}
-                    className="w-full text-left cursor-pointer rounded-xl p-2 transition-all duration-200 flex items-center justify-between bg-gradient-to-r from-blue-600/30 to-purple-600/30 border border-blue-500/50 shadow-lg hover:translate-y-[-1px] active:translate-y-[0px]"
+                    className="w-full h-auto p-2 text-left justify-start bg-gradient-to-r from-blue-600/30 to-purple-600/30 border border-blue-500/50 shadow-lg hover:translate-y-[-1px] active:translate-y-[0px] hover:from-blue-600/40 hover:to-purple-600/40 transition-all duration-200"
                   >
                     <div className="flex-1 min-w-0">
                       <TokenBalanceCard
@@ -101,13 +113,12 @@ const ChainSelector: React.FC<ChainSelectorProps> = ({ chains, onSelectChain, us
                         compactView
                       />
                     </div>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
           </div>
         )}
-      </div>
 
       <div className="mt-6 pt-4 border-t border-white/10 text-center">
         <p className="text-xs text-gray-500">Powered by secure off-chain protocols</p>

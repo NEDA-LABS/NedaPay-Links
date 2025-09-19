@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
-import { FaBell, FaTrash, FaTimes } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Bell, Trash2, X, Loader2 } from 'lucide-react';
 import { useWallets } from '@privy-io/react-auth';
 import { addPaymentTransaction, PaymentTransaction } from '../utils/paymentStorage';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 
 // Fallback UUID generator for environments without crypto.randomUUID
 function uuidFallback() {
@@ -221,130 +226,147 @@ export default function NotificationTab() {
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
-    <div className="relative">
-      <button
-        className="relative text-white bg-[#3E55E6] rounded-xl p-2 hover:!bg-blue-100 transition-colors duration-300"
-        aria-label="Notifications"
-        onClick={() => setOpen((o) => !o)}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative hover:bg-slate-100 transition-colors duration-200"
+          aria-label="Notifications"
+        >
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold bg-red-500 hover:bg-red-500"
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      
+      <PopoverContent 
+        className="w-80 p-0 bg-white/95 backdrop-blur-md border border-slate-200/50 shadow-2xl" 
+        align="end"
+        sideOffset={8}
       >
-        <FaBell size={18} className='text-white hover:text-blue-500 transition-colors duration-300'/>
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[1.25rem]">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-      </button>
-
-      {open && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-40 md:hidden" 
-            onClick={() => setOpen(false)}
-          />
-          
-          {/* Notification Panel */}
-          <div className="fixed md:absolute right-2 md:right-0 mt-2 w-80 md:w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-[70vh] md:max-h-[80vh] flex flex-col">
-            {/* Header */}
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-800 text-xs">Notifications</span>
-                {loading && (
-                  <div className="w-4 h-4 border-2 !border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {allNotifications.length > 0 && (
-                  <>
-                    <button 
-                      className="!text-xs text-blue-600 hover:!underline !bg-blue-100 hover:!bg-blue-200 px-3 py-1.5 !rounded-full transition"
-                      onClick={markAllRead}
-                      disabled={unreadCount === 0}
-                    >
-                      Mark all read
-                    </button>
-                    <button 
-                      className="!text-xs text-red-600 hover:!underline !bg-red-100 hover:!bg-red-200 px-3 py-1.5 !rounded-full transition"
-                      onClick={deleteAllNotifications}
-                    >
-                      Clear all
-                    </button>
-                  </>
-                )}
-                <button
-                  className="p-1 hover:!bg-slate-100 !rounded-full transition-colors"
-                  onClick={() => setOpen(false)}
-                >
-                  <FaTimes size={14} className="text-slate-500" />
-                </button>
-              </div>
-            </div>
-
-            {/* Notifications List */}
-            <div className="flex-1 overflow-y-auto">
-              {allNotifications.length === 0 ? (
-                <div className="p-6 text-center text-slate-500">
-                  <FaBell size={24} className="mx-auto mb-2 opacity-50" />
-                  <p>No notifications yet.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {allNotifications.map((notification) => (
-                    <div 
-                      key={notification.id} 
-                      className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer group ${
-                        !notification.read ? 'bg-blue-50 border-l-2 border-blue-500' : ''
-                      }`}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            {!notification.read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                            )}
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              notification.type === 'payment_received' 
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {notification.type || 'general'}
-                            </span>
-                            {notification.isLocal && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
-                                local
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-slate-900 mb-1 break-words">
-                            {notification.message}
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            {notification.timestamp}
-                          </div>
-                        </div>
-                        <button
-                          className="opacity-0 !group-hover:opacity-100 p-1 hover:!bg-red-100 !rounded-full transition-all"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (notification.isLocal) {
-                              deleteLocalNotification(notification.id);
-                            } else {
-                              deleteDbNotification(notification.id);
-                            }
-                          }}
-                        >
-                          <FaTrash size={12} className="text-red-500" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {/* Header */}
+        <div className="p-4 border-b border-slate-200/50 bg-gradient-to-r from-slate-50 to-indigo-50/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-slate-800 text-sm">Notifications</h3>
+              {loading && (
+                <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
               )}
             </div>
+            <div className="flex items-center gap-1">
+              {allNotifications.length > 0 && (
+                <>
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                    onClick={markAllRead}
+                    disabled={unreadCount === 0}
+                  >
+                    Mark all read
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={deleteAllNotifications}
+                  >
+                    Clear all
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 hover:bg-slate-100"
+                onClick={() => setOpen(false)}
+              >
+                <X className="h-3 w-3 text-slate-500" />
+              </Button>
+            </div>
           </div>
-        </>
-      )}
-    </div>
+        </div>
+
+        {/* Notifications List */}
+        <ScrollArea className="h-[400px]">
+          {allNotifications.length === 0 ? (
+            <div className="p-8 text-center">
+              <Bell className="h-8 w-8 mx-auto mb-3 text-slate-400" />
+              <p className="text-sm text-slate-500">No notifications yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {allNotifications.map((notification) => (
+                <div 
+                  key={notification.id} 
+                  className={`p-4 hover:bg-gradient-to-r hover:from-slate-50 hover:to-indigo-50/20 transition-all cursor-pointer group relative ${
+                    !notification.read 
+                      ? 'bg-gradient-to-r from-indigo-50/50 to-purple-50/30 border-l-2 border-indigo-500' 
+                      : ''
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 animate-pulse"></div>
+                        )}
+                        <Badge 
+                          variant={notification.type === 'payment_received' ? 'default' : 'secondary'}
+                          className={`text-xs ${
+                            notification.type === 'payment_received' 
+                              ? 'bg-green-100 text-green-700 hover:bg-green-100'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          {notification.type || 'general'}
+                        </Badge>
+                        {notification.isLocal && (
+                          <Badge 
+                            variant="outline"
+                            className="text-xs bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-50"
+                          >
+                            local
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-slate-900 mb-2 break-words leading-relaxed">
+                        {notification.message}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {notification.timestamp}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="opacity-0 group-hover:opacity-100 h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600 transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (notification.isLocal) {
+                          deleteLocalNotification(notification.id);
+                        } else {
+                          deleteDbNotification(notification.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
   );
 }
