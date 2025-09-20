@@ -143,6 +143,7 @@ export default function OffRampPayment({
   const [walletAddress, setWalletAddress] = useState("");
   const [refundAddress, setRefundAddress] = useState("");
   const [currentChainId, setCurrentChainId] = useState<number | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   // --- Privy ---
   const { wallets } = useWallets();
@@ -194,14 +195,15 @@ export default function OffRampPayment({
   // -----------------------
   const isValidAddress = (address: string) => utils.isAddress(address);
 
-  const calculateTokenAmount = () => {
-    if (!rate || !fiatAmount) return "0";
+  const calculateTokenAmount = (currentRate?: number) => {
+    const rateToUse = currentRate || rate;
+    if (!rateToUse || !fiatAmount) return "0";
     try {
       const parsedAmount = parseFloat(fiatAmount);
       // Calculate token amount needed so that (tokenAmount - 0.5% fee) = fiatAmount
       // Formula: tokenAmount = fiatAmount / (rate * (1 - 0.005))
       // This ensures the recipient gets exactly the requested fiat amount after fees
-      const tokenAmount = parsedAmount / (rate * (1 - 0.005));
+      const tokenAmount = parsedAmount / (rateToUse * (1 - 0.005));
       const formattedAmount = tokenAmount.toFixed(6);
       setCryptoAmount(formattedAmount);
       return formattedAmount;
@@ -276,7 +278,7 @@ export default function OffRampPayment({
     }
   };
 
-  const createOffRampOrder = async () => {
+  const createOffRampOrder = async (currentRate?: number) => {
     try {
       setLoading(true);
       setError(null);
@@ -284,14 +286,14 @@ export default function OffRampPayment({
       if (!refundAddress || !isValidAddress(refundAddress)) {
         throw new Error("Please enter a valid refund address");
       }
-      const tokenAmount = calculateTokenAmount();
+      const tokenAmount = calculateTokenAmount(currentRate);
       if (!tokenAmount || tokenAmount === "0") {
         throw new Error("Invalid token amount");
       }
 
       const order = await axios.post("/api/paycrest/orders", {
         amount: tokenAmount,
-        rate,
+        rate: currentRate || rate,
         token: selectedToken,
         network: selectedChain,
         recipient: {
@@ -622,23 +624,30 @@ export default function OffRampPayment({
     }
 
     setLoading(true);
+    setIsInitializing(true);
     setError(null);
 
     try {
       // First verify the recipient account
       await verifyRecipient();
       
-      // Fetch the current exchange rate
-      await fetchRate();
+      // Fetch the current exchange rate and wait for it to complete
+      const currentRate = await fetchRate();
+      
+      // Ensure rate is available before proceeding
+      if (!currentRate || currentRate <= 0) {
+        throw new Error("Unable to fetch current exchange rate. Please try again.");
+      }
       
       // Create the off-ramp order which generates the deposit address
-      await createOffRampOrder();
+      await createOffRampOrder(currentRate);
     } catch (error: any) {
       console.error("Error creating deposit address:", error);
       const friendlyError = parseTransactionError(error);
       setError(friendlyError);
     } finally {
       setLoading(false);
+      setIsInitializing(false);
     }
   };
 
@@ -1246,13 +1255,13 @@ IMPORTANT: If off-ramp processing fails, tokens will be refunded to the originat
         {/* Create Deposit Button */}
         <Button
           onClick={createDepositAddress}
-          disabled={!selectedChain || !selectedToken || !refundAddress || loading}
+          disabled={!selectedChain || !selectedToken || !refundAddress || loading || isInitializing}
           className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-lg transition-colors duration-200 text-sm disabled:opacity-50"
         >
-          {loading ? (
+          {loading || isInitializing ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating deposit address...
+              {isInitializing ? "Initializing..." : "Creating deposit address..."}
             </>
           ) : (
             <>

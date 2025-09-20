@@ -269,29 +269,31 @@ export default function PayPage({ params }: { params: { id: string } }) {
             </div>
           </div>
 
-          {/* Proceed to Pay Button */}
-          <Button
-            onClick={onProceedToPay}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg transition-all duration-200"
-          >
-            Proceed to Pay
-          </Button>
-
-          {/* QR Code Section */}
+          {/* QR Code Section with Proceed Button */}
           {qrDataUrl && (
-            <div className="bg-slate-800/30 rounded-lg p-4 border border-white/10 !rounded-2xl text-center">
+            <div className="bg-slate-800/30 rounded-lg p-4 border border-white/10 !rounded-2xl text-center relative">
               <div className="mb-3">
                 <span className="text-white text-xs font-medium">Scan to Pay</span>
               </div>
-              <Image
-                src={qrDataUrl}
-                alt="Payment QR Code"
-                width={200}
-                height={200}
-                className="mx-auto rounded-lg bg-white p-2"
-              />
+              <div className="relative inline-block">
+                <Image
+                  src={qrDataUrl}
+                  alt="Payment QR Code"
+                  width={200}
+                  height={200}
+                  className="mx-auto rounded-lg bg-white p-2"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Button
+                    onClick={onProceedToPay}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg backdrop-blur-sm bg-opacity-90 hover:bg-opacity-100 transition-all duration-200"
+                  >
+                    Proceed to Pay
+                  </Button>
+                </div>
+              </div>
               <p className="text-slate-400 text-xs mt-2">
-                Scan with your wallet app
+                Or click "Proceed to Pay" to use wallet
               </p>
             </div>
           )}
@@ -363,42 +365,45 @@ export default function PayPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Payment Content */}
-          {linkType === "offramp" && 
-           amount && 
-           currency && 
-           to && 
-           offRampType && 
-           offRampValue && 
-           offRampProvider && 
-           accountName && 
-           (offRampType === "PHONE" || offRampType === "BANK_ACCOUNT") ? (
+          {linkType === "offramp" ? (
             <OffRampPayment
               amount={amount}
               currency={currency}
-              description={description || undefined}
-              chainId={chainId || undefined}
+              selectedToken={selectedToken}
+              description={description}
+              resolvedChain={resolvedChain}
+              chainId={chainId}
               to={to}
-              offRampType={offRampType as "PHONE" | "BANK_ACCOUNT"}
+              params={params}
+              customAmount={customAmount}
+              setCustomAmount={setCustomAmount}
+              showAmountInput={showAmountInput}
+              setShowAmountInput={setShowAmountInput}
+              selectedChain={selectedChain}
+              setSelectedChain={setSelectedChain}
+              setSelectedToken={setSelectedToken}
+              offRampType={offRampType}
               offRampValue={offRampValue}
               offRampProvider={offRampProvider}
               accountName={accountName}
-              linkId={params.id}
             />
-          ) : linkType === "offramp" ? (
-            <Alert className="bg-red-900/20 border-red-500/50">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Invalid offramp payment link. Missing required parameters.
-              </AlertDescription>
-            </Alert>
           ) : (
             <PayWithWallet
-              to={to || ""}
-              amount={amount || "0"}
-              currency={currency || "USDC"}
-              description={description || undefined}
-              linkId={params.id}
-              chainId={chainId || undefined}
+              amount={amount}
+              currency={currency}
+              selectedToken={selectedToken}
+              description={description}
+              resolvedChain={resolvedChain}
+              chainId={chainId}
+              to={to}
+              params={params}
+              customAmount={customAmount}
+              setCustomAmount={setCustomAmount}
+              showAmountInput={showAmountInput}
+              setShowAmountInput={setShowAmountInput}
+              selectedChain={selectedChain}
+              setSelectedChain={setSelectedChain}
+              setSelectedToken={setSelectedToken}
             />
           )}
         </CardContent>
@@ -459,12 +464,10 @@ export default function PayPage({ params }: { params: { id: string } }) {
               </div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">
-                {linkType === "offramp" ? "Off-Ramp Payment" : "Crypto Payment"}
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                NedaPay
               </h1>
-              <p className="text-slate-100 text-sm">
-                {linkType === "offramp" ? "Convert crypto to local currency" : "Secure Payment Gateway"}
-              </p>
+              <p className="text-slate-400 text-sm">Secure Payment Gateway</p>
             </div>
           </motion.div>
 
