@@ -252,22 +252,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
               <p className="text-slate-300 text-sm leading-relaxed">{description}</p>
             </div>
           )}
-
-          {/* Security Badges */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-slate-800/30 rounded-lg p-2 border border-white/10 text-center">
-              <Shield className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
-              <div className="text-xs text-slate-300">SSL Secured</div>
-            </div>
-            <div className="bg-slate-800/30 rounded-lg p-2 border border-white/10 text-center">
-              <CheckCircle className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-              <div className="text-xs text-slate-300">Blockchain Verified</div>
-            </div>
-            <div className="bg-slate-800/30 rounded-lg p-2 border border-white/10 text-center">
-              <Zap className="w-4 h-4 text-purple-400 mx-auto mb-1" />
-              <div className="text-xs text-slate-300">Instant</div>
-            </div>
-          </div>
+          
 
           {/* Proceed to Pay Button */}
           <Button
@@ -460,10 +445,10 @@ export default function PayPage({ params }: { params: { id: string } }) {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">
-                {linkType === "offramp" ? "Off-Ramp Payment" : "Crypto Payment"}
+                {linkType === "offramp" ? "Off-Ramp Payment" : "Stablecoin Payment"}
               </h1>
               <p className="text-slate-100 text-sm">
-                {linkType === "offramp" ? "Convert crypto to local currency" : "Secure Payment Gateway"}
+                {linkType === "offramp" ? "Convert stablecoin to local currency" : "Send stablecoin to a wallet"}
               </p>
             </div>
           </motion.div>
