@@ -1,78 +1,99 @@
-import { FileText, Link, DollarSign, BarChart3 } from "lucide-react";
+"use client";
+import { FileText, Link, DollarSign, BarChart3, ChevronDown, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function QuickActions() {
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
   
   const actions = [
     {
       title: "Invoice",
-      description: "Create & send invoices",
       icon: FileText,
       onClick: () => router.push("/invoice"),
-      color: "blue",
+      description: "Create new invoice"
     },
     {
       title: "Request",
-      description: "Generate payment links",
       icon: Link,
       onClick: () => router.push("/payment-link"),
-      color: "green",
+      description: "Generate payment link"
     },
     {
       title: "Withdraw",
-      description: "Transfer to bank",
       icon: DollarSign,
       onClick: () => router.push("/ramps"),
-      color: "purple",
+      description: "Cash out funds"
     },
     {
       title: "Analytics",
-      description: "View insights & stats",
       icon: BarChart3,
       onClick: () => router.push("/analytics"),
-      color: "orange",
+      description: "View reports"
     },
   ];
 
-  const getColorClasses = (color: string) => {
-    const colors = {
-      blue: "text-blue-400 group-hover:text-blue-300",
-      green: "text-emerald-400 group-hover:text-emerald-300",
-      purple: "text-purple-400 group-hover:text-purple-300",
-      orange: "text-amber-400 group-hover:text-amber-300",
-    };
-    return colors[color as keyof typeof colors] || colors.blue;
-  };
-
   return (
-    <div className="mt-6">
-      <div className="grid grid-cols-2 gap-3">
+    <div className="flex items-center justify-center mb-6 px-4 relative z-50">
+      {/* Desktop View */}
+      <div className="hidden md:flex items-center bg-slate-800/80 backdrop-blur-sm rounded-full p-1.5 border border-slate-700/50 shadow-lg">
         {actions.map((action, idx) => (
           <button
             key={idx}
             onClick={action.onClick}
-            className="group relative flex flex-row items-center p-2 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 hover:border-gray-600/50 hover:bg-gray-800/70 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/10 active:scale-[0.98]"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-200 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
           >
-            {/* Icon container */}
-            <div className="flex items-center justify-center w-10 h-10 group-hover:bg-gray-700/70 transition-colors duration-300">
-              <action.icon className={`w-5 h-5 transition-colors duration-300 ${getColorClasses(action.color)}`} />
-            </div>
-            
-            {/* Text content */}
-            <div className="text-left">
-              <h3 className="text-sm font-semibold text-gray-100 group-hover:text-white transition-colors duration-300">
-                {action.title}
-              </h3>
-              {/* <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mt-1">
-                {action.description}
-              </p> */}
-            </div>
-            
-            {/* Subtle gradient overlay on hover */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            <action.icon className="w-4 h-4" />
+            <span>{action.title}</span>
           </button>
         ))}
+      </div>
+
+      {/* Mobile Dropdown */}
+      <div className="md:hidden">
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-full px-4 py-2.5 shadow-lg"
+            >
+              {/* <Menu className="w-4 h-4 mr-2" /> */}
+              <span className="text-sm font-medium">Quick Actions</span>
+              <ChevronDown className="w-4 h-4 ml-2 transition-transform duration-200" style={{
+                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+              }} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            className="w-56 bg-slate-800/95 backdrop-blur-xl border-slate-700/50 shadow-xl"
+            align="center"
+            sideOffset={8}
+          >
+            {actions.map((action, idx) => (
+              <DropdownMenuItem
+                key={idx}
+                onClick={action.onClick}
+                className="flex items-center gap-3 px-3 py-3 text-slate-300 hover:text-white hover:bg-slate-700/50 cursor-pointer transition-colors duration-200"
+              >
+                <div className="w-8 h-8 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                  <action.icon className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{action.title}</span>
+                  <span className="text-xs text-slate-400">{action.description}</span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

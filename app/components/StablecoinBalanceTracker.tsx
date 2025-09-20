@@ -4,9 +4,13 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { stablecoins } from "../data/stablecoins";
 import { SUPPORTED_CHAINS } from "@/data/platformSupportedChains";
-import { X, AlertCircle, Wallet, Loader2, ChevronRight, Repeat, RefreshCw } from "lucide-react";
+import { X, AlertCircle, Wallet, Loader2, ChevronRight, Repeat, RefreshCw, ChevronDown, DollarSign } from "lucide-react";
 import SwapModal from "./SwapModal";
-import { Button } from "@/components/Button"; 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import ChainSwitcher from "@/components/ChainSwitcher";
 import WalletKit from "@/dashboard/WalletKit";
@@ -52,6 +56,8 @@ export const StablecoinBalanceTracker = ({
   const [errors, setErrors] = useState<string[]>([]);
   const [provider, setProvider] = useState<ethers.providers.Provider | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [visibleTokensCount, setVisibleTokensCount] = useState(6);
 
   const address = wallets[0]?.address || null;
 
@@ -284,143 +290,225 @@ export const StablecoinBalanceTracker = ({
 
   if (!isOpen) return null;
 
+  // Get all relevant tokens for current chain
+  const relevantTokens = stablecoins.filter((coin) => 
+    currentChain && coin.chainIds.includes(currentChain.id)
+  );
+
+  // Separate tokens with and without balance
+  const tokensWithBalance = relevantTokens.filter((coin) => {
+    const balance = balances[coin.baseToken] || 0;
+    return balance > 0;
+  });
+
+  const tokensWithoutBalance = relevantTokens.filter((coin) => {
+    const balance = balances[coin.baseToken] || 0;
+    return balance === 0;
+  });
+
+  // Show tokens with balance first, then fill remaining space with zero-balance tokens
+  const displayTokens = [...tokensWithBalance, ...tokensWithoutBalance.slice(0, Math.max(0, visibleTokensCount - tokensWithBalance.length))];
+  const hasMoreTokens = relevantTokens.length > displayTokens.length;
+
   return (
-    <div className="z-50 flex items-center justify-center md:p-4 overflow-auto rounded-2xl w-full">
-      <div className="max-w-6xl bg-gray-800 rounded-2xl shadow-xl w-[95%] mx-auto">
-        <div className="h-full overflow-auto"> 
-          {/* <div className="md:p-6 sticky top-0 z-10">
-            <div className="flex flex-col md:flex-row md:justify-between">
-              <div className="mt-4 md:mt-0 flex space-x-2">
-                {wallets[0]?.walletClientType === "coinbase_wallet" && loading && (
-                  <div className="flex items-center text-yellow-500 text-sm">
-                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                    Coinbase may take longer to respond...
-                  </div>
-                )}
+    <Card className="bg-slate-900/40 backdrop-blur-xl border-slate-800/50 hover:border-slate-700/50 transition-all duration-300 h-full flex flex-col">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg font-semibold text-white text-center flex items-center justify-between">
+          <span>Stablecoins</span>
+          <Badge variant="secondary" className="bg-slate-800 text-slate-300">
+            {tokensWithBalance.length}/{relevantTokens.length}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 flex-1 flex flex-col">
+        {errors.length > 0 && (
+          <div className="p-3 bg-red-900/30 rounded-lg border border-red-800/50">
+            {errors.map((err, i) => (
+              <div key={i} className="text-red-400 text-sm flex items-center">
+                <AlertCircle className="mr-2 h-4 w-4" /> {err}
               </div>
-            </div>
-          </div> */}
-          <h3 className="text-lg font-semibold text-white text-center">Stablecoins</h3>
-          
-          {errors.length > 0 && (
-            <div className="p-3 bg-red-900/30 rounded-lg mx-4 mb-3">
-              {errors.map((err, i) => (
-                <div key={i} className="text-red-400 text-sm flex items-center">
-                  <AlertCircle className="mr-2 h-4 w-4" /> {err}
-                </div>
-              ))}
-              <Button 
-                size="sm" 
-                className="mt-2"
-                onClick={() => setRetryCount(c => c + 1)}
+            ))}
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="mt-2"
+              onClick={() => setRetryCount(c => c + 1)}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Retry
+            </Button>
+          </div>
+        )}
+
+        {/* Stablecoin Flex Layout */}
+        <div className="flex flex-wrap gap-3 flex-1 content-start">
+          {displayTokens.map((coin) => {
+            const balance = balances[coin.baseToken] || 0;
+            const convertedBalance = convertCurrency(
+              balance,
+              coin.currency,
+              selectedCurrency
+            );
+            const hasBalance = balance > 0;
+
+            return (
+              <Card
+                key={coin.baseToken}
+                className={`flex-shrink-0 w-[calc(50%-0.375rem)] md:w-[calc(33.333%-0.5rem)] transition-all duration-200 hover:scale-[1.02] ${
+                  hasBalance
+                    ? "bg-gradient-to-b from-emerald-900/20 to-slate-900/40 border-emerald-500/30 hover:border-emerald-400/50"
+                    : "bg-slate-900/20 border-slate-700/30 hover:border-slate-600/50"
+                }`}
               >
-                <RefreshCw className="mr-2 h-4 w-4" /> Retry
-              </Button>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 md:gap-3 p-4">
-            {stablecoins.map((coin) => {
-              if (!currentChain || !coin.chainIds.includes(currentChain.id))
-                return null;
-
-              const balance = balances[coin.baseToken] || 0;
-              const convertedBalance = convertCurrency(
-                balance,
-                coin.currency,
-                selectedCurrency
-              );
-              const hasBalance = balance > 0;
-
-              return (
-                <div
-                  key={coin.baseToken}
-                  className={`rounded-xl border transition-all p-3 flex items-center justify-between shadow-sm ${
-                    hasBalance
-                      ? "bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-green-500/40"
-                      : "bg-[#0f172a] border-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-3"> 
-                    <Image src={coin.flag} alt={coin.name} width={24} height={24} className="text-2xl rounded-full"/>
-                    <div>
-                      <div className="text-xs md:text-sm font-semibold text-white">
+                <CardContent className="p-3">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <Image 
+                        src={coin.flag} 
+                        alt={coin.name} 
+                        width={18} 
+                        height={18} 
+                        className="rounded-full"
+                      />
+                      <div className="text-sm font-medium text-white truncate">
                         {coin.baseToken}
                       </div>
-                      <div className="text-xs md:text-sm text-gray-400">
-                        ≈ {getCurrencySymbol(selectedCurrency)}
-                        {convertedBalance.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 6,
-                        })}
-                      </div>
+                    </div>
+                    <div className="text-xs text-slate-400 text-center">
+                      ≈{getCurrencySymbol(selectedCurrency)}{convertedBalance.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
                     </div>
                   </div>
-
-                  <div className="flex flex-col md:flex-row items-center gap-2">
-                    <div className="text-right">
-                      <div className="text-xs md:text-sm font-bold text-white">
-                        {balance.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleSwapClick(coin.baseToken)}
-                      disabled={!hasBalance}
-                      className={`p-2 rounded-lg transition ${
-                        hasBalance
-                          ? "bg-green-500/20 hover:bg-green-500/30 text-green-400"
-                          : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                      }`}
-                    >
-                      <Repeat className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* <div className="bg-slate-950/60 rounded-2xl shadow-xl m-6 p-6">
-            <div className="grid grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-base font-bold text-white">
-                  {stablecoins.length}
-                </div>
-                <div className="text-sm text-white">Total Stablecoins</div>
-              </div>
-              <div className="text-center">
-                <div className="text-base font-bold text-white">
-                  {Object.values(balances).filter((b) => b > 0).length}
-                </div>
-                <div className="text-sm text-white">With Balance</div>
-              </div>
-              <div className="text-center">
-                <div className="text-base font-bold text-white">
-                  {new Set(stablecoins.map((c) => c.currency)).size}
-                </div>
-                <div className="text-sm text-white">Currencies</div>
-              </div>
-            </div>
-          </div> */}
-
-          {swapModalOpen && (
-            <SwapModal
-              open={swapModalOpen}
-              fromSymbol={swapFromSymbol}
-              onSwap={handleSwapClick}
-              onClose={() => setSwapModalOpen(false)}
-              maxAmount={balances[swapFromSymbol]?.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 6,
-              })}
-            />
-          )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
-      </div>
-    </div>
+
+        {/* Show All Button - Opens Modal */}
+        <div className="mt-auto pt-4">
+          {(hasMoreTokens || relevantTokens.length > visibleTokensCount) && (
+            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full text-xs text-slate-400 hover:text-white hover:bg-slate-800/50 border-slate-700 transition-colors"
+                >
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                  View All Stablecoins ({relevantTokens.length} total)
+                </Button>
+              </DialogTrigger>
+            <DialogContent className="max-w-6xl max-h-[80vh] bg-slate-900 border-slate-700">
+              <DialogHeader>
+                <DialogTitle className="text-white flex items-center justify-between">
+                  <span>All Stablecoins</span>
+                  <Badge variant="secondary" className="bg-slate-800 text-slate-300">
+                    {tokensWithBalance.length}/{relevantTokens.length} Active
+                  </Badge>
+                </DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="h-[60vh] pr-4">
+                <div className="flex flex-wrap gap-3 p-1">
+                  {relevantTokens.map((coin) => {
+                    const balance = balances[coin.baseToken] || 0;
+                    const convertedBalance = convertCurrency(
+                      balance,
+                      coin.currency,
+                      selectedCurrency
+                    );
+                    const hasBalance = balance > 0;
+
+                    return (
+                      <Card
+                        key={coin.baseToken}
+                        className={`flex-shrink-0 w-[calc(50%-0.375rem)] md:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)] xl:w-[calc(20%-0.6rem)] transition-all duration-200 hover:scale-[1.02] ${
+                          hasBalance
+                            ? "bg-gradient-to-b from-emerald-900/20 to-slate-900/40 border-emerald-500/30 hover:border-emerald-400/50"
+                            : "bg-slate-900/20 border-slate-700/30 hover:border-slate-600/50"
+                        }`}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Image 
+                              src={coin.flag} 
+                              alt={coin.name} 
+                              width={20} 
+                              height={20} 
+                              className="rounded-full"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-semibold text-white truncate">
+                                {coin.baseToken}
+                              </div>
+                              {hasBalance && (
+                                <Badge variant="secondary" className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                                  Active
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="text-xs text-slate-400">
+                              ≈ {getCurrencySymbol(selectedCurrency)}
+                              {convertedBalance.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 4,
+                              })}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-bold text-white">
+                                {balance.toLocaleString(undefined, {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant={hasBalance ? "default" : "ghost"}
+                                className={`h-6 w-6 p-0 ${
+                                  hasBalance
+                                    ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border-emerald-500/30"
+                                    : "text-slate-500 hover:text-slate-400"
+                                }`}
+                                onClick={() => {
+                                  if (hasBalance) {
+                                    handleSwapClick(coin.baseToken);
+                                    setModalOpen(false);
+                                  }
+                                }}
+                                disabled={!hasBalance}
+                              >
+                                <Repeat className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        )}
+        </div>
+
+        {swapModalOpen && (
+          <SwapModal
+            open={swapModalOpen}
+            fromSymbol={swapFromSymbol}
+            onSwap={handleSwapClick}
+            onClose={() => setSwapModalOpen(false)}
+            maxAmount={balances[swapFromSymbol]?.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 6,
+            })}
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
@@ -431,64 +519,84 @@ export const StablecoinBalanceButton = () => {
 
   return (
     <>
-       <div className="group relative">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-800/60 via-slate-800/40 to-slate-900/60 backdrop-blur-md rounded-3xl"></div>
-      
-      {/* Subtle Border Glow */}
-      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      
-      {/* Main Card */}
-      <div 
-        className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-600/30 p-2 hover:bg-slate-800/50 hover:border-slate-500/50 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h3 className="text-slate-300 text-sm md:text-lg font-medium tracking-wide">Stablecoins Balance</h3>
+      <div className="relative group z-20">
+        {/* Gradient Background Layer */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl"></div>
+        
+        {/* Hover Glow Effect */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-blue-500/5 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        
+        {/* Main Card */}
+        <div className="relative bg-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/40 p-6 hover:bg-slate-800/60 hover:border-slate-600/60 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300 transform hover:scale-[1.01]">
+          
+          {/* Header Section */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 mb-1 font-medium tracking-wide uppercase">Total Balance</p>
+                <h3 className="text-white text-sm font-semibold">Stablecoins Portfolio</h3>
+              </div>
+            </div>
+            <ChainSwitcher />
           </div>
-          <ChainSwitcher />
-        </div>
 
-        {/* Balance Section */}
-        <div className="md:mb-8 text-center">
-          {loading ? (
-            <div className="flex items-center justify-center space-x-4">
-              <Loader2 className="animate-spin h-10 w-10 text-blue-400" />
+          {/* Balance Display */}
+          <div className="text-center mb-6">
+            {loading ? (
+              <div className="flex flex-col items-center space-y-4">
+                <Loader2 className="animate-spin h-8 w-8 text-emerald-400" />
+                <div className="space-y-2">
+                  <div className="h-10 bg-gradient-to-r from-slate-700/40 to-slate-600/20 rounded-lg w-32 mx-auto animate-pulse"></div>
+                  <div className="h-3 bg-slate-700/20 rounded w-16 mx-auto animate-pulse"></div>
+                </div>
+              </div>
+            ) : (
               <div className="space-y-2">
-                <div className="h-12 bg-gradient-to-r from-slate-700/50 to-slate-600/30 rounded-xl w-48 animate-pulse"></div>
-                <div className="h-4 bg-slate-700/30 rounded w-24 mx-auto animate-pulse"></div>
+                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent leading-tight">
+                  ${totalBalance.toLocaleString('en-US', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  })}
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <p className="text-slate-400 text-xs font-medium tracking-wider uppercase">USD</p>
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 flex-wrap">
+            <div className="transform hover:scale-[1.02] transition-transform duration-200">
+              <WalletKit buttonName="Transact" />
             </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="text-base md:text-6xl font-bold bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent leading-none">
-                ${totalBalance.toLocaleString('en-US', { 
-                  minimumFractionDigits: 2, 
-                  maximumFractionDigits: 2 
-                })}
-              </div>
-              <p className="text-slate-400 text-sm font-medium">USD</p>
+            <div className="w-px h-8 bg-slate-600/30 hidden sm:block"></div>
+            <button
+              onClick={() => window.location.href = '/ramps'}
+              className="px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 hover:from-orange-500/30 hover:to-yellow-500/30 border border-orange-500/30 hover:border-orange-400/50 rounded-lg text-orange-300 hover:text-orange-200 text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2"
+            >
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden xs:inline">Withdraw</span>
+              <span className="xs:hidden">Cash Out</span>
+            </button>
+          </div>
+
+          {/* Status Indicator */}
+          {/* <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+              <span className="text-xs text-emerald-400 font-medium">Live Balance</span>
             </div>
-          )}
+          </div> */}
+          
+          {/* Decorative Elements */}
+          <div className="absolute top-4 right-4 w-16 h-16 bg-gradient-to-bl from-emerald-500/5 to-transparent rounded-full"></div>
+          <div className="absolute bottom-4 left-4 w-12 h-12 bg-gradient-to-tr from-blue-500/5 to-transparent rounded-full"></div>
         </div>
-
-        {/* Action Buttons */}
-        {/* <div className="flex items-center justify-center gap-4">
-          <div className="hover:scale-105 transition-transform duration-200">
-            <WalletKit buttonName="Send" />
-          </div>
-          <div className="w-px h-8 bg-slate-600/50"></div>
-          <div className="hover:scale-105 transition-transform duration-200">
-            <WalletKit buttonName="Receive" />
-          </div>
-        </div> */}
-
-        {/* Subtle Corner Accent */}
-        {/* <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-3xl"></div> */}
-        {/* <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-500/5 to-transparent rounded-3xl"></div> */}
       </div>
-    </div>
 
       <StablecoinBalanceTracker
         isOpen={false}

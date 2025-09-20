@@ -21,6 +21,7 @@ import {
   ArrowRightLeft,
   Home,
   IdCard,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -80,7 +81,7 @@ function AppSidebarContent() {
       icon: FileText,
     },
     // { title: "Dispute and Settlement", url: "/disputes", icon: Shield },
-    { title: "Settings", url: "/settings", icon: Settings },
+    { title: "Profile", url: "/settings", icon: User },
   ];
 
   const resourceItems = [

@@ -355,61 +355,81 @@ export default function DashboardContent() {
       <BroadCastNotificationListener />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          {/* <h1 className="text-2xl font-bold text-white">
             Your Dashboard
-          </h1>
+          </h1> */}
           {/* <p className="text-sm md:text-lg text-white text-muted-foreground mt-2">
             Seamlessly manage stablecoin payments and monitor your business
             performance
           </p> */}
         </div>
       </div>
-      <div className="bg-gray-800/70 md:pt-12 rounded-2xl">
+      {/* Quick Actions - Detached and positioned above */}
+      <div className="relative z-40">
+      {authenticated && <QuickActions />}
+      </div>
+      
+      <div className="bg-gray-800/70 md:pt-12 rounded-2xl relative z-10">
         <Card className="relative border-0 bg-gray-800 text-white shadow-2xl w-[92%] mx-auto rounded-xl">
           <CardContent className="relative p-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="lg:col-span-2 space-y-4">
                 {authenticated ? (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="rounded-xl p-4 items-center justify-centerm my-auto">
-                        <div className="flex flex-row flex-wrap items-center gap-2 items-center my-auto">
-                          <div className="flex flex-row items-center gap-2">
-                            <p className="text-white font-mono text-base">
-                              {ensName || `${walletAddress?.slice(0, 5)}...${walletAddress?.slice(-4)}`}
-                              
-                            </p>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 w-6 p-0 text-white/70 hover:text-white"
-                              onClick={() => {
-                                navigator.clipboard.writeText(walletAddress || "")
-                                setCopied(true)
-                                setTimeout(() => setCopied(false), 2000)
-                              }}
-                            >
-                              {copied ? (
-                                <Check className="h-3 w-3" />
-                              ) : (
-                                <Copy className="h-3 w-3" />
-                              )}
-                            </Button>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2"></div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left Column - Address, Balance, Actions */}
+                      <div className="space-y-8">
+                        {/* Address Section */}
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl"></div>
+                          <div className="relative bg-slate-800/30 backdrop-blur-sm rounded-xl p-4 border border-slate-700/30">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center">
+                                  <Wallet className="w-4 h-4 text-blue-400" />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-slate-400 mb-1">Wallet Address</p>
+                                  <p className="text-white font-mono text-sm font-medium">
+                                    {ensName || `${walletAddress?.slice(0, 8)}...${walletAddress?.slice(-6)}`}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(walletAddress || "")
+                                  setCopied(true)
+                                  setTimeout(() => setCopied(false), 2000)
+                                }}
+                              >
+                                {copied ? (
+                                  <Check className="h-4 w-4 text-green-400" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                        <QuickActions />
+                        
+                        {/* Balance Section */}
+                        <div>
+                          <StablecoinBalanceButton />
+                        </div>
+                        
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <StablecoinBalanceButton />
-                        <div className="flex flex-row items-center justify-center mx-auto gap-2">
-                          <WalletKit buttonName="Send" />
-                          <div className="w-px h-8 bg-slate-600/50"></div>
-                          <WalletKit buttonName="Receive" />
-                        </div>
+                      
+                      {/* Right Column - Stablecoins */}
+                      <div>
+                        <StablecoinBalanceTracker
+                          isOpen={true}
+                          onClose={() => {}}
+                          setTotalBalance={() => {}}
+                          setLoading={() => {}}
+                        />
                       </div>
                     </div>
                   </>
@@ -432,12 +452,6 @@ export default function DashboardContent() {
             </div>
           </CardContent>
         </Card>
-        <StablecoinBalanceTracker
-          isOpen={true}
-          onClose={() => {}}
-          setTotalBalance={() => {}}
-          setLoading={() => {}}
-        />
       </div>
     </div>
   );
