@@ -121,7 +121,7 @@ export function CookieConsentModal() {
                     <div className="flex-1">
                       <p className="text-sm text-gray-700 leading-relaxed">
                         We use necessary cookies to make NedaPay work. With your consent, we'll also use analytics to improve your experience.{' '}
-                        <Link href="/privacy" className="text-indigo-600 hover:text-indigo-700 underline underline-offset-2">
+                        <Link href="/privacy-policy" className="text-indigo-600 hover:text-indigo-700 underline underline-offset-2">
                           Privacy Policy
                         </Link>
                       </p>

@@ -254,23 +254,23 @@ export default function PayPage({ params }: { params: { id: string } }) {
   // Show loading while Privy is initializing
   if (!ready || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 text-white">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-md"
         >
-          <Card className="border-0 shadow-xl">
+          <Card className="border-0 shadow-xl text-white">
             <CardContent className="p-8">
               <div className="text-center space-y-6">
                 <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-white animate-spin" />
                 </div>
                 <div className="space-y-2">
-                  <h1 className="text-2xl font-bold text-slate-900">
+                  <h1 className="text-2xl font-bold text-white">
                     {!ready ? "Initializing..." : "Validating Payment Link"}
                   </h1>
-                  <p className="text-slate-600">
+                  <p className="text-white">
                     {!ready
                       ? "Setting up secure connection"
                       : "Verifying payment details"}
@@ -290,7 +290,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="min-h-screen flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -299,15 +299,11 @@ export default function PayPage({ params }: { params: { id: string } }) {
             <Card className="border-0 shadow-xl">
               <CardContent className="p-8">
                 <div className="text-center space-y-6">
-                  <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <Shield className="w-10 h-10 text-white" />
-                  </div>
+                  
                   <div className="space-y-2">
-                    <h1 className="text-2xl font-bold text-slate-900">
-                      Secure Access Required
-                    </h1>
-                    <p className="text-slate-600">
-                      Please authenticate to access this payment page securely.
+                    
+                    <p className="text-slate-100">
+                      Please login or create account to access this payment page.
                     </p>
                   </div>
 
@@ -316,25 +312,12 @@ export default function PayPage({ params }: { params: { id: string } }) {
                     size="lg"
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
-                    <Shield className="w-5 h-5 mr-2" />
+                    {/* <Shield className="w-5 h-5 mr-2" /> */}
                     Authenticate with Privy
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
 
-                  <div className="flex items-center justify-center space-x-4 text-xs text-slate-500">
-                    <div className="flex items-center space-x-1">
-                      <Lock className="w-3 h-3" />
-                      <span>256-bit SSL</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Shield className="w-3 h-3" />
-                      <span>Secure Auth</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Zap className="w-3 h-3" />
-                      <span>Instant</span>
-                    </div>
-                  </div>
+                  
                 </div>
               </CardContent>
             </Card>
@@ -349,7 +332,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
 
   if (!isValidLink) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -365,7 +348,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
                   <h1 className="text-2xl font-bold text-red-600">
                     Invalid Payment Link
                   </h1>
-                  <p className="text-slate-600">{errorMessage}</p>
+                  <p className="text-slate-100">{errorMessage}</p>
                 </div>
                 <Alert className="border-red-200 bg-red-50">
                   <AlertCircle className="h-4 w-4 text-red-600" />
@@ -441,14 +424,14 @@ export default function PayPage({ params }: { params: { id: string } }) {
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    {linkType === "NORMAL" && (currency || selectedToken) && (
+                    {selectedToken && !currency && (
                       <Image
                         src={
                           stablecoins.find(
-                            (t) => t.baseToken === (currency || selectedToken)
+                            (t) => t.baseToken.toLowerCase() === selectedToken?.toLowerCase()
                           )?.flag || ""
                         }
-                        alt={currency || selectedToken || ""}
+                        alt={selectedToken}
                         width={32}
                         height={32}
                         className="rounded-full"
@@ -458,7 +441,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
                       <div className="text-lg font-semibold text-white">
                         {amount ? `${amount}` : "Any Amount"}
                       </div>
-                      {linkType === "NORMAL" && (currency || selectedToken) && (
+                      {(currency || selectedToken) && (
                         <div className="text-slate-400 text-xs">
                           {currency || selectedToken}
                         </div>

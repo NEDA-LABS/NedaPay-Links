@@ -7,6 +7,16 @@ import { Toaster, toast } from "react-hot-toast";
 import { fetchTokenRate, verifyAccount } from "@/utils/paycrest";
 import { usePrivy, useWallets, useSendTransaction } from "@privy-io/react-auth";
 import { stablecoins } from "@/data/stablecoins";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { CheckCircle, AlertCircle, Download, ExternalLink, Loader2, Wallet, Shield } from "lucide-react";
+import Image from "next/image";
+import { SUPPORTED_CHAINS as CHAIN_CONFIGS } from "@/ramps/payramp/offrampHooks/constants";
 
 /* =========================
    Chain configuration (with explorerUrl for links)
@@ -34,7 +44,7 @@ const SUPPORTED_CHAINS: SupportedChain[] = [
     explorerUrl: "https://basescan.org",
   },
   {
-    name: "arbitrum-one",
+    name: "arbitrum one",
     id: 42161,
     supports: ["USDC", "USDT"],
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
@@ -61,7 +71,7 @@ const SUPPORTED_CHAINS: SupportedChain[] = [
     explorerUrl: "https://celoscan.io",
   },
   {
-    name: "bnb",
+    name: "bnb smart chain",
     id: 56,
     supports: ["USDC", "USDT"],
     nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
@@ -69,6 +79,15 @@ const SUPPORTED_CHAINS: SupportedChain[] = [
     blockExplorerUrls: ["https://bscscan.com"],
     explorerUrl: "https://bscscan.com",
   },
+  {
+    name: "scroll",
+    id: 534352,
+    supports: ["USDC", "USDT"],
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://mainnet.scroll.io"],
+    blockExplorerUrls: ["https://scrollscan.com"],
+    explorerUrl: "https://scrollscan.com",
+  }
 ] as const;
 
 // Token selection dropdown uses these
@@ -122,6 +141,7 @@ export default function OffRampPayment({
   const [selectedToken, setSelectedToken] = useState<SupportedToken | "">("");
   const [selectedChain, setSelectedChain] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [refundAddress, setRefundAddress] = useState("");
   const [currentChainId, setCurrentChainId] = useState<number | null>(null);
 
   // --- Privy ---
@@ -130,9 +150,16 @@ export default function OffRampPayment({
   const { sendTransaction } = useSendTransaction();
   const { ready, authenticated } = usePrivy();
 
+  // Auto-populate refund address with connected wallet
+  useEffect(() => {
+    if (connectedWallet?.address && !refundAddress) {
+      setRefundAddress(connectedWallet.address);
+    }
+  }, [connectedWallet?.address, refundAddress]);
+
   // Short-circuit render until Privy is ready (prevents undefined states)
   if (!ready) {
-    return null;
+    return <div>Loading...</div>;
   }
 
   const derivedCurrentChainId =
@@ -171,7 +198,10 @@ export default function OffRampPayment({
     if (!rate || !fiatAmount) return "0";
     try {
       const parsedAmount = parseFloat(fiatAmount);
-      const tokenAmount = (parsedAmount + parsedAmount * 0.05) / rate;
+      // Calculate token amount needed so that (tokenAmount - 0.5% fee) = fiatAmount
+      // Formula: tokenAmount = fiatAmount / (rate * (1 - 0.005))
+      // This ensures the recipient gets exactly the requested fiat amount after fees
+      const tokenAmount = parsedAmount / (rate * (1 - 0.005));
       const formattedAmount = tokenAmount.toFixed(6);
       setCryptoAmount(formattedAmount);
       return formattedAmount;
@@ -186,18 +216,27 @@ export default function OffRampPayment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rate]);
 
-  const handleChainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const chain = e.target.value;
-    setSelectedChain(chain);
-    // ensure compatible token
-    if (selectedToken) {
-      const chainSupports =
-        SUPPORTED_CHAINS.find((c) => c.name === chain)?.supports || [];
-      if (!chainSupports.includes(selectedToken)) {
-        setSelectedToken("");
+  const handleChainChange = async (chainName: string) => {
+    setSelectedChain(chainName);
+    
+    // Find the chain ID for the selected chain and switch automatically
+    const selectedChainConfig = SUPPORTED_CHAINS.find(c => c.name.toLowerCase() === chainName.toLowerCase());
+    if (selectedChainConfig && connectedWallet) {
+      try {
+        await switchChain(selectedChainConfig.id);
+      } catch (error) {
+        console.error("Failed to switch chain:", error);
+        // Don't show error to user as chain switching might fail for various reasons
+        // but they can still proceed with the selected chain
       }
     }
+    
+    // ensure compatible token
+    if (selectedToken && !SUPPORTED_CHAINS.find((c) => c.name === chainName)?.supports.includes(selectedToken)) {
+      setSelectedToken("");
+    }
   };
+
   const handleTokenChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value as SupportedToken | "";
     setSelectedToken(value);
@@ -242,8 +281,8 @@ export default function OffRampPayment({
       setLoading(true);
       setError(null);
 
-      if (!isValidAddress(walletAddress)) {
-        throw new Error("Please enter a valid wallet address");
+      if (!refundAddress || !isValidAddress(refundAddress)) {
+        throw new Error("Please enter a valid refund address");
       }
       const tokenAmount = calculateTokenAmount();
       if (!tokenAmount || tokenAmount === "0") {
@@ -262,7 +301,7 @@ export default function OffRampPayment({
           memo: description || "",
         },
         reference: `order-${Date.now()}`,
-        returnAddress: walletAddress,
+        returnAddress: refundAddress,
       });
 
       const { receiveAddress } = order.data.data;
@@ -498,7 +537,13 @@ export default function OffRampPayment({
   // -----------------------
   // Pay (inline version)
   // -----------------------
-  // Helper function to parse error messages
+  // Helper function to get chain icon
+  const getChainIcon = (chainName: string): string => {
+    const chainConfig = CHAIN_CONFIGS.find(c => c.name.toLowerCase() === chainName.toLowerCase());
+    return chainConfig?.icon || '/ethereum.svg'; // fallback icon
+  };
+
+  // Helper function to parse transaction errors into user-friendly messages
   const parseTransactionError = (error: any): string => {
     const errorMessage = error?.message || error?.toString() || "Unknown error";
     
@@ -560,8 +605,40 @@ export default function OffRampPayment({
       const balance = await erc20.balanceOf(walletAddress);
       return balance.gte(requiredAmount);
     } catch (error) {
-      console.warn("Balance check failed:", error);
-      return true; // Allow transaction to proceed if balance check fails
+      console.error("Balance check failed:", error);
+      return false; // Do not allow transaction to proceed if balance check fails
+    }
+  };
+
+  const createDepositAddress = async () => {
+    if (!selectedChain || !selectedToken) {
+      setError("Please select both network and token");
+      return;
+    }
+
+    if (!refundAddress) {
+      setError("Please enter a refund address");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // First verify the recipient account
+      await verifyRecipient();
+      
+      // Fetch the current exchange rate
+      await fetchRate();
+      
+      // Create the off-ramp order which generates the deposit address
+      await createOffRampOrder();
+    } catch (error: any) {
+      console.error("Error creating deposit address:", error);
+      const friendlyError = parseTransactionError(error);
+      setError(friendlyError);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -856,16 +933,16 @@ export default function OffRampPayment({
       case "submitting":
       case "pending":
       case "confirming":
-        return { message: "Transaction processing...", color: "text-blue-600" };
+        return { message: "Transaction processing...", color: "text-blue-400" };
       case "confirmed":
         return {
           message: description
             ? `Transaction confirmed for ${description}!`
             : "Transaction confirmed!",
-          color: "text-green-600",
+          color: "text-emerald-400",
         };
       case "failed":
-        return { message: error || "Transaction failed", color: "text-red-600" };
+        return { message: error || "Transaction failed", color: "text-red-400" };
       default:
         return { message: "", color: "" };
     }
@@ -933,16 +1010,9 @@ IMPORTANT: If off-ramp processing fails, tokens will be refunded to the originat
     return (
       <div className="mt-4 text-center">
         <div className="flex justify-center">
-          <svg className="animate-spin w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
+          <Loader2 className="animate-spin w-8 h-8 text-blue-400" />
         </div>
-        <p className="mt-2 text-blue-600">Processing transaction...</p>
+        <p className="mt-2 text-blue-200 text-sm">Processing transaction...</p>
       </div>
     );
   }
@@ -950,14 +1020,21 @@ IMPORTANT: If off-ramp processing fails, tokens will be refunded to the originat
   // Error (no tx yet)
   if (error && !txHash) {
     return (
-      <div className="mt-4 text-center">
-        <p className="text-red-600">{error}</p>
-        <button
-          onClick={() => setError(null)}
-          className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-        >
-          Try Again
-        </button>
+      <div className="mt-4">
+        <Alert className="border-red-500/20 bg-red-900/10">
+          <AlertCircle className="w-4 h-4 text-red-400" />
+          <AlertDescription className="text-red-200 text-sm">
+            {error}
+          </AlertDescription>
+        </Alert>
+        <div className="mt-3 text-center">
+          <Button
+            onClick={() => setError(null)}
+            className="bg-blue-500 hover:bg-blue-600 text-white text-sm"
+          >
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
@@ -965,35 +1042,45 @@ IMPORTANT: If off-ramp processing fails, tokens will be refunded to the originat
   // Success
   if (txHash) {
     return (
-      <div className="mt-4 text-center p-6 bg-green-50 rounded-xl">
-        <svg className="w-16 h-16 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <h3 className="text-xl font-bold mt-4 text-slate-700">Payment Successful!</h3>
-        <p className="mt-2">
-          {cryptoAmount || amount} {cryptoAmount ? selectedToken : currency} sent
-        </p>
+      <div className="mt-4">
+        <Card className="border border-emerald-500/20 bg-emerald-900/10">
+          <CardContent className="p-6 text-center">
+            <div className="w-16 h-16 mx-auto bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-8 h-8 text-emerald-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">Payment Successful!</h3>
+            <p className="text-emerald-200 text-sm mb-4">
+              {cryptoAmount || amount} {cryptoAmount ? selectedToken : currency} sent
+            </p>
 
-        {statusMessage && <div className={`mt-2 ${statusColor} text-sm font-medium`}>{statusMessage}</div>}
+            {statusMessage && (
+              <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-500/30 mb-4">
+                {statusMessage}
+              </Badge>
+            )}
 
-        <p className="text-sm mt-4 text-slate-700">Transaction Hash:</p>
-        <a
-          href={getExplorerUrl()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 text-sm break-all inline-block mt-1"
-        >
-          {txHash.slice(0, 12)}...{txHash.slice(-10)}
-        </a>
+            <div className="bg-slate-800/30 rounded-lg p-3 mb-4">
+              <p className="text-xs text-slate-400 mb-1">Transaction Hash:</p>
+              <a
+                href={getExplorerUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 text-xs break-all hover:text-blue-300 inline-flex items-center space-x-1"
+              >
+                <span>{txHash.slice(0, 12)}...{txHash.slice(-10)}</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
 
-        <div className="mt-6">
-          <button
-            onClick={downloadReceipt}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-          >
-            Download Receipt
-          </button>
-        </div>
+            <Button
+              onClick={downloadReceipt}
+              className="bg-blue-500 hover:bg-blue-600 text-white text-sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download Receipt
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -1001,30 +1088,39 @@ IMPORTANT: If off-ramp processing fails, tokens will be refunded to the originat
   // If deposit address has been created, show details + inline pay button
   if (depositAddress) {
     return (
-      <div className="mt-4 text-center">
+      <div className="mt-4">
         {showChainWarning && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800">
+          <Alert className="mb-4 border-amber-500/20 bg-amber-900/10">
+            <AlertCircle className="w-4 h-4 text-amber-400" />
+            <AlertDescription className="text-amber-200 text-sm">
               Please switch to <strong>{targetChain?.name}</strong> network to complete this payment
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
 
-        <div className="mb-4 p-4 bg-blue-50 rounded-xl">
-          <p className="text-sm !text-gray-600 mb-2">Send to deposit address:</p>
-          <p className="font-mono text-sm break-all mb-4 text-slate-800">{depositAddress}</p>
-          <p className="text-lg font-bold text-slate-800">
-            {cryptoAmount} {selectedToken}
-          </p>
-          <p className="text-sm !text-gray-600 mt-2">
-            ≈ {fiatAmount} {currency} via {offRampProvider}
-          </p>
-          <p className="text-sm !text-gray-500 mt-2">
-            Rate: 1 {selectedToken} = {rate.toFixed(2)} {currency}
-          </p>
-        </div>
+        <Card className="mb-4 border border-blue-500/20 bg-blue-900/10">
+          <CardContent className="p-4">
+            <div className="text-center space-y-3">
+              <p className="text-xs text-slate-400">Send to deposit address:</p>
+              <div className="bg-slate-800/30 rounded-lg p-3">
+                <p className="font-mono text-xs break-all text-white">{depositAddress}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-semibold text-white">
+                  {cryptoAmount} {selectedToken}
+                </p>
+                <p className="text-xs text-slate-300">
+                  ≈ {fiatAmount} {currency} via {offRampProvider}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Rate: 1 {selectedToken} = {rate.toFixed(2)} {currency}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <button
+        <Button
           onClick={handlePay}
           disabled={
             loading ||
@@ -1032,209 +1128,140 @@ IMPORTANT: If off-ramp processing fails, tokens will be refunded to the originat
             (!!chainId && derivedCurrentChainId !== chainId) ||
             !authenticated
           }
-          className="px-4 py-2 !bg-blue-600 hover:!bg-blue-600 text-white rounded-lg font-semibold transition disabled:opacity-60"
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-lg transition-colors duration-200 text-sm disabled:opacity-60"
         >
           {loading ? (
             <span className="flex items-center justify-center">
-              <svg
-                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              {txStatus === "idle" ? "Processing..." : statusMessage || "Processing..."}
+              <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
+              Processing...
             </span>
           ) : (
-            `Pay with Wallet`
+            <>
+              <Wallet className="w-4 h-4 mr-2" />
+              Pay with Wallet
+            </>
           )}
-        </button>
+        </Button>
 
-        {txStatus !== "idle" && txStatus !== "confirmed" && !error && (
-          <div className={`mt-2 ${statusColor} text-sm font-medium`}>{statusMessage}</div>
+        {statusMessage && (
+          <div className="mt-3">
+            <Badge className={`${statusColor === 'text-blue-400' ? 'bg-blue-500/20 text-blue-200 border-blue-500/30' : statusColor === 'text-emerald-400' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30' : 'bg-red-500/20 text-red-200 border-red-500/30'}`}>
+              {statusMessage}
+            </Badge>
+          </div>
+        )}
+
+        {!connectedWallet && (
+          <Alert className="mt-4 border-red-500/20 bg-red-900/10">
+            <AlertCircle className="w-4 h-4 text-red-400" />
+            <AlertDescription className="text-red-200 text-sm">
+              Please connect your wallet first
+            </AlertDescription>
+          </Alert>
         )}
       </div>
     );
   }
 
-  // Main initial render (select network + token, then open modal -> create order)
+  // Main initial render (select network + token, then create deposit address)
   return (
     <div className="mt-4">
       <Toaster position="top-right" />
       <div className="space-y-4">
+        {/* Chain Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Your Wallet Address (Refund Address)
-          </label>
-          <input
-            type="text"
-            value={walletAddress}
-            onChange={handleWalletAddressChange}
-            placeholder="0x..."
-            className="w-full p-2 border border-gray-300 rounded-lg text-slate-700"
-          />
-          {walletAddress && !isValidAddress(walletAddress) && (
-            <p className="text-red-500 text-sm mt-1">Invalid wallet address</p>
-          )}
+          <Label className="text-white font-medium text-sm mb-2 block">Select Network</Label>
+          <Select value={selectedChain} onValueChange={handleChainChange}>
+            <SelectTrigger className="w-full bg-slate-800/50 border-white/20 text-white h-12 rounded-xl backdrop-blur-sm">
+              <SelectValue placeholder="Choose a network" className="text-slate-300" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-white/20 backdrop-blur-xl">
+              {SUPPORTED_CHAINS.map((chain) => (
+                <SelectItem key={chain.id} value={chain.name} className="text-white hover:bg-slate-700">
+                  <div className="flex items-center space-x-2">
+                    <Image 
+                      src={getChainIcon(chain.name)} 
+                      alt={chain.name} 
+                      width={20} 
+                      height={20} 
+                      className="rounded-full"
+                    />
+                    <span className="text-sm capitalize">{chain.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
+        {/* Token Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select Blockchain Network
-          </label>
-          <select
-            value={selectedChain}
-            onChange={handleChainChange}
-            className="w-full p-2 border border-gray-300 rounded-lg text-slate-700"
-          >
-            <option value="">Choose network</option>
-            {SUPPORTED_CHAINS.map((chain) => (
-              <option key={chain.name} value={chain.name}>
-                {chain.name.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select Token
-          </label>
-          <select
-            value={selectedToken}
-            onChange={handleTokenChange}
-            className="w-full p-2 border border-gray-300 rounded-lg text-slate-700"
-            disabled={!selectedChain}
-          >
-            <option value="">Choose token</option>
-            {selectedChain &&
-              SUPPORTED_TOKENS.filter((token) => {
+          <Label className="text-white font-medium text-sm mb-2 block">Select Token</Label>
+          <Select value={selectedToken} onValueChange={(value) => setSelectedToken(value as SupportedToken)}>
+            <SelectTrigger className="w-full bg-slate-800/50 border-white/20 text-white h-12 rounded-xl backdrop-blur-sm">
+              <SelectValue placeholder="Choose a token" className="text-slate-300" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-white/20 backdrop-blur-xl">
+              {SUPPORTED_TOKENS.filter((token) => {
                 const chain = SUPPORTED_CHAINS.find((c) => c.name === selectedChain);
                 return chain?.supports.includes(token);
-              }).map((token) => (
-                <option key={token} value={token}>
-                  {token}
-                </option>
-              ))}
-          </select>
+              }).map((token) => {
+                const tokenData = stablecoins.find(t => t.baseToken === token);
+                return (
+                  <SelectItem key={token} value={token} className="text-white hover:bg-slate-700">
+                    <div className="flex items-center space-x-2">
+                      {tokenData?.flag && (
+                        <Image 
+                          src={tokenData.flag} 
+                          alt={token} 
+                          width={16} 
+                          height={16} 
+                          className="rounded-full"
+                        />
+                      )}
+                      <span className="text-sm">{token}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
 
-      <button
-        onClick={async () => {
-          if (!selectedToken || !selectedChain || !walletAddress) return;
-          if (!isValidAddress(walletAddress)) {
-            setError("Please enter a valid wallet address");
-            return;
-          }
+        {/* Refund Address */}
+        <div>
+          <Label className="text-white font-medium text-sm mb-2 block">Refund Address</Label>
+          <Input
+            type="text"
+            value={refundAddress}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRefundAddress(e.target.value)}
+            placeholder="Enter wallet address for refunds"
+            className="w-full bg-slate-800/50 border-white/20 text-white h-12 rounded-xl backdrop-blur-sm placeholder:text-slate-400"
+          />
+          <p className="text-slate-400 text-xs mt-1">
+            Address where tokens will be refunded if off-ramp processing fails
+          </p>
+        </div>
 
-          setLoading(true);
-          try {
-            const [currentRate, verification] = await Promise.all([
-              fetchRate(),
-              verifyRecipient(),
-            ]);
-
-            if (currentRate && verification) {
-              setRate(currentRate);
-              setVerificationStatus(verification);
-              setShowPaymentModal(true);
-            }
-          } catch (error) {
-            toast.error("Failed to fetch payment details");
-            console.error(error);
-          } finally {
-            setLoading(false);
-          }
-        }}
-        className={`mt-6 w-full px-4 py-2 rounded-lg font-medium ${
-          selectedToken &&
-          selectedChain &&
-          walletAddress &&
-          isValidAddress(walletAddress)
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-        }`}
-        disabled={
-          !selectedToken ||
-          !selectedChain ||
-          !walletAddress ||
-          !isValidAddress(walletAddress) ||
-          loading
-        }
-      >
-        {loading ? "Loading..." : "Proceed to Payment"}
-      </button>
-
-      {/* Payment details modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          {!rate || !verificationStatus ? (
-            <div className="bg-white rounded-xl p-6 w-full max-w-md text-center">
-              <div className="flex justify-center">
-                <svg className="animate-spin w-8 h-8 text-blue-500" />
-              </div>
-              <p className="mt-4">Preparing payment details...</p>
-            </div>
+        {/* Create Deposit Button */}
+        <Button
+          onClick={createDepositAddress}
+          disabled={!selectedChain || !selectedToken || !refundAddress || loading}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-lg transition-colors duration-200 text-sm disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating deposit address...
+            </>
           ) : (
-            <div className="bg-white rounded-xl p-6 w-full max-w-md">
-              <h3 className="text-xl font-bold mb-4">Payment Details</h3>
-
-              <div className="space-y-4">
-                <div>
-                  <p className="text-gray-600">Exchange Rate</p>
-                  <p className="font-semibold text-slate-700">
-                    1 {selectedToken} = {rate.toFixed(2)} {currency}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-gray-600">Recipient Verification</p>
-                  {verificationStatus ? (
-                    <p className="text-green-600 font-semibold">
-                      Verified • {verificationStatus.accountName}
-                    </p>
-                  ) : (
-                    <p className="text-yellow-600">Pending verification</p>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-gray-600">You Pay</p>
-                  <p className="text-2xl font-bold text-slate-700">
-                    {cryptoAmount} {selectedToken}
-                  </p>
-                  <p className="text-gray-600">
-                    ≈ {fiatAmount} {currency}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-between">
-                <button
-                  onClick={() => setShowPaymentModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-slate-700"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={createOffRampOrder}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-                  disabled={!verificationStatus || !walletAddress}
-                >
-                  Initiate Order
-                </button>
-              </div>
-            </div>
+            <>
+              <Shield className="w-4 h-4 mr-2" />
+              Create Deposit Address
+            </>
           )}
-        </div>
-      )}
+        </Button>
+      </div>
     </div>
   );
 }

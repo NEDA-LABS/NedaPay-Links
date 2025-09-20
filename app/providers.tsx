@@ -77,7 +77,7 @@ export function Providers(props: { children: ReactNode }) {
         appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
         config={{
           appearance: {
-            walletList: ['metamask', 'coinbase_wallet', 'wallet_connect', 'binance', 'bybit_wallet', 'okx_wallet'],
+            walletList: ['metamask', 'coinbase_wallet', 'base_account', 'binance', 'wallet_connect', 'bybit_wallet', 'okx_wallet'],
             walletChainType: 'ethereum-only'},
           embeddedWallets: {
             ethereum: {
