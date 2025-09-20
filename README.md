@@ -1,175 +1,137 @@
-# NEDA Pay 
-A comprehensive Stablecoins digital payment platform built with Next.js, React, ethers.js, wagmi, Privy, and Coinbase OnchainKit. NEDA Pay offers end-to-end payment solutions for both individuals and businesses, including stablecoin management, fiat offramping, and robust compliance features.
+# NedaPay
+
+A comprehensive stablecoin payment platform that enables both businesses and individuals to send, receive, manage, and convert cryptocurrency payments with ease. Built for the modern economy, NedaPay bridges the gap between traditional finance and decentralized currencies through an intuitive, user-friendly interface.
 
 ---
 
-## Table of Contents
-- [NEDA Pay](#neda-pay)
-  - [Table of Contents](#table-of-contents)
-  - [Key Features](#key-features)
-    - [Digital Payment Solutions](#digital-payment-solutions)
-    - [Merchant Features](#merchant-features)
-    - [Compliance \& Security](#compliance--security)
-    - [User Experience](#user-experience)
-  - [Aerodrome Swaps](#aerodrome-swaps)
-  - [Privy Authentication](#privy-authentication)
-  - [Fiat Offramping](#fiat-offramping)
-  - [Architecture](#architecture)
+## What is NedaPay?
+
+NedaPay is a next-generation payment platform designed for merchants, businesses, and individual users who want to transact with stablecoins globally. The platform provides a complete suite of tools for payment processing, invoice management, compliance, and fiat conversion - all through a single, comprehensive dashboard that serves both business and personal use cases.
+
+### Core Capabilities
+
+**💳 Payment Solutions for Everyone**
+- Create instant payment links with customizable amounts and currencies
+- Generate professional invoices with automatic payment tracking
+- Send and receive payments in multiple stablecoins (USDC, USDT, cNGN, ZARP, EURC, and more)
+- Real-time payment notifications and status updates
+
+**💰 Multi-Currency Stablecoin Support**
+- Support for 10+ regional stablecoins across different countries
+- Automatic balance tracking across Base, Arbitrum, Polygon, and other networks
+- Built-in token swapping through Aerodrome DEX integration
+- Real-time exchange rates and conversion tools
+
+**🌍 Global Fiat Offramping**
+- Convert stablecoins directly to local fiat currencies
+- Support for multiple countries including Nigeria, Indonesia, Tanzania, Kenya, and more
+- Bank account and mobile money integration
+- Competitive exchange rates with transparent fee structure
+
+**📊 Dashboard & Analytics**
+- Comprehensive transaction history and reporting
+- Revenue and spending tracking with growth metrics
+- Payment link management and performance analytics
+- Personal and business financial insights
+
+**🔐 Enterprise-Grade Security & Compliance**
+- Integrated KYC/KYB verification through Sumsub
+- Multi-step business verification process
+- Document management and audit trails
+- Regulatory compliance for financial services
+
+**🔗 Flexible Authentication**
+- Privy-powered authentication with embedded wallets
+- Support for external wallets (MetaMask, Coinbase Wallet, WalletConnect)
+- Social login options (Farcaster, email)
+- ENS and Base Name resolution for user-friendly addresses
 
 ---
 
 ## Key Features
 
-### Digital Payment Solutions
-- **Stablecoin Management:**
-  - Real-time balance tracking
-  - Secure stablecoin transactions in Base Network
-  - Integration with major stablecoins
-  - Transaction history and analytics
+### Payment Solutions
+- **Instant Payment Links**: Generate secure payment links in seconds with optional amount and currency specification
+- **Professional Invoicing**: Create, send, and track invoices with automatic payment processing
+- **QR Code Generation**: Automatic QR code creation for easy mobile payments
+- **Multi-Network Support**: Accept payments across Base, Arbitrum, Polygon, and other EVM networks
 
-- **Fiat Offramping:**
-  - Direct USDC to fiat conversion
-  - Multiple fiat currency support
-  - Integrated payment processors
-  - Gas abstraction for seamless transactions
+### Stablecoin Management
+- **Real-Time Balances**: Live tracking of stablecoin balances across multiple networks
+- **Token Swapping**: Integrated DEX functionality for instant token conversions
+- **Multi-Currency Display**: Support for regional stablecoins including cNGN (Nigeria), ZARP (South Africa), IDRX (Indonesia)
+- **Network Detection**: Automatic network switching and balance synchronization
 
-### Merchant Features
-- **Business Verification (KYB):**
-  - Multi-step business verification process
-  - Document upload and verification
-  - Business information management
-  - Ownership structure tracking
-  - Corporate agreement acceptance
+### Fiat Integration
+- **Direct Offramping**: Convert stablecoins to local fiat currencies
+- **Regional Support**: Tailored solutions for different countries and payment methods
+- **Bank Integration**: Direct bank account deposits and mobile money transfers
+- **Competitive Rates**: Real-time exchange rates with transparent pricing
 
-- **Payment Processing:**
-  - Secure payment links
-  - Invoice creation and management
-  - Mobile withdrawal options
-  - Transaction monitoring
+### Personal & Business Tools
+- **Transaction Analytics**: Detailed reporting
+- **Financial Tracking**: Monitor personal spending and business performance with growth metrics
+- **Export Capabilities**: Download transaction data and generate reports
 
-### Compliance & Security
-- **Individual KYC:**
-  - Multi-factor identity verification
-  - Document upload and validation
-  - Personal information management
-  - Financial background assessment
-
-- **Business KYB:**
-  - Comprehensive business verification
-  - Document management system
-  - Ownership structure tracking
-  - Corporate compliance checks
-  - Audit trail and monitoring
-
-- **Security Features:**
-  - Privy Authentication System:
-    - Embedded and external wallet support
-    - Social login integration
-    - Persistent authentication
-  - Data Encryption:
-    - End-to-end encryption
-    - Secure document storage
-    - Compliance with data protection standards
-  - Audit Trail:
-    - Comprehensive activity logging
-    - User action tracking
-    - Compliance monitoring
-
-### User Experience
-- **Modern UI/UX:**
-  - Responsive design
-  - Intuitive navigation
-  - Clear status indicators
-  - Progress tracking
-
-- **Workflow Management:**
-  - Step-by-step verification process
-  - Document upload interface
-  - Status updates and notifications
-  - Review and approval workflow
-
-- **Multi-Wallet Support:**
-  - Connect with MetaMask, Coinbase Wallet, and others by wallet connect or use Privy's embedded wallets.
-  - Persistent wallet connection state across all pages.
-  - ENS (.eth) and Base Name (.base) resolution for user-friendly display.
-
-- **Stablecoin Balances:**
-  - Real-time fetching of ERC-20 balances for supported stablecoins (e.g., cNGN, ZARP, EURC, etc.).
-  - Each stablecoin entry now includes an explicit `decimals` field for precise formatting and conversion.
-  - Shows all stablecoins, but only fetches balances for tokens deployed on the connected network.
-
-- **Network Detection:**
-  - Detects the connected network and prompts users to switch if not on Base Mainnet.
-  - Only fetches balances for tokens on the current chain (using `chainId`).
-
-- **Error Handling:**
-  - Per-token error icons and tooltips for contract call failures (e.g., missing `decimals()` function).
-  - Suppresses uncaught contract errors in the browser console.
-
-- **User Experience:**
-  - Clean, modern UI with clear feedback for network and token issues.
-  - Swap modal displays user-friendly quotes and output estimates, clamped to the correct number of decimals for each token.
-  - Always displays all tokens, with '0' balance for those not on the current network.
 
 ---
 
-## Aerodrome Swaps
+## Supported Stablecoins & Regions
 
-- The dashboard integrates directly with the Aerodrome DEX for token swaps.
-- Supports both stable and volatile pools, using the official Aerodrome router and factory.
-- Swap modal fetches quotes and executes swaps with proper decimals for every supported stablecoin.
-- Output estimates are always formatted for human readability, based on each token's decimals.
+### Global Stablecoins
+- **USDC** (USD Coin) - United States Dollar
+- **USDT** (Tether USD) - United States Dollar
+- **EURC** (Euro Coin) - European Euro
 
----
+### Regional Stablecoins
+- **cNGN** - Nigerian Naira (Nigeria)
+- **ZARP** - South African Rand (South Africa)
+- **IDRX** - Indonesian Rupiah (Indonesia)
+- **CADC** - Canadian Dollar (Canada)
+- **BRL** - Brazilian Real (Brazil)
+- **TRYB** - Turkish Lira (Turkey)
+- **NZDD** - New Zealand Dollar (New Zealand)
+- **MXNe** - Mexican Peso (Mexico)
 
-## Privy Authentication
-
-NEDA Pay uses Privy for comprehensive authentication and wallet management:
-
-- **Embedded Wallets:**
-  - Users can create wallets directly within the application.
-  - No need to download additional wallet extensions.
-  - Secured by Privy's infrastructure with MPC (Multi-Party Computation).
-  - Gas abstraction available - users don't need to hold ETH for transaction fees.
-
-- **External Wallet Support:**
-  - Full compatibility with existing EOAs (Externally Owned Accounts).
-  - Supports MetaMask, Coinbase Wallet, WalletConnect, and other popular wallets.
-  - Seamless switching between embedded and external wallets.
-
-- **Authentication Methods:**
-  - Social logins (Farcaster).
-  - Email authentication.
-  - Traditional wallet connection.
+### Supported Networks
+- Base Mainnet (Primary)
+- Arbitrum One
+- Polygon Mainnet
+- Optimism
+- BNB Smart Chain
+- Scroll Mainnet
+- Celo Mainnet
 
 ---
 
-## Fiat Offramping
+## Technology Stack
 
-Comprehensive fiat offramping solution integrated directly into the merchant dashboard:
+**Frontend Framework**
+- Next.js 15 with App Router
+- React 19 with TypeScript
+- Tailwind CSS for styling
+- Framer Motion for animations
 
-- **USDC to Fiat Conversion:**
-  - Direct conversion from USDC to local fiat currencies.
-  - Competitive exchange rates with real-time pricing.
-  - Support for multiple fiat currencies based on merchant location.
+**Blockchain Integration**
+- Wagmi for wallet connections
+- Ethers.js for contract interactions
+- Coinbase OnchainKit for enhanced functionality
+- Viem for modern Ethereum interactions
 
-- **Gas Abstraction:**
-  - Embedded wallet users enjoy gasless transactions during offramping.
-  - Transaction fees are automatically deducted from the conversion amount.
-  - No need to maintain ETH balances for gas fees.
+**Authentication & Security**
+- Privy for wallet and social authentication
+- Sumsub for KYC/KYB verification
+- End-to-end encryption for sensitive data
 
-- **Compliance & KYC:**
-  - In progress
+**Database & Backend**
+- Prisma ORM with SQLite/PostgreSQL
+- RESTful API architecture
+- Real-time notifications system
 
----
-
-## Architecture
-
-- **Frontend:** Next.js (App Router), React, Tailwind CSS
-- **Authentication:** Privy (embedded wallets + EOA support)
-- **Wallets:** wagmi, ethers.js, Coinbase OnchainKit, viem
-- **State Management:** React Context (GlobalWalletContext)
-- **Stablecoin Data:** TypeScript config in `app/data/stablecoins.ts`
-
+**Payment Processing**
+- Multi-chain stablecoin support
+- Aerodrome DEX integration
+- Automated payment verification
+- Cross-border fiat conversion
 
 ---

@@ -6,7 +6,6 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { parseEther, formatUnits, isAddress, parseUnits } from "viem";
 import { acrossClient } from "@/utils/acrossProtocol";
 import { type TransactionProgress } from '@across-protocol/app-sdk';
-import { Listbox, Transition } from "@headlessui/react";
 import toast, { Toaster } from 'react-hot-toast';
 import {
   ChevronDownIcon,
@@ -19,6 +18,16 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import { withDashboardLayout } from "@/utils/withDashboardLayout";
 import { type Address } from "viem";
@@ -29,56 +38,56 @@ const chainConfig = {
   10: { 
     name: "Optimism", 
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#FF0420] flex items-center justify-center">
-        <Image src="/optimism.svg" alt="Optimism" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#FF0420] flex items-center justify-center">
+        <Image src="/optimism.svg" alt="Optimism" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     ) 
   },
   42161: { 
     name: "Arbitrum", 
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#2D374B] flex items-center justify-center">
-        <Image src="/arbitrum.svg" alt="Arbitrum" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#2D374B] flex items-center justify-center">
+        <Image src="/arbitrum.svg" alt="Arbitrum" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     ) 
   },
   8453: { 
     name: "Base", 
     icon: (
-      <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-        <Image src="/base.svg" alt="Base" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-blue-500 flex items-center justify-center">
+        <Image src="/base.svg" alt="Base" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     ) 
   },
   137: { 
     name: "Polygon", 
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#8247E5] flex items-center justify-center">
-        <Image src="/polygon.svg" alt="Polygon" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#8247E5] flex items-center justify-center">
+        <Image src="/polygon.svg" alt="Polygon" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     ) 
   },
   56: { 
     name: "BNB Chain", 
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#F0B90B] flex items-center justify-center">
-        <Image src="/bnb.svg" alt="BNB Chain" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#F0B90B] flex items-center justify-center">
+        <Image src="/bnb.svg" alt="BNB Chain" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     ) 
   },
   534352: { 
     name: "Scroll", 
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#EACD98] flex items-center justify-center">
-        <Image src="/scroll.svg" alt="Scroll" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#EACD98] flex items-center justify-center">
+        <Image src="/scroll.svg" alt="Scroll" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     ) 
   },
   42220: { 
     name: "Celo", 
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#FCFF52] flex items-center justify-center">
-        <Image src="/celo.svg" alt="Celo" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#FCFF52] flex items-center justify-center">
+        <Image src="/celo.svg" alt="Celo" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     ) 
   },
@@ -119,8 +128,8 @@ const TOKENS = {
       56: "0x0000000000000000000000000000000000000000",
     },
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#627EEA] flex items-center justify-center">
-        <Image src="/eth-logo.svg" alt="ETH" width={20} height={20} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#627EEA] flex items-center justify-center">
+        <Image src="/eth-logo.svg" alt="ETH" width={16} height={16} className="md:w-5 md:h-5" />
       </div>
     )
   },
@@ -149,8 +158,8 @@ const TOKENS = {
       534352: "0x06efdbff2a14a7c8e15944d1f4a48f9f95f663a4",
     },
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#2775CA] flex items-center justify-center">
-        <Image src="/usdc-logo.svg" alt="USDC" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#2775CA] flex items-center justify-center">
+        <Image src="/usdc-logo.svg" alt="USDC" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     )
   },
@@ -168,8 +177,8 @@ const TOKENS = {
       42220: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
     },
     icon: (
-      <div className="w-6 h-6 rounded-full bg-[#26A17B] flex items-center justify-center">
-        <Image src="/usdt-logo.svg" alt="USDT" width={24} height={24} />
+      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#26A17B] flex items-center justify-center">
+        <Image src="/usdt-logo.svg" alt="USDT" width={16} height={16} className="md:w-6 md:h-6" />
       </div>
     )
   },
@@ -276,32 +285,37 @@ function BridgePage() {
 
   const wallet = wallets?.[0];
 
-  // Handle chain switching
-  const switchChain = useCallback(async () => {
-    if (!wallet || !address) return;
+  // Handle automatic chain switching with delay for better UX
+  const autoSwitchChain = useCallback(async () => {
+    if (!wallet || !address || isSwitchingChain) return;
+    
+    // Add a small delay to make the switch feel more natural
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     setIsSwitchingChain(true);
     setError("");
     try {
       await wallet.switchChain(fromChainId);
       setNeedsChainSwitch(false);
-      toast.success(`Switched to ${chainConfig[fromChainId as keyof typeof chainConfig]?.name}`);
+      toast.success(`Automatically switched to ${chainConfig[fromChainId as keyof typeof chainConfig]?.name}`);
     } catch (err: any) {
       const errorMsg = `Failed to switch chain: ${err.message || "Unknown error"}`;
       setError(errorMsg);
       toast.error(errorMsg);
+      setNeedsChainSwitch(true);
     } finally {
       setIsSwitchingChain(false);
     }
-  }, [wallet, fromChainId, address]);
+  }, [wallet, fromChainId, address, isSwitchingChain]);
 
-  // Check if chain needs switching
+  // Automatically switch to the "from" chain when needed
   useEffect(() => {
-    if (wallet?.chainId && wallet.chainId.toString() !== fromChainId.toString()) {
-      setNeedsChainSwitch(true);
-    } else {
+    if (wallet?.chainId && wallet.chainId.toString() !== fromChainId.toString() && wallet && address && ready && authenticated) {
+      autoSwitchChain();
+    } else if (wallet?.chainId && wallet.chainId.toString() === fromChainId.toString()) {
       setNeedsChainSwitch(false);
     }
-  }, [wallet?.chainId, fromChainId]);
+  }, [wallet?.chainId, fromChainId, wallet, address, ready, authenticated, autoSwitchChain]);
 
   // Fetch supported chains
   useEffect(() => {
@@ -523,48 +537,37 @@ function BridgePage() {
     label: string;
     disabled?: boolean;
   }) => (
-    <Listbox value={value} onChange={onChange} disabled={disabled}>
-      <div className="relative">
-        <Listbox.Label className="block text-sm font-medium text-gray-300 md:mb-2">{label}</Listbox.Label>
-        <Listbox.Button className="relative w-full bg-gray-800 border border-gray-700 rounded-xl py-2 md:py-3 pl-4 pr-10 text-left shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-          <span className="flex items-center gap-3">
-            {chainConfig[value as keyof typeof chainConfig]?.icon}
-            <span className="font-medium text-white text-sm">{chainConfig[value as keyof typeof chainConfig]?.name}</span>
-          </span>
-          <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <ChevronDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-          </span>
-        </Listbox.Button>
-        <Transition
-          leave="transition ease-in duration-100"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <Listbox.Options className="max-h-60 overflow-auto">
-            {Object.entries(chainConfig).map(([id, chain]) => (
-              <Listbox.Option
-                key={id}
-                value={Number(id)}
-                className={({ active }) =>
-                  `relative cursor-pointer select-none py-3 pl-4 pr-4 ${
-                    active ? 'bg-gray-700 text-blue-300' : 'text-gray-200'
-                  }`
-                }
-              >
-                {({ selected }) => (
-                  <div className="flex items-center gap-3">
-                    {chain.icon}
-                    <span className={`block truncate ${selected ? 'font-medium text-blue-400' : 'font-normal'}`}>
-                      {chain.name}
-                    </span>
-                  </div>
-                )}
-              </Listbox.Option>
-            ))}
-          </Listbox.Options>
-        </Transition>
-      </div>
-    </Listbox>
+    <div className="space-y-1 md:space-y-2">
+      <Label className="text-xs md:text-sm font-medium text-gray-300">{label}</Label>
+      <Select 
+        value={value.toString()} 
+        onValueChange={(val) => onChange(Number(val))}
+        disabled={disabled}
+      >
+        <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-700 h-8 md:h-10 px-2 md:px-3">
+          <SelectValue>
+            <div className="flex items-center gap-1 md:gap-3">
+              {chainConfig[value as keyof typeof chainConfig]?.icon}
+              <span className="font-medium text-white text-xs md:text-sm truncate">{chainConfig[value as keyof typeof chainConfig]?.name}</span>
+            </div>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="bg-gray-800 border-gray-700">
+          {Object.entries(chainConfig).map(([id, chain]) => (
+            <SelectItem 
+              key={id} 
+              value={id}
+              className="text-gray-200 focus:bg-gray-700 focus:text-blue-300"
+            >
+              <div className="flex items-center gap-2 md:gap-3">
+                {chain.icon}
+                <span className="text-xs md:text-sm">{chain.name}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 
   // Token selection component
@@ -573,47 +576,34 @@ function BridgePage() {
     onChange: (value: TokenSymbol) => void; 
     disabled?: boolean;
   }) => (
-    <Listbox value={value} onChange={onChange} disabled={disabled}>
-      <div className="relative">
-        <Listbox.Button className="relative w-full bg-gray-800 border border-gray-700 rounded-xl py-2 md:py-3 pl-4 pr-10 text-left shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-          <span className="flex items-center gap-3">
+    <Select 
+      value={value} 
+      onValueChange={onChange}
+      disabled={disabled}
+    >
+      <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-700">
+        <SelectValue>
+          <div className="flex items-center gap-3">
             {TOKENS[value].icon}
             <span className="font-medium text-white">{value}</span>
-          </span>
-          <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <ChevronDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-          </span>
-        </Listbox.Button>
-        <Transition
-          leave="transition ease-in duration-100"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <Listbox.Options className="max-h-60 overflow-auto">
-            {tokenOptions.map((token) => (
-              <Listbox.Option
-                key={token.value}
-                value={token.value}
-                className={({ active }) =>
-                  `relative cursor-pointer select-none py-3 pl-4 pr-4 ${
-                    active ? 'bg-gray-700 text-blue-300' : 'text-gray-200'
-                  }`
-                }
-              >
-                {({ selected }) => (
-                  <div className="flex items-center gap-3">
-                    {token.icon}
-                    <span className={`block truncate ${selected ? 'font-medium text-blue-400' : 'font-normal'}`}>
-                      {token.label} - {token.name}
-                    </span>
-                  </div>
-                )}
-              </Listbox.Option>
-            ))}
-          </Listbox.Options>
-        </Transition>
-      </div>
-    </Listbox>
+          </div>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="bg-gray-800 border-gray-700">
+        {tokenOptions.map((token) => (
+          <SelectItem 
+            key={token.value} 
+            value={token.value}
+            className="text-gray-200 focus:bg-gray-700 focus:text-blue-300"
+          >
+            <div className="flex items-center gap-3">
+              {token.icon}
+              <span>{token.label} - {token.name}</span>
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 
   // Render loading state
@@ -647,66 +637,77 @@ function BridgePage() {
 
   // Bridge Completion Modal
   const BridgeCompleteModal = () => {
-    if (!isBridgeComplete || !completedBridge) return null;
-
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
-        <div className="bg-gray-800 border border-gray-700 rounded-2xl max-w-md w-full p-6">
-          <div className="text-center">
-            <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto" />
-            <h3 className="text-2xl font-bold text-white mt-4">Bridge Complete!</h3>
-            <p className="text-gray-400 mt-2">
-              You have successfully bridged {completedBridge.amountSent} {completedBridge.tokenSymbol} from {chainConfig[completedBridge.fromChainId as keyof typeof chainConfig]?.name} to {chainConfig[completedBridge.toChainId as keyof typeof chainConfig]?.name}.
-            </p>
-            
-            <div className="mt-6 space-y-3 text-left bg-gray-900 rounded-lg p-4">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Sent:</span>
-                <span className="text-white">{completedBridge.amountSent} {completedBridge.tokenSymbol}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Received:</span>
-                <span className="text-white">{completedBridge.amountReceived} {completedBridge.tokenSymbol}</span>
-              </div>
-              
-              {completedBridge.depositTxHash && (
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Deposit TX:</span>
-                  <a 
-                    href={`${explorerConfig[completedBridge.fromChainId]}${completedBridge.depositTxHash}`} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
-                  >
-                    View
-                  </a>
-                </div>
-              )}
-              
-              {completedBridge.fillTxHash && (
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Fill TX:</span>
-                  <a 
-                    href={`${explorerConfig[completedBridge.toChainId]}${completedBridge.fillTxHash}`} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
-                  >
-                    View
-                  </a>
-                </div>
-              )}
+      <Dialog open={isBridgeComplete} onOpenChange={setIsBridgeComplete}>
+        <DialogContent className="bg-gray-800 border-gray-700 max-w-md">
+          <DialogHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <CheckCircleIcon className="h-16 w-16 text-green-500" />
             </div>
-            
-            <button
-              onClick={() => setIsBridgeComplete(false)}
-              className="mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
+            <DialogTitle className="text-2xl font-bold text-white">Bridge Complete!</DialogTitle>
+            <DialogDescription className="text-gray-400 mt-2">
+              {completedBridge && (
+                <>
+                  You have successfully bridged {completedBridge.amountSent} {completedBridge.tokenSymbol} from {chainConfig[completedBridge.fromChainId as keyof typeof chainConfig]?.name} to {chainConfig[completedBridge.toChainId as keyof typeof chainConfig]?.name}.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {completedBridge && (
+            <div className="mt-6">
+              <Card className="bg-gray-900 border-gray-700">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Sent:</span>
+                    <span className="text-white">{completedBridge.amountSent} {completedBridge.tokenSymbol}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Received:</span>
+                    <span className="text-white">{completedBridge.amountReceived} {completedBridge.tokenSymbol}</span>
+                  </div>
+                  <Separator className="bg-gray-700" />
+                  {completedBridge.depositTxHash && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Deposit TX:</span>
+                      <a 
+                        href={`${explorerConfig[completedBridge.fromChainId]}${completedBridge.depositTxHash}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline"
+                      >
+                        View
+                      </a>
+                    </div>
+                  )}
+                  
+                  {completedBridge.fillTxHash && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Fill TX:</span>
+                      <a 
+                        href={`${explorerConfig[completedBridge.toChainId]}${completedBridge.fillTxHash}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline"
+                      >
+                        View
+                      </a>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              <Button
+                onClick={() => setIsBridgeComplete(false)}
+                className="mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold hover:from-blue-700 hover:to-indigo-700"
+                size="lg"
+              >
+                Close
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     );
   };
 
@@ -726,17 +727,17 @@ function BridgePage() {
       />
       <Header />
       <main className="max-w-2xl mx-auto p-1 md:pt-8">
-        <div className="bg-gray-800 rounded-3xl shadow-2xl border border-gray-700 overflow-hidden">
-          <div className="p-6 md:p-8 space-y-2 md:space-y-6">
-            <div className="pb-4 border-b border-gray-700">
-              <h1 className="text-base md:text-2xl font-bold text-white">Cross-Chain Bridge</h1>
-              <p className="text-sm text-gray-400 mt-1">Transfer assets between networks instantly</p>
-            </div>
+        <Card className="bg-gray-800 border-gray-700 shadow-2xl !rounded-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base md:text-2xl font-bold text-white">Cross-Chain Bridge</CardTitle>
+            <CardDescription className="text-sm text-gray-400">Transfer assets between networks instantly</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 md:space-y-6">
             
             {/* Chain Selection */}
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                <div className="md:col-span-2">
+              <div className="grid grid-cols-5 gap-2 md:gap-4 items-center">
+                <div className="col-span-2">
                   <ChainSelect 
                     value={fromChainId} 
                     onChange={setFromChainId} 
@@ -744,16 +745,18 @@ function BridgePage() {
                     disabled={executing || isSwitchingChain}
                   />
                 </div>
-                <div className="flex justify-center md:col-span-1">
-                  <button
+                <div className="col-span-1 flex justify-center">
+                  <Button
                     onClick={swapChains}
-                    className="p-3 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+                    variant="outline"
+                    size="icon"
+                    className="p-2 md:p-3 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600"
                     disabled={loading || executing || isSwitchingChain}
                   >
-                    <ArrowsUpDownIcon className="h-5 w-5" />
-                  </button>
+                    <ArrowsUpDownIcon className="h-4 w-4 md:h-5 md:w-5" />
+                  </Button>
                 </div>
-                <div className="md:col-span-2">
+                <div className="col-span-2">
                   <ChainSelect 
                     value={toChainId} 
                     onChange={setToChainId} 
@@ -764,25 +767,23 @@ function BridgePage() {
               </div>
               
               {!routeSupported && (
-                <div className="bg-yellow-900/30 border border-yellow-700 rounded-xl p-3 flex items-start">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
-                  <p className="text-yellow-300 text-sm">
+                <Alert className="bg-yellow-900/30 border-yellow-700">
+                  <ExclamationTriangleIcon className="h-4 w-4" />
+                  <AlertDescription className="text-yellow-300">
                     This route is not supported by Across Protocol. Please select different chains.
-                  </p>
-                </div>
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
             
             {/* Token Selection */}
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-gray-300">Token</label>
-                <div className="flex items-center">
-                  <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-lg flex items-center">
-                    <InformationCircleIcon className="h-4 w-4 mr-1" />
-                    Supported on both chains
-                  </span>
-                </div>
+                <Label className="text-sm font-medium text-gray-300">Token</Label>
+                <Badge variant="secondary" className="bg-gray-700 text-gray-300 border-gray-600">
+                  <InformationCircleIcon className="h-4 w-4 mr-1" />
+                  Supported on both chains
+                </Badge>
               </div>
               <TokenSelect 
                 value={selectedToken} 
@@ -791,43 +792,45 @@ function BridgePage() {
               />
               
               {!tokenSupported && (
-                <div className="bg-red-900/30 border border-red-700 rounded-xl p-3 flex items-start">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" />
-                  <p className="text-red-300 text-sm">
+                <Alert className="bg-red-900/30 border-red-700">
+                  <ExclamationTriangleIcon className="h-4 w-4" />
+                  <AlertDescription className="text-red-300">
                     {selectedToken} is not supported on both selected chains. Please choose a different token.
-                  </p>
-                </div>
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
             
             {/* Amount Input */}
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-gray-300">Amount</label>
+                <Label className="text-sm font-medium text-gray-300">Amount</Label>
                 {balance && (
                   <div className="flex items-center">
                     <span className="text-sm text-gray-400">
                       Balance: {Number(formatUnits(balance.value, tokenDecimals)).toFixed(6)} {tokenDetails.symbol}
                     </span>
-                    <button
+                    <Button
                       onClick={setMaxAmount}
-                      className="ml-2 px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs text-gray-300 transition-colors"
+                      variant="outline"
+                      size="sm"
+                      className="ml-2 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-xs text-gray-300 border-gray-600"
                       disabled={executing || isSwitchingChain || !balance || !routeSupported || !tokenSupported}
                     >
                       MAX
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
               <div className="relative flex">
-                <input
+                <Input
                   type="number"
                   step="any"
                   min="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.0"
-                  className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-2 md:py-4 px-4 text-xl font-semibold text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-2 md:py-4 px-4 text-xl font-semibold text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   disabled={executing || isSwitchingChain || !routeSupported || !tokenSupported}
                 />
               </div>
@@ -835,25 +838,26 @@ function BridgePage() {
             
             {/* Advanced Options */}
             <div className="border-t border-gray-700 pt-4">
-              <button
+              <Button
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center text-sm text-gray-400 hover:text-gray-300 transition-colors"
+                variant="ghost"
+                className="flex items-center text-sm text-gray-400 hover:text-gray-300 p-0 h-auto"
               >
                 <span>Advanced Options</span>
                 <ChevronDownIcon className={`ml-2 h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-              </button>
+              </Button>
               {showAdvanced && (
                 <div className="mt-4 space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-300">
                       Recipient Address (Optional)
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="text"
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
                       placeholder="0x... (defaults to your address)"
-                      className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-3 px-4 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl py-3 px-4 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       disabled={executing || isSwitchingChain}
                     />
                   </div>
@@ -861,150 +865,160 @@ function BridgePage() {
               )}
             </div>
             
-            {/* Chain Switch Notice */}
-            {needsChainSwitch && (
-              <div className="bg-yellow-900/30 border border-yellow-700 rounded-xl p-4">
-                <div className="flex items-start">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
-                  <div>
-                    <p className="text-yellow-300 text-sm">
-                      Your wallet is connected to a different chain. Switch to {chainConfig[fromChainId as keyof typeof chainConfig]?.name} to continue.
-                    </p>
-                    <button
-                      onClick={switchChain}
-                      disabled={isSwitchingChain}
-                      className="mt-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors flex items-center"
-                    >
-                      {isSwitchingChain ? (
-                        <>
-                          <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" />
-                          Switching...
-                        </>
-                      ) : (
-                        `Switch to ${chainConfig[fromChainId as keyof typeof chainConfig]?.name}`
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
+            {/* Auto Chain Switch Notice */}
+            {isSwitchingChain && (
+              <Alert className="bg-blue-900/30 border-blue-700">
+                <ArrowPathIcon className="animate-spin h-4 w-4" />
+                <AlertDescription className="text-blue-300">
+                  <p className="text-sm">
+                    Automatically switching to {chainConfig[fromChainId as keyof typeof chainConfig]?.name}...
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {needsChainSwitch && !isSwitchingChain && (
+              <Alert className="bg-red-900/30 border-red-700">
+                <ExclamationTriangleIcon className="h-4 w-4" />
+                <AlertDescription className="text-red-300">
+                  <p className="text-sm">
+                    Failed to automatically switch to {chainConfig[fromChainId as keyof typeof chainConfig]?.name}. Please switch manually in your wallet.
+                  </p>
+                </AlertDescription>
+              </Alert>
             )}
             
             {/* Validation Errors */}
             {!validation.isValid && !needsChainSwitch && (
-              <div className="bg-red-900/30 border border-red-700 rounded-xl p-4">
-                <div className="flex items-start">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mt-0.5 mr-2 flex-shrink-0" />
-                  <div>
+              <Alert className="bg-red-900/30 border-red-700">
+                <ExclamationTriangleIcon className="h-4 w-4" />
+                <AlertDescription className="text-red-300">
+                  <div className="space-y-1">
                     {validation.errors.map((error, index) => (
-                      <p key={index} className="text-red-300 text-sm">{error}</p>
+                      <p key={index} className="text-sm">{error}</p>
                     ))}
                   </div>
-                </div>
-              </div>
+                </AlertDescription>
+              </Alert>
             )}
             
             {/* Quote Display */}
             {loading && !quote && (
-              <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center justify-center">
-                <ArrowPathIcon className="animate-spin h-5 w-5 mr-2 text-blue-400" />
-                <span className="text-gray-400">Fetching Quote...</span>
-              </div>
+              <Card className="bg-gray-800 border-gray-700">
+                <CardContent className="p-4 flex items-center justify-center">
+                  <ArrowPathIcon className="animate-spin h-5 w-5 mr-2 text-blue-400" />
+                  <span className="text-gray-400">Fetching Quote...</span>
+                </CardContent>
+              </Card>
             )}
             
             {quote && (
-              <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border border-green-700 rounded-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base md:text-lg font-semibold text-white">Bridge Quote</h3>
-                  <div className="flex items-center text-green-400">
-                    <ClockIcon className="h-4 w-4 mr-1" />
-                    <span className="text-sm font-medium">~{Math.round(quote.estimatedFillTimeSec / 60)} min</span>
+              <Card className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border-green-700">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base md:text-lg font-semibold text-white">Bridge Quote</CardTitle>
+                    <Badge variant="secondary" className="bg-green-900/50 text-green-400 border-green-700">
+                      <ClockIcon className="h-4 w-4 mr-1" />
+                      ~{Math.round(quote.estimatedFillTimeSec / 60)} min
+                    </Badge>
                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gray-800 rounded-lg p-4">
-                    <div className="text-sm text-gray-400 mb-1">You'll Receive</div>
-                    <div className="text-base font-bold text-white">
-                      {Number(formatUnits(quote.deposit.outputAmount, getTokenDecimals(tokenDetails, toChainId))).toFixed(6)} {tokenDetails.symbol}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      on {chainConfig[toChainId as keyof typeof chainConfig]?.name}
-                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardContent className="p-4">
+                        <div className="text-sm text-gray-400 mb-1">You'll Receive</div>
+                        <div className="text-base font-bold text-white">
+                          {Number(formatUnits(quote.deposit.outputAmount, getTokenDecimals(tokenDetails, toChainId))).toFixed(6)} {tokenDetails.symbol}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          on {chainConfig[toChainId as keyof typeof chainConfig]?.name}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardContent className="p-4">
+                        <div className="text-sm text-gray-400 mb-1">Bridge Fee</div>
+                        <div className="text-base font-bold text-white">
+                          {Number(formatUnits(quote.fees.totalRelayFee.total, tokenDecimals)).toFixed(6)} {tokenDetails.symbol}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          ~{((Number(formatUnits(quote.fees.totalRelayFee.total, tokenDecimals)) / Number(amount)) * 100).toFixed(3)}%
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
-                  <div className="bg-gray-800 rounded-lg p-4">
-                    <div className="text-sm text-gray-400 mb-1">Bridge Fee</div>
-                    <div className="text-base font-bold text-white">
-                      {Number(formatUnits(quote.fees.totalRelayFee.total, tokenDecimals)).toFixed(6)} {tokenDetails.symbol}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      ~{((Number(formatUnits(quote.fees.totalRelayFee.total, tokenDecimals)) / Number(amount)) * 100).toFixed(3)}%
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={executeBridge}
-                  disabled={executing || needsChainSwitch || !validation.isValid}
-                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed transform hover:scale-[1.02] transition-all duration-200 shadow-lg flex items-center justify-center"
-                >
-                  {executing ? (
-                    <>
-                      <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" />
-                      {progress?.step === "approve" && "Approving..."}
-                      {progress?.step === "deposit" && "Depositing..."}
-                      {progress?.step === "fill" && "Completing..."}
-                    </>
-                  ) : (
-                    <>
-                      Bridge Now
-                      <ArrowRightIcon className="h-5 w-5 ml-2" />
-                    </>
-                  )}
-                </button>
-              </div>
+                  <Button
+                    onClick={executeBridge}
+                    disabled={executing || needsChainSwitch || !validation.isValid}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed transform hover:scale-[1.02] transition-all duration-200 shadow-lg"
+                    size="lg"
+                  >
+                    {executing ? (
+                      <>
+                        <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" />
+                        {progress?.step === "approve" && "Approving..."}
+                        {progress?.step === "deposit" && "Depositing..."}
+                        {progress?.step === "fill" && "Completing..."}
+                      </>
+                    ) : (
+                      <>
+                        Bridge Now
+                        <ArrowRightIcon className="h-5 w-5 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
             )}
             
             {/* Progress Display */}
             {progress && (
-              <div className="bg-blue-900/30 border border-blue-700 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-blue-300">Bridge Progress</h4>
-                  <div className="flex items-center text-blue-400">
-                    <ArrowPathIcon className="animate-spin h-4 w-4 mr-1" />
-                    <span className="text-sm capitalize">{progress.step}</span>
+              <Card className="bg-blue-900/30 border-blue-700">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-semibold text-blue-300">Bridge Progress</CardTitle>
+                    <Badge variant="secondary" className="bg-blue-900/50 text-blue-400 border-blue-700">
+                      <ArrowPathIcon className="animate-spin h-4 w-4 mr-1" />
+                      <span className="capitalize">{progress.step}</span>
+                    </Badge>
                   </div>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <div className={`flex items-center ${progress.step === "approve" ? "text-blue-400" : progress.status === "txSuccess" ? "text-green-400" : "text-gray-500"}`}>
-                    {progress.step === "approve" ? 
-                      <ArrowPathIcon className="animate-spin h-4 w-4 mr-1" /> : 
-                      progress.status === "txSuccess" ? 
-                      <CheckCircleIcon className="h-4 w-4 mr-1" /> : 
-                      <div className="h-4 w-4 mr-1 rounded-full border-2 border-gray-500" />
-                    }
-                    Approve
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between text-sm">
+                    <div className={`flex items-center ${progress.step === "approve" ? "text-blue-400" : progress.status === "txSuccess" ? "text-green-400" : "text-gray-500"}`}>
+                      {progress.step === "approve" ? 
+                        <ArrowPathIcon className="animate-spin h-4 w-4 mr-1" /> : 
+                        progress.status === "txSuccess" ? 
+                        <CheckCircleIcon className="h-4 w-4 mr-1" /> : 
+                        <div className="h-4 w-4 mr-1 rounded-full border-2 border-gray-500" />
+                      }
+                      Approve
+                    </div>
+                    <div className={`flex items-center ${progress.step === "deposit" ? "text-blue-400" : progress.status === "txSuccess" ? "text-green-400" : "text-gray-500"}`}>
+                      {progress.step === "deposit" ? 
+                        <ArrowPathIcon className="animate-spin h-4 w-4 mr-1" /> : 
+                        progress.status === "txSuccess" ? 
+                        <CheckCircleIcon className="h-4 w-4 mr-1" /> : 
+                        <div className="h-4 w-4 mr-1 rounded-full border-2 border-gray-500" />
+                      }
+                      Deposit
+                    </div>
+                    <div className={`flex items-center ${progress.step === "fill" ? "text-blue-400" : progress.status === "txSuccess" ? "text-green-400" : "text-gray-500"}`}>
+                      {progress.step === "fill" ? 
+                        <ArrowPathIcon className="animate-spin h-4 w-4 mr-1" /> : 
+                        progress.status === "txSuccess" ? 
+                        <CheckCircleIcon className="h-4 w-4 mr-1" /> : 
+                        <div className="h-4 w-4 mr-1 rounded-full border-2 border-gray-500" />
+                      }
+                      Complete
+                    </div>
                   </div>
-                  <div className={`flex items-center ${progress.step === "deposit" ? "text-blue-400" : progress.status === "txSuccess" ? "text-green-400" : "text-gray-500"}`}>
-                    {progress.step === "deposit" ? 
-                      <ArrowPathIcon className="animate-spin h-4 w-4 mr-1" /> : 
-                      progress.status === "txSuccess" ? 
-                      <CheckCircleIcon className="h-4 w-4 mr-1" /> : 
-                      <div className="h-4 w-4 mr-1 rounded-full border-2 border-gray-500" />
-                    }
-                    Deposit
-                  </div>
-                  <div className={`flex items-center ${progress.step === "fill" ? "text-blue-400" : progress.status === "txSuccess" ? "text-green-400" : "text-gray-500"}`}>
-                    {progress.step === "fill" ? 
-                      <ArrowPathIcon className="animate-spin h-4 w-4 mr-1" /> : 
-                      progress.status === "txSuccess" ? 
-                      <CheckCircleIcon className="h-4 w-4 mr-1" /> : 
-                      <div className="h-4 w-4 mr-1 rounded-full border-2 border-gray-500" />
-                    }
-                    Complete
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </main>
       
       {/* Bridge Completion Modal */}
