@@ -532,9 +532,9 @@ export const StablecoinBalanceButton = () => {
           {/* Header Section */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 rounded-xl flex items-center justify-center">
+              {/* <div className="w-10 h-10 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 rounded-xl flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-emerald-400" />
-              </div>
+              </div> */}
               <div>
                 <p className="text-xs text-slate-400 mb-1 font-medium tracking-wide uppercase">Total Balance</p>
                 <h3 className="text-white text-sm font-semibold">Stablecoins Portfolio</h3>
@@ -555,7 +555,7 @@ export const StablecoinBalanceButton = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent leading-tight">
+                <div className="text-3xl md:text-4xl font-bold text-slate-100 leading-tight">
                   ${totalBalance.toLocaleString('en-US', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
@@ -571,7 +571,7 @@ export const StablecoinBalanceButton = () => {
           {/* Action Buttons */}
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 flex-wrap">
             <div className="transform hover:scale-[1.02] transition-transform duration-200">
-              <WalletKit buttonName="Transact" />
+              <WalletKit buttonName="Wallet" />
             </div>
             <div className="w-px h-8 bg-slate-600/30 hidden sm:block"></div>
             <button
@@ -580,7 +580,7 @@ export const StablecoinBalanceButton = () => {
             >
               <DollarSign className="w-4 h-4" />
               <span className="hidden xs:inline">Withdraw</span>
-              <span className="xs:hidden">Cash Out</span>
+              <span className="xs:hidden">Withdraw</span>
             </button>
           </div>
 
