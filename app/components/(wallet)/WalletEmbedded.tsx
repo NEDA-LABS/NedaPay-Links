@@ -5,13 +5,27 @@ import { useAccount, useBalance, useSwitchChain, useChainId, usePublicClient } f
 import { useFundWallet, useSendTransaction, useWallets, usePrivy } from '@privy-io/react-auth';
 import { formatUnits, parseEther, parseUnits, isAddress, encodeFunctionData } from 'viem';
 import { base, bsc, scroll, celo, arbitrum, polygon, optimism, mainnet } from 'viem/chains';
-import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalLink, X, ChevronDown } from 'lucide-react';
+import { Copy, Eye, EyeOff, Download, Send, Plus, Wallet, ArrowUpDown, ExternalLink, X, ChevronDown, AlertTriangle, Shield, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { stablecoins } from '@/data/stablecoins';
 import { resolveName } from '@/utils/ensUtils';
 import EnsAddressInput from '@/components/(wallet)/EnsAddressInput';
 import Image from 'next/image';
 import { getTokenIcon, getNativeTokenIcon } from '@/utils/tokenIcons';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// shadcn/ui components
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ERC20_ABI = [
   {
@@ -101,9 +115,6 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchingChain, setIsSwitchingChain] = useState(false);
-  const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false);
-  const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false);
-  const [isFundAssetDropdownOpen, setIsFundAssetDropdownOpen] = useState(false);
 
   // Fund states
   const [fundAmount, setFundAmount] = useState('');
@@ -148,10 +159,10 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     resolveEnsName();
   }, [address]);
 
-  // native token balance
+  // native token balance - use actual connected chainId instead of activeChain
   const { data: nativeBalance, refetch: refetchNativeBalance } = useBalance({
     address,
-    chainId: activeChain.id,
+    chainId: chainId, // Use actual connected chain instead of activeChain
   });
 
   useEffect(() => {
@@ -194,31 +205,44 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     );
   }, [activeChain.id]);
 
+  // Helper function to format balance with smart precision
+  const formatBalance = (value: number, symbol: string): string => {
+    if (value === 0) return '0';
+    if (value < 0.000001) return '< 0.000001';
+    if (value < 0.01) return value.toFixed(6);
+    if (value < 1) return value.toFixed(4);
+    if (value < 1000) return value.toFixed(2);
+    return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  };
+
   const loadTokenBalances = async () => {
-    if (!address || !isOpen) return;
+    if (!address || !isOpen || !publicClient) return;
+    
     try {
       const tokenBalances: TokenBalance[] = [];
 
+      // Add native token balance with better formatting
       if (nativeBalance) {
         const formatted = parseFloat(formatUnits(nativeBalance.value, nativeBalance.decimals));
         const price = NATIVE_TOKEN_PRICES[activeChain.id] || 1;
         tokenBalances.push({
           symbol: nativeBalance.symbol,
-          balance: formatted.toFixed(6),
+          balance: formatBalance(formatted, nativeBalance.symbol),
           usd: (formatted * price).toFixed(2),
           decimals: nativeBalance.decimals,
           isNative: true
         });
       }
 
-      for (const token of relevantTokens) {
+      // Load all ERC20 token balances in parallel for better performance
+      const tokenPromises = relevantTokens.map(async (token) => {
         try {
           const decimals =
             typeof token.decimals === 'object'
               ? (token.decimals as any)[activeChain.id] ?? 6
               : token.decimals;
 
-          const balance = await publicClient?.readContract({
+          const balance = await publicClient.readContract({
             address: token.addresses[activeChain.id as keyof typeof token.addresses] as `0x${string}`,
             abi: ERC20_ABI,
             functionName: 'balanceOf',
@@ -227,21 +251,38 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
 
           if (balance) {
             const formatted = parseFloat(formatUnits(balance as bigint, decimals));
-            if (formatted > 0) {
-              tokenBalances.push({
-                symbol: token.baseToken,
-                balance: formatted.toFixed(6),
-                usd: (formatted * 1).toFixed(2),
-                address: token.addresses[activeChain.id as keyof typeof token.addresses],
-                decimals,
-                isNative: false
-              });
-            }
+            // Show tokens even with 0 balance for better UX
+            return {
+              symbol: token.baseToken,
+              balance: formatBalance(formatted, token.baseToken),
+              usd: (formatted * 1).toFixed(2),
+              address: token.addresses[activeChain.id as keyof typeof token.addresses],
+              decimals,
+              isNative: false
+            };
           }
+          return null;
         } catch (error) {
           console.error(`Error loading ${token.baseToken} balance:`, error);
+          return null;
         }
-      }
+      });
+
+      // Wait for all token balances to load in parallel
+      const tokenResults = await Promise.allSettled(tokenPromises);
+      
+      tokenResults.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value) {
+          tokenBalances.push(result.value);
+        }
+      });
+
+      // Sort balances: native first, then by USD value
+      tokenBalances.sort((a, b) => {
+        if (a.isNative && !b.isNative) return -1;
+        if (!a.isNative && b.isNative) return 1;
+        return parseFloat(b.usd) - parseFloat(a.usd);
+      });
 
       setBalances(tokenBalances);
     } catch (error) {
@@ -250,21 +291,33 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     }
   };
 
+  // Optimized effect for loading balances - ensure chain consistency
   useEffect(() => {
-    if (!isOpen || !address) return;
+    if (!isOpen || !address || !publicClient || !nativeBalance) return;
+    
+    // Only load if activeChain matches the actual connected chain
+    if (activeChain.id !== chainId) return;
+    
     setIsLoading(true);
-    loadTokenBalances().finally(() => setIsLoading(false));
-  }, [isOpen, address, activeChain, nativeBalance, relevantTokens]);
+    // Add small delay to prevent rapid successive calls
+    const timeoutId = setTimeout(() => {
+      loadTokenBalances().finally(() => setIsLoading(false));
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [isOpen, address, activeChain.id, nativeBalance?.value, chainId]);
 
+  // Separate effect for native balance refetch on chain switch
   useEffect(() => {
-    if (isOpen && address) refetchNativeBalance();
-  }, [activeChain, isOpen, address, refetchNativeBalance]);
+    if (isOpen && address && refetchNativeBalance) {
+      refetchNativeBalance();
+    }
+  }, [activeChain.id, isOpen, address]);
 
   const switchChain = async (chain: any) => {
     try {
       setIsSwitchingChain(true);
       setIsLoading(true);
-      setIsChainDropdownOpen(false);
       if (switchChainAsync) await switchChainAsync({ chainId: chain.id });
       setActiveChain(chain);
       setBalances([]);
@@ -303,11 +356,7 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
     if (!address || !fundAmount) return toast.error('Missing amount');
     try {
       setIsLoading(true);
-      await fundWallet(address, {
-        chain: activeChain,
-        amount: fundAmount,
-        asset: fundAsset
-      });
+      await fundWallet({ address: address as string });
       toast.success('Funding flow opened');
       setFundAmount('');
     } catch (e: any) {
@@ -362,565 +411,605 @@ export default function WalletModal({ isOpen, onClose, defaultTab = 'overview' }
 
   const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 bg-opacity-50 z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        {/* Modal */}
-        <div
-          className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Wallet className="h-6 w-6" />
-                <h2 className="text-xl font-bold">Wallet</h2>
-              </div>
-              <div className="flex items-center gap-4">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg max-h-[85vh] p-0 overflow-hidden bg-slate-900 border-slate-700 !rounded-2xl">
+        <div className="relative">
+          {/* Enhanced Header */}
+          <div className="bg-slate-800 p-4 border-b border-slate-600 !rounded-t-2xl">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-600 !rounded-xl shadow-lg">
+                    <Wallet className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                  <p className="text-sm font-semibold text-white">
+                    NedaPay
+                  </p>
+                  <span className="text-xs text-slate-200">stablecoins wallet</span>
+                  </div>
+                </div>
                 {address && (
-                  <div className="text-sm opacity-90">
-                    {ensName || formatAddress(address)}
+                  <div className="flex items-center gap-2 bg-slate-700 px-3 py-1.5 !rounded-xl border border-slate-600">
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                    <span className="text-sm text-slate-200 font-mono">
+                      {ensName || formatAddress(address)}
+                    </span>
                   </div>
                 )}
-                <button
-                  onClick={onClose}
-                  className="text-white hover:bg-white/20 p-2 rounded-lg transition"
-                >
-                  <X className="h-5 w-5" />
-                </button>
               </div>
-            </div>
+            </DialogHeader>
 
-            {/* Chain Switcher - Professional Dropdown */}
-            <div className="mt-4 relative">
-              <button
-                onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
+            {/* Chain Switcher */}
+            <div className="mt-4">
+              <Select
+                value={activeChain.id.toString()}
+                onValueChange={(value) => {
+                  const chain = SUPPORTED_CHAINS.find(c => c.id.toString() === value);
+                  if (chain) switchChain(chain);
+                }}
                 disabled={isSwitchingChain || isLoading}
-                className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-4 py-2 flex items-center justify-between transition-all duration-200 disabled:opacity-50"
               >
-                <div className="flex items-center gap-2">
-                  {isSwitchingChain ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1" />
-                  ) : (
-                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">
+                <SelectTrigger className="w-full bg-slate-700 border-slate-600 text-white hover:bg-slate-600 !rounded-xl">
+                  <div className="flex items-center gap-3">
+                    {isSwitchingChain ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-400 border-t-white" />
+                    ) : (
                       <Image
                         src={getNativeTokenIcon(activeChain.id)}
                         alt={activeChain.name}
                         width={20}
                         height={20}
-                        className="rounded-full"
+                        className="rounded-full ring-2 ring-blue-400/30"
                       />
-                    </div>
-                  )}
-                  <span className="font-medium">
-                    {isSwitchingChain ? 'Switching...' : activeChain.name}
-                  </span>
-                </div>
-                <ChevronDown 
-                  className={`h-4 w-4 transition-transform ${isChainDropdownOpen ? 'rotate-180' : ''}`} 
-                />
-              </button>
-
-              {isChainDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                    )}
+                    <SelectValue>
+                      <span className="font-medium">
+                        {isSwitchingChain ? 'Switching...' : activeChain.name}
+                      </span>
+                    </SelectValue>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700 !rounded-xl">
                   {SUPPORTED_CHAINS.map((chain) => (
-                    <button
-                      key={chain.id}
-                      onClick={() => switchChain(chain)}
-                      className={`w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition ${
-                        activeChain.id === chain.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold">
+                    <SelectItem key={chain.id} value={chain.id.toString()} className="text-white hover:bg-slate-700 !rounded-lg">
+                      <div className="flex items-center gap-3">
                         <Image
                           src={getNativeTokenIcon(chain.id)}
                           alt={chain.name}
-                          width={20}
-                          height={20}
+                          width={16}
+                          height={16}
                           className="rounded-full"
                         />
+                        <span className="font-medium">{chain.name}</span>
                       </div>
-                      <div className="flex-1">
-                        <div className="font-medium">{chain.name}</div>
-                        <div className="text-xs opacity-70">Chain ID: {chain.id}</div>
-                      </div>
-                      {activeChain.id === chain.id && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      )}
-                    </button>
+                    </SelectItem>
                   ))}
-                </div>
-              )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex border-b dark:border-gray-700">
-            {[
-              { id: 'overview', label: 'Overview', icon: Wallet },
-              { id: 'send', label: 'Send', icon: Send },
-              { id: 'receive', label: 'Receive', icon: Download },
-              { id: 'settings', label: 'Settings', icon: ArrowUpDown }
-            ].map(({ id, label, icon: Icon}) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id as any)}
-                className={`flex-1 flex items-center justify-center gap-1 p-2 text-sm font-medium transition ${
-                  activeTab === id
-                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-400'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* Enhanced Tabs */}
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-b border-slate-600 !rounded-none">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white !rounded-lg">
+                <Wallet className="h-4 w-4 mr-1" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="send" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white !rounded-lg">
+                <Send className="h-4 w-4 mr-1" />
+                Send
+              </TabsTrigger>
+              <TabsTrigger value="receive" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white !rounded-lg">
+                <Download className="h-4 w-4 mr-1" />
+                Receive
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white text-slate-300 hover:text-white transition-all !rounded-lg">
+                <ArrowUpDown className="h-4 w-4 mr-1" />
+                Settings
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Content */}
-          <div className="p-6 min-h-[400px] max-h-[500px] overflow-y-auto">
-            {activeTab === 'overview' && (
-              <div className="space-y-2 md:space-y-6">
-                {/* Balances */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Your Assets</h3>
-                  {isLoading || isSwitchingChain ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-                      <p className="text-gray-500 dark:text-gray-400 mt-2">
-                        {isSwitchingChain ? 'Switching chain...' : 'Loading balances...'}
-                      </p>
-                    </div>
-                  ) : balances.length > 0 ? (
-                    <div className="space-y-3">
-                      {balances.map((balance, index) => (
-                        <div key={`${balance.symbol}-${index}`}
-                             className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/70 transition">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center">
-                              <Image
-                                src={getTokenIcon(balance.symbol, activeChain.id)}
-                                alt={balance.symbol}
-                                width={20}
-                                height={20}
-                                className="rounded-full"
-                              />
-                            </div>
-                            <div>
-                              <div className="text-sm font-semibold text-gray-900 dark:text-white">{balance.symbol}</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {balance.isNative ? 'Native Token' : 'ERC-20'}
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="p-4 space-y-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-4">
+                  {/* Assets Card */}
+                  <Card className="bg-slate-800 border-slate-600 !rounded-2xl">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-white text-base">
+                        <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-500 !rounded-lg">
+                          <Wallet className="h-4 w-4 text-white" />
+                        </div>
+                        Your Assets
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {isLoading || isSwitchingChain ? (
+                        <div className="text-center py-6">
+                          <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-400/30 border-t-blue-400 mx-auto" />
+                          <p className="text-slate-300 mt-2 text-sm">
+                            {isSwitchingChain ? 'Switching chain...' : 'Loading balances...'}
+                          </p>
+                        </div>
+                      ) : balances.length > 0 ? (
+                        <div className="space-y-2">
+                          {balances.map((balance, index) => (
+                            <div
+                              key={`${balance.symbol}-${index}`}
+                              className="flex justify-between items-center p-3 !rounded-xl bg-slate-700 border border-slate-600 hover:border-blue-500/50 transition-all duration-200"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 !rounded-full bg-slate-600 flex items-center justify-center border border-slate-500">
+                                  <Image
+                                    src={getTokenIcon(balance.symbol, activeChain.id)}
+                                    alt={balance.symbol}
+                                    width={20}
+                                    height={20}
+                                    className="rounded-full"
+                                  />
+                                </div>
+                                <div>
+                                  <div className="font-medium text-white text-sm">{balance.symbol}</div>
+                                  <Badge variant="secondary" className="text-xs bg-slate-700/80 text-slate-300 border-slate-600 !rounded-md">
+                                    {balance.isNative ? 'Native' : 'ERC-20'}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-semibold text-white">{balance.balance}</div>
+                                <div className="text-xs text-slate-400">Available</div>
                               </div>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-gray-900 dark:text-white">{balance.balance}</div>
-                            {/* <div className="text-sm text-gray-500 dark:text-gray-400">≈ ${balance.usd}</div> */}
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Wallet className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                      <p className="text-gray-500 dark:text-gray-400">No supported tokens found on {activeChain.name}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => setActiveTab('send')}
-                    className="flex items-center justify-center gap-2 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium"
-                  >
-                    <Send className="h-4 w-4" />
-                    Send
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('receive')}
-                    className="flex items-center justify-center gap-2 p-4 bg-green-600 hover:bg-green-700 text-white rounded-xl transition font-medium"
-                  >
-                    <Download className="h-4 w-4" />
-                    Receive
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'send' && (
-              <div className="space-y-2 md:space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Send Tokens</h3>
-
-                {/* Token Selection - Custom Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Token</label>
-                  <div className="relative">
-                    <button
-                      onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-between text-left"
-                    >
-                      <div className="flex items-center gap-3">
-                        {selectedToken && (
-                          <Image
-                            src={getTokenIcon(selectedToken.symbol, activeChain.id)}
-                            alt={selectedToken.symbol}
-                            width={24}
-                            height={24}
-                            className="rounded-full"
-                          />
-                        )}
-                        <span>
-                          {selectedToken ? `${selectedToken.symbol} [${selectedToken.balance}]` : 'Select a token'}
-                        </span>
-                      </div>
-                      <ChevronDown className="h-4 w-4 text-gray-400" />
-                    </button>
-
-                    {isTokenDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                        {balances.map((balance, index) => (
-                          <button
-                            key={`${balance.symbol}-${index}`}
-                            onClick={() => {
-                              setSelectedToken(balance);
-                              setIsTokenDropdownOpen(false);
-                            }}
-                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
-                          >
-                            <Image
-                              src={getTokenIcon(balance.symbol, activeChain.id)}
-                              alt={balance.symbol}
-                              width={24}
-                              height={24}
-                              className="rounded-full"
-                            />
-                            <div>
-                              <div className="font-medium">{balance.symbol}</div>
-                              <div className="text-sm text-gray-500">{balance.balance} available</div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Recipient (ENS or Address) */}
-                <EnsAddressInput
-                  value={sendToRaw}
-                  onChange={setSendToRaw}
-                  onResolved={setSendToResolved}
-                  label="Recipient (ENS or Address)"
-                  placeholder="vitalik.eth or 0x..."
-                />
-
-                {/* Amount */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount</label>
-                  <input
-                    type="number"
-                    value={sendAmount}
-                    onChange={(e) => setSendAmount(e.target.value)}
-                    placeholder={selectedToken ? `Amount in ${selectedToken.symbol}` : '0.0'}
-                    step="any"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800"
-                  />
-                  {selectedToken && (
-                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      <span>Available: {selectedToken.balance} {selectedToken.symbol}</span>
-                      <button
-                        onClick={() => setSendAmount(selectedToken.balance)}
-                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-                      >
-                        Max
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Send Button */}
-                <button
-                  onClick={handleSend}
-                  disabled={!isValidRecipient || !sendAmount || !selectedToken || isLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-                      Send Transaction
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {activeTab === 'receive' && (
-              <div className="space-y-2 md:space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Receive Tokens</h3>
-
-                {/* Address Display */}
-                <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-xl">
-                  <div className="text-center">
-                    <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">Your Wallet Address</div>
-                    <div className="font-mono text-sm text-gray-900 dark:text-white break-all mb-2">
-                      {address}
-                    </div>
-                    <button
-                      onClick={() => address && copyToClipboard(address, 'Address')}
-                      className="flex items-center justify-center gap-2 mx-auto p-2 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy Address
-                    </button>
-                  </div>
-                </div>
-
-                {/* Fund Wallet */}
-                <div className="border-t dark:border-gray-700 pt-6">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Fund Your Wallet</h4>
-                  <div className="space-y-4">
-                    <input
-                      type="number"
-                      value={fundAmount}
-                      onChange={(e) => setFundAmount(e.target.value)}
-                      placeholder="Amount"
-                      step="any"
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:bg-gray-800"
-                    />
-                    
-                    {/* Asset Selection Dropdown */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setIsFundAssetDropdownOpen(!isFundAssetDropdownOpen)}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-between text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Image
-                            src={getTokenIcon(
-                              fundAsset === 'native-currency' 
-                                ? activeChain.nativeCurrency.symbol 
-                                : fundAsset,
-                              activeChain.id
-                            )}
-                            alt={fundAsset}
-                            width={24}
-                            height={24}
-                            className="rounded-full"
-                          />
-                          <span>
-                            {fundAsset === 'native-currency' 
-                              ? activeChain.nativeCurrency.symbol 
-                              : fundAsset}
-                          </span>
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                      </button>
-
-                      {isFundAssetDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10">
-                          <button
-                            onClick={() => {
-                              setFundAsset('native-currency');
-                              setIsFundAssetDropdownOpen(false);
-                            }}
-                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
-                          >
-                            <Image
-                              src={getNativeTokenIcon(activeChain.id)}
-                              alt={activeChain.nativeCurrency.symbol}
-                              width={24}
-                              height={24}
-                              className="rounded-full"
-                            />
-                            <span>{activeChain.nativeCurrency.symbol}</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setFundAsset('USDC');
-                              setIsFundAssetDropdownOpen(false);
-                            }}
-                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
-                          >
-                            <Image
-                              src={getTokenIcon('USDC', activeChain.id)}
-                              alt="USDC"
-                              width={24}
-                              height={24}
-                              className="rounded-full"
-                            />
-                            <span>USDC</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <button
-                      onClick={handleFund}
-                      disabled={!fundAmount || isLoading}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Processing...
-                        </>
                       ) : (
-                        <>
-                          <Plus className="h-4 w-4" />
-                          Fund Wallet
-                        </>
+                        <div className="text-center py-6">
+                          <div className="w-12 h-12 bg-slate-700 !rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-600">
+                            <Wallet className="h-6 w-6 text-slate-400" />
+                          </div>
+                          <p className="text-slate-400 text-sm">No supported tokens found on {activeChain.name}</p>
+                        </div>
                       )}
-                    </button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Actions */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      onClick={() => setActiveTab('send')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg !rounded-xl"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Send
+                    </Button>
+                    <Button
+                      onClick={() => setActiveTab('receive')}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white border-0 shadow-lg !rounded-xl"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Receive
+                    </Button>
                   </div>
                 </div>
-              </div>
-            )}
+              </ScrollArea>
+            </TabsContent>
 
-            {activeTab === 'settings' && (
-              <div className="space-y-1 md:space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Wallet Settings</h3>
+            {/* Send Tab */}
+            <TabsContent value="send" className="p-4 space-y-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-4">
+                  <Card className="bg-slate-800 border-slate-600 !rounded-2xl">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-white text-base">
+                        <div className="p-1.5 bg-gradient-to-br from-blue-500 to-purple-500 !rounded-lg">
+                          <Send className="h-4 w-4 text-white" />
+                        </div>
+                        Send Tokens
+                      </CardTitle>
+                      <CardDescription className="text-slate-300 text-sm">
+                        Transfer tokens to any address or ENS name
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Token Selection */}
+                      <div className="space-y-2">
+                        <Label className="text-white">Select Token</Label>
+                        <Select
+                          value={selectedToken ? `${selectedToken.symbol}-${selectedToken.isNative}` : ''}
+                          onValueChange={(value) => {
+                            const [symbol, isNative] = value.split('-');
+                            const token = balances.find(b => b.symbol === symbol && b.isNative === (isNative === 'true'));
+                            if (token) setSelectedToken(token);
+                          }}
+                        >
+                          <SelectTrigger className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600 !rounded-xl">
+                            <SelectValue placeholder="Choose a token to send">
+                              {selectedToken && (
+                                <div className="flex items-center gap-3">
+                                  <Image
+                                    src={getTokenIcon(selectedToken.symbol, activeChain.id)}
+                                    alt={selectedToken.symbol}
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-sm">{selectedToken.symbol}</span>
+                                  <Badge variant="outline" className="ml-auto text-xs bg-slate-700/80 text-slate-300 border-slate-600 !rounded-md">
+                                    {selectedToken.balance}
+                                  </Badge>
+                                </div>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700 !rounded-xl">
+                            {balances.map((balance, index) => (
+                              <SelectItem
+                                key={`${balance.symbol}-${index}`}
+                                value={`${balance.symbol}-${balance.isNative}`}
+                                className="text-white hover:bg-slate-700 !rounded-lg"
+                              >
+                                <div className="flex items-center gap-3 w-full">
+                                  <Image
+                                    src={getTokenIcon(balance.symbol, activeChain.id)}
+                                    alt={balance.symbol}
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium text-sm">{balance.symbol}</div>
+                                    <div className="text-xs text-slate-400">{balance.balance} available</div>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                {/* Privy dashboard */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700">
-                  <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Advanced Wallet Management</h4>
-                  <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">
-                    For more advanced wallet features, transaction history, and additional tokens,
-                    visit your Privy dashboard.
-                  </p>
-                  <a
-                    href="https://home.privy.io"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm"
-                  >
-                    Open Privy Dashboard
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                  {user && (user as any).email && (
-                    <p className="text-blue-600 dark:text-blue-400 text-xs mt-2">
-                      Login with: {(user as any).email.address}
-                    </p>
-                  )}
+                      {/* Recipient */}
+                      <div className="space-y-2">
+                        <EnsAddressInput
+                          value={sendToRaw}
+                          onChange={setSendToRaw}
+                          onResolved={setSendToResolved}
+                          label="Recipient (ENS or Address)"
+                          placeholder="vitalik.eth or 0x..."
+                        />
+                      </div>
+
+                      {/* Amount */}
+                      <div className="space-y-2">
+                        <Label className="text-white text-sm">Amount</Label>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            value={sendAmount}
+                            onChange={(e) => setSendAmount(e.target.value)}
+                            placeholder={selectedToken ? `Amount in ${selectedToken.symbol}` : '0.0'}
+                            step="any"
+                            className="bg-slate-700 border-slate-600 text-white pr-16 !rounded-xl"
+                          />
+                          {selectedToken && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSendAmount(selectedToken.balance)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 text-blue-400 hover:text-blue-300 !rounded-lg"
+                            >
+                              MAX
+                            </Button>
+                          )}
+                        </div>
+                        {selectedToken && (
+                          <div className="flex justify-between text-sm text-slate-400">
+                            <span>Available: {selectedToken.balance} {selectedToken.symbol}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Send Button */}
+                      <Button
+                        onClick={handleSend}
+                        disabled={!isValidRecipient || !sendAmount || !selectedToken || isLoading}
+                        className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white border-0 shadow-lg !rounded-xl"
+                      >
+                        {isLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-400/30 border-t-white mr-2" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Transaction
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
+              </ScrollArea>
+            </TabsContent>
 
-                {/* Export Private Key */}
-                <div className="border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded-xl">
-                  <div className="flex items-start gap-3">
-                    <div className="text-yellow-600 dark:text-yellow-500 text-xl">⚠️</div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">Export Private Key</h4>
-                      <p className="text-yellow-700 dark:text-yellow-400 text-sm mb-4">
-                        Your private key gives full access to your wallet. Never share it with anyone and store it securely.
-                      </p>
+            {/* Receive Tab */}
+            <TabsContent value="receive" className="p-4 space-y-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-4">
+                  {/* Address Display Card */}
+                  <Card className="bg-slate-800 border-slate-600 !rounded-2xl">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-white text-base">
+                        <div className="p-1.5 bg-indigo-500 !rounded-lg">
+                          <Download className="h-4 w-4 text-white" />
+                        </div>
+                        Receive Tokens
+                      </CardTitle>
+                      <CardDescription className="text-slate-300 text-sm">
+                        Share your wallet address to receive tokens
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center space-y-4">
+                        <div className="p-4 bg-slate-700 !rounded-xl border border-slate-600">
+                          <Label className="text-slate-300 text-sm">Your Wallet Address</Label>
+                          <div className="mt-2 p-3 bg-slate-800/80 !rounded-lg border border-slate-600">
+                            <code className="text-white text-sm break-all font-mono">
+                              {address}
+                            </code>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => address && copyToClipboard(address, 'Address')}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white border-0 shadow-lg !rounded-xl"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy Address
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
 
+                  {/* Fund Wallet Card */}
+                  <Card className="bg-slate-800 border-slate-600 !rounded-2xl">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-white text-base">
+                        <div className="p-1.5 bg-blue-500 !rounded-lg">
+                          <Plus className="h-4 w-4 text-white" />
+                        </div>
+                        Fund Wallet
+                      </CardTitle>
+                      <CardDescription className="text-slate-300 text-sm">
+                        Add funds to your wallet using Privy
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-white text-sm">Amount</Label>
+                        <Input
+                          type="number"
+                          value={fundAmount}
+                          onChange={(e) => setFundAmount(e.target.value)}
+                          placeholder="Amount to fund"
+                          className="bg-slate-700 border-slate-600 text-white !rounded-xl"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-white text-sm">Asset</Label>
+                        <Select value={fundAsset} onValueChange={(value: any) => setFundAsset(value)}>
+                          <SelectTrigger className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600 !rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700 !rounded-xl">
+                            <SelectItem value="USDC" className="text-white hover:bg-slate-700 !rounded-lg">USDC</SelectItem>
+                            <SelectItem value="native-currency" className="text-white hover:bg-slate-700 !rounded-lg">Native Currency</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <Button
+                        onClick={handleFund}
+                        disabled={!fundAmount || isLoading}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg !rounded-xl"
+                      >
+                        {isLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-400/30 border-t-white mr-2" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Fund Wallet
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            {/* Settings Tab */}
+            <TabsContent value="settings" className="p-4 space-y-4">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-4">
+                  {/* Privy Dashboard Card */}
+                  <Card className="bg-slate-800 border-slate-600 !rounded-2xl">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-white text-base">
+                        <div className="p-1.5 bg-blue-500 !rounded-lg">
+                          <Shield className="h-4 w-4 text-white" />
+                        </div>
+                        Advanced Wallet Management
+                      </CardTitle>
+                      <CardDescription className="text-slate-300 text-sm">
+                        Access advanced features through your Privy dashboard
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Alert className="bg-slate-700 border-slate-600 !rounded-xl">
+                        <AlertDescription className="text-slate-300 text-sm">
+                          For transaction history, advanced token management, and additional features,
+                          visit your Privy dashboard.
+                        </AlertDescription>
+                      </Alert>
+                      <Button
+                        asChild
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg !rounded-xl"
+                      >
+                        <a
+                          href="https://home.privy.io"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2"
+                        >
+                          Open Privy Dashboard
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      {user && (user as any).email && (
+                        <div className="text-center">
+                          <Badge variant="secondary" className="text-xs bg-slate-700/80 text-slate-300 border-slate-600 !rounded-md">
+                            Login with: {(user as any).email.address}
+                          </Badge>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Export Private Key Card */}
+                  <Card className="bg-slate-700 border-slate-600 !rounded-xl hover:shadow-lg transition-all duration-200">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-yellow-400 text-base">
+                        <div className="p-1.5 bg-yellow-500 !rounded-lg">
+                          <AlertTriangle className="h-4 w-4 text-white" />
+                        </div>
+                        Export Private Key
+                      </CardTitle>
+                      <CardDescription className="text-yellow-300/90 text-sm">
+                        Your private key gives full access to your wallet. Never share it with anyone.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Alert className="bg-yellow-900/30 border-yellow-600/50 !rounded-xl">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription className="text-yellow-300 text-sm">
+                          Store your private key securely. Anyone with access to it can control your wallet.
+                        </AlertDescription>
+                      </Alert>
+                      
                       {!privateKey ? (
-                        <button
+                        <Button
                           onClick={handleExportWallet}
                           disabled={isExporting || !address}
-                          className="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition disabled:opacity-50"
+                          variant="outline"
+                          className="w-full border-yellow-600 text-yellow-400 hover:bg-yellow-600/10 !rounded-xl"
                         >
                           {isExporting ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-yellow-400/30 border-t-yellow-400 mr-2" />
                               Exporting...
                             </>
                           ) : (
                             <>
-                              <Download className="h-4 w-4" />
+                              <Download className="h-4 w-4 mr-2" />
                               Export Private Key
                             </>
                           )}
-                        </button>
+                        </Button>
                       ) : (
-                        <div className="space-y-3">
-                          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border dark:border-gray-700">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Private Key</span>
-                              <button
-                                onClick={() => setShowPrivateKey(!showPrivateKey)}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                              >
-                                {showPrivateKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                              </button>
-                            </div>
-                            <div className="font-mono text-sm text-gray-900 dark:text-white break-all">
-                              {showPrivateKey ? privateKey : '•'.repeat(64)}
+                        <div className="space-y-4">
+                          <div className="p-4 bg-slate-700 !rounded-xl border border-slate-600">
+                            <Label className="text-slate-300 text-sm">Private Key</Label>
+                            <div className="mt-2 p-3 bg-slate-800 !rounded-lg border border-slate-600">
+                              <code className="text-white text-sm break-all font-mono">
+                                {privateKey}
+                              </code>
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <button
+                            <Button
                               onClick={() => copyToClipboard(privateKey, 'Private key')}
-                              className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm"
+                              className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white shadow-lg !rounded-xl"
                             >
-                              <Copy className="h-3 w-3" />
+                              <Copy className="h-4 w-4 mr-2" />
                               Copy
-                            </button>
-                            <button
-                              onClick={() => {
-                                setPrivateKey('');
-                                setShowPrivateKey(false);
-                              }}
-                              className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition text-sm"
+                            </Button>
+                            <Button
+                              onClick={() => setPrivateKey('')}
+                              variant="outline"
+                              className="flex-1 border-slate-600 text-slate-400 hover:bg-slate-700/50 !rounded-xl"
                             >
-                              Clear
-                            </button>
+                              Hide
+                            </Button>
                           </div>
                         </div>
                       )}
-                    </div>
-                  </div>
-                </div>
+                    </CardContent>
+                  </Card>
 
-                {/* Network Info */}
-                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Network Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Network:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">{activeChain.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Chain ID:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">{activeChain.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Currency:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">{activeChain.nativeCurrency.symbol}</span>
-                    </div>
-                    {activeChain.blockExplorers?.default && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600 dark:text-gray-400">Explorer:</span>
-                        <a
-                          href={`${activeChain.blockExplorers.default.url}/address/${address}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-                        >
-                          View on Explorer
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
+                  {/* Network Information Card */}
+                  <Card className="bg-slate-800 border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-white">
+                        <Zap className="h-5 w-5" />
+                        Network Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400">Network:</span>
+                          <Badge variant="secondary">{activeChain.name}</Badge>
+                        </div>
+                        <Separator className="bg-slate-600" />
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400">Chain ID:</span>
+                          <span className="text-white font-medium">{activeChain.id}</span>
+                        </div>
+                        <Separator className="bg-slate-600" />
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400">Currency:</span>
+                          <span className="text-white font-medium">{activeChain.nativeCurrency.symbol}</span>
+                        </div>
+                        {activeChain.blockExplorers?.default && (
+                          <>
+                            <Separator className="bg-slate-600" />
+                            <div className="flex justify-between items-center">
+                              <span className="text-slate-400">Explorer:</span>
+                              <Button
+                                asChild
+                                variant="link"
+                                size="sm"
+                                className="text-blue-400 hover:text-blue-300 p-0 h-auto"
+                              >
+                                <a
+                                  href={`${activeChain.blockExplorers.default.url}/address/${address}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1"
+                                >
+                                  View on Explorer
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </div>
-            )}
-          </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </div>
-      </div>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
