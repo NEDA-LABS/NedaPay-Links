@@ -20,21 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ArrowRight, MapPin, Search } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { withDashboardLayout } from "@/utils/withDashboardLayout";
 import Header from "@/components/Header";
@@ -95,11 +81,9 @@ function RampsPage() {
   const router = useRouter();
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [open, setOpen] = useState(false);
 
   const handleCountrySelect = (countryId: string) => {
     setSelectedCountry(countryId);
-    setOpen(false);
   };
 
   const handleProceed = () => {
@@ -133,98 +117,54 @@ function RampsPage() {
             </CardDescription> */}
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Country Selection with Search */}
+              {/* Country Selection */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-slate-300">
                   Select Country
                 </Label>
-                <Popover open={open} onOpenChange={setOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={open}
-                      className="w-full py-6 rounded-lg bg-slate-200 border border-indigo-700 text-slate-800 justify-between hover:bg-slate-300"
-                    >
-                      {selectedCountry ? (
+                <Select value={selectedCountry} onValueChange={handleCountrySelect}>
+                  <SelectTrigger className="w-full py-6 rounded-lg bg-slate-200 border border-indigo-700 text-slate-800 hover:bg-slate-300">
+                    <SelectValue placeholder="Select your country/currency...">
+                      {selectedCountry && selectedCountryData && (
                         <div className="flex items-center gap-3">
                           <span className="text-lg">
-                            {selectedCountryData?.flag}
+                            {selectedCountryData.flag}
                           </span>
                           <div className="flex flex-col items-start">
                             <span className="font-medium">
-                              {selectedCountryData?.name}
+                              {selectedCountryData.name}
                             </span>
                             <span className="text-xs text-slate-600">
-                              {selectedCountryData?.currency} (
-                              {selectedCountryData?.currencySymbol})
+                              {selectedCountryData.currency} (
+                              {selectedCountryData.currencySymbol})
                             </span>
                           </div>
                         </div>
-                      ) : (
-                        <span className="text-slate-500">
-                          Select your country/currency...
-                        </span>
                       )}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    className="w-full p-0 bg-slate-200 border border-indigo-700" 
-                    side="bottom" 
-                    align="start"
-                    sideOffset={4}
-                    avoidCollisions={true}
-                    collisionPadding={8}
-                    style={{
-                      maxHeight: 'min(60vh, 300px)',
-                      minHeight: '200px'
-                    }}
-                  >
-                    <Command className="bg-slate-200 h-full">
-                      <CommandInput
-                        placeholder="Search countries..."
-                        className="bg-slate-100 border-slate-300 text-slate-800 h-12 px-3 sticky top-0 z-10"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        spellCheck="false"
-                      />
-                      <CommandEmpty className="text-slate-600 p-4 text-center">
-                        No country found.
-                      </CommandEmpty>
-                      <CommandGroup className="max-h-[calc(60vh-3rem)] sm:max-h-60 overflow-auto p-1 pb-2">
-                        {countries.map((country) => (
-                          <CommandItem
-                            key={country.id}
-                            value={`${country.name} ${country.currency} ${country.currencySymbol}`}
-                            onSelect={() => handleCountrySelect(country.id)}
-                            className="cursor-pointer hover:bg-slate-300 text-slate-800 p-3 rounded-md m-1 min-h-[3rem] touch-manipulation"
-                          >
-                            <div className="flex items-center gap-3 w-full">
-                              <span className="text-lg">{country.flag}</span>
-                              <div className="flex flex-col flex-1">
-                                <span className="font-medium">
-                                  {country.name}
-                                </span>
-                                <span className="text-xs text-slate-600">
-                                  {country.currency} ({country.currencySymbol})
-                                </span>
-                              </div>
-                              <Check
-                                className={cn(
-                                  "ml-auto h-4 w-4",
-                                  selectedCountry === country.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-200 border border-indigo-700 max-h-60">
+                    {countries.map((country) => (
+                      <SelectItem
+                        key={country.id}
+                        value={country.id}
+                        className="cursor-pointer hover:bg-slate-300 text-slate-800 p-3 min-h-[3rem] focus:bg-slate-300"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <span className="text-lg">{country.flag}</span>
+                          <div className="flex flex-col flex-1">
+                            <span className="font-medium">
+                              {country.name}
+                            </span>
+                            <span className="text-xs text-slate-600">
+                              {country.currency} ({country.currencySymbol})
+                            </span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Selected Country Preview */}
