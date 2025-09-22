@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { utils } from "ethers";
 import { Toaster, toast } from 'react-hot-toast';
-import { SUPPORTED_CHAINS_NORMAL as SUPPORTED_CHAINS } from "@/ramps/payramp/offrampHooks/constants";
+import { SUPPORTED_CHAINS_NORMAL as SUPPORTED_CHAINS } from "../../../ramps/payramp/offrampHooks/constants";
 import { usePrivy, useWallets, useSendTransaction } from "@privy-io/react-auth";
-import { stablecoins } from "@/data/stablecoins";
+import { stablecoins } from "../../../data/stablecoins";
 import { processPaymentWithFee } from "@/utils/nedapayProtocol";
 
 export default function PayWithWallet({

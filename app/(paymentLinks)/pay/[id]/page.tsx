@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 
 import React from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { ChainSelector, TokenSelector, AmountInput } from './components/PaymentSelectors';
 import dynamicImport from "next/dynamic";
 import { utils } from "ethers";
 import { useAccount } from "wagmi";
@@ -26,8 +27,8 @@ import {
   Loader2,
 } from "lucide-react";
 import QRCode from "qrcode";
-import { SUPPORTED_CHAINS, SUPPORTED_CHAINS_NORMAL } from "@/ramps/payramp/offrampHooks/constants";
-import { stablecoins } from "@/data/stablecoins";
+import { SUPPORTED_CHAINS, SUPPORTED_CHAINS_NORMAL } from "../../../ramps/payramp/offrampHooks/constants";
+import { stablecoins } from "../../../data/stablecoins";
 import {
   mainnet,
   base,
@@ -91,8 +92,6 @@ export default function PayPage({ params }: { params: { id: string } }) {
   const [isValidLink, setIsValidLink] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [customAmount, setCustomAmount] = useState("");
-  const [showAmountInput, setShowAmountInput] = useState(false);
   const [currentStep, setCurrentStep] = useState<"details" | "payment">("details");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   
@@ -111,19 +110,15 @@ export default function PayPage({ params }: { params: { id: string } }) {
   const chainId = chainIdParam ? parseInt(chainIdParam) : null;
   const tokenParam = searchParams.get("token");
 
-  const [selectedChain, setSelectedChain] = useState(
-    chainId?.toString() || "8453"
-  );
-  const [selectedToken, setSelectedToken] = useState(
-    tokenParam || currency || "USDC"
-  );
+  // Get the selected chain for the DetailsView
+  const selectedChainForDetails = chainId?.toString() || "8453";
 
   // Determine link type
   const linkType = offRampType ? "offramp" : "normal";
 
-  // Find the resolved chain
+  // Find the resolved chain for the DetailsView
   const resolvedChain = NORMAL_PAYMENT_CHAINS.find(
-    (chain) => chain.id === parseInt(selectedChain)
+    (chain) => chain.id === parseInt(selectedChainForDetails)
   );
 
   // Generate QR code data
@@ -179,8 +174,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Details View Component
-  const DetailsView = ({
+  // Memoized Details View Component
+  const DetailsView = React.memo(({
     amount,
     currency,
     selectedToken,
@@ -220,10 +215,13 @@ export default function PayPage({ params }: { params: { id: string } }) {
               )}
             </div>
             <div className="flex items-center space-x-3">
-              {selectedToken && !currency && (
+              {(selectedToken || currency) && (
                 <Image
-                  src={stablecoins.find(t => t.baseToken.toLowerCase() === selectedToken?.toLowerCase())?.flag || ""}
-                  alt={selectedToken}
+                  src={stablecoins.find(t => 
+                    t.baseToken.toLowerCase() === (selectedToken || currency)?.toLowerCase() ||
+                    t.currency.toLowerCase() === (selectedToken || currency)?.toLowerCase()
+                  )?.flag || "/usdc-logo.svg"}
+                  alt={selectedToken || currency || "Token"}
                   width={32}
                   height={32}
                   className="rounded-full"
@@ -283,26 +281,18 @@ export default function PayPage({ params }: { params: { id: string } }) {
         </CardContent>
       </Card>
     );
-  };
+  });
 
   // Payment View Component  
-  const PaymentView = ({
+  const PaymentView = React.memo(({
     amount,
     currency,
-    selectedToken,
     description,
-    resolvedChain,
     linkType,
     chainId,
+    tokenParam,
     to,
     params,
-    customAmount,
-    setCustomAmount,
-    showAmountInput,
-    setShowAmountInput,
-    selectedChain,
-    setSelectedChain,
-    setSelectedToken,
     offRampType,
     offRampValue,
     offRampProvider,
@@ -311,26 +301,46 @@ export default function PayPage({ params }: { params: { id: string } }) {
   }: {
     amount: string | null;
     currency: string | null;
-    selectedToken: string;
     description: string | null;
-    resolvedChain: any;
     linkType: string;
     chainId: number | null;
+    tokenParam: string | null;
     to: string | null;
     params: { id: string };
-    customAmount: string;
-    setCustomAmount: (value: string) => void;
-    showAmountInput: boolean;
-    setShowAmountInput: (value: boolean) => void;
-    selectedChain: string;
-    setSelectedChain: (value: string) => void;
-    setSelectedToken: (value: string) => void;
     offRampType: string | null;
     offRampValue: string | null;
     offRampProvider: string | null;
     accountName: string | null;
     onBackToDetails: () => void;
   }) => {
+
+    // --- STATE MOVED HERE TO PREVENT TOP-LEVEL RE-RENDERS ---
+    const [internalSelectedChain, setInternalSelectedChain] = useState(chainId?.toString() || '8453');
+    const [internalSelectedToken, setInternalSelectedToken] = useState(tokenParam || currency || 'USDC');
+    const [internalCustomAmount, setInternalCustomAmount] = useState('');
+
+    const handleChainChange = useCallback((value: string) => {
+      setInternalSelectedChain(value);
+      const available = stablecoins.filter(token => token.chainIds.includes(parseInt(value)));
+      if (available.length > 0 && !available.find(t => t.baseToken === internalSelectedToken)) {
+        setInternalSelectedToken(available[0].baseToken);
+      }
+    }, [internalSelectedToken]);
+
+    const handleTokenChange = useCallback((value: string) => {
+      setInternalSelectedToken(value);
+    }, []);
+
+    const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      setInternalCustomAmount(e.target.value);
+    }, []);
+
+    const availableTokens = useMemo(() => {
+      return stablecoins.filter((token) => 
+        token.chainIds.includes(parseInt(internalSelectedChain))
+      );
+    }, [internalSelectedChain]);
+
     return (
       <Card className="border border-white/10 bg-white/5 backdrop-blur-sm shadow-lg overflow-hidden !rounded-2xl">
         <CardContent className="p-4 space-y-4">
@@ -346,6 +356,35 @@ export default function PayPage({ params }: { params: { id: string } }) {
               Back to Details
             </Button>
           </div>
+
+          {/* Chain and Token Selection for Normal Payments */}
+          {linkType === "normal" && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="space-y-4 mb-6"
+            >
+              <ChainSelector 
+                selectedChain={internalSelectedChain} 
+                onChainChange={handleChainChange} 
+              />
+              
+              <TokenSelector 
+                selectedToken={internalSelectedToken} 
+                onTokenChange={handleTokenChange} 
+                availableTokens={availableTokens} 
+              />
+
+              {/* Custom Amount Input for "Any Amount" links */}
+              {!amount && (
+                <AmountInput 
+                  customAmount={internalCustomAmount} 
+                  onAmountChange={handleAmountChange} 
+                />
+              )}
+            </motion.div>
+          )}
 
           {/* Payment Content */}
           {linkType === "offramp" && 
@@ -379,17 +418,17 @@ export default function PayPage({ params }: { params: { id: string } }) {
           ) : (
             <PayWithWallet
               to={to || ""}
-              amount={amount || "0"}
-              currency={currency || "USDC"}
+              amount={amount || internalCustomAmount || "0"}
+              currency={internalSelectedToken || currency || "USDC"}
               description={description || undefined}
               linkId={params.id}
-              chainId={chainId || undefined}
+              chainId={parseInt(internalSelectedChain) || chainId || undefined}
             />
           )}
         </CardContent>
       </Card>
     );
-  };
+  });
 
   if (isLoading) {
     return (
@@ -463,7 +502,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
               <DetailsView
                 amount={amount}
                 currency={currency}
-                selectedToken={selectedToken}
+                selectedToken={tokenParam || currency || "USDC"} // Pass initial token
                 description={description}
                 resolvedChain={resolvedChain}
                 linkType={linkType}
@@ -474,20 +513,12 @@ export default function PayPage({ params }: { params: { id: string } }) {
               <PaymentView
                 amount={amount}
                 currency={currency}
-                selectedToken={selectedToken}
                 description={description}
-                resolvedChain={resolvedChain}
                 linkType={linkType}
                 chainId={chainId}
+                tokenParam={tokenParam}
                 to={to}
                 params={params}
-                customAmount={customAmount}
-                setCustomAmount={setCustomAmount}
-                showAmountInput={showAmountInput}
-                setShowAmountInput={setShowAmountInput}
-                selectedChain={selectedChain}
-                setSelectedChain={setSelectedChain}
-                setSelectedToken={setSelectedToken}
                 offRampType={offRampType}
                 offRampValue={offRampValue}
                 offRampProvider={offRampProvider}
