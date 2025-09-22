@@ -3,7 +3,6 @@
 import toast from "react-hot-toast";
 import {
   useState,
-  useRef,
   useEffect,
   useCallback,
   useImperativeHandle,
@@ -17,7 +16,16 @@ import { getBasename } from "../utils/getBaseName";
 import { useUserSync } from "../hooks/useUserSync";
 import { useLinkAccount } from "@privy-io/react-auth";
 import AuthenticationModal from "./AuthenticationModal";
-import { FaWallet, FaSignOutAlt } from "react-icons/fa";
+import { Wallet, LogOut, PlusCircle, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 // Type definitions for BasenameDisplay component
 interface BasenameDisplayProps {
@@ -179,13 +187,9 @@ const WalletSelector = forwardRef<
       }
     `;
 
-  const [showOptions, setShowOptions] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
-  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showOptions, setShowOptions] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -200,14 +204,13 @@ const WalletSelector = forwardRef<
   } = useUserSync();
 
   // Privy hooks - Added clearActiveWallet to fully disconnect wallets
-  const { 
-    authenticated, 
-    user, 
-    connectWallet, 
-    logout, 
-    ready, 
+  const {
+    authenticated,
+    user,
+    connectWallet,
+    logout,
+    ready,
     login,
-   // Crucial for complete wallet disconnection
   } = usePrivy();
 
   // Link account hook
@@ -313,39 +316,6 @@ const WalletSelector = forwardRef<
     []
   );
 
-  // Close dropdown when clicking or touching outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowOptions(false);
-      }
-    };
-
-    if (showOptions) {
-      document.addEventListener(
-        "mousedown",
-        handleClickOutside as EventListener
-      );
-      document.addEventListener(
-        "touchstart",
-        handleClickOutside as EventListener
-      );
-    }
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside as EventListener
-      );
-      document.removeEventListener(
-        "touchstart",
-        handleClickOutside as EventListener
-      );
-    };
-  }, [showOptions]);
 
   // Handle wallet connection state and persistence
   useEffect(() => {
@@ -393,7 +363,6 @@ const WalletSelector = forwardRef<
 
       // Then logout from Privy
       await logout();
-      setShowOptions(false);
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("walletConnected");
@@ -442,9 +411,7 @@ const WalletSelector = forwardRef<
       );
     }
 
-    return (
-      <FaWallet className="text-slate-50"/>
-    );
+    return <Wallet className="h-5 w-5 text-white" />;
   };
 
   if (!ready) {
@@ -456,151 +423,82 @@ const WalletSelector = forwardRef<
   }
 
   return (
-    <div className="relative bg-gradient-to-r from-blue-400 bg-indigo-400 rounded-xl" ref={dropdownRef}>
+    <div className="relative">
       <style jsx>{mobileStyles}</style>
 
       {isConnected ? (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowOptions(!showOptions);
-          }}
-          className="flex items-center space-x-2 bg-[#3E55E6] text-white shadow-sm hover:from-blue-600 hover:to-purple-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-2"
-          style={{ borderRadius: "0.75rem" }}
-        >
-          <div className="wallet-icon w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
-            {renderWalletIcon()}
-          </div>
-
-          {pathname !== "/" && (
-            <div className="wallet-address-container flex-1 min-w-0">
-              {walletAddress ? (
-                <div className="wallet-address text-xs sm:text-sm font-bold">
+        <DropdownMenu open={showOptions} onOpenChange={setShowOptions}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="secondary" className="flex items-center space-x-2 bg-[#3E55E6] text-white hover:bg-blue-700 rounded-2xl px-2">
+              <div className="wallet-icon w-6 h-6 flex items-center justify-center">
+                {renderWalletIcon()}
+              </div>
+              {pathname !== "/" && (
+                <div className="wallet-address-container flex-1 min-w-0">
+                  {walletAddress ? (
+                    <div className="wallet-address text-xs sm:text-sm font-bold">
+                      <BasenameDisplay
+                        address={walletAddress}
+                        basenameClassName="basename-display"
+                        addressClassName="address-display !text-white"
+                        isMobile={true}
+                      />
+                    </div>
+                  ) : emailAddress ? (
+                    <span className="wallet-address text-xs sm:text-sm font-bold">
+                      {formatEmail(emailAddress, 15)}
+                    </span>
+                  ) : (
+                    <span className="wallet-address text-xs sm:text-sm font-bold">
+                      Connected
+                    </span>
+                  )}
+                </div>
+              )}
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-64 bg-slate-900/90 backdrop-blur-sm border border-slate-700 text-slate-200" align="end">
+            <DropdownMenuLabel>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-slate-200">
+                  Connected Account
+                </h3>
+                <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+                  Active
+                </span>
+              </div>
+              <div className="mt-1 text-xs text-slate-400 break-all">
+                {walletAddress ? (
                   <BasenameDisplay
                     address={walletAddress}
-                    basenameClassName="basename-display"
-                    addressClassName="address-display !text-white"
-                    isMobile={true}
+                    basenameClassName="text-xs"
+                    isMobile={false}
                   />
-                </div>
-              ) : emailAddress ? (
-                <span className="wallet-address text-xs sm:text-sm !text-slate-20 font-bold">
-                  {formatEmail(emailAddress, 15)}
-                </span>
-              ) : (
-                <span className="wallet-address text-xs sm:text-sm font-bold p-2">
-                  Connected
-                </span>
-              )}
-            </div>
-          )}
-
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="white"
-            className="w-4 h-4 flex-shrink-0 text-slate-800"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m19.5 8.25-7.5 7.5-7.5-7.5"
-            />
-          </svg>
-        </button>
-      ) : (
-        <button
-          onClick={handleEmailLogin}
-          className="flex items-center bg-[#3E55E6] hover:bg-blue-200 text-white hover:text-black rounded-lg transition-all duration-200 shadow-sm"
-          disabled={isConnecting}
-          style={{ borderRadius: "0.75rem" }}
-        >
-          <span className="sign-in-text text-xs sm:text-sm font-bold p-2">
-            {isConnecting ? "Connecting..." : "Sign in"}
-          </span>
-        </button>
-      )}
-
-      {showOptions && isConnected && (
-        <div
-          className="absolute right-0 mt-2 w-64 rounded-xl shadow-xl !bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border-2 border-blue-100 dark:border-blue-900"
-          onClick={(e) => e.stopPropagation()}
-          style={{ maxHeight: "80vh", overflowY: "auto" }}
-        >
-          <div
-            className="p-3 border-b border-gray-200"
-            style={{
-              border: "1px solid lightgray",
-              borderRadius: "0.75rem",
-              padding: "0.5rem",
-              margin: "0.5rem",
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">
-                Connected Account
-              </h3>
-              <span
-                className="text-xs px-2 py-1 rounded-full text-green-600"
-              >
-                Active
-              </span>
-            </div>
-            <div className="mt-1 text-xs text-slate-800 break-all">
-              {walletAddress ? (
-                <BasenameDisplay
-                  address={walletAddress}
-                  basenameClassName="text-xs !text-slate-800"
-                  isMobile={false}
-                />
-              ) : emailAddress ? (
-                emailAddress
-              ) : (
-                "Connected"
-              )}
-            </div>
-          </div>
-
-          {!hasEmail && walletAddress && (
-            <div className="p-3 border-b border-gray-200">
-              <button
-                onClick={handleLinkEmail}
-                className="options w-full text-center px-4 py-2 text-blue-600 transition-colors rounded-lg"
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  <span className="hover:text-blue-800">Add Email Address</span>
-                </div>
-              </button>
-            </div>
-          )}
-
-          <div className="p-2 space-y-1">
-            <button
-              onClick={handleLogout}
-              className="w-full text-center text-slate-50 hover:text-slate-800 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-200 transition-colors"
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <FaSignOutAlt size={20} className=""/>
-                <span>Logout</span>
+                ) : emailAddress ? (
+                  emailAddress
+                ) : (
+                  "Connected"
+                )}
               </div>
-            </button>
-          </div>
-        </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {!hasEmail && walletAddress && (
+              <DropdownMenuItem onClick={handleLinkEmail}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                <span>Add Email Address</span>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Button onClick={handleEmailLogin} disabled={isConnecting} className="bg-[#3E55E6] hover:bg-blue-700 rounded-lg">
+          {isConnecting ? "Connecting..." : "Sign in"}
+        </Button>
       )}
 
       {showAuthModal && isConnected && (
