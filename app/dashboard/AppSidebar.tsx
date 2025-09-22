@@ -22,6 +22,8 @@ import {
   Home,
   IdCard,
   User,
+  Receipt,
+  History
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -64,7 +66,7 @@ function AppSidebarContent() {
     { title: "Home", url: "/dashboard", icon: Home },
     { title: "Payment Link", url: "/payment-link", icon: Send },
     { title: "Generate Invoice", url: "/invoice", icon: FileIcon },
-    { title: "Withdraw", url: "/ramps", icon: CreditCard },
+    { title: "Withdraw", url: "/ramps", icon: Receipt },
     { title: "Bridge", url: "/accross-bridge", icon: ArrowRightLeft },
     { title: "Analytics", url: "/analytics", icon: BarChart3 },
     {
@@ -72,7 +74,7 @@ function AppSidebarContent() {
       url: "/all-transactions",
       icon: FileText,
     },
-    { title: "Notifications", url: "/all-notifications", icon: Bell },
+    { title: "Withdraw History", url: "/all-notifications", icon: History },
     { title: "Profile", url: "/settings", icon: User },
     { title: "Developers", url: "/developers", icon: Code },
     { title: "Support", url: "/support", icon: HelpCircle },
@@ -130,11 +132,11 @@ function AppSidebarContent() {
         <div className="flex-1 p-4 space-y-2 overflow-y-auto">
           <SidebarMenu>
             {allItems.map((item) => (
-              <SidebarMenuItem key={item.title} className=" md:my-2">
+              <SidebarMenuItem key={item.title} className="md:my-2">
                 <SidebarMenuButton asChild>
                   <Link
                     href={item.url}
-                    className={`flex items-center space-x-3 md:space-x-4 p-2 md:p-3 rounded-full transition-colors text-base md:text-xl ${getNavClass(
+                    className={`flex items-center space-x-3 md:space-x-4 p-2 md:p-3 rounded-full transition-colors text-base md:text-lg ${getNavClass(
                       item.url
                     )}`}
                   >
