@@ -1,5 +1,5 @@
 "use client";
-import { FileText, Link, DollarSign, BarChart3, ChevronDown, Menu } from "lucide-react";
+import { FileText, Link, DollarSign, BarChart3, ChevronDown, Menu, ArrowLeftRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -34,9 +34,9 @@ export default function QuickActions() {
       description: "Cash out funds"
     },
     {
-      title: "Analytics",
-      icon: BarChart3,
-      onClick: () => router.push("/analytics"),
+      title: "Bridge",
+      icon: ArrowLeftRight,
+      onClick: () => router.push("/accross-bridge"),
       description: "View reports"
     },
   ];
@@ -44,21 +44,21 @@ export default function QuickActions() {
   return (
     <div className="flex items-center justify-center mb-6 px-4 relative z-50">
       {/* Desktop View */}
-      <div className="hidden md:flex items-center bg-slate-800/80 backdrop-blur-sm rounded-full p-1.5 border border-slate-700/50 shadow-lg">
+      <div className="flex items-center bg-slate-900/90 backdrop-blur-sm rounded-full p-1.5 border border-slate-700/50 shadow-lg">
         {actions.map((action, idx) => (
           <button
             key={idx}
             onClick={action.onClick}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-200 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
+            className="flex items-center gap-2 px-1 md:px-4 py-2.5 rounded-full transition-all duration-200 text-xs md:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
           >
-            <action.icon className="w-4 h-4" />
+            <action.icon className="w-3 h-3 md:w-4 md:h-4" />
             <span>{action.title}</span>
           </button>
         ))}
       </div>
 
       {/* Mobile Dropdown */}
-      <div className="md:hidden">
+      <div className="hidden">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
             <Button 

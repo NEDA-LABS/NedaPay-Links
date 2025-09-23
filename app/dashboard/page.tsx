@@ -3,13 +3,11 @@ import { useState, useEffect, useMemo } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { stablecoins } from "@/data/stablecoins";
-import { MetricCard } from "./MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Badge } from "@/components/Badge";
 import { Copy, Check } from "lucide-react";
 import SwapModal from "@/components/SwapModal";
-import { PaymentMethods } from "./PaymentMethods";
 import Header from "@/components/Header";
 import {
   Activity,
@@ -369,8 +367,8 @@ export default function DashboardContent() {
       {authenticated && <QuickActions />}
       </div>
       
-      <div className="bg-gray-800/70 md:pt-12 rounded-2xl relative z-10">
-        <Card className="relative border-0 bg-gray-800 text-white shadow-2xl w-[92%] mx-auto rounded-xl">
+      <div className=" rounded-2xl relative z-10">
+        <Card className="relative border-0 bg-slate-900/90 text-white shadow-2xl md:w-[92%] mx-auto rounded-3xl">
           <CardContent className="relative p-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="lg:col-span-2 space-y-4">
