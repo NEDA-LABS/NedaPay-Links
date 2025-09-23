@@ -41,6 +41,8 @@ import {
 import Header from "@/components/Header";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import Image from "next/image";
+import { resolveName } from "@/utils/ensUtils";
+import { isAddress } from "viem";
 import {
   Card,
   CardContent,
@@ -94,6 +96,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<"details" | "payment">("details");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [toEnsName, setToEnsName] = useState<string | null>(null);
   
   const amountParam = searchParams.get("amount");
   const amount = amountParam === "0" ? null : amountParam;
@@ -167,6 +170,23 @@ export default function PayPage({ params }: { params: { id: string } }) {
     validateLink();
   }, [signature, linkType, offRampType, offRampValue, to]);
 
+  // Resolve ENS for the recipient address (merchant who generated the link)
+  useEffect(() => {
+    const work = async () => {
+      try {
+        if (to && isAddress(to as `0x${string}`)) {
+          const name = await resolveName({ address: to as `0x${string}` });
+          setToEnsName(name);
+        } else {
+          setToEnsName(null);
+        }
+      } catch {
+        setToEnsName(null);
+      }
+    };
+    work();
+  }, [to]);
+
   // Copy to clipboard function
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -183,7 +203,9 @@ export default function PayPage({ params }: { params: { id: string } }) {
     resolvedChain,
     linkType,
     qrDataUrl,
-    onProceedToPay
+    onProceedToPay,
+    to,
+    toEnsName
   }: {
     amount: string | null;
     currency: string | null;
@@ -193,6 +215,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
     linkType: string;
     qrDataUrl: string | null;
     onProceedToPay: () => void;
+    to: string | null;
+    toEnsName: string | null;
   }) => {
     return (
       <Card className="border border-white/10 bg-white/5 backdrop-blur-sm shadow-lg overflow-hidden !rounded-2xl">
@@ -250,7 +274,34 @@ export default function PayPage({ params }: { params: { id: string } }) {
               <p className="text-slate-300 text-sm leading-relaxed">{description}</p>
             </div>
           )}
-          
+          {/* Recipient (Merchant) */}
+          {to && (
+            <div className="bg-slate-800/30 rounded-lg p-3 border border-white/10 !rounded-2xl">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span className="text-white text-xs font-medium">Recipient</span>
+                {toEnsName && (
+                  <Badge className="ml-2 bg-indigo-600/30 text-indigo-200 border-indigo-500/30 text-[10px]">
+                    {toEnsName}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <code className="text-slate-200 text-xs break-all font-mono flex-1">
+                  {`${to.slice(0, 6)}...${to.slice(-4)}`}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => to && copyToClipboard(to)}
+                  className="bg-slate-800/60 border-slate-600 text-slate-200 hover:bg-slate-700/60 !rounded-lg h-8 px-2"
+                >
+                  <ClipboardCopy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
 
           {/* Proceed to Pay Button */}
           <Button
@@ -507,6 +558,8 @@ export default function PayPage({ params }: { params: { id: string } }) {
                 resolvedChain={resolvedChain}
                 linkType={linkType}
                 qrDataUrl={qrDataUrl}
+                to={to}
+                toEnsName={toEnsName}
                 onProceedToPay={() => setCurrentStep("payment")}
               />
             ) : (
