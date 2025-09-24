@@ -8,7 +8,6 @@ import { createConfig as createPrivyConfig } from "@privy-io/wagmi";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { SidebarProvider } from "@/compliance/user/components/ui/sidebar";
 
 // Create a query client for React Query
 const queryClient = new QueryClient();
@@ -71,7 +70,6 @@ const wagmiConfig = createPrivyConfig({
 
 export function Providers(props: { children: ReactNode }) {
   return (
-    <SidebarProvider>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <PrivyProvider
         appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
@@ -92,6 +90,5 @@ export function Providers(props: { children: ReactNode }) {
         </QueryClientProvider>
       </PrivyProvider>
     </ThemeProvider>
-    </SidebarProvider>
   );
 }
