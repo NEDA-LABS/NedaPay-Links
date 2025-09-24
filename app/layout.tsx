@@ -1,8 +1,6 @@
 import '@coinbase/onchainkit/styles.css';
 import type { Metadata } from 'next';
 import './globals.css';
-import './compliance/user/kyc.css';
-import './components/name-fallback.css';
 import { Providers } from './providers';
 import AppToaster from './components/Toaster';
 import {Analytics} from '@vercel/analytics/next';
