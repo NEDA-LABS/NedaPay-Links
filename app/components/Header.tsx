@@ -4,28 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Settings,
-  Sun,
-  Moon,
-  Zap,
-  HelpCircle,
-  Menu,
-  X,
-  Repeat,
-  Wallet,
-  Banknote,
-  Coins,
-  Link as LinkIcon,
-  Receipt,
-} from "lucide-react";
 import Image from "next/image";
-import { AppSidebarToggle } from "@/dashboard/AppSidebar";
-import { SidebarProvider } from "@/compliance/user/components/ui/sidebar";
 
 // Import your actual components
-import WalletSelector from "./WalletSelector";
-import NotificationTab from "./NotificationTab";
+import WalletSelector from "@/components/WalletSelector";
 import { FaGear } from "react-icons/fa6";
 import { usePrivy } from "@privy-io/react-auth";
 import { Badge } from "@/components/ui/badge";
@@ -36,9 +18,6 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
-  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
 
   const { authenticated } = usePrivy();
 
@@ -85,11 +64,6 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
           <div className="flex items-center">
-            {pathname !== "/" && (
-              <div className="flex  md:hidden">
-                <AppSidebarToggle />
-              </div>
-            )}
             <Link href="/" className="group flex items-center space-x-3">
               {/* Simplified Logo */}
               <div className="relative flex">
@@ -125,8 +99,6 @@ export default function Header() {
 
             {/* Action Buttons Container */}
             <div className="flex items-center space-x-1 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2">
-              <NotificationTab />
-
               <WalletSelector />
             </div>
           </div>

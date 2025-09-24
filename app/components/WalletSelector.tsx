@@ -15,7 +15,6 @@ import { Name } from "@coinbase/onchainkit/identity";
 import { getBasename } from "../utils/getBaseName";
 import { useUserSync } from "../hooks/useUserSync";
 import { useLinkAccount } from "@privy-io/react-auth";
-import AuthenticationModal from "./AuthenticationModal";
 import { Wallet, LogOut, PlusCircle, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -499,16 +498,6 @@ const WalletSelector = forwardRef<
         <Button onClick={handleEmailLogin} disabled={isConnecting} className="bg-[#3E55E6] hover:bg-blue-700 rounded-lg">
           {isConnecting ? "Connecting..." : "Sign in"}
         </Button>
-      )}
-
-      {showAuthModal && isConnected && (
-        <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4">
-          <AuthenticationModal
-            isOpen={showAuthModal}
-            onClose={() => setShowAuthModal(false)}
-            address={walletAddress || emailAddress || ""}
-          />
-        </div>
       )}
     </div>
   );

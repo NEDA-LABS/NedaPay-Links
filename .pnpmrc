@@ -1,0 +1,41 @@
+# pnpm configuration for NedaPay project
+
+# Use strict peer dependencies to avoid version conflicts
+strict-peer-dependencies=true
+
+# Enable hoisting for better performance
+hoist=true
+
+# Shamefully hoist to avoid module resolution issues with Next.js
+shamefully-hoist=true
+
+# Auto install peer dependencies
+auto-install-peers=true
+
+# Use hard links for better disk space efficiency
+link-workspace-packages=true
+
+# Enable side effects cache for faster installs
+side-effects-cache=true
+
+# Prefer offline packages when available
+prefer-offline=true
+
+# Registry configuration
+registry=https://registry.npmjs.org/
+
+# Store directory (optional - pnpm will use default if not specified)
+# store-dir=~/.pnpm-store
+
+# Lockfile settings
+lockfile=true
+prefer-frozen-lockfile=false
+
+# Node.js version management
+use-node-version=20
+
+# Package import method
+package-import-method=auto
+
+# Dedupe injected dependencies
+dedupe-injected-deps=true
