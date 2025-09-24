@@ -27,8 +27,8 @@ import {
   Loader2,
 } from "lucide-react";
 import QRCode from "qrcode";
-import { SUPPORTED_CHAINS, SUPPORTED_CHAINS_NORMAL } from "../../../ramps/payramp/offrampHooks/constants";
-import { stablecoins } from "../../../data/stablecoins";
+import { SUPPORTED_CHAINS, SUPPORTED_CHAINS_NORMAL } from "@/ramps/payramp/offrampHooks/constants";
+import { stablecoins } from "@/data/stablecoins";
 import {
   mainnet,
   base,
@@ -145,7 +145,10 @@ export default function PayPage({ params }: { params: { id: string } }) {
   // Validate link on mount
   useEffect(() => {
     const validateLink = () => {
-      if (!signature) {
+      // Allow demo links with demo signature
+      const isDemoLink = params.id === 'demo-payment-link' && signature === 'demo-signature-for-showcase';
+      
+      if (!signature && !isDemoLink) {
         setIsValidLink(false);
         setErrorMessage("Invalid payment link - missing signature");
         return;
@@ -168,7 +171,7 @@ export default function PayPage({ params }: { params: { id: string } }) {
     };
 
     validateLink();
-  }, [signature, linkType, offRampType, offRampValue, to]);
+  }, [signature, linkType, offRampType, offRampValue, to, params.id]);
 
   // Resolve ENS for the recipient address (merchant who generated the link)
   useEffect(() => {
